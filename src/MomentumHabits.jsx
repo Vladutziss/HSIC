@@ -42,6 +42,7 @@ import {
   Cloud,
   CloudOff,
   HardDrive,
+  Monitor,
   Minus,
 } from "lucide-react";
 
@@ -153,8 +154,34 @@ const CATALOG = [
 const byId = Object.fromEntries(CATALOG.map((h) => [h.id, h]));
 
 // Categorical slots in fixed order (validated palette, slots 1–4).
-const SERIES = ["#2a78d6", "#eb6834", "#1baf7a", "#c98500"];
-const OVERALL = "#1d3b33";
+// Theme tokens. Screens read them as CSS variables (Tailwind classes) or,
+// where a library needs literal colours (recharts), through ThemeContext.
+// Categorical slots follow the validated palette's light/dark steps.
+const THEMES = {
+  light: {
+    bg: "#f3f6f4", "bg-glass": "rgba(243,246,244,0.95)", card: "#ffffff", "card-head": "#f4f8f6",
+    ink: "#15241f", "on-ink": "#ffffff", body: "#3c4b45", muted: "#5b6b64", faint: "#9aa8a2", faint2: "#c3cec9",
+    line: "#dde5e0", "line-soft": "#eef2ef", track: "#e2e9e5", chip: "#f1f4f2", skel: "#e6ede9",
+    control: "#b7c5bf", "control-hover": "#9fb8ad", disabled: "#b9cac2",
+    accent: "#1f6f54", "accent-bg": "#1f6f54", "accent-bg-hover": "#185a44", "accent-soft": "#e8f2ed",
+    "done-bg": "#f3faf6", "done-line": "#b8d6c7", "warm-bg": "#fff4de", "warm-ink": "#8a5a00",
+    overall: "#1d3b33", streak: "#8c9a94", stretch: "#1baf7a",
+    series: ["#2a78d6", "#eb6834", "#1baf7a", "#c98500"],
+  },
+  dark: {
+    bg: "#0f1714", "bg-glass": "rgba(15,23,20,0.92)", card: "#16211d", "card-head": "#1a2823",
+    ink: "#e6eee9", "on-ink": "#0f1714", body: "#c2cec8", muted: "#93a39b", faint: "#6f7f78", faint2: "#46544e",
+    line: "#27352f", "line-soft": "#1f2c27", track: "#26342e", chip: "#1f2c27", skel: "#23312b",
+    control: "#4c5c55", "control-hover": "#6b8a7d", disabled: "#33443c",
+    accent: "#5cc79c", "accent-bg": "#2b8a66", "accent-bg-hover": "#237556", "accent-soft": "#1b3129",
+    "done-bg": "#13251e", "done-line": "#2c5242", "warm-bg": "#3a2c0f", "warm-ink": "#f0c46a",
+    overall: "#d8e6df", streak: "#7d8c85", stretch: "#199e70",
+    series: ["#3987e5", "#d95926", "#199e70", "#c98500"],
+  },
+};
+const ThemeContext = React.createContext(THEMES.light);
+const useTheme = () => React.useContext(ThemeContext);
+const cssVars = (T) => Object.fromEntries(Object.entries(T).filter(([, v]) => typeof v === "string").map(([k, v]) => [`--${k}`, v]));
 
 function mulberry32(a) {
   return function () {
@@ -642,7 +669,7 @@ function Ring({ value, color, size = 56, stroke = 6, children }) {
   return (
     <div className="relative shrink-0" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="-rotate-90">
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#e2e9e5" strokeWidth={stroke} />
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" style={{ stroke: "var(--track)" }} strokeWidth={stroke} />
         <circle
           cx={size / 2}
           cy={size / 2}
@@ -662,16 +689,16 @@ function Ring({ value, color, size = 56, stroke = 6, children }) {
 
 function Delta({ value }) {
   const v = Math.round(value);
-  if (v === 0) return <span className="text-xs text-[#5b6b64]">flat this week</span>;
+  if (v === 0) return <span className="text-xs text-[color:var(--muted)]">flat this week</span>;
   return v > 0 ? (
-    <span className="text-xs font-medium text-[#1f6f54]">+{v} this week</span>
+    <span className="text-xs font-medium text-[color:var(--accent)]">+{v} this week</span>
   ) : (
-    <span className="text-xs text-[#5b6b64]">{v} this week · one check-in turns it</span>
+    <span className="text-xs text-[color:var(--muted)]">{v} this week · one check-in turns it</span>
   );
 }
 
 function Card({ className = "", children }) {
-  return <div className={`rounded-2xl border border-[#dde5e0] bg-white ${className}`}>{children}</div>;
+  return <div className={`rounded-2xl border border-[color:var(--line)] bg-[color:var(--card)] ${className}`}>{children}</div>;
 }
 
 function ChartTooltip({ active, payload, label, fmt }) {
@@ -679,12 +706,12 @@ function ChartTooltip({ active, payload, label, fmt }) {
   const rows = payload.filter((p) => p.value != null);
   if (!rows.length) return null;
   return (
-    <div className="rounded-lg border border-[#dde5e0] bg-white px-3 py-2 text-xs shadow-sm">
-      <div className="mb-1 font-medium text-[#15241f]">{fmt ? fmt(label) : label}</div>
+    <div className="rounded-lg border border-[color:var(--line)] bg-[color:var(--card)] px-3 py-2 text-xs shadow-sm">
+      <div className="mb-1 font-medium text-[color:var(--ink)]">{fmt ? fmt(label) : label}</div>
       {rows.map((p) => (
-        <div key={p.dataKey} className="flex items-center gap-2 text-[#5b6b64]">
+        <div key={p.dataKey} className="flex items-center gap-2 text-[color:var(--muted)]">
           <span className="inline-block h-0.5 w-3 rounded" style={{ background: p.color }} />
-          {p.name}: <span className="font-mono tabular-nums text-[#15241f]">{Math.round(p.value)}</span>
+          {p.name}: <span className="font-mono tabular-nums text-[color:var(--ink)]">{Math.round(p.value)}</span>
         </div>
       ))}
     </div>
@@ -706,22 +733,22 @@ function Onboarding({ initial, onDone, onCancel, onReset }) {
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-10">
-      <div className="mb-8 flex items-center gap-2 text-[#1f6f54]">
+      <div className="mb-8 flex items-center gap-2 text-[color:var(--accent)]">
         <Leaf size={20} />
         <span className="font-display text-lg font-semibold tracking-tight">Momentum</span>
       </div>
-      <h1 className="font-display text-3xl font-semibold leading-tight tracking-tight text-[#15241f] sm:text-4xl" style={{ textWrap: "balance" }}>
+      <h1 className="font-display text-3xl font-semibold leading-tight tracking-tight text-[color:var(--ink)] sm:text-4xl" style={{ textWrap: "balance" }}>
         Build habits that bend, not break.
       </h1>
-      <p className="mt-3 max-w-prose text-[15px] leading-relaxed text-[#5b6b64]">
+      <p className="mt-3 max-w-prose text-[15px] leading-relaxed text-[color:var(--muted)]">
         Instead of a streak that resets to zero, each habit carries a momentum score. Check-ins raise it, a missed day nudges it down a
         little, and getting back on track recovers it faster.
       </p>
 
       <section className="mt-8">
         <div className="mb-3 flex items-baseline justify-between">
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-[#15241f]">Pick 3–4 habits</h2>
-          <span className="font-mono text-xs tabular-nums text-[#5b6b64]">{picked.length}/4</span>
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-[color:var(--ink)]">Pick 3–4 habits</h2>
+          <span className="font-mono text-xs tabular-nums text-[color:var(--muted)]">{picked.length}/4</span>
         </div>
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
           {CATALOG.map((h) => {
@@ -734,14 +761,14 @@ function Onboarding({ initial, onDone, onCancel, onReset }) {
                 id={`pick-${h.id}`}
                 onClick={() => toggle(h.id)}
                 disabled={disabled}
-                className={`flex items-start gap-3 rounded-xl border p-3 text-left transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1f6f54] ${
-                  on ? "border-[#1f6f54] bg-[#e8f2ed]" : "border-[#dde5e0] bg-white hover:border-[#9fb8ad]"
+                className={`flex items-start gap-3 rounded-xl border p-3 text-left transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)] ${
+                  on ? "border-[color:var(--accent)] bg-[color:var(--accent-soft)]" : "border-[color:var(--line)] bg-[color:var(--card)] hover:border-[color:var(--control-hover)]"
                 } ${disabled ? "opacity-40" : ""}`}
               >
-                <Icon size={18} className={on ? "mt-0.5 text-[#1f6f54]" : "mt-0.5 text-[#5b6b64]"} />
+                <Icon size={18} className={on ? "mt-0.5 text-[color:var(--accent)]" : "mt-0.5 text-[color:var(--muted)]"} />
                 <span>
-                  <span className="block text-sm font-medium text-[#15241f]">{h.name}</span>
-                  <span className="block text-xs text-[#5b6b64]">{h.full}</span>
+                  <span className="block text-sm font-medium text-[color:var(--ink)]">{h.name}</span>
+                  <span className="block text-xs text-[color:var(--muted)]">{h.full}</span>
                 </span>
               </button>
             );
@@ -750,7 +777,7 @@ function Onboarding({ initial, onDone, onCancel, onReset }) {
       </section>
 
       <section className="mt-8">
-        <label htmlFor="goal" className="mb-2 block text-sm font-semibold uppercase tracking-wider text-[#15241f]">
+        <label htmlFor="goal" className="mb-2 block text-sm font-semibold uppercase tracking-wider text-[color:var(--ink)]">
           Your goal, in a sentence
         </label>
         <textarea
@@ -760,9 +787,9 @@ function Onboarding({ initial, onDone, onCancel, onReset }) {
           rows={2}
           maxLength={140}
           placeholder="e.g. Have enough energy to enjoy evenings with my family"
-          className="w-full resize-none rounded-xl border border-[#dde5e0] bg-white p-3 text-[15px] text-[#15241f] placeholder:text-[#9aa8a2] focus:border-[#1f6f54] focus:outline-none"
+          className="w-full resize-none rounded-xl border border-[color:var(--line)] bg-[color:var(--card)] p-3 text-[15px] text-[color:var(--ink)] placeholder:text-[color:var(--faint)] focus:border-[color:var(--accent)] focus:outline-none"
         />
-        <p className="mt-1 text-xs text-[#5b6b64]">Suggestions will refer back to this.</p>
+        <p className="mt-1 text-xs text-[color:var(--muted)]">Suggestions will refer back to this.</p>
       </section>
 
       <div className="mt-8 flex flex-wrap items-center gap-3">
@@ -770,46 +797,46 @@ function Onboarding({ initial, onDone, onCancel, onReset }) {
           id="start"
           disabled={!ready}
           onClick={() => onDone(picked, goal, withSample)}
-          className="rounded-xl bg-[#1f6f54] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#185a44] disabled:cursor-not-allowed disabled:bg-[#b9cac2]"
+          className="rounded-xl bg-[color:var(--accent-bg)] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[color:var(--accent-bg-hover)] disabled:cursor-not-allowed disabled:bg-[color:var(--disabled)]"
         >
           {editing ? "Save changes" : "Start tracking"}
         </button>
         {editing ? (
-          <button id="cancel-edit" onClick={onCancel} className="rounded-xl px-4 py-3 text-sm font-medium text-[#5b6b64] hover:bg-[#e8f2ed]">
+          <button id="cancel-edit" onClick={onCancel} className="rounded-xl px-4 py-3 text-sm font-medium text-[color:var(--muted)] hover:bg-[color:var(--accent-soft)]">
             Cancel
           </button>
         ) : (
           <button
             id="example"
             onClick={() => onDone(["gym", "meditate", "read", "deepwork"], "Feel strong and clear-headed going into exam season", true)}
-            className="rounded-xl px-4 py-3 text-sm font-medium text-[#1f6f54] hover:bg-[#e8f2ed]"
+            className="rounded-xl px-4 py-3 text-sm font-medium text-[color:var(--accent)] hover:bg-[color:var(--accent-soft)]"
           >
             Use an example setup
           </button>
         )}
       </div>
       {editing ? (
-        <div className="mt-8 border-t border-[#dde5e0] pt-4 text-sm text-[#5b6b64]">
+        <div className="mt-8 border-t border-[color:var(--line)] pt-4 text-sm text-[color:var(--muted)]">
           <p>Your check-in history is kept. A newly added habit starts tracking today.</p>
           {!confirmReset ? (
-            <button id="reset" onClick={() => setConfirmReset(true)} className="mt-2 text-xs underline underline-offset-2 hover:text-[#15241f]">
+            <button id="reset" onClick={() => setConfirmReset(true)} className="mt-2 text-xs underline underline-offset-2 hover:text-[color:var(--ink)]">
               Delete all my data and start over
             </button>
           ) : (
             <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
               <span>This removes every check-in, to-do and setting.</span>
-              <button id="reset-confirm" onClick={onReset} className="rounded-md bg-[#15241f] px-2.5 py-1 font-medium text-white">
+              <button id="reset-confirm" onClick={onReset} className="rounded-md bg-[color:var(--ink)] px-2.5 py-1 font-medium text-[color:var(--on-ink)]">
                 Delete everything
               </button>
-              <button onClick={() => setConfirmReset(false)} className="rounded-md px-2.5 py-1 hover:bg-[#e8f2ed]">
+              <button onClick={() => setConfirmReset(false)} className="rounded-md px-2.5 py-1 hover:bg-[color:var(--accent-soft)]">
                 Keep my data
               </button>
             </div>
           )}
         </div>
       ) : (
-        <label htmlFor="with-sample" className="mt-6 flex cursor-pointer items-start gap-2 text-xs leading-relaxed text-[#5b6b64]">
-          <input id="with-sample" type="checkbox" checked={withSample} onChange={(e) => setWithSample(e.target.checked)} className="mt-0.5 accent-[#1f6f54]" />
+        <label htmlFor="with-sample" className="mt-6 flex cursor-pointer items-start gap-2 text-xs leading-relaxed text-[color:var(--muted)]">
+          <input id="with-sample" type="checkbox" checked={withSample} onChange={(e) => setWithSample(e.target.checked)} className="mt-0.5 accent-[color:var(--accent-bg)]" />
           <span>
             Start with 30 days of sample check-ins and sleep, so the momentum curve has something to show. Untick to start from a blank history.
             Example setup always includes the sample.
@@ -837,15 +864,15 @@ function SuggestionCard({ suggestions, modes, setMode }) {
 
   return (
     <Card className="overflow-hidden">
-      <div className="flex items-center justify-between border-b border-[#eef2ef] bg-[#f4f8f6] px-4 py-2.5">
-        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[#1f6f54]">
+      <div className="flex items-center justify-between border-b border-[color:var(--line-soft)] bg-[color:var(--card-head)] px-4 py-2.5">
+        <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[color:var(--accent)]">
           <Sparkles size={14} /> Today's suggestion
         </div>
         {suggestions.length > 1 && (
           <button
             id="next-suggestion"
             onClick={() => setIdx((i) => i + 1)}
-            className="flex items-center gap-1 whitespace-nowrap rounded-md px-2 py-1 text-xs text-[#5b6b64] hover:bg-white"
+            className="flex items-center gap-1 whitespace-nowrap rounded-md px-2 py-1 text-xs text-[color:var(--muted)] hover:bg-[color:var(--card)]"
           >
             <RefreshCw size={12} /> Another idea ({(idx % suggestions.length) + 1}/{suggestions.length})
           </button>
@@ -854,18 +881,18 @@ function SuggestionCard({ suggestions, modes, setMode }) {
       <div className="p-4">
         {thinking ? (
           <div className="space-y-2" aria-live="polite">
-            <div className="text-xs text-[#5b6b64]">Looking at your last 7 days…</div>
-            <div className="h-4 w-2/3 animate-pulse rounded bg-[#e6ede9]" />
-            <div className="h-3 w-full animate-pulse rounded bg-[#eef2ef]" />
-            <div className="h-3 w-5/6 animate-pulse rounded bg-[#eef2ef]" />
+            <div className="text-xs text-[color:var(--muted)]">Looking at your last 7 days…</div>
+            <div className="h-4 w-2/3 animate-pulse rounded bg-[color:var(--skel)]" />
+            <div className="h-3 w-full animate-pulse rounded bg-[color:var(--line-soft)]" />
+            <div className="h-3 w-5/6 animate-pulse rounded bg-[color:var(--line-soft)]" />
           </div>
         ) : (
           <div>
-            <h3 className="font-display text-lg font-semibold leading-snug text-[#15241f]">{s.title}</h3>
-            <p className="mt-1.5 text-[15px] leading-relaxed text-[#3c4b45]">{s.body}</p>
+            <h3 className="font-display text-lg font-semibold leading-snug text-[color:var(--ink)]">{s.title}</h3>
+            <p className="mt-1.5 text-[15px] leading-relaxed text-[color:var(--body)]">{s.body}</p>
             <div className="mt-3 flex flex-wrap gap-1.5">
               {s.signals.map((x) => (
-                <span key={x} className="rounded-full bg-[#f1f4f2] px-2.5 py-1 text-xs text-[#5b6b64]">
+                <span key={x} className="rounded-full bg-[color:var(--chip)] px-2.5 py-1 text-xs text-[color:var(--muted)]">
                   {x}
                 </span>
               ))}
@@ -875,7 +902,7 @@ function SuggestionCard({ suggestions, modes, setMode }) {
                 id="apply-suggestion"
                 onClick={() => setMode(s.id, applied ? "full" : "lite")}
                 className={`mt-4 flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition ${
-                  applied ? "bg-[#e8f2ed] text-[#1f6f54]" : "bg-[#1f6f54] text-white hover:bg-[#185a44]"
+                  applied ? "bg-[color:var(--accent-soft)] text-[color:var(--accent)]" : "bg-[color:var(--accent-bg)] text-white hover:bg-[color:var(--accent-bg-hover)]"
                 }`}
               >
                 {applied ? <Check size={16} /> : <Feather size={16} />}
@@ -900,14 +927,14 @@ function HabitRow({ id, color, stats, value, mode, onToggle, onMode, onOpen }) {
   const done = value > 0;
 
   return (
-    <div className={`flex items-center gap-3 rounded-2xl border p-3 transition sm:p-4 ${done ? "border-[#b8d6c7] bg-[#f3faf6]" : "border-[#dde5e0] bg-white"}`}>
+    <div className={`flex items-center gap-3 rounded-2xl border p-3 transition sm:p-4 ${done ? "border-[color:var(--done-line)] bg-[color:var(--done-bg)]" : "border-[color:var(--line)] bg-[color:var(--card)]"}`}>
       <button
         id={`check-${id}`}
         onClick={onToggle}
         aria-pressed={done}
         aria-label={`Mark ${h.name} done`}
-        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border-2 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#1f6f54] ${
-          done ? "border-[#1f6f54] bg-[#1f6f54] text-white" : "border-[#b7c5bf] bg-white hover:border-[#1f6f54]"
+        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border-2 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[color:var(--accent)] ${
+          done ? "border-[color:var(--accent)] bg-[color:var(--accent-bg)] text-white" : "border-[color:var(--control)] bg-[color:var(--card)] hover:border-[color:var(--accent)]"
         }`}
       >
         {done && <Check size={18} strokeWidth={3} />}
@@ -916,15 +943,15 @@ function HabitRow({ id, color, stats, value, mode, onToggle, onMode, onOpen }) {
       <div role="button" tabIndex={0} onClick={onOpen} onKeyDown={(e) => e.key === "Enter" && onOpen()} className="min-w-0 flex-1 cursor-pointer text-left">
         <div className="flex items-center gap-2">
           <Icon size={16} style={{ color }} />
-          <span className="font-medium text-[#15241f]">{h.name}</span>
+          <span className="font-medium text-[color:var(--ink)]">{h.name}</span>
           {prev.comeback || (prev.run > 0 && prev.run <= COMEBACK_WINDOW && prev.hadMiss) ? (
-            <span className="whitespace-nowrap rounded-full bg-[#fff4de] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-[#8a5a00]">Comeback 1.6×</span>
+            <span className="whitespace-nowrap rounded-full bg-[color:var(--warm-bg)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-[color:var(--warm-ink)]">Comeback 1.6×</span>
           ) : null}
         </div>
-        <div className="truncate text-sm text-[#5b6b64]">{mode === "lite" ? h.lite : h.full}</div>
-        <div className="mt-0.5 text-xs text-[#5b6b64]">
+        <div className="truncate text-sm text-[color:var(--muted)]">{mode === "lite" ? h.lite : h.full}</div>
+        <div className="mt-0.5 text-xs text-[color:var(--muted)]">
           {done ? (
-            <span className="text-[#1f6f54]">
+            <span className="text-[color:var(--accent)]">
               Logged · momentum +{(shown.m - prev.m).toFixed(1)}
             </span>
           ) : (
@@ -932,13 +959,13 @@ function HabitRow({ id, color, stats, value, mode, onToggle, onMode, onOpen }) {
               Checking in adds <span className="font-mono tabular-nums">+{gain.toFixed(1)}</span>
             </span>
           )}
-          <span className="mx-1.5 text-[#c3cec9]">·</span>
+          <span className="mx-1.5 text-[color:var(--faint2)]">·</span>
           <button
             onClick={(e) => {
               e.stopPropagation();
               onMode(mode === "lite" ? "full" : "lite");
             }}
-            className="underline decoration-dotted underline-offset-2 hover:text-[#1f6f54]"
+            className="underline decoration-dotted underline-offset-2 hover:text-[color:var(--accent)]"
           >
             {mode === "lite" ? "switch to full" : "lighter version"}
           </button>
@@ -947,9 +974,9 @@ function HabitRow({ id, color, stats, value, mode, onToggle, onMode, onOpen }) {
 
       <button onClick={onOpen} className="flex items-center gap-2" aria-label={`Open ${h.name} details`}>
         <Ring value={shown.m} color={color}>
-          <span className="font-mono text-sm font-semibold tabular-nums text-[#15241f]">{Math.round(shown.m)}</span>
+          <span className="font-mono text-sm font-semibold tabular-nums text-[color:var(--ink)]">{Math.round(shown.m)}</span>
         </Ring>
-        <ChevronRight size={16} className="hidden text-[#9aa8a2] sm:block" />
+        <ChevronRight size={16} className="hidden text-[color:var(--faint)] sm:block" />
       </button>
     </div>
   );
@@ -960,37 +987,38 @@ function Today({ habits, stats, today, modes, setMode, toggleToday, suggestions,
   const overall = current.reduce((a, b) => a + b, 0) / current.length;
   const week = habits.reduce((a, id) => a + stats[id].week7, 0) / habits.length;
   const doneCount = habits.filter((id) => today[id] > 0).length;
+  const T = useTheme();
   const dateStr = startOfToday().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
 
   return (
     <div className="space-y-5">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-        <Ring value={overall} color={OVERALL} size={92} stroke={9}>
+        <Ring value={overall} color={T.overall} size={92} stroke={9}>
           <div className="text-center">
-            <div className="font-mono text-2xl font-semibold leading-none tabular-nums text-[#15241f]">{Math.round(overall)}</div>
-            <div className="mt-0.5 text-[10px] uppercase tracking-wider text-[#5b6b64]">momentum</div>
+            <div className="font-mono text-2xl font-semibold leading-none tabular-nums text-[color:var(--ink)]">{Math.round(overall)}</div>
+            <div className="mt-0.5 text-[10px] uppercase tracking-wider text-[color:var(--muted)]">momentum</div>
           </div>
         </Ring>
         <div className="min-w-0">
-          <div className="text-xs uppercase tracking-wider text-[#5b6b64]">{dateStr}</div>
-          <h1 className="font-display text-2xl font-semibold tracking-tight text-[#15241f]">
+          <div className="text-xs uppercase tracking-wider text-[color:var(--muted)]">{dateStr}</div>
+          <h1 className="font-display text-2xl font-semibold tracking-tight text-[color:var(--ink)]">
             {momentumLabel(overall)}. {doneCount === habits.length ? "Everything's logged for today." : doneCount > 0 ? `${doneCount} of ${habits.length} done so far.` : "A fresh day to add to it."}
           </h1>
           <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
             <Delta value={week} />
-            <span className="flex items-center gap-1 text-xs text-[#5b6b64]">
+            <span className="flex items-center gap-1 text-xs text-[color:var(--muted)]">
               <Moon size={12} /> Slept
-              <button id="sleep-down" aria-label="Less sleep" onClick={() => setSleep(Math.max(3, sleep[HISTORY_DAYS] - 0.5))} className="rounded p-0.5 hover:bg-white">
+              <button id="sleep-down" aria-label="Less sleep" onClick={() => setSleep(Math.max(3, sleep[HISTORY_DAYS] - 0.5))} className="rounded p-0.5 hover:bg-[color:var(--card)]">
                 <Minus size={12} />
               </button>
-              <span className="font-mono tabular-nums text-[#15241f]">{sleep[HISTORY_DAYS].toFixed(1)} h</span>
-              <button id="sleep-up" aria-label="More sleep" onClick={() => setSleep(Math.min(12, sleep[HISTORY_DAYS] + 0.5))} className="rounded p-0.5 hover:bg-white">
+              <span className="font-mono tabular-nums text-[color:var(--ink)]">{sleep[HISTORY_DAYS].toFixed(1)} h</span>
+              <button id="sleep-up" aria-label="More sleep" onClick={() => setSleep(Math.min(12, sleep[HISTORY_DAYS] + 0.5))} className="rounded p-0.5 hover:bg-[color:var(--card)]">
                 <Plus size={12} />
               </button>
               last night
             </span>
           </div>
-          <p className="mt-1 truncate text-sm italic text-[#5b6b64]">Goal: {goal}</p>
+          <p className="mt-1 truncate text-sm italic text-[color:var(--muted)]">Goal: {goal}</p>
         </div>
       </div>
 
@@ -1011,7 +1039,7 @@ function Today({ habits, stats, today, modes, setMode, toggleToday, suggestions,
           />
         ))}
       </div>
-      <p className="text-center text-xs text-[#5b6b64]">The lighter version counts for {Math.round(LITE_CREDIT * 100)}% of a full check-in and never counts as a miss.</p>
+      <p className="text-center text-xs text-[color:var(--muted)]">The lighter version counts for {Math.round(LITE_CREDIT * 100)}% of a full check-in and never counts as a miss.</p>
 
       <TodoList todos={todos} setTodos={setTodos} habits={habits} colors={colors} />
     </div>
@@ -1034,21 +1062,36 @@ const PREP = {
   deepwork: "Block tomorrow 9:00–10:30 for deep work",
 };
 
-const newTodo = (text, list = "today", habit = null, done = false) => ({
+// A to-do has a `date` (day key) or null for "Later". Undone to-dos from
+// earlier days roll forward into today's list.
+const newTodo = (text, date = todayKey(), habit = null, done = false) => ({
   id: `t${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`,
   text,
-  list,
+  date,
   habit,
   done,
+  doneOn: done ? date : null,
 });
+// older saved to-dos used list: "today" | "later"
+const normTodo = (t) => ("date" in t ? t : { ...t, date: t.list === "later" ? null : todayKey(), doneOn: t.done ? todayKey() : null });
+const addDays = (key, n) => {
+  const d = new Date(key + "T00:00:00");
+  d.setDate(d.getDate() + n);
+  return dayKey(d);
+};
+const shortDay = (key) => new Date(key + "T00:00:00").toLocaleDateString("en-GB", { weekday: "short" });
 
 function seedTodos(habits) {
+  const tk = todayKey();
   return [
-    newTodo(PREP[habits[0]], "today", habits[0]),
-    newTodo("Buy groceries for the week", "today", null, true),
-    newTodo(PREP[habits[habits.length - 1]], "today", habits[habits.length - 1]),
-    newTodo("Reply to Ana about Saturday", "later"),
-    newTodo(PREP[habits[1]], "later", habits[1]),
+    newTodo(PREP[habits[0]], tk, habits[0]),
+    newTodo("Buy groceries for the week", tk, null, true),
+    newTodo(PREP[habits[habits.length - 1]], tk, habits[habits.length - 1]),
+    newTodo("Reply to Ana about Saturday", null),
+    newTodo(PREP[habits[1]], null, habits[1]),
+    newTodo(PREP[habits[2]], addDays(tk, 1), habits[2]),
+    newTodo("Call the dentist", addDays(tk, 2)),
+    newTodo("Plan next week", addDays(tk, 4)),
   ];
 }
 
@@ -1061,16 +1104,17 @@ function TodoItem({ t, habits, colors, onToggle, onMove, onDelete }) {
         onClick={onToggle}
         aria-pressed={t.done}
         aria-label={t.done ? `Mark “${t.text}” not done` : `Mark “${t.text}” done`}
-        className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md border-2 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1f6f54] ${
-          t.done ? "border-[#1f6f54] bg-[#1f6f54] text-white" : "border-[#b7c5bf] bg-white hover:border-[#1f6f54]"
+        className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md border-2 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)] ${
+          t.done ? "border-[color:var(--accent)] bg-[color:var(--accent-bg)] text-white" : "border-[color:var(--control)] bg-[color:var(--card)] hover:border-[color:var(--accent)]"
         }`}
       >
         {t.done && <Check size={12} strokeWidth={3} />}
       </button>
       <div className="min-w-0 flex-1">
-        <div className={`text-[15px] leading-snug ${t.done ? "text-[#9aa8a2] line-through" : "text-[#15241f]"}`}>{t.text}</div>
+        <div className={`text-[15px] leading-snug ${t.done ? "text-[color:var(--faint)] line-through" : "text-[color:var(--ink)]"}`}>{t.text}</div>
+        {!t.done && t.date && t.date < todayKey() && <span className="mr-2 text-xs text-[color:var(--muted)]">from {shortDay(t.date)}</span>}
         {hi >= 0 && (
-          <span className="mt-0.5 inline-flex items-center gap-1 text-xs text-[#5b6b64]">
+          <span className="mt-0.5 inline-flex items-center gap-1 text-xs text-[color:var(--muted)]">
             <span className="inline-block h-1.5 w-1.5 rounded-full" style={{ background: colors[hi] }} />
             helps {byId[t.habit].name.toLowerCase()}
           </span>
@@ -1079,10 +1123,10 @@ function TodoItem({ t, habits, colors, onToggle, onMove, onDelete }) {
       {!t.done && (
         <button
           onClick={onMove}
-          className="flex shrink-0 items-center gap-1 rounded-md px-1.5 py-1 text-xs text-[#5b6b64] hover:bg-[#f1f4f2] hover:text-[#15241f]"
-          aria-label={t.list === "today" ? "Move to later" : "Move to today"}
+          className="flex shrink-0 items-center gap-1 rounded-md px-1.5 py-1 text-xs text-[color:var(--muted)] hover:bg-[color:var(--chip)] hover:text-[color:var(--ink)]"
+          aria-label={t.date ? "Move to later" : "Move to today"}
         >
-          {t.list === "today" ? (
+          {t.date ? (
             <>
               Later <ArrowRight size={12} />
             </>
@@ -1093,7 +1137,7 @@ function TodoItem({ t, habits, colors, onToggle, onMove, onDelete }) {
           )}
         </button>
       )}
-      <button onClick={onDelete} aria-label={`Delete “${t.text}”`} className="shrink-0 rounded-md p-1 text-[#9aa8a2] hover:bg-[#f1f4f2] hover:text-[#15241f]">
+      <button onClick={onDelete} aria-label={`Delete “${t.text}”`} className="shrink-0 rounded-md p-1 text-[color:var(--faint)] hover:bg-[color:var(--chip)] hover:text-[color:var(--ink)]">
         <X size={14} />
       </button>
     </li>
@@ -1109,24 +1153,26 @@ function TodoList({ todos, setTodos, habits, colors }) {
   const add = (e) => {
     e.preventDefault();
     if (!text.trim()) return;
-    setTodos((ts) => [...ts, newTodo(text.trim(), list, habit || null)]);
+    setTodos((ts) => [...ts, newTodo(text.trim(), list === "today" ? todayKey() : null, habit || null)]);
     setText("");
   };
   const update = (id, patch) => setTodos((ts) => ts.map((t) => (t.id === id ? { ...t, ...patch } : t)));
   const remove = (id) => setTodos((ts) => ts.filter((t) => t.id !== id));
 
-  const open = (l) => todos.filter((t) => !t.done && t.list === l);
-  const done = todos.filter((t) => t.done);
-  const todayAll = todos.filter((t) => t.list === "today");
-  const todayDone = todayAll.filter((t) => t.done).length;
+  const tk = todayKey();
+  const open = (l) => todos.filter((t) => !t.done && (l === "today" ? t.date && t.date <= tk : !t.date));
+  const done = todos.filter((t) => t.done && t.doneOn === tk);
+  const todayDone = done.length;
+  const todayAll = [...open("today"), ...done];
+  const upcoming = todos.filter((t) => !t.done && t.date && t.date > tk).length;
   const item = (t) => (
     <TodoItem
       key={t.id}
       t={t}
       habits={habits}
       colors={colors}
-      onToggle={() => update(t.id, { done: !t.done })}
-      onMove={() => update(t.id, { list: t.list === "today" ? "later" : "today" })}
+      onToggle={() => update(t.id, { done: !t.done, doneOn: t.done ? null : tk })}
+      onMove={() => update(t.id, { date: t.date ? null : tk })}
       onDelete={() => remove(t.id)}
     />
   );
@@ -1134,14 +1180,14 @@ function TodoList({ todos, setTodos, habits, colors }) {
   return (
     <Card className="p-4">
       <div className="flex items-baseline justify-between gap-2">
-        <h2 className="flex items-center gap-2 font-display text-lg font-semibold text-[#15241f]">
-          <ListTodo size={18} className="text-[#1f6f54]" /> To-dos
+        <h2 className="flex items-center gap-2 font-display text-lg font-semibold text-[color:var(--ink)]">
+          <ListTodo size={18} className="text-[color:var(--accent)]" /> To-dos
         </h2>
-        <span className="font-mono text-xs tabular-nums text-[#5b6b64]">
+        <span className="font-mono text-xs tabular-nums text-[color:var(--muted)]">
           {todayDone}/{todayAll.length} today
         </span>
       </div>
-      <p className="mt-0.5 text-sm text-[#5b6b64]">One-off tasks. Anything you don't get to can move to Later without counting against you.</p>
+      <p className="mt-0.5 text-sm text-[color:var(--muted)]">One-off tasks. Anything you don't get to can move to Later without counting against you.</p>
 
       <form onSubmit={add} className="mt-3 flex flex-col gap-2 sm:flex-row">
         <label htmlFor="todo-text" className="sr-only">
@@ -1153,7 +1199,7 @@ function TodoList({ todos, setTodos, habits, colors }) {
           onChange={(e) => setText(e.target.value)}
           maxLength={120}
           placeholder="Add a to-do…"
-          className="min-w-0 flex-1 rounded-lg border border-[#dde5e0] bg-white px-3 py-2 text-[15px] text-[#15241f] placeholder:text-[#9aa8a2] focus:border-[#1f6f54] focus:outline-none"
+          className="min-w-0 flex-1 rounded-lg border border-[color:var(--line)] bg-[color:var(--card)] px-3 py-2 text-[15px] text-[color:var(--ink)] placeholder:text-[color:var(--faint)] focus:border-[color:var(--accent)] focus:outline-none"
         />
         <div className="flex gap-2">
           <label htmlFor="todo-list" className="sr-only">
@@ -1163,7 +1209,7 @@ function TodoList({ todos, setTodos, habits, colors }) {
             id="todo-list"
             value={list}
             onChange={(e) => setList(e.target.value)}
-            className="rounded-lg border border-[#dde5e0] bg-white px-2 py-2 text-sm text-[#3c4b45] focus:border-[#1f6f54] focus:outline-none"
+            className="rounded-lg border border-[color:var(--line)] bg-[color:var(--card)] px-2 py-2 text-sm text-[color:var(--body)] focus:border-[color:var(--accent)] focus:outline-none"
           >
             <option value="today">Today</option>
             <option value="later">Later</option>
@@ -1175,7 +1221,7 @@ function TodoList({ todos, setTodos, habits, colors }) {
             id="todo-habit"
             value={habit}
             onChange={(e) => setHabit(e.target.value)}
-            className="min-w-0 flex-1 rounded-lg border border-[#dde5e0] bg-white px-2 py-2 text-sm text-[#3c4b45] focus:border-[#1f6f54] focus:outline-none sm:flex-none"
+            className="min-w-0 flex-1 rounded-lg border border-[color:var(--line)] bg-[color:var(--card)] px-2 py-2 text-sm text-[color:var(--body)] focus:border-[color:var(--accent)] focus:outline-none sm:flex-none"
           >
             <option value="">No habit</option>
             {habits.map((id) => (
@@ -1188,7 +1234,7 @@ function TodoList({ todos, setTodos, habits, colors }) {
             id="todo-add"
             type="submit"
             disabled={!text.trim()}
-            className="flex items-center gap-1 rounded-lg bg-[#1f6f54] px-3 py-2 text-sm font-semibold text-white hover:bg-[#185a44] disabled:bg-[#b9cac2]"
+            className="flex items-center gap-1 rounded-lg bg-[color:var(--accent-bg)] px-3 py-2 text-sm font-semibold text-white hover:bg-[color:var(--accent-bg-hover)] disabled:bg-[color:var(--disabled)]"
           >
             <Plus size={16} /> Add
           </button>
@@ -1196,27 +1242,32 @@ function TodoList({ todos, setTodos, habits, colors }) {
       </form>
 
       <div className="mt-3">
-        <div className="text-xs font-semibold uppercase tracking-wider text-[#5b6b64]">Today</div>
+        <div className="text-xs font-semibold uppercase tracking-wider text-[color:var(--muted)]">Today</div>
         {open("today").length ? (
-          <ul className="divide-y divide-[#eef2ef]">{open("today").map(item)}</ul>
+          <ul className="divide-y divide-[color:var(--line-soft)]">{open("today").map(item)}</ul>
         ) : (
-          <p className="py-2 text-sm text-[#5b6b64]">Nothing left for today.</p>
+          <p className="py-2 text-sm text-[color:var(--muted)]">Nothing left for today.</p>
+        )}
+        {upcoming > 0 && (
+          <p className="pt-1 text-xs text-[color:var(--muted)]">
+            {upcoming} more scheduled on later days. See them in the Week tab.
+          </p>
         )}
       </div>
 
       {open("later").length > 0 && (
         <div className="mt-3">
-          <div className="text-xs font-semibold uppercase tracking-wider text-[#5b6b64]">Later</div>
-          <ul className="divide-y divide-[#eef2ef]">{open("later").map(item)}</ul>
+          <div className="text-xs font-semibold uppercase tracking-wider text-[color:var(--muted)]">Later</div>
+          <ul className="divide-y divide-[color:var(--line-soft)]">{open("later").map(item)}</ul>
         </div>
       )}
 
       {done.length > 0 && (
-        <div className="mt-3 border-t border-[#eef2ef] pt-2">
-          <button id="todo-show-done" onClick={() => setShowDone((x) => !x)} className="flex items-center gap-1 text-xs text-[#5b6b64] hover:text-[#15241f]">
+        <div className="mt-3 border-t border-[color:var(--line-soft)] pt-2">
+          <button id="todo-show-done" onClick={() => setShowDone((x) => !x)} className="flex items-center gap-1 text-xs text-[color:var(--muted)] hover:text-[color:var(--ink)]">
             <ChevronRight size={12} className={`transition ${showDone ? "rotate-90" : ""}`} /> Done ({done.length})
           </button>
-          {showDone && <ul className="divide-y divide-[#eef2ef]">{done.map(item)}</ul>}
+          {showDone && <ul className="divide-y divide-[color:var(--line-soft)]">{done.map(item)}</ul>}
         </div>
       )}
     </Card>
@@ -1224,12 +1275,286 @@ function TodoList({ todos, setTodos, habits, colors }) {
 }
 
 /* ------------------------------------------------------------------ */
+/*  Week planner (calendar view of to-dos)                             */
+/* ------------------------------------------------------------------ */
+const mondayOf = (key) => {
+  const d = new Date(key + "T00:00:00");
+  d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+  return dayKey(d);
+};
+
+function WeekItem({ t, habits, colors, weekKeys, onUpdate, onDelete, onDragStart }) {
+  const hi = t.habit ? habits.indexOf(t.habit) : -1;
+  const tk = todayKey();
+  return (
+    <li
+      draggable
+      onDragStart={(e) => {
+        e.dataTransfer.setData("text/plain", t.id);
+        e.dataTransfer.effectAllowed = "move";
+        onDragStart(t.id);
+      }}
+      className="group cursor-grab rounded-lg border border-[color:var(--line)] bg-[color:var(--card)] p-2 active:cursor-grabbing"
+    >
+      <div className="flex items-start gap-2">
+        <button
+          onClick={() => onUpdate({ done: !t.done, doneOn: t.done ? null : tk })}
+          aria-pressed={t.done}
+          aria-label={t.done ? `Mark “${t.text}” not done` : `Mark “${t.text}” done`}
+          className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border-2 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--accent)] ${
+            t.done ? "border-[color:var(--accent)] bg-[color:var(--accent-bg)] text-white" : "border-[color:var(--control)] hover:border-[color:var(--accent)]"
+          }`}
+        >
+          {t.done && <Check size={10} strokeWidth={3} />}
+        </button>
+        <span className={`min-w-0 flex-1 break-words text-sm leading-snug ${t.done ? "text-[color:var(--faint)] line-through" : "text-[color:var(--ink)]"}`}>
+          {hi >= 0 && <span className="mr-1 inline-block h-1.5 w-1.5 -translate-y-0.5 rounded-full" style={{ background: colors[hi] }} />}
+          {t.text}
+        </span>
+      </div>
+      <div className="mt-1.5 flex items-center justify-between gap-1 md:opacity-0 md:transition md:focus-within:opacity-100 md:group-hover:opacity-100">
+        <label className="sr-only" htmlFor={`move-${t.id}`}>
+          Move “{t.text}”
+        </label>
+        <select
+          id={`move-${t.id}`}
+          value={t.date || ""}
+          onChange={(e) => onUpdate({ date: e.target.value || null })}
+          className="min-w-0 max-w-full flex-1 rounded border border-[color:var(--line)] bg-[color:var(--card)] px-1 py-0.5 text-[11px] text-[color:var(--muted)] focus:border-[color:var(--accent)] focus:outline-none"
+        >
+          {t.date && !weekKeys.includes(t.date) && <option value={t.date}>{fmtDay(new Date(t.date + "T00:00:00"))}</option>}
+          {weekKeys.map((k) => (
+            <option key={k} value={k}>
+              {shortDay(k)} {new Date(k + "T00:00:00").getDate()}
+            </option>
+          ))}
+          <option value="">Later</option>
+        </select>
+        <button onClick={onDelete} aria-label={`Delete “${t.text}”`} className="shrink-0 rounded p-0.5 text-[color:var(--faint)] hover:bg-[color:var(--chip)] hover:text-[color:var(--ink)]">
+          <X size={12} />
+        </button>
+      </div>
+    </li>
+  );
+}
+
+function AddInline({ onAdd, label }) {
+  const [open, setOpen] = useState(false);
+  const [text, setText] = useState("");
+  if (!open)
+    return (
+      <button onClick={() => setOpen(true)} className="flex w-full items-center gap-1 rounded-lg px-2 py-1.5 text-xs text-[color:var(--muted)] hover:bg-[color:var(--chip)] hover:text-[color:var(--ink)]">
+        <Plus size={12} /> {label}
+      </button>
+    );
+  return (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        if (text.trim()) onAdd(text.trim());
+        setText("");
+        setOpen(false);
+      }}
+    >
+      <input
+        autoFocus
+        value={text}
+        maxLength={120}
+        onChange={(e) => setText(e.target.value)}
+        onBlur={() => {
+          if (text.trim()) onAdd(text.trim());
+          setText("");
+          setOpen(false);
+        }}
+        onKeyDown={(e) => e.key === "Escape" && (setText(""), setOpen(false))}
+        placeholder="New to-do"
+        aria-label={label}
+        className="w-full rounded-lg border border-[color:var(--accent)] bg-[color:var(--card)] px-2 py-1.5 text-sm text-[color:var(--ink)] placeholder:text-[color:var(--faint)] focus:outline-none"
+      />
+    </form>
+  );
+}
+
+function WeekPlanner({ todos, setTodos, habits, colors, log }) {
+  const tk = todayKey();
+  const [weekStart, setWeekStart] = useState(() => mondayOf(tk));
+  const [dragId, setDragId] = useState(null);
+  const [over, setOver] = useState(null);
+  const weekKeys = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
+  const weekEnd = weekKeys[6];
+
+  const updateTodo = (id, patch) => setTodos((ts) => ts.map((t) => (t.id === id ? { ...t, ...patch } : t)));
+  const removeTodo = (id) => setTodos((ts) => ts.filter((t) => t.id !== id));
+  const addTodo = (text, date) => setTodos((ts) => [...ts, newTodo(text, date)]);
+  const drop = (date) => (e) => {
+    e.preventDefault();
+    const id = e.dataTransfer.getData("text/plain") || dragId;
+    if (id) updateTodo(id, { date });
+    setDragId(null);
+    setOver(null);
+  };
+  const dropProps = (date, zone) => ({
+    onDragOver: (e) => {
+      e.preventDefault();
+      if (over !== zone) setOver(zone);
+    },
+    onDragLeave: (e) => {
+      if (!e.currentTarget.contains(e.relatedTarget)) setOver(null);
+    },
+    onDrop: drop(date),
+  });
+
+  const inWeek = todos.filter((t) => t.date && t.date >= weekStart && t.date <= weekEnd);
+  const doneCount = inWeek.filter((t) => t.done).length;
+  const later = todos.filter((t) => !t.date && !t.done);
+  const first = new Date(weekStart + "T00:00:00");
+  const last = new Date(weekEnd + "T00:00:00");
+  const range =
+    first.getMonth() === last.getMonth()
+      ? `${first.getDate()}–${last.getDate()} ${last.toLocaleDateString("en-GB", { month: "long" })}`
+      : `${fmtDay(first)} – ${fmtDay(last)}`;
+  const item = (t) => (
+    <WeekItem
+      key={t.id}
+      t={t}
+      habits={habits}
+      colors={colors}
+      weekKeys={weekKeys}
+      onUpdate={(patch) => updateTodo(t.id, patch)}
+      onDelete={() => removeTodo(t.id)}
+      onDragStart={setDragId}
+    />
+  );
+
+  return (
+    <div className="space-y-5">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="font-display text-2xl font-semibold tracking-tight text-[color:var(--ink)]">Week of {range}</h1>
+          <p className="text-sm text-[color:var(--muted)]">
+            {inWeek.length ? `${doneCount} of ${inWeek.length} to-dos done` : "Nothing planned yet"} · drag a to-do to another day, or use its menu
+          </p>
+        </div>
+        <div className="flex items-center gap-1">
+          <button id="week-prev" onClick={() => setWeekStart(addDays(weekStart, -7))} aria-label="Previous week" className="rounded-lg border border-[color:var(--line)] bg-[color:var(--card)] p-2 text-[color:var(--muted)] hover:text-[color:var(--ink)]">
+            <ChevronLeft size={16} />
+          </button>
+          <button
+            id="week-this"
+            onClick={() => setWeekStart(mondayOf(tk))}
+            disabled={weekStart === mondayOf(tk)}
+            className="rounded-lg border border-[color:var(--line)] bg-[color:var(--card)] px-3 py-1.5 text-sm text-[color:var(--body)] hover:text-[color:var(--ink)] disabled:opacity-50"
+          >
+            This week
+          </button>
+          <button id="week-next" onClick={() => setWeekStart(addDays(weekStart, 7))} aria-label="Next week" className="rounded-lg border border-[color:var(--line)] bg-[color:var(--card)] p-2 text-[color:var(--muted)] hover:text-[color:var(--ink)]">
+            <ChevronRight size={16} />
+          </button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-2 md:grid-cols-7">
+        {weekKeys.map((k) => {
+          const d = new Date(k + "T00:00:00");
+          const isToday = k === tk;
+          const past = k < tk;
+          const dayTodos = todos
+            .filter((t) => t.date === k)
+            .sort((a, b) => Number(a.done) - Number(b.done));
+          return (
+            <section
+              key={k}
+              {...dropProps(k, k)}
+              aria-label={d.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" })}
+              className={`flex flex-col rounded-xl border p-2 transition md:min-h-[9rem] ${
+                over === k
+                  ? "border-[color:var(--accent)] bg-[color:var(--accent-soft)]"
+                  : isToday
+                  ? "border-[color:var(--accent)] bg-[color:var(--card)]"
+                  : "border-[color:var(--line)] bg-[color:var(--card)]"
+              } ${past && over !== k ? "opacity-80" : ""}`}
+            >
+              <header className="mb-2 flex items-center justify-between gap-1 border-b border-[color:var(--line-soft)] pb-1.5 md:flex-col md:items-start">
+                <div className="flex items-baseline gap-1.5">
+                  <span className={`text-[11px] font-semibold uppercase tracking-wider ${isToday ? "text-[color:var(--accent)]" : "text-[color:var(--muted)]"}`}>
+                    {d.toLocaleDateString("en-GB", { weekday: "short" })}
+                  </span>
+                  <span
+                    className={`font-mono text-lg font-semibold tabular-nums ${
+                      isToday ? "rounded-md bg-[color:var(--accent-bg)] px-1.5 text-white" : "text-[color:var(--ink)]"
+                    }`}
+                  >
+                    {d.getDate()}
+                  </span>
+                </div>
+                {/* habit check-ins for that day */}
+                <div className="flex gap-1" aria-label="Habit check-ins">
+                  {habits.map((id, i) => {
+                    const v = log[k]?.[id];
+                    const future = k > tk;
+                    return (
+                      <span
+                        key={id}
+                        title={`${byId[id].name}: ${future ? "upcoming" : v === 1 ? "done" : v > 0 ? "lighter version" : k === tk ? "not yet" : "rest day"}`}
+                        className="inline-block h-2 w-2 rounded-full"
+                        style={
+                          v > 0
+                            ? { background: colors[i], opacity: v === 1 ? 1 : 0.5 }
+                            : { boxShadow: `inset 0 0 0 1.5px ${future ? "var(--line)" : "var(--control)"}` }
+                        }
+                      />
+                    );
+                  })}
+                </div>
+              </header>
+              <ul className="flex flex-col gap-1.5">{dayTodos.map(item)}</ul>
+              <div className="mt-auto pt-1.5">
+                <AddInline label={`Add to ${d.toLocaleDateString("en-GB", { weekday: "short" })}`} onAdd={(text) => addTodo(text, k)} />
+              </div>
+            </section>
+          );
+        })}
+      </div>
+
+      <section
+        {...dropProps(null, "later")}
+        aria-label="Later"
+        className={`rounded-xl border border-dashed p-3 transition ${over === "later" ? "border-[color:var(--accent)] bg-[color:var(--accent-soft)]" : "border-[color:var(--control)]"}`}
+      >
+        <div className="mb-2 flex items-baseline justify-between">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-[color:var(--muted)]">Later · no day yet</h2>
+          <span className="text-xs text-[color:var(--muted)]">{later.length}</span>
+        </div>
+        {later.length ? (
+          <ul className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 md:grid-cols-4">{later.map(item)}</ul>
+        ) : (
+          <p className="text-sm text-[color:var(--muted)]">Drop a to-do here to schedule it later.</p>
+        )}
+        <div className="mt-1.5 max-w-xs">
+          <AddInline label="Add to Later" onAdd={(text) => addTodo(text, null)} />
+        </div>
+      </section>
+
+      <p className="flex items-center gap-2 text-xs text-[color:var(--muted)]">
+        <span className="flex gap-1">
+          {habits.map((id, i) => (
+            <span key={id} className="inline-block h-2 w-2 rounded-full" style={{ background: colors[i] }} />
+          ))}
+        </span>
+        Dots under each date show that day's habit check-ins. Faded means the lighter version, an outline means none.
+      </p>
+    </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
 /*  Progress                                                           */
 /* ------------------------------------------------------------------ */
 function Progress({ habits, values, priors, stats, colors, goal }) {
+  const T = useTheme();
   const [focus, setFocus] = useState("all");
   const ids = focus === "all" ? habits : [focus];
-  const color = focus === "all" ? OVERALL : colors[habits.indexOf(focus)];
+  const color = focus === "all" ? T.overall : colors[habits.indexOf(focus)];
 
   const { data, now, pace, stretch, p, streakData, resets, lowest } = useMemo(() => {
     const n = values[ids[0]].length;
@@ -1274,14 +1599,14 @@ function Progress({ habits, values, priors, stats, colors, goal }) {
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="font-display text-2xl font-semibold tracking-tight text-[#15241f]">Your trajectory</h1>
-        <p className="text-sm text-[#5b6b64]">Last 30 days, plus where the current pace leads over the next 60.</p>
+        <h1 className="font-display text-2xl font-semibold tracking-tight text-[color:var(--ink)]">Your trajectory</h1>
+        <p className="text-sm text-[color:var(--muted)]">Last 30 days, plus where the current pace leads over the next 60.</p>
       </div>
 
       <div className="flex flex-wrap gap-1.5" role="tablist">
         {["all", ...habits].map((id, i) => {
           const on = focus === id;
-          const c = id === "all" ? OVERALL : colors[i - 1];
+          const c = id === "all" ? T.overall : colors[i - 1];
           return (
             <button
               key={id}
@@ -1290,7 +1615,7 @@ function Progress({ habits, values, priors, stats, colors, goal }) {
               aria-selected={on}
               onClick={() => setFocus(id)}
               className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm transition ${
-                on ? "border-[#15241f] bg-[#15241f] text-white" : "border-[#dde5e0] bg-white text-[#3c4b45] hover:border-[#9fb8ad]"
+                on ? "border-[color:var(--ink)] bg-[color:var(--ink)] text-[color:var(--on-ink)]" : "border-[color:var(--line)] bg-[color:var(--card)] text-[color:var(--body)] hover:border-[color:var(--control-hover)]"
               }`}
             >
               <span className="inline-block h-2 w-2 rounded-full" style={{ background: c }} />
@@ -1302,53 +1627,53 @@ function Progress({ habits, values, priors, stats, colors, goal }) {
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <Card className="p-4">
-          <div className="text-xs uppercase tracking-wider text-[#5b6b64]">Now</div>
-          <div className="font-mono text-3xl font-semibold tabular-nums text-[#15241f]">{Math.round(now)}</div>
-          <div className="text-xs text-[#5b6b64]">{momentumLabel(now)}</div>
+          <div className="text-xs uppercase tracking-wider text-[color:var(--muted)]">Now</div>
+          <div className="font-mono text-3xl font-semibold tabular-nums text-[color:var(--ink)]">{Math.round(now)}</div>
+          <div className="text-xs text-[color:var(--muted)]">{momentumLabel(now)}</div>
         </Card>
         <Card className="p-4">
-          <div className="text-xs uppercase tracking-wider text-[#5b6b64]">In 60 days at this pace</div>
-          <div className="font-mono text-3xl font-semibold tabular-nums text-[#15241f]">{Math.round(pace)}</div>
-          <div className="text-xs text-[#5b6b64]">{perWeek} check-ins/week · {momentumLabel(pace).toLowerCase()}</div>
+          <div className="text-xs uppercase tracking-wider text-[color:var(--muted)]">In 60 days at this pace</div>
+          <div className="font-mono text-3xl font-semibold tabular-nums text-[color:var(--ink)]">{Math.round(pace)}</div>
+          <div className="text-xs text-[color:var(--muted)]">{perWeek} check-ins/week · {momentumLabel(pace).toLowerCase()}</div>
         </Card>
         <Card className="p-4">
-          <div className="text-xs uppercase tracking-wider text-[#5b6b64]">With one more per week</div>
-          <div className="font-mono text-3xl font-semibold tabular-nums text-[#1f6f54]">{Math.round(stretch)}</div>
-          <div className="text-xs text-[#5b6b64]">+{Math.round(stretch - pace)} over the current pace</div>
+          <div className="text-xs uppercase tracking-wider text-[color:var(--muted)]">With one more per week</div>
+          <div className="font-mono text-3xl font-semibold tabular-nums text-[color:var(--accent)]">{Math.round(stretch)}</div>
+          <div className="text-xs text-[color:var(--muted)]">+{Math.round(stretch - pace)} over the current pace</div>
         </Card>
       </div>
 
       <Card className="p-4">
         <div className="mb-1 flex items-baseline justify-between gap-2">
-          <h2 className="text-sm font-semibold text-[#15241f]">Momentum, {focus === "all" ? "average of your habits" : byId[focus].name}</h2>
-          <span className="text-xs text-[#5b6b64]">0–100</span>
+          <h2 className="text-sm font-semibold text-[color:var(--ink)]">Momentum, {focus === "all" ? "average of your habits" : byId[focus].name}</h2>
+          <span className="text-xs text-[color:var(--muted)]">0–100</span>
         </div>
         <div className="h-72 w-full">
           <ResponsiveContainer>
             <LineChart data={data} margin={{ top: 12, right: 12, bottom: 4, left: -18 }}>
-              <CartesianGrid stroke="#eef2ef" vertical={false} />
+              <CartesianGrid stroke={T["line-soft"]} vertical={false} />
               <XAxis
                 dataKey="x"
                 type="number"
                 domain={[-(HISTORY_DAYS), PROJECTION_DAYS]}
                 ticks={[-30, -15, 0, 15, 30, 45, 60]}
                 tickFormatter={dayLabel}
-                tick={{ fontSize: 11, fill: "#5b6b64" }}
-                axisLine={{ stroke: "#dde5e0" }}
+                tick={{ fontSize: 11, fill: T.muted }}
+                axisLine={{ stroke: T.line }}
                 tickLine={false}
               />
-              <YAxis domain={[0, 100]} ticks={[0, 25, 50, 75, 100]} tick={{ fontSize: 11, fill: "#5b6b64" }} axisLine={false} tickLine={false} />
-              <Tooltip content={<ChartTooltip fmt={dayLabel} />} cursor={{ stroke: "#9aa8a2", strokeDasharray: "3 3" }} />
-              <ReferenceLine x={0} stroke="#9aa8a2" strokeDasharray="2 4" label={{ value: "Today", position: "insideTopLeft", fontSize: 11, fill: "#5b6b64" }} />
-              <Legend iconType="plainline" wrapperStyle={{ fontSize: 12, color: "#3c4b45" }} />
+              <YAxis domain={[0, 100]} ticks={[0, 25, 50, 75, 100]} tick={{ fontSize: 11, fill: T.muted }} axisLine={false} tickLine={false} />
+              <Tooltip content={<ChartTooltip fmt={dayLabel} />} cursor={{ stroke: T.faint, strokeDasharray: "3 3" }} />
+              <ReferenceLine x={0} stroke={T.faint} strokeDasharray="2 4" label={{ value: "Today", position: "insideTopLeft", fontSize: 11, fill: T.muted }} />
+              <Legend iconType="plainline" wrapperStyle={{ fontSize: 12, color: T.body }} />
               <Line name="Actual" dataKey="actual" stroke={color} strokeWidth={2} dot={false} activeDot={{ r: 4 }} connectNulls={false} isAnimationActive />
               <Line name="At this pace" dataKey="pace" stroke={color} strokeWidth={2} strokeDasharray="6 5" dot={false} activeDot={{ r: 4 }} />
-              <Line name="+1 check-in/week" dataKey="stretch" stroke="#1baf7a" strokeWidth={2} strokeDasharray="2 4" dot={false} activeDot={{ r: 4 }} />
+              <Line name="+1 check-in/week" dataKey="stretch" stroke={T.stretch} strokeWidth={2} strokeDasharray="2 4" dot={false} activeDot={{ r: 4 }} />
             </LineChart>
           </ResponsiveContainer>
         </div>
-        <p className="mt-3 text-sm leading-relaxed text-[#3c4b45]">
-          <TrendingUp size={14} className="mr-1 inline text-[#1f6f54]" />
+        <p className="mt-3 text-sm leading-relaxed text-[color:var(--body)]">
+          <TrendingUp size={14} className="mr-1 inline text-[color:var(--accent)]" />
           At this pace, in 60 days your {focusName} will be around <strong className="font-semibold">{Math.round(pace)}</strong>, which is{" "}
           {momentumLabel(pace).toLowerCase()} territory. Adding just one extra check-in a week (the lighter version counts) lifts that to{" "}
           <strong className="font-semibold">{Math.round(stretch)}</strong>. {goal ? `That's steady ground under “${goal.trim()}”.` : ""}
@@ -1356,34 +1681,34 @@ function Progress({ habits, values, priors, stats, colors, goal }) {
       </Card>
 
       <Card className="p-4">
-        <h2 className="text-sm font-semibold text-[#15241f]">Why momentum instead of a streak</h2>
-        <p className="mt-1 text-sm text-[#5b6b64]">
+        <h2 className="text-sm font-semibold text-[color:var(--ink)]">Why momentum instead of a streak</h2>
+        <p className="mt-1 text-sm text-[color:var(--muted)]">
           Over the same 30 days, a classic streak counter would have reset to zero {timesWord(resets)}. Your momentum's lowest point was{" "}
-          <span className="font-mono tabular-nums text-[#15241f]">{Math.round(lowest)}</span>.
+          <span className="font-mono tabular-nums text-[color:var(--ink)]">{Math.round(lowest)}</span>.
         </p>
         <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
-            <div className="mb-1 text-xs text-[#5b6b64]">Classic streak (days{focus === "all" ? ", averaged" : ""})</div>
+            <div className="mb-1 text-xs text-[color:var(--muted)]">Classic streak (days{focus === "all" ? ", averaged" : ""})</div>
             <div className="h-32">
               <ResponsiveContainer>
                 <AreaChart data={streakData} margin={{ top: 4, right: 4, bottom: 0, left: -28 }}>
-                  <CartesianGrid stroke="#eef2ef" vertical={false} />
-                  <XAxis dataKey="x" tick={false} axisLine={{ stroke: "#dde5e0" }} />
-                  <YAxis tick={{ fontSize: 10, fill: "#5b6b64" }} axisLine={false} tickLine={false} allowDecimals={false} />
+                  <CartesianGrid stroke={T["line-soft"]} vertical={false} />
+                  <XAxis dataKey="x" tick={false} axisLine={{ stroke: T.line }} />
+                  <YAxis tick={{ fontSize: 10, fill: T.muted }} axisLine={false} tickLine={false} allowDecimals={false} />
                   <Tooltip content={<ChartTooltip fmt={dayLabel} />} />
-                  <Area name="Streak" type="stepAfter" dataKey="streak" stroke="#8c9a94" fill="#8c9a94" fillOpacity={0.15} strokeWidth={2} />
+                  <Area name="Streak" type="stepAfter" dataKey="streak" stroke={T.streak} fill={T.streak} fillOpacity={0.15} strokeWidth={2} />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
           </div>
           <div>
-            <div className="mb-1 text-xs text-[#5b6b64]">Momentum (0–100)</div>
+            <div className="mb-1 text-xs text-[color:var(--muted)]">Momentum (0–100)</div>
             <div className="h-32">
               <ResponsiveContainer>
                 <AreaChart data={streakData} margin={{ top: 4, right: 4, bottom: 0, left: -28 }}>
-                  <CartesianGrid stroke="#eef2ef" vertical={false} />
-                  <XAxis dataKey="x" tick={false} axisLine={{ stroke: "#dde5e0" }} />
-                  <YAxis domain={[0, 100]} ticks={[0, 50, 100]} tick={{ fontSize: 10, fill: "#5b6b64" }} axisLine={false} tickLine={false} />
+                  <CartesianGrid stroke={T["line-soft"]} vertical={false} />
+                  <XAxis dataKey="x" tick={false} axisLine={{ stroke: T.line }} />
+                  <YAxis domain={[0, 100]} ticks={[0, 50, 100]} tick={{ fontSize: 10, fill: T.muted }} axisLine={false} tickLine={false} />
                   <Tooltip content={<ChartTooltip fmt={dayLabel} />} />
                   <Area name="Momentum" type="monotone" dataKey="momentum" stroke={color} fill={color} fillOpacity={0.12} strokeWidth={2} />
                 </AreaChart>
@@ -1394,10 +1719,10 @@ function Progress({ habits, values, priors, stats, colors, goal }) {
       </Card>
 
       <Card className="p-4">
-        <h2 className="flex items-center gap-2 text-sm font-semibold text-[#15241f]">
+        <h2 className="flex items-center gap-2 text-sm font-semibold text-[color:var(--ink)]">
           <Settings2 size={14} /> How the score moves
         </h2>
-        <ul className="mt-2 grid grid-cols-1 gap-2 text-sm text-[#3c4b45] sm:grid-cols-2">
+        <ul className="mt-2 grid grid-cols-1 gap-2 text-sm text-[color:var(--body)] sm:grid-cols-2">
           <li>
             <span className="font-medium">Check-in:</span> closes {Math.round(BASE_RATE * 100)}% of the gap to 100, growing to {Math.round(BASE_RATE * 150)}% on a 6-day run.
           </li>
@@ -1432,14 +1757,15 @@ function Typewriter({ text }) {
     return () => clearInterval(t);
   }, [text]);
   return (
-    <p className="text-[15px] leading-relaxed text-[#3c4b45]">
+    <p className="text-[15px] leading-relaxed text-[color:var(--body)]">
       {text.slice(0, n)}
-      {n < text.length && <span className="ml-0.5 inline-block h-4 w-1.5 animate-pulse bg-[#1f6f54] align-middle" />}
+      {n < text.length && <span className="ml-0.5 inline-block h-4 w-1.5 animate-pulse bg-[color:var(--accent-bg)] align-middle" />}
     </p>
   );
 }
 
 function HabitDetail({ id, values, todayValue, stats, color, goal, sleep, onBack }) {
+  const T = useTheme();
   const h = byId[id];
   const Icon = h.icon;
   const s = stats;
@@ -1462,7 +1788,7 @@ function HabitDetail({ id, values, todayValue, stats, color, goal, sleep, onBack
 
   return (
     <div className="space-y-5">
-      <button id="back" onClick={onBack} className="flex items-center gap-1 text-sm text-[#5b6b64] hover:text-[#15241f]">
+      <button id="back" onClick={onBack} className="flex items-center gap-1 text-sm text-[color:var(--muted)] hover:text-[color:var(--ink)]">
         <ChevronLeft size={16} /> Today
       </button>
 
@@ -1471,13 +1797,13 @@ function HabitDetail({ id, values, todayValue, stats, color, goal, sleep, onBack
           <Icon size={22} style={{ color }} />
         </Ring>
         <div>
-          <h1 className="font-display text-2xl font-semibold tracking-tight text-[#15241f]">{h.name}</h1>
-          <div className="text-sm text-[#5b6b64]">
+          <h1 className="font-display text-2xl font-semibold tracking-tight text-[color:var(--ink)]">{h.name}</h1>
+          <div className="text-sm text-[color:var(--muted)]">
             {h.full} · lighter: {h.lite.toLowerCase()}
           </div>
           <div className="mt-1 flex flex-wrap items-center gap-x-3 text-sm">
-            <span className="font-mono tabular-nums text-[#15241f]">{Math.round(s.last.m)}</span>
-            <span className="text-[#5b6b64]">{momentumLabel(s.last.m)}</span>
+            <span className="font-mono tabular-nums text-[color:var(--ink)]">{Math.round(s.last.m)}</span>
+            <span className="text-[color:var(--muted)]">{momentumLabel(s.last.m)}</span>
             <Delta value={s.week7} />
           </div>
         </div>
@@ -1491,55 +1817,55 @@ function HabitDetail({ id, values, todayValue, stats, color, goal, sleep, onBack
           ["Recovery", s.recoveryAvg != null ? `${s.recoveryAvg.toFixed(1)} d` : "–", "back to pre-miss level"],
         ].map(([k, v, sub]) => (
           <Card key={k} className="p-3">
-            <div className="text-[11px] uppercase tracking-wider text-[#5b6b64]">{k}</div>
-            <div className="font-mono text-xl font-semibold tabular-nums text-[#15241f]">{v}</div>
-            <div className="text-[11px] text-[#5b6b64]">{sub}</div>
+            <div className="text-[11px] uppercase tracking-wider text-[color:var(--muted)]">{k}</div>
+            <div className="font-mono text-xl font-semibold tabular-nums text-[color:var(--ink)]">{v}</div>
+            <div className="text-[11px] text-[color:var(--muted)]">{sub}</div>
           </Card>
         ))}
       </div>
 
       <Card className="overflow-hidden">
-        <div className="flex items-center justify-between border-b border-[#eef2ef] bg-[#f4f8f6] px-4 py-2.5">
-          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[#1f6f54]">
+        <div className="flex items-center justify-between border-b border-[color:var(--line-soft)] bg-[color:var(--card-head)] px-4 py-2.5">
+          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[color:var(--accent)]">
             <Sparkles size={14} /> AI insight
           </div>
-          <button id="regen" onClick={() => setSeed((x) => x + 1)} className="flex items-center gap-1 rounded-md px-2 py-1 text-xs text-[#5b6b64] hover:bg-white">
+          <button id="regen" onClick={() => setSeed((x) => x + 1)} className="flex items-center gap-1 rounded-md px-2 py-1 text-xs text-[color:var(--muted)] hover:bg-[color:var(--card)]">
             <RefreshCw size={12} /> Regenerate
           </button>
         </div>
         <div className="p-4">
           {loading ? (
             <div className="space-y-2">
-              <div className="text-xs text-[#5b6b64]">Reading 30 days of check-ins and sleep…</div>
+              <div className="text-xs text-[color:var(--muted)]">Reading 30 days of check-ins and sleep…</div>
               {[100, 92, 97, 60].map((w, i) => (
-                <div key={i} className="h-3 animate-pulse rounded bg-[#eef2ef]" style={{ width: `${w}%` }} />
+                <div key={i} className="h-3 animate-pulse rounded bg-[color:var(--line-soft)]" style={{ width: `${w}%` }} />
               ))}
             </div>
           ) : (
             <Typewriter key={seed} text={insight} />
           )}
-          <div className="mt-3 text-[11px] text-[#9aa8a2]">Generated from your check-in history · simulated in this prototype</div>
+          <div className="mt-3 text-[11px] text-[color:var(--faint)]">Generated from your check-in history · simulated in this prototype</div>
         </div>
       </Card>
 
       <Card className="p-4">
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="flex items-center gap-2 text-sm font-semibold text-[#15241f]">
+          <h2 className="flex items-center gap-2 text-sm font-semibold text-[color:var(--ink)]">
             <CalendarDays size={14} /> Check-ins
           </h2>
-          <div className="flex items-center gap-3 text-[11px] text-[#5b6b64]">
+          <div className="flex items-center gap-3 text-[11px] text-[color:var(--muted)]">
             <span className="flex items-center gap-1">
               <span className="inline-block h-3 w-3 rounded" style={{ background: color }} /> full
             </span>
             <span className="flex items-center gap-1">
-              <span className="inline-block h-3 w-3 rounded" style={{ background: `repeating-linear-gradient(135deg, ${color}66 0 2px, #ffffff 2px 4px)`, boxShadow: `inset 0 0 0 1px ${color}` }} /> lighter
+              <span className="inline-block h-3 w-3 rounded" style={{ background: `repeating-linear-gradient(135deg, ${color}66 0 2px, ${T.card} 2px 4px)`, boxShadow: `inset 0 0 0 1px ${color}` }} /> lighter
             </span>
             <span className="flex items-center gap-1">
-              <span className="inline-block h-3 w-3 rounded border border-dashed border-[#b7c5bf]" /> rest
+              <span className="inline-block h-3 w-3 rounded border border-dashed border-[color:var(--control)]" /> rest
             </span>
           </div>
         </div>
-        <div className="mx-auto grid max-w-sm grid-cols-7 gap-1.5 text-center text-[10px] uppercase tracking-wider text-[#9aa8a2]">
+        <div className="mx-auto grid max-w-sm grid-cols-7 gap-1.5 text-center text-[10px] uppercase tracking-wider text-[color:var(--faint)]">
           {["M", "T", "W", "T", "F", "S", "S"].map((d, i) => (
             <div key={i}>{d}</div>
           ))}
@@ -1549,9 +1875,9 @@ function HabitDetail({ id, values, todayValue, stats, color, goal, sleep, onBack
             const isToday = c.i === HISTORY_DAYS;
             const style =
               c.v === 1
-                ? { background: color, color: "#fff" }
+                ? { background: color, color: "#ffffff" }
                 : c.v > 0
-                ? { background: `repeating-linear-gradient(135deg, ${color}66 0 3px, #ffffff 3px 6px)`, color: "#15241f", boxShadow: `inset 0 0 0 1.5px ${color}` }
+                ? { background: `repeating-linear-gradient(135deg, ${color}66 0 3px, ${T.card} 3px 6px)`, color: T.ink, boxShadow: `inset 0 0 0 1.5px ${color}` }
                 : {};
             const label = c.v == null ? (isToday ? "open" : "not tracked yet") : c.v === 1 ? "full" : c.v > 0 ? "lighter version" : "rest day";
             return (
@@ -1559,8 +1885,8 @@ function HabitDetail({ id, values, todayValue, stats, color, goal, sleep, onBack
                 key={k}
                 title={`${fmtDay(d)} · ${label} · slept ${sleep[c.i]} h`}
                 className={`flex aspect-square max-w-full items-center justify-center rounded-md font-mono text-[11px] normal-case tabular-nums ${
-                  c.v === 0 ? "border border-dashed border-[#b7c5bf] text-[#9aa8a2]" : c.v == null ? (isToday ? "border border-[#dde5e0] text-[#5b6b64]" : "text-[#c3cec9]") : ""
-                } ${isToday ? "ring-2 ring-[#15241f] ring-offset-1" : ""}`}
+                  c.v === 0 ? "border border-dashed border-[color:var(--control)] text-[color:var(--faint)]" : c.v == null ? (isToday ? "border border-[color:var(--line)] text-[color:var(--muted)]" : "text-[color:var(--faint2)]") : ""
+                } ${isToday ? "ring-2 ring-[color:var(--ink)] ring-offset-1" : ""}`}
                 style={style}
               >
                 {d.getDate()}
@@ -1571,22 +1897,22 @@ function HabitDetail({ id, values, todayValue, stats, color, goal, sleep, onBack
       </Card>
 
       <Card className="p-4">
-        <h2 className="mb-2 text-sm font-semibold text-[#15241f]">Momentum, last 30 days</h2>
+        <h2 className="mb-2 text-sm font-semibold text-[color:var(--ink)]">Momentum, last 30 days</h2>
         <div className="h-40">
           <ResponsiveContainer>
             <AreaChart data={series} margin={{ top: 6, right: 8, bottom: 0, left: -24 }}>
-              <CartesianGrid stroke="#eef2ef" vertical={false} />
+              <CartesianGrid stroke={T["line-soft"]} vertical={false} />
               <XAxis
                 dataKey="x"
                 type="number"
                 domain={[-HISTORY_DAYS, 0]}
                 ticks={[-28, -21, -14, -7, 0]}
                 tickFormatter={(x) => (x === 0 ? "Today" : fmtDay(new Date(startOfToday().getTime() + x * DAY_MS)))}
-                tick={{ fontSize: 10, fill: "#5b6b64" }}
-                axisLine={{ stroke: "#dde5e0" }}
+                tick={{ fontSize: 10, fill: T.muted }}
+                axisLine={{ stroke: T.line }}
                 tickLine={false}
               />
-              <YAxis domain={[0, 100]} ticks={[0, 50, 100]} tick={{ fontSize: 10, fill: "#5b6b64" }} axisLine={false} tickLine={false} />
+              <YAxis domain={[0, 100]} ticks={[0, 50, 100]} tick={{ fontSize: 10, fill: T.muted }} axisLine={false} tickLine={false} />
               <Tooltip content={<ChartTooltip fmt={(x) => (x === 0 ? "Today" : fmtDay(new Date(startOfToday().getTime() + x * DAY_MS)))} />} />
               <Area name="Momentum" type="monotone" dataKey="m" stroke={color} fill={color} fillOpacity={0.12} strokeWidth={2} activeDot={{ r: 4 }} />
             </AreaChart>
@@ -1598,10 +1924,63 @@ function HabitDetail({ id, values, todayValue, stats, color, goal, sleep, onBack
 }
 
 /* ------------------------------------------------------------------ */
+/*  Theme                                                              */
+/* ------------------------------------------------------------------ */
+// "system" follows the host page's data-theme (set by the Claude viewer)
+// and otherwise the OS setting. The explicit choice is a per-device
+// convenience, so it lives in localStorage rather than the synced data.
+const THEME_KEY = "momentum-theme";
+function detectSystemTheme() {
+  if (typeof document === "undefined") return "light";
+  const attr = document.documentElement.getAttribute("data-theme");
+  if (attr === "dark" || attr === "light") return attr;
+  return window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+}
+function useThemeMode() {
+  const [pref, setPref] = useState(() => {
+    try {
+      return window.localStorage.getItem(THEME_KEY) || "system";
+    } catch (e) {
+      return "system";
+    }
+  });
+  const [system, setSystem] = useState(detectSystemTheme);
+  useEffect(() => {
+    const onChange = () => setSystem(detectSystemTheme());
+    const mq = window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)") : null;
+    if (mq && mq.addEventListener) mq.addEventListener("change", onChange);
+    const mo = new MutationObserver(onChange);
+    mo.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+    return () => {
+      if (mq && mq.removeEventListener) mq.removeEventListener("change", onChange);
+      mo.disconnect();
+    };
+  }, []);
+  const mode = pref === "system" ? system : pref;
+  useEffect(() => {
+    document.body.style.background = THEMES[mode].bg;
+    document.documentElement.style.colorScheme = mode;
+  }, [mode]);
+  const cycle = () => {
+    const next = pref === "system" ? "light" : pref === "light" ? "dark" : "system";
+    setPref(next);
+    try {
+      window.localStorage.setItem(THEME_KEY, next);
+    } catch (e) {
+      /* per-device preference only */
+    }
+  };
+  return { pref, mode, cycle };
+}
+
+/* ------------------------------------------------------------------ */
 /*  App shell                                                          */
 /* ------------------------------------------------------------------ */
 export default function MomentumHabits() {
   const { data, status, saving, update } = useStoredData();
+  const theme = useThemeMode();
+  const T = THEMES[theme.mode];
+  const rootStyle = { ...cssVars(T), colorScheme: theme.mode };
   const [view, setView] = useState("today");
   const [detail, setDetail] = useState(null);
   const [editing, setEditing] = useState(false);
@@ -1630,10 +2009,10 @@ export default function MomentumHabits() {
 
   if (status === "loading") {
     return (
-      <div className="momentum-root flex min-h-screen items-center justify-center bg-[#f3f6f4] text-sm text-[#5b6b64]">
+      <div className="momentum-root flex min-h-screen items-center justify-center bg-[color:var(--bg)] text-sm text-[color:var(--muted)]" style={rootStyle}>
         {fonts}
         <span className="flex items-center gap-2">
-          <Leaf size={16} className="animate-pulse text-[#1f6f54]" /> Loading your habits…
+          <Leaf size={16} className="animate-pulse text-[color:var(--accent)]" /> Loading your habits…
         </span>
       </div>
     );
@@ -1641,7 +2020,8 @@ export default function MomentumHabits() {
 
   if (!data || editing) {
     return (
-      <div className="momentum-root min-h-screen bg-[#f3f6f4] text-[#15241f]">
+      <ThemeContext.Provider value={T}>
+      <div className="momentum-root min-h-screen bg-[color:var(--bg)] text-[color:var(--ink)]" style={rootStyle}>
         {fonts}
         <Onboarding
           initial={data && editing ? { habits: data.habits, goal: data.goal } : null}
@@ -1669,13 +2049,14 @@ export default function MomentumHabits() {
           }}
         />
       </div>
+      </ThemeContext.Provider>
     );
   }
 
   const habits = data.habits;
   const { today, modes: storedModes, sleep } = win;
   const modes = Object.fromEntries(habits.map((id) => [id, storedModes[id] || "full"]));
-  const colors = habits.map((_, i) => SERIES[i]);
+  const colors = habits.map((_, i) => T.series[i]);
   const tk = todayKey();
   const setMode = (id, m) =>
     update((d) => {
@@ -1698,10 +2079,11 @@ export default function MomentumHabits() {
     });
   const setTodos = (fn) =>
     update((d) => {
-      d.todos = typeof fn === "function" ? fn(d.todos || []) : fn;
+      const cur = (d.todos || []).map(normTodo);
+      d.todos = typeof fn === "function" ? fn(cur) : fn;
       return d;
     });
-  const todos = data.todos || [];
+  const todos = (data.todos || []).map(normTodo);
   const openHabit = (id) => {
     setDetail(id);
     setView("habit");
@@ -1717,19 +2099,23 @@ export default function MomentumHabits() {
 
   const tabs = [
     { key: "today", label: "Today", icon: Sun },
+    { key: "week", label: "Week", icon: CalendarDays },
     { key: "progress", label: "Progress", icon: TrendingUp },
   ];
+  const ThemeIcon = theme.pref === "system" ? Monitor : theme.pref === "dark" ? Moon : Sun;
+  const themeLabel = theme.pref === "system" ? `System (${theme.mode})` : theme.pref === "dark" ? "Dark" : "Light";
 
   return (
-    <div className="momentum-root min-h-screen bg-[#f3f6f4] text-[#15241f]">
+    <ThemeContext.Provider value={T}>
+      <div className="momentum-root min-h-screen bg-[color:var(--bg)] text-[color:var(--ink)]" style={rootStyle}>
       {fonts}
-      <header className="sticky top-0 z-10 border-b border-[#dde5e0] bg-[#f3f6f4]/95 backdrop-blur">
-        <div className="mx-auto flex max-w-3xl items-center justify-between gap-2 px-4 py-3">
-          <div className="flex items-center gap-2 text-[#1f6f54]">
+      <header className="sticky top-0 z-10 border-b border-[color:var(--line)] bg-[color:var(--bg-glass)] backdrop-blur">
+        <div className={`mx-auto flex items-center justify-between gap-2 px-4 py-3 ${view === "week" ? "max-w-6xl" : "max-w-3xl"}`}>
+          <div className="flex items-center gap-2 text-[color:var(--accent)]">
             <Leaf size={18} />
             <span className="hidden font-display font-semibold tracking-tight sm:inline">Momentum</span>
           </div>
-          <nav className="flex items-center gap-1 rounded-xl bg-white p-1 shadow-sm ring-1 ring-[#dde5e0]">
+          <nav className="flex items-center gap-1 rounded-xl bg-[color:var(--card)] p-1 shadow-sm ring-1 ring-[color:var(--line)]">
             {tabs.map((t) => {
               const on = view === t.key || (t.key === "today" && view === "habit");
               const I = t.icon;
@@ -1739,21 +2125,32 @@ export default function MomentumHabits() {
                   id={`tab-${t.key}`}
                   onClick={() => setView(t.key)}
                   className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition ${
-                    on ? "bg-[#15241f] text-white" : "text-[#5b6b64] hover:text-[#15241f]"
+                    on ? "bg-[color:var(--ink)] text-[color:var(--on-ink)]" : "text-[color:var(--muted)] hover:text-[color:var(--ink)]"
                   }`}
                 >
-                  <I size={14} /> {t.label}
+                  <I size={14} /> <span className="hidden sm:inline">{t.label}</span>
                 </button>
               );
             })}
           </nav>
-          <button id="edit-habits" onClick={() => setEditing(true)} className="whitespace-nowrap text-xs text-[#5b6b64] hover:text-[#15241f]">
-            Edit habits
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              id="theme-toggle"
+              onClick={theme.cycle}
+              title={`Theme: ${themeLabel}. Click to change.`}
+              aria-label={`Theme: ${themeLabel}. Click to change.`}
+              className="rounded-lg p-2 text-[color:var(--muted)] hover:bg-[color:var(--card)] hover:text-[color:var(--ink)]"
+            >
+              <ThemeIcon size={16} />
+            </button>
+            <button id="edit-habits" onClick={() => setEditing(true)} className="whitespace-nowrap text-xs text-[color:var(--muted)] hover:text-[color:var(--ink)]">
+              Edit habits
+            </button>
+          </div>
         </div>
       </header>
 
-      <main className="mx-auto max-w-3xl px-4 py-6">
+      <main className={`mx-auto px-4 py-6 ${view === "week" ? "max-w-6xl" : "max-w-3xl"}`}>
         {view === "today" && (
           <Today
             habits={habits}
@@ -1772,6 +2169,7 @@ export default function MomentumHabits() {
             setTodos={setTodos}
           />
         )}
+        {view === "week" && <WeekPlanner todos={todos} setTodos={setTodos} habits={habits} colors={colors} log={data.log} />}
         {view === "progress" && <Progress habits={habits} values={valuesWithToday} priors={win.priors} stats={stats} colors={colors} goal={data.goal} />}
         {view === "habit" && detail && habits.includes(detail) && (
           <HabitDetail
@@ -1785,13 +2183,14 @@ export default function MomentumHabits() {
             onBack={() => setView("today")}
           />
         )}
-        <footer className="mt-10 border-t border-[#dde5e0] pt-4 text-center text-xs text-[#9aa8a2]">
-          <span className="mb-2 flex items-center justify-center gap-1.5 text-[#5b6b64]">
+        <footer className="mt-10 border-t border-[color:var(--line)] pt-4 text-center text-xs text-[color:var(--faint)]">
+          <span className="mb-2 flex items-center justify-center gap-1.5 text-[color:var(--muted)]">
             <saveBadge.icon size={12} /> {saveBadge.text}
           </span>
           No streaks to lose, no leaderboards. Missed days lower the score a little, and it comes back.
         </footer>
       </main>
     </div>
+    </ThemeContext.Provider>
   );
 }
