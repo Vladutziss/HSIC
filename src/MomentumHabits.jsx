@@ -34,6 +34,11 @@ import {
   Settings2,
   Sun,
   Leaf,
+  ListTodo,
+  Plus,
+  X,
+  ArrowRight,
+  ArrowLeft,
 } from "lucide-react";
 
 /* ------------------------------------------------------------------ */
@@ -698,7 +703,7 @@ function HabitRow({ id, color, stats, value, mode, onToggle, onMode, onOpen }) {
   );
 }
 
-function Today({ habits, stats, today, modes, setMode, toggleToday, suggestions, goal, sleep, openHabit, colors }) {
+function Today({ habits, stats, today, modes, setMode, toggleToday, suggestions, goal, sleep, openHabit, colors, todos, setTodos }) {
   const current = habits.map((id) => (today[id] > 0 ? stepMomentum(stats[id].last, today[id]).m : stats[id].last.m));
   const overall = current.reduce((a, b) => a + b, 0) / current.length;
   const week = habits.reduce((a, id) => a + stats[id].week7, 0) / habits.length;
@@ -747,7 +752,209 @@ function Today({ habits, stats, today, modes, setMode, toggleToday, suggestions,
         ))}
       </div>
       <p className="text-center text-xs text-[#5b6b64]">The lighter version counts for {Math.round(LITE_CREDIT * 100)}% of a full check-in and never counts as a miss.</p>
+
+      <TodoList todos={todos} setTodos={setTodos} habits={habits} colors={colors} />
     </div>
+  );
+}
+
+/* ------------------------------------------------------------------ */
+/*  To-do list                                                         */
+/* ------------------------------------------------------------------ */
+// Small prep tasks that make a habit easier to start tomorrow.
+const PREP = {
+  gym: "Pack the gym bag for tomorrow",
+  meditate: "Set a 2-min reminder after lunch",
+  read: "Pick the next book and leave it on the nightstand",
+  sleep: "Charge the phone outside the bedroom",
+  water: "Fill a water bottle for the desk",
+  journal: "Leave the notebook on the pillow",
+  walk: "Plan a 15-min walking loop near home",
+  language: "Download two Spanish podcast episodes",
+  deepwork: "Block tomorrow 9:00–10:30 for deep work",
+};
+
+let todoSeq = 0;
+const newTodo = (text, list = "today", habit = null, done = false) => ({ id: `t${++todoSeq}`, text, list, habit, done });
+
+function seedTodos(habits) {
+  return [
+    newTodo(PREP[habits[0]], "today", habits[0]),
+    newTodo("Buy groceries for the week", "today", null, true),
+    newTodo(PREP[habits[habits.length - 1]], "today", habits[habits.length - 1]),
+    newTodo("Reply to Ana about Saturday", "later"),
+    newTodo(PREP[habits[1]], "later", habits[1]),
+  ];
+}
+
+function TodoItem({ t, habits, colors, onToggle, onMove, onDelete }) {
+  const hi = t.habit ? habits.indexOf(t.habit) : -1;
+  return (
+    <li className="group flex items-start gap-3 py-2">
+      <button
+        id={`todo-${t.id}`}
+        onClick={onToggle}
+        aria-pressed={t.done}
+        aria-label={t.done ? `Mark “${t.text}” not done` : `Mark “${t.text}” done`}
+        className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md border-2 transition focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1f6f54] ${
+          t.done ? "border-[#1f6f54] bg-[#1f6f54] text-white" : "border-[#b7c5bf] bg-white hover:border-[#1f6f54]"
+        }`}
+      >
+        {t.done && <Check size={12} strokeWidth={3} />}
+      </button>
+      <div className="min-w-0 flex-1">
+        <div className={`text-[15px] leading-snug ${t.done ? "text-[#9aa8a2] line-through" : "text-[#15241f]"}`}>{t.text}</div>
+        {hi >= 0 && (
+          <span className="mt-0.5 inline-flex items-center gap-1 text-xs text-[#5b6b64]">
+            <span className="inline-block h-1.5 w-1.5 rounded-full" style={{ background: colors[hi] }} />
+            helps {byId[t.habit].name.toLowerCase()}
+          </span>
+        )}
+      </div>
+      {!t.done && (
+        <button
+          onClick={onMove}
+          className="flex shrink-0 items-center gap-1 rounded-md px-1.5 py-1 text-xs text-[#5b6b64] hover:bg-[#f1f4f2] hover:text-[#15241f]"
+          aria-label={t.list === "today" ? "Move to later" : "Move to today"}
+        >
+          {t.list === "today" ? (
+            <>
+              Later <ArrowRight size={12} />
+            </>
+          ) : (
+            <>
+              <ArrowLeft size={12} /> Today
+            </>
+          )}
+        </button>
+      )}
+      <button onClick={onDelete} aria-label={`Delete “${t.text}”`} className="shrink-0 rounded-md p-1 text-[#9aa8a2] hover:bg-[#f1f4f2] hover:text-[#15241f]">
+        <X size={14} />
+      </button>
+    </li>
+  );
+}
+
+function TodoList({ todos, setTodos, habits, colors }) {
+  const [text, setText] = useState("");
+  const [list, setList] = useState("today");
+  const [habit, setHabit] = useState("");
+  const [showDone, setShowDone] = useState(false);
+
+  const add = (e) => {
+    e.preventDefault();
+    if (!text.trim()) return;
+    setTodos((ts) => [...ts, newTodo(text.trim(), list, habit || null)]);
+    setText("");
+  };
+  const update = (id, patch) => setTodos((ts) => ts.map((t) => (t.id === id ? { ...t, ...patch } : t)));
+  const remove = (id) => setTodos((ts) => ts.filter((t) => t.id !== id));
+
+  const open = (l) => todos.filter((t) => !t.done && t.list === l);
+  const done = todos.filter((t) => t.done);
+  const todayAll = todos.filter((t) => t.list === "today");
+  const todayDone = todayAll.filter((t) => t.done).length;
+  const item = (t) => (
+    <TodoItem
+      key={t.id}
+      t={t}
+      habits={habits}
+      colors={colors}
+      onToggle={() => update(t.id, { done: !t.done })}
+      onMove={() => update(t.id, { list: t.list === "today" ? "later" : "today" })}
+      onDelete={() => remove(t.id)}
+    />
+  );
+
+  return (
+    <Card className="p-4">
+      <div className="flex items-baseline justify-between gap-2">
+        <h2 className="flex items-center gap-2 font-display text-lg font-semibold text-[#15241f]">
+          <ListTodo size={18} className="text-[#1f6f54]" /> To-dos
+        </h2>
+        <span className="font-mono text-xs tabular-nums text-[#5b6b64]">
+          {todayDone}/{todayAll.length} today
+        </span>
+      </div>
+      <p className="mt-0.5 text-sm text-[#5b6b64]">One-off tasks. Anything you don't get to can move to Later without counting against you.</p>
+
+      <form onSubmit={add} className="mt-3 flex flex-col gap-2 sm:flex-row">
+        <label htmlFor="todo-text" className="sr-only">
+          New to-do
+        </label>
+        <input
+          id="todo-text"
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          maxLength={120}
+          placeholder="Add a to-do…"
+          className="min-w-0 flex-1 rounded-lg border border-[#dde5e0] bg-white px-3 py-2 text-[15px] text-[#15241f] placeholder:text-[#9aa8a2] focus:border-[#1f6f54] focus:outline-none"
+        />
+        <div className="flex gap-2">
+          <label htmlFor="todo-list" className="sr-only">
+            List
+          </label>
+          <select
+            id="todo-list"
+            value={list}
+            onChange={(e) => setList(e.target.value)}
+            className="rounded-lg border border-[#dde5e0] bg-white px-2 py-2 text-sm text-[#3c4b45] focus:border-[#1f6f54] focus:outline-none"
+          >
+            <option value="today">Today</option>
+            <option value="later">Later</option>
+          </select>
+          <label htmlFor="todo-habit" className="sr-only">
+            Related habit
+          </label>
+          <select
+            id="todo-habit"
+            value={habit}
+            onChange={(e) => setHabit(e.target.value)}
+            className="min-w-0 flex-1 rounded-lg border border-[#dde5e0] bg-white px-2 py-2 text-sm text-[#3c4b45] focus:border-[#1f6f54] focus:outline-none sm:flex-none"
+          >
+            <option value="">No habit</option>
+            {habits.map((id) => (
+              <option key={id} value={id}>
+                {byId[id].name}
+              </option>
+            ))}
+          </select>
+          <button
+            id="todo-add"
+            type="submit"
+            disabled={!text.trim()}
+            className="flex items-center gap-1 rounded-lg bg-[#1f6f54] px-3 py-2 text-sm font-semibold text-white hover:bg-[#185a44] disabled:bg-[#b9cac2]"
+          >
+            <Plus size={16} /> Add
+          </button>
+        </div>
+      </form>
+
+      <div className="mt-3">
+        <div className="text-xs font-semibold uppercase tracking-wider text-[#5b6b64]">Today</div>
+        {open("today").length ? (
+          <ul className="divide-y divide-[#eef2ef]">{open("today").map(item)}</ul>
+        ) : (
+          <p className="py-2 text-sm text-[#5b6b64]">Nothing left for today.</p>
+        )}
+      </div>
+
+      {open("later").length > 0 && (
+        <div className="mt-3">
+          <div className="text-xs font-semibold uppercase tracking-wider text-[#5b6b64]">Later</div>
+          <ul className="divide-y divide-[#eef2ef]">{open("later").map(item)}</ul>
+        </div>
+      )}
+
+      {done.length > 0 && (
+        <div className="mt-3 border-t border-[#eef2ef] pt-2">
+          <button id="todo-show-done" onClick={() => setShowDone((x) => !x)} className="flex items-center gap-1 text-xs text-[#5b6b64] hover:text-[#15241f]">
+            <ChevronRight size={12} className={`transition ${showDone ? "rotate-90" : ""}`} /> Done ({done.length})
+          </button>
+          {showDone && <ul className="divide-y divide-[#eef2ef]">{done.map(item)}</ul>}
+        </div>
+      )}
+    </Card>
   );
 }
 
@@ -1134,6 +1341,7 @@ export default function MomentumHabits() {
   const [detail, setDetail] = useState(null);
   const [today, setToday] = useState({});
   const [modes, setModes] = useState({});
+  const [todos, setTodos] = useState([]);
 
   const sleep = useMemo(() => simulateSleep(), []);
   const values = useMemo(() => {
@@ -1170,6 +1378,7 @@ export default function MomentumHabits() {
             setSetup({ habits, goal });
             setModes(Object.fromEntries(habits.map((id) => [id, "full"])));
             setToday({});
+            setTodos(seedTodos(habits));
             setView("today");
           }}
         />
@@ -1240,6 +1449,8 @@ export default function MomentumHabits() {
             sleep={sleep}
             openHabit={openHabit}
             colors={colors}
+            todos={todos}
+            setTodos={setTodos}
           />
         )}
         {view === "progress" && <Progress habits={setup.habits} values={valuesWithToday} stats={stats} colors={colors} goal={setup.goal} />}
