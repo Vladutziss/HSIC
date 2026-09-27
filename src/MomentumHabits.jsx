@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ResponsiveContainer,
   LineChart,
@@ -39,6 +39,10 @@ import {
   X,
   ArrowRight,
   ArrowLeft,
+  Cloud,
+  CloudOff,
+  HardDrive,
+  Minus,
 } from "lucide-react";
 
 /* ------------------------------------------------------------------ */
@@ -60,6 +64,7 @@ const PROJECTION_DAYS = 60;
 
 function stepMomentum(prev, v) {
   const s = { ...prev };
+  if (v == null) return s; // day before the habit was tracked
   if (v > 0) {
     s.run += 1;
     s.missRun = 0;
@@ -91,8 +96,8 @@ const initialState = () => ({
   streak: 0,
 });
 
-function runMomentum(values) {
-  let s = initialState();
+function runMomentum(values, init = initialState()) {
+  let s = init;
   return values.map((v) => {
     s = stepMomentum(s, v);
     return s;
@@ -113,9 +118,9 @@ function project(startM, p, a, days) {
 }
 
 function recentRate(values, n = 14) {
-  const slice = values.slice(-n);
+  const slice = values.slice(-n).filter((v) => v != null);
   const done = slice.filter((v) => v > 0);
-  const p = done.length / slice.length;
+  const p = slice.length ? done.length / slice.length : 0.7;
   const a = done.length ? done.reduce((x, y) => x + y, 0) / done.length : 1;
   return { p, a };
 }
@@ -214,14 +219,221 @@ function simulateHabit(habit, idx, sleep) {
   return values;
 }
 
+
+/* ------------------------------------------------------------------ */
+/*  Stored data: check-ins by date                                     */
+/* ------------------------------------------------------------------ */
+// Everything the user enters lives in one JSON document:
+// { v, habits, goal, starts: {habit: day}, log: {day: {habit: credit}},
+//   sleep: {day: hours}, modes: {day, map}, todos: [...] }
+// A tracked day with no entry for a habit counts as a miss.
+const DATA_VERSION = 1;
+const dayKey = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+const todayKey = () => dayKey(startOfToday());
+const clone = (x) => JSON.parse(JSON.stringify(x));
+
+// Sleep for nights nobody logged: a stable pseudo-random value per date.
+function simSleepFor(key) {
+  let h = 0;
+  for (const ch of key) h = (Math.imul(h, 31) + ch.charCodeAt(0)) | 0;
+  const r = mulberry32(h)();
+  return Math.round((6.4 + r * 1.6) * 10) / 10;
+}
+
+function sampleHistory(habits) {
+  const sleepArr = simulateSleep();
+  const log = {};
+  const sleep = {};
+  for (let i = 0; i <= HISTORY_DAYS; i++) sleep[dayKey(dateAt(i))] = sleepArr[i];
+  habits.forEach((id, idx) => {
+    simulateHabit(byId[id], idx, sleepArr).forEach((v, i) => {
+      const k = dayKey(dateAt(i));
+      log[k] = { ...log[k], [id]: v };
+    });
+  });
+  return { log, sleep, start: dayKey(dateAt(0)) };
+}
+
+function newData(habits, goal, withSample) {
+  const sample = withSample ? sampleHistory(habits) : null;
+  const start = sample ? sample.start : todayKey();
+  return {
+    v: DATA_VERSION,
+    habits,
+    goal,
+    starts: Object.fromEntries(habits.map((id) => [id, start])),
+    log: sample ? sample.log : {},
+    sleep: sample ? sample.sleep : {},
+    modes: { day: todayKey(), map: {} },
+    todos: seedTodos(habits),
+  };
+}
+
+// Derive the 30-day window the screens use, plus the momentum state
+// carried in from any older history.
+function deriveWindow(data) {
+  const keys = Array.from({ length: HISTORY_DAYS + 1 }, (_, i) => dayKey(dateAt(i)));
+  const windowStart = keys[0];
+  const sleep = keys.map((k) => (data.sleep[k] != null ? data.sleep[k] : simSleepFor(k)));
+  const values = {};
+  const priors = {};
+  data.habits.forEach((id) => {
+    const start = data.starts[id] || windowStart;
+    values[id] = keys.slice(0, HISTORY_DAYS).map((k) => (k < start ? null : data.log[k]?.[id] ?? 0));
+    // replay days before the window so long-term users keep their momentum
+    let st = initialState();
+    const older = Object.keys(data.log).filter((k) => k >= start && k < windowStart).sort();
+    if (older.length) {
+      const d = new Date(older[0] + "T00:00:00");
+      for (; dayKey(d) < windowStart; d.setDate(d.getDate() + 1)) st = stepMomentum(st, data.log[dayKey(d)]?.[id] ?? 0);
+    }
+    priors[id] = st;
+  });
+  const today = data.log[keys[HISTORY_DAYS]] || {};
+  const modes = data.modes && data.modes.day === keys[HISTORY_DAYS] ? data.modes.map : {};
+  return { values, priors, sleep, today, modes };
+}
+
+const LOCAL_KEY = "momentum-habits-v1";
+
+// Loads and saves the data document. In a Claude artifact it uses the
+// artifact's database, in a private per-user path; elsewhere it falls back
+// to localStorage, and failing that keeps data for this session only.
+function useStoredData() {
+  const [data, setDataState] = useState(null);
+  const dataRef = useRef(null);
+  const setData = (d) => {
+    dataRef.current = d;
+    setDataState(d);
+  };
+  const [status, setStatus] = useState("loading"); // loading | cloud | local | memory | readonly
+  const [saving, setSaving] = useState(false);
+  const backend = useRef(null);
+  const version = useRef(0);
+  const saved = useRef(0);
+  const queue = useRef(Promise.resolve());
+  const timer = useRef(null);
+
+  useEffect(() => {
+    let unsub = null;
+    let cancelled = false;
+    const useLocal = () => {
+      let stored = null;
+      let ok = false;
+      try {
+        const raw = window.localStorage.getItem(LOCAL_KEY);
+        stored = raw ? JSON.parse(raw) : null;
+        ok = true;
+      } catch (e) {
+        ok = false;
+      }
+      backend.current = ok ? { kind: "local" } : { kind: "memory" };
+      if (!cancelled) {
+        setData(stored);
+        setStatus(ok ? "local" : "memory");
+      }
+    };
+    (async () => {
+      const c = typeof window !== "undefined" ? window.claude : null;
+      if (!c || typeof c.use !== "function") return useLocal();
+      let db = null;
+      let uid = null;
+      try {
+        const [d, user] = await Promise.all([c.use("db"), c.use("user")]);
+        db = d;
+        uid = user ? await user.id() : null;
+      } catch (e) {
+        db = null;
+      }
+      if (cancelled) return;
+      if (!db || !uid) return useLocal();
+      const ref = db.doc(`data/users/${uid}/momentum`);
+      backend.current = { kind: "cloud", ref };
+      let first = true;
+      unsub = ref.onSnapshot(
+        (snap) => {
+          // ignore echoes while local edits are still unsaved
+          if (!first && (saved.current < version.current || snap.metadata.hasPendingWrites)) return;
+          first = false;
+          setData(snap.exists ? clone(snap.data()) : null);
+          setStatus((st) => (st === "readonly" ? st : "cloud"));
+        },
+        () => {
+          if (first) useLocal();
+        }
+      );
+    })();
+    return () => {
+      cancelled = true;
+      if (unsub) unsub();
+      clearTimeout(timer.current);
+    };
+  }, []);
+
+  const write = useCallback((doc, v) => {
+    const b = backend.current;
+    if (!b || b.kind === "memory") {
+      saved.current = v;
+      return;
+    }
+    if (b.kind === "local") {
+      try {
+        if (doc) window.localStorage.setItem(LOCAL_KEY, JSON.stringify(doc));
+        else window.localStorage.removeItem(LOCAL_KEY);
+      } catch (e) {
+        setStatus("memory");
+      }
+      saved.current = v;
+      return;
+    }
+    // one write at a time to the cloud document; retry a transient failure once
+    setSaving(true);
+    const op = () => (doc ? b.ref.set(doc) : b.ref.delete());
+    queue.current = queue.current
+      .then(async () => {
+        try {
+          await op();
+        } catch (e) {
+          if (!e || e.code !== "unavailable") throw e;
+          await new Promise((r) => setTimeout(r, 800 + Math.random() * 800));
+          await op();
+        }
+        saved.current = Math.max(saved.current, v);
+        setStatus((st) => (st === "error" ? "cloud" : st));
+      })
+      .catch((e) => {
+        setStatus(e && e.code === "invalid_argument" ? "readonly" : "error");
+      })
+      .finally(() => {
+        if (saved.current >= version.current) setSaving(false);
+      });
+  }, []);
+
+  // update(fn) applies fn to a copy of the data and saves after a short pause
+  const update = useCallback(
+    (fn) => {
+      const d = dataRef.current;
+      const next = fn(d ? clone(d) : null);
+      setData(next);
+      const v = ++version.current;
+      clearTimeout(timer.current);
+      timer.current = setTimeout(() => write(next, v), 500);
+    },
+    [write]
+  );
+
+  return { data, status, saving, update };
+}
+
 /* ------------------------------------------------------------------ */
 /*  "AI" layer — templated, rule-based, written to read like an LLM    */
 /* ------------------------------------------------------------------ */
 const plural = (n, one, many) => (n === 1 ? one : many);
 const timesWord = (n) => (n === 1 ? "once" : n === 2 ? "twice" : `${n} times`);
 
-function habitStats(id, values, sleep) {
-  const series = runMomentum(values);
+function habitStats(id, values, sleep, prior) {
+  const series = runMomentum(values, prior);
+  const tracked = values.filter((v) => v != null);
   const last = series[series.length - 1];
   const last7 = values.slice(-7);
   const misses7 = last7.filter((v) => v === 0).length;
@@ -229,6 +441,7 @@ function habitStats(id, values, sleep) {
 
   const byDow = Array.from({ length: 7 }, () => ({ n: 0, done: 0 }));
   values.forEach((v, i) => {
+    if (v == null) return;
     const d = dateAt(i).getDay();
     byDow[d].n += 1;
     if (v > 0) byDow[d].done += 1;
@@ -236,14 +449,14 @@ function habitStats(id, values, sleep) {
   const dowRates = byDow.map((b, d) => ({ d, rate: b.n ? b.done / b.n : 0, n: b.n }));
   const ranked = [...dowRates].filter((x) => x.n >= 3).sort((a, b) => a.rate - b.rate);
 
-  const afterBad = values.filter((_, i) => sleep[i] < 6.3);
-  const afterGood = values.filter((_, i) => sleep[i] >= 7);
+  const afterBad = values.filter((v, i) => v != null && sleep[i] < 6.3);
+  const afterGood = values.filter((v, i) => v != null && sleep[i] >= 7);
   const rateOf = (arr) => (arr.length ? arr.filter((v) => v > 0).length / arr.length : null);
 
   // days needed to climb back to the pre-miss level
   const recoveries = [];
   values.forEach((v, i) => {
-    if (v !== 0 || i === 0 || values[i - 1] === 0) return;
+    if (v !== 0 || i === 0 || values[i - 1] === 0 || values[i - 1] == null) return;
     const before = series[i - 1].m;
     for (let j = i + 1; j < series.length; j++) {
       if (series[j].m >= before) {
@@ -274,7 +487,8 @@ function habitStats(id, values, sleep) {
     resets,
     lowest,
     bestRun,
-    completion: values.filter((v) => v > 0).length / values.length,
+    completion: tracked.length ? tracked.filter((v) => v > 0).length / tracked.length : 0,
+    trackedDays: tracked.length,
     week7: series[series.length - 1].m - series[series.length - 8].m,
   };
 }
@@ -378,6 +592,11 @@ function buildSuggestions({ habits, stats, sleep, goal }) {
 function buildInsight(id, s, goal) {
   const h = byId[id];
   const parts = [];
+  if (s.trackedDays < 3) {
+    return `You started tracking ${h.name.toLowerCase()} recently, so there isn't enough history for patterns yet. After a few days of check-ins (the lighter version counts too), this will show which days and conditions help you most.${
+      goal ? ` Each one adds up toward “${goal.trim()}”.` : ""
+    }`;
+  }
   parts.push(
     `Over the last 30 days you completed ${h.name.toLowerCase()} on ${Math.round(s.completion * 100)}% of days, and your momentum sits at ${Math.round(
       s.last.m
@@ -475,9 +694,12 @@ function ChartTooltip({ active, payload, label, fmt }) {
 /* ------------------------------------------------------------------ */
 /*  Onboarding                                                         */
 /* ------------------------------------------------------------------ */
-function Onboarding({ onDone }) {
-  const [picked, setPicked] = useState([]);
-  const [goal, setGoal] = useState("");
+function Onboarding({ initial, onDone, onCancel, onReset }) {
+  const editing = !!initial;
+  const [picked, setPicked] = useState(initial ? initial.habits : []);
+  const [goal, setGoal] = useState(initial ? initial.goal : "");
+  const [withSample, setWithSample] = useState(true);
+  const [confirmReset, setConfirmReset] = useState(false);
   const toggle = (id) =>
     setPicked((p) => (p.includes(id) ? p.filter((x) => x !== id) : p.length >= 4 ? p : [...p, id]));
   const ready = picked.length >= 3 && goal.trim().length > 3;
@@ -547,23 +769,53 @@ function Onboarding({ onDone }) {
         <button
           id="start"
           disabled={!ready}
-          onClick={() => onDone(picked, goal)}
+          onClick={() => onDone(picked, goal, withSample)}
           className="rounded-xl bg-[#1f6f54] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#185a44] disabled:cursor-not-allowed disabled:bg-[#b9cac2]"
         >
-          Start tracking
+          {editing ? "Save changes" : "Start tracking"}
         </button>
-        <button
-          id="example"
-          onClick={() => onDone(["gym", "meditate", "read", "deepwork"], "Feel strong and clear-headed going into exam season")}
-          className="rounded-xl px-4 py-3 text-sm font-medium text-[#1f6f54] hover:bg-[#e8f2ed]"
-        >
-          Use an example setup
-        </button>
+        {editing ? (
+          <button id="cancel-edit" onClick={onCancel} className="rounded-xl px-4 py-3 text-sm font-medium text-[#5b6b64] hover:bg-[#e8f2ed]">
+            Cancel
+          </button>
+        ) : (
+          <button
+            id="example"
+            onClick={() => onDone(["gym", "meditate", "read", "deepwork"], "Feel strong and clear-headed going into exam season", true)}
+            className="rounded-xl px-4 py-3 text-sm font-medium text-[#1f6f54] hover:bg-[#e8f2ed]"
+          >
+            Use an example setup
+          </button>
+        )}
       </div>
-      <p className="mt-6 flex items-start gap-2 text-xs leading-relaxed text-[#5b6b64]">
-        <Info size={14} className="mt-0.5 shrink-0" />
-        Prototype: the app seeds 30 days of simulated check-ins and sleep data so you can see the momentum curve in action.
-      </p>
+      {editing ? (
+        <div className="mt-8 border-t border-[#dde5e0] pt-4 text-sm text-[#5b6b64]">
+          <p>Your check-in history is kept. A newly added habit starts tracking today.</p>
+          {!confirmReset ? (
+            <button id="reset" onClick={() => setConfirmReset(true)} className="mt-2 text-xs underline underline-offset-2 hover:text-[#15241f]">
+              Delete all my data and start over
+            </button>
+          ) : (
+            <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+              <span>This removes every check-in, to-do and setting.</span>
+              <button id="reset-confirm" onClick={onReset} className="rounded-md bg-[#15241f] px-2.5 py-1 font-medium text-white">
+                Delete everything
+              </button>
+              <button onClick={() => setConfirmReset(false)} className="rounded-md px-2.5 py-1 hover:bg-[#e8f2ed]">
+                Keep my data
+              </button>
+            </div>
+          )}
+        </div>
+      ) : (
+        <label htmlFor="with-sample" className="mt-6 flex cursor-pointer items-start gap-2 text-xs leading-relaxed text-[#5b6b64]">
+          <input id="with-sample" type="checkbox" checked={withSample} onChange={(e) => setWithSample(e.target.checked)} className="mt-0.5 accent-[#1f6f54]" />
+          <span>
+            Start with 30 days of sample check-ins and sleep, so the momentum curve has something to show. Untick to start from a blank history.
+            Example setup always includes the sample.
+          </span>
+        </label>
+      )}
     </div>
   );
 }
@@ -703,7 +955,7 @@ function HabitRow({ id, color, stats, value, mode, onToggle, onMode, onOpen }) {
   );
 }
 
-function Today({ habits, stats, today, modes, setMode, toggleToday, suggestions, goal, sleep, openHabit, colors, todos, setTodos }) {
+function Today({ habits, stats, today, modes, setMode, toggleToday, suggestions, goal, sleep, setSleep, openHabit, colors, todos, setTodos }) {
   const current = habits.map((id) => (today[id] > 0 ? stepMomentum(stats[id].last, today[id]).m : stats[id].last.m));
   const overall = current.reduce((a, b) => a + b, 0) / current.length;
   const week = habits.reduce((a, id) => a + stats[id].week7, 0) / habits.length;
@@ -727,7 +979,15 @@ function Today({ habits, stats, today, modes, setMode, toggleToday, suggestions,
           <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
             <Delta value={week} />
             <span className="flex items-center gap-1 text-xs text-[#5b6b64]">
-              <Moon size={12} /> {sleep[HISTORY_DAYS]} h sleep last night
+              <Moon size={12} /> Slept
+              <button id="sleep-down" aria-label="Less sleep" onClick={() => setSleep(Math.max(3, sleep[HISTORY_DAYS] - 0.5))} className="rounded p-0.5 hover:bg-white">
+                <Minus size={12} />
+              </button>
+              <span className="font-mono tabular-nums text-[#15241f]">{sleep[HISTORY_DAYS].toFixed(1)} h</span>
+              <button id="sleep-up" aria-label="More sleep" onClick={() => setSleep(Math.min(12, sleep[HISTORY_DAYS] + 0.5))} className="rounded p-0.5 hover:bg-white">
+                <Plus size={12} />
+              </button>
+              last night
             </span>
           </div>
           <p className="mt-1 truncate text-sm italic text-[#5b6b64]">Goal: {goal}</p>
@@ -774,8 +1034,13 @@ const PREP = {
   deepwork: "Block tomorrow 9:00–10:30 for deep work",
 };
 
-let todoSeq = 0;
-const newTodo = (text, list = "today", habit = null, done = false) => ({ id: `t${++todoSeq}`, text, list, habit, done });
+const newTodo = (text, list = "today", habit = null, done = false) => ({
+  id: `t${Date.now().toString(36)}${Math.random().toString(36).slice(2, 7)}`,
+  text,
+  list,
+  habit,
+  done,
+});
 
 function seedTodos(habits) {
   return [
@@ -961,14 +1226,14 @@ function TodoList({ todos, setTodos, habits, colors }) {
 /* ------------------------------------------------------------------ */
 /*  Progress                                                           */
 /* ------------------------------------------------------------------ */
-function Progress({ habits, values, stats, colors, goal }) {
+function Progress({ habits, values, priors, stats, colors, goal }) {
   const [focus, setFocus] = useState("all");
   const ids = focus === "all" ? habits : [focus];
   const color = focus === "all" ? OVERALL : colors[habits.indexOf(focus)];
 
   const { data, now, pace, stretch, p, streakData, resets, lowest } = useMemo(() => {
     const n = values[ids[0]].length;
-    const perHabit = ids.map((id) => runMomentum(values[id]));
+    const perHabit = ids.map((id) => runMomentum(values[id], priors[id]));
     const actual = Array.from({ length: n }, (_, i) => perHabit.reduce((a, s) => a + s[i].m, 0) / ids.length);
     const rates = ids.map((id) => recentRate(values[id]));
     const projPace = ids.map((id, k) => project(perHabit[k][n - 1].m, rates[k].p, rates[k].a, PROJECTION_DAYS));
@@ -1000,7 +1265,7 @@ function Progress({ habits, values, stats, colors, goal }) {
       resets: r,
       lowest: Math.min(...actual),
     };
-  }, [focus, values, habits, stats]);
+  }, [focus, values, priors, habits, stats]);
 
   const dayLabel = (x) => (x === 0 ? "Today" : fmtDay(new Date(startOfToday().getTime() + x * DAY_MS)));
   const perWeek = (p * 7).toFixed(1);
@@ -1188,7 +1453,7 @@ function HabitDetail({ id, values, todayValue, stats, color, goal, sleep, onBack
 
   const insight = useMemo(() => buildInsight(id, s, goal), [id, s, goal]);
   const all = [...values, todayValue > 0 ? todayValue : null];
-  const series = runMomentum(values).map((x, i) => ({ x: i - HISTORY_DAYS, m: x.m }));
+  const series = s.series.map((x, i) => ({ x: i - HISTORY_DAYS, m: values[i] == null ? null : x.m }));
   if (todayValue > 0) series.push({ x: 0, m: stepMomentum(s.last, todayValue).m });
 
   // calendar grid aligned to weekday (Mon-first)
@@ -1220,7 +1485,7 @@ function HabitDetail({ id, values, todayValue, stats, color, goal, sleep, onBack
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {[
-          ["Completion", `${Math.round(s.completion * 100)}%`, "last 30 days"],
+          ["Completion", s.trackedDays ? `${Math.round(s.completion * 100)}%` : "–", s.trackedDays ? "last 30 days" : "no days logged yet"],
           ["Best run", `${s.bestRun} d`, "this month"],
           ["Lowest point", Math.round(s.lowest), "never zero"],
           ["Recovery", s.recoveryAvg != null ? `${s.recoveryAvg.toFixed(1)} d` : "–", "back to pre-miss level"],
@@ -1288,13 +1553,13 @@ function HabitDetail({ id, values, todayValue, stats, color, goal, sleep, onBack
                 : c.v > 0
                 ? { background: `repeating-linear-gradient(135deg, ${color}66 0 3px, #ffffff 3px 6px)`, color: "#15241f", boxShadow: `inset 0 0 0 1.5px ${color}` }
                 : {};
-            const label = c.v == null ? "open" : c.v === 1 ? "full" : c.v > 0 ? "lighter version" : "rest day";
+            const label = c.v == null ? (isToday ? "open" : "not tracked yet") : c.v === 1 ? "full" : c.v > 0 ? "lighter version" : "rest day";
             return (
               <div
                 key={k}
                 title={`${fmtDay(d)} · ${label} · slept ${sleep[c.i]} h`}
                 className={`flex aspect-square max-w-full items-center justify-center rounded-md font-mono text-[11px] normal-case tabular-nums ${
-                  c.v === 0 ? "border border-dashed border-[#b7c5bf] text-[#9aa8a2]" : c.v == null ? "border border-[#dde5e0] text-[#5b6b64]" : ""
+                  c.v === 0 ? "border border-dashed border-[#b7c5bf] text-[#9aa8a2]" : c.v == null ? (isToday ? "border border-[#dde5e0] text-[#5b6b64]" : "text-[#c3cec9]") : ""
                 } ${isToday ? "ring-2 ring-[#15241f] ring-offset-1" : ""}`}
                 style={style}
               >
@@ -1336,30 +1601,24 @@ function HabitDetail({ id, values, todayValue, stats, color, goal, sleep, onBack
 /*  App shell                                                          */
 /* ------------------------------------------------------------------ */
 export default function MomentumHabits() {
-  const [setup, setSetup] = useState(null); // { habits, goal }
+  const { data, status, saving, update } = useStoredData();
   const [view, setView] = useState("today");
   const [detail, setDetail] = useState(null);
-  const [today, setToday] = useState({});
-  const [modes, setModes] = useState({});
-  const [todos, setTodos] = useState([]);
+  const [editing, setEditing] = useState(false);
 
-  const sleep = useMemo(() => simulateSleep(), []);
-  const values = useMemo(() => {
-    if (!setup) return {};
-    return Object.fromEntries(setup.habits.map((id, i) => [id, simulateHabit(byId[id], i, sleep)]));
-  }, [setup, sleep]);
+  const win = useMemo(() => (data ? deriveWindow(data) : null), [data]);
   const stats = useMemo(
-    () => Object.fromEntries(Object.entries(values).map(([id, v]) => [id, habitStats(id, v, sleep)])),
-    [values, sleep]
+    () => (win ? Object.fromEntries(data.habits.map((id) => [id, habitStats(id, win.values[id], win.sleep, win.priors[id])])) : {}),
+    [win]
   );
   const suggestions = useMemo(
-    () => (setup ? buildSuggestions({ habits: setup.habits, stats, sleep, goal: setup.goal }) : []),
-    [setup, stats, sleep]
+    () => (win ? buildSuggestions({ habits: data.habits, stats, sleep: win.sleep, goal: data.goal }) : []),
+    [win, stats]
   );
   // include today's check-ins in the progress chart once they exist
   const valuesWithToday = useMemo(
-    () => Object.fromEntries(Object.entries(values).map(([id, v]) => [id, today[id] > 0 ? [...v, today[id]] : v])),
-    [values, today]
+    () => (win ? Object.fromEntries(data.habits.map((id) => [id, win.today[id] > 0 ? [...win.values[id], win.today[id]] : win.values[id]])) : {}),
+    [win]
   );
 
   const fonts = (
@@ -1369,16 +1628,43 @@ export default function MomentumHabits() {
       .momentum-root .font-mono{font-family:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace}`}</style>
   );
 
-  if (!setup) {
+  if (status === "loading") {
+    return (
+      <div className="momentum-root flex min-h-screen items-center justify-center bg-[#f3f6f4] text-sm text-[#5b6b64]">
+        {fonts}
+        <span className="flex items-center gap-2">
+          <Leaf size={16} className="animate-pulse text-[#1f6f54]" /> Loading your habits…
+        </span>
+      </div>
+    );
+  }
+
+  if (!data || editing) {
     return (
       <div className="momentum-root min-h-screen bg-[#f3f6f4] text-[#15241f]">
         {fonts}
         <Onboarding
-          onDone={(habits, goal) => {
-            setSetup({ habits, goal });
-            setModes(Object.fromEntries(habits.map((id) => [id, "full"])));
-            setToday({});
-            setTodos(seedTodos(habits));
+          initial={data && editing ? { habits: data.habits, goal: data.goal } : null}
+          onCancel={() => setEditing(false)}
+          onReset={() => {
+            update(() => null);
+            setEditing(false);
+            setView("today");
+          }}
+          onDone={(habits, goal, withSample) => {
+            if (data && editing) {
+              update((d) => {
+                d.habits = habits;
+                d.goal = goal;
+                habits.forEach((id) => {
+                  if (!d.starts[id]) d.starts[id] = todayKey();
+                });
+                return d;
+              });
+            } else {
+              update(() => newData(habits, goal, withSample));
+            }
+            setEditing(false);
             setView("today");
           }}
         />
@@ -1386,16 +1672,48 @@ export default function MomentumHabits() {
     );
   }
 
-  const colors = setup.habits.map((_, i) => SERIES[i]);
-  const setMode = (id, m) => {
-    setModes((x) => ({ ...x, [id]: m }));
-    setToday((t) => (t[id] > 0 ? { ...t, [id]: m === "lite" ? LITE_CREDIT : 1 } : t));
-  };
-  const toggleToday = (id) => setToday((t) => ({ ...t, [id]: t[id] > 0 ? 0 : modes[id] === "lite" ? LITE_CREDIT : 1 }));
+  const habits = data.habits;
+  const { today, modes: storedModes, sleep } = win;
+  const modes = Object.fromEntries(habits.map((id) => [id, storedModes[id] || "full"]));
+  const colors = habits.map((_, i) => SERIES[i]);
+  const tk = todayKey();
+  const setMode = (id, m) =>
+    update((d) => {
+      const map = d.modes && d.modes.day === tk ? d.modes.map : {};
+      d.modes = { day: tk, map: { ...map, [id]: m } };
+      if (d.log[tk]?.[id] > 0) d.log[tk][id] = m === "lite" ? LITE_CREDIT : 1;
+      return d;
+    });
+  const toggleToday = (id) =>
+    update((d) => {
+      const day = { ...(d.log[tk] || {}) };
+      day[id] = day[id] > 0 ? 0 : modes[id] === "lite" ? LITE_CREDIT : 1;
+      d.log[tk] = day;
+      return d;
+    });
+  const setSleep = (h) =>
+    update((d) => {
+      d.sleep[tk] = Math.round(h * 10) / 10;
+      return d;
+    });
+  const setTodos = (fn) =>
+    update((d) => {
+      d.todos = typeof fn === "function" ? fn(d.todos || []) : fn;
+      return d;
+    });
+  const todos = data.todos || [];
   const openHabit = (id) => {
     setDetail(id);
     setView("habit");
   };
+
+  const saveBadge = {
+    cloud: { icon: Cloud, text: saving ? "Saving…" : "Saved to your account" },
+    local: { icon: HardDrive, text: "Saved on this device" },
+    memory: { icon: CloudOff, text: "Not saved: storage unavailable" },
+    readonly: { icon: CloudOff, text: "View only: changes aren't saved" },
+    error: { icon: CloudOff, text: "Couldn't save. Will retry on your next change" },
+  }[status];
 
   const tabs = [
     { key: "today", label: "Today", icon: Sun },
@@ -1429,7 +1747,7 @@ export default function MomentumHabits() {
               );
             })}
           </nav>
-          <button id="edit-habits" onClick={() => setSetup(null)} className="whitespace-nowrap text-xs text-[#5b6b64] hover:text-[#15241f]">
+          <button id="edit-habits" onClick={() => setEditing(true)} className="whitespace-nowrap text-xs text-[#5b6b64] hover:text-[#15241f]">
             Edit habits
           </button>
         </div>
@@ -1438,35 +1756,39 @@ export default function MomentumHabits() {
       <main className="mx-auto max-w-3xl px-4 py-6">
         {view === "today" && (
           <Today
-            habits={setup.habits}
+            habits={habits}
             stats={stats}
             today={today}
             modes={modes}
             setMode={setMode}
             toggleToday={toggleToday}
             suggestions={suggestions}
-            goal={setup.goal}
+            goal={data.goal}
             sleep={sleep}
+            setSleep={setSleep}
             openHabit={openHabit}
             colors={colors}
             todos={todos}
             setTodos={setTodos}
           />
         )}
-        {view === "progress" && <Progress habits={setup.habits} values={valuesWithToday} stats={stats} colors={colors} goal={setup.goal} />}
-        {view === "habit" && detail && (
+        {view === "progress" && <Progress habits={habits} values={valuesWithToday} priors={win.priors} stats={stats} colors={colors} goal={data.goal} />}
+        {view === "habit" && detail && habits.includes(detail) && (
           <HabitDetail
             id={detail}
-            values={values[detail]}
+            values={win.values[detail]}
             todayValue={today[detail] || 0}
             stats={stats[detail]}
-            color={colors[setup.habits.indexOf(detail)]}
-            goal={setup.goal}
+            color={colors[habits.indexOf(detail)]}
+            goal={data.goal}
             sleep={sleep}
             onBack={() => setView("today")}
           />
         )}
         <footer className="mt-10 border-t border-[#dde5e0] pt-4 text-center text-xs text-[#9aa8a2]">
+          <span className="mb-2 flex items-center justify-center gap-1.5 text-[#5b6b64]">
+            <saveBadge.icon size={12} /> {saveBadge.text}
+          </span>
           No streaks to lose, no leaderboards. Missed days lower the score a little, and it comes back.
         </footer>
       </main>
