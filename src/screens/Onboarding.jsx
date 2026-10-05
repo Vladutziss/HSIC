@@ -1,10 +1,11 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, ArrowRight, Check, Moon, Plus, Sparkles, Wand2 } from "lucide-react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { ArrowLeft, ArrowRight, Check, History, Moon, Plus, Sparkles, Wand2 } from "lucide-react";
 import { Button, Chip, Corners, Field, Gems, Toggle } from "../components/ui.jsx";
 import { Sprite } from "../components/Sprite.jsx";
 import { HABIT_ICONS, iconFor } from "../components/icons.js";
 import { DayPicker, DifficultyPicker, scheduleLabel } from "../components/HabitEditor.jsx";
 import { CATALOG, MAX_HABITS, PATHS, PATH_LIST, RECOMMENDED, habitFromCatalog, nextColor, uid } from "../lib/catalog.js";
+import { legacyHabits, legacySummary } from "../lib/legacy.js";
 
 const GOAL_EXAMPLES = {
   sport: "Să alerg primul meu semimaraton până în primăvară.",
@@ -90,7 +91,7 @@ function CustomHabitForm({ path, habits, onAdd, onCancel }) {
   );
 }
 
-export default function Onboarding({ onDone, store, today }) {
+export default function Onboarding({ onDone, store, today, legacy }) {
   const [step, setStep] = useState(0);
   const [nick, setNick] = useState("");
   const [path, setPath] = useState(null);
@@ -100,6 +101,19 @@ export default function Onboarding({ onDone, store, today }) {
   const [reviewTime, setReviewTime] = useState("21:00");
   const [demo, setDemo] = useState(true);
   const [filter, setFilter] = useState("rec");
+  const [importOld, setImportOld] = useState(true);
+  const fromLegacy = useRef(false);
+  const old = legacy ? legacySummary(legacy) : null;
+
+  // data from the first version of the app: goal and habits come pre-filled
+  useEffect(() => {
+    if (!legacy || fromLegacy.current) return;
+    fromLegacy.current = true;
+    setDemo(false);
+    if (legacy.goal) setGoal((g) => g || legacy.goal);
+    const hs = legacyHabits(legacy, today);
+    if (hs.length) setHabits((cur) => (cur.length ? cur : hs));
+  }, [legacy, today]);
 
   // prefill the name from the claude.ai profile when there is one
   useEffect(() => {
@@ -113,6 +127,7 @@ export default function Onboarding({ onDone, store, today }) {
 
   const choosePath = (p) => {
     setPath(p);
+    if (fromLegacy.current && importOld && habits.length) return;
     if (!habits.length || habits.every((h) => h.catalogId)) {
       const recs = RECOMMENDED[p].map((id) => CATALOG.find((c) => c.id === id));
       const list = [];
@@ -134,7 +149,10 @@ export default function Onboarding({ onDone, store, today }) {
   }, [path, filter]);
 
   const canNext = [nick.trim().length > 0, !!path, goal.trim().length >= 4, habits.length > 0, true, true][step];
-  const next = () => (step < STEPS.length - 1 ? setStep(step + 1) : onDone({ nick: nick.trim(), path, goal: goal.trim(), habits, reviewTime, demo }));
+  const next = () =>
+    step < STEPS.length - 1
+      ? setStep(step + 1)
+      : onDone({ nick: nick.trim(), path, goal: goal.trim(), habits: habits.map((h) => ({ ...h, cat: h.catalogId ? h.cat : h.cat || path })), reviewTime, demo, importOld: !!old && importOld });
 
   const eggPath = path || "creativ";
   let content;
@@ -153,6 +171,21 @@ export default function Onboarding({ onDone, store, today }) {
           <Field label="Cum să-ți spunem?" htmlFor="ob-nick">
             <input id="ob-nick" className="field" value={nick} maxLength={24} placeholder="Numele sau porecla ta" onChange={(e) => setNick(e.target.value)} />
           </Field>
+          {old && (
+            <label htmlFor="ob-import" className="flex items-start justify-between gap-4 rounded-2xl bg-mint/10 p-4 ring-1 ring-mint/30">
+              <span className="flex gap-3">
+                <History size={20} className="mt-0.5 shrink-0 text-mint" aria-hidden="true" />
+                <span>
+                  <span className="block font-extrabold text-ink">Am găsit datele din prima versiune</span>
+                  <span className="block text-xs font-semibold text-body">
+                    {old.todos} to-do-uri ({old.open} nefăcute), {old.habits} obiceiuri{old.goal ? " și obiectivul tău" : ""}. Le aducem în aplicația nouă; istoricul vechi de bife nu se
+                    mută.
+                  </span>
+                </span>
+              </span>
+              <Toggle id="ob-import" checked={importOld} onChange={setImportOld} label="Importă datele vechi" />
+            </label>
+          )}
         </div>
       </div>
     );
