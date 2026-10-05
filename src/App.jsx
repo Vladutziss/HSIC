@@ -11,6 +11,7 @@ import { permissionState } from "./lib/platform.js";
 import { useGroups } from "./lib/groups.js";
 import { seedDemo, stripDemo } from "./lib/demo.js";
 import { DEFAULT_NAMES, uid } from "./lib/catalog.js";
+import { legacyTodos } from "./lib/legacy.js";
 import { Confirm, ToastProvider, useToast } from "./components/ui.jsx";
 import { Shell } from "./components/Shell.jsx";
 import { ProofModal } from "./components/ProofModal.jsx";
@@ -311,6 +312,7 @@ function Game() {
       s = r.state;
       seeded = r.months;
     }
+    if (draft.importOld && store.legacy) s.todos = [...legacyTodos(store.legacy, today), ...(s.todos || [])];
     update(() => s);
     if (seeded) store.putMonths(seeded);
     go("home");
@@ -332,7 +334,7 @@ function Game() {
   // ------------------------------------------------------------ render
 
   if (state === undefined) return <Loading />;
-  if (state === null) return <Onboarding onDone={startGame} store={store} today={today} />;
+  if (state === null) return <Onboarding onDone={startGame} store={store} today={today} legacy={store.legacy} />;
   if (!d) return <Loading />;
 
   const common = { state, d, today, go, ai, months, recentStories };

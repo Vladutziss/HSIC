@@ -41,6 +41,8 @@ Versiunea publicată folosește capabilitățile paginilor Claude:
 
 Ca să folosească grupurile, prietenii trebuie să poată deschide și edita aplicația (partajare din meniul Share).
 
+**Datele din prima versiune** (`data/users/<id>/momentum`) nu se șterg. La primul onboarding în versiunea nouă, obiectivul și obiceiurile vechi sunt precompletate, iar to-do-urile se importă (opțiune activă implicit). Istoricul vechi de bife nu se mută, fiindcă era în mare parte date demonstrative.
+
 ## Structură
 
 ```
@@ -52,6 +54,7 @@ src/lib/groups.js    grupuri, clasament, remindere, grup demonstrativ
 src/lib/quotes.js    citate pentru momentele-cheie
 src/lib/moments.js   detectarea momentelor-cheie
 src/lib/demo.js      3 săptămâni de date demonstrative
+src/lib/legacy.js    import din prima versiune a aplicației
 src/screens/         Onboarding, Acasă, Obiceiuri, Personaj, Grup, Planificator, Statistici, Setări
 src/components/      interfață comună, grafice, ferestre pentru dovezi, momente, obiceiuri, to-do
 scripts/build-artifact.mjs   construiește pagina pentru claude.ai

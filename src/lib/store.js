@@ -9,6 +9,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { capability } from "./platform.js";
 
 const PREFIX = "momentum2:";
+const LEGACY_LOCAL_KEY = "momentum-habits-v1"; // the first version of the app
 const NONE = Symbol("none");
 export const clone = (x) => (x == null ? x : JSON.parse(JSON.stringify(x)));
 
@@ -88,6 +89,7 @@ export function useAppStore() {
   const [mode, setMode] = useState("loading"); // cloud | local | memory
   const [saveStatus, setSaveStatus] = useState("saved");
   const [months, setMonths] = useState({});
+  const [legacy, setLegacy] = useState(null); // data from the first version of the app, offered for import
   const env = useRef(null);
 
   useEffect(() => {
@@ -104,6 +106,14 @@ export function useAppStore() {
       env.current = e;
       setState(r.value);
       setMode(e.kind);
+      if (!r.value) {
+        try {
+          const old = window.localStorage.getItem(LEGACY_LOCAL_KEY);
+          if (old) setLegacy(JSON.parse(old));
+        } catch {
+          /* nothing to import */
+        }
+      }
     };
 
     (async () => {
@@ -142,6 +152,13 @@ export function useAppStore() {
           e.data = data;
           setState(data);
           setMode("cloud");
+          if (!data && !e.legacyChecked) {
+            e.legacyChecked = true;
+            db.doc(`data/users/${uid}/momentum`)
+              .get()
+              .then((old) => old.exists && setLegacy(clone(old.data())))
+              .catch(() => {});
+          }
         },
         () => {
           if (first) {
@@ -237,7 +254,7 @@ export function useAppStore() {
     e.stateWriter.schedule(null, 0);
   }, []);
 
-  return { state, mode, saveStatus, months, update, loadMonth, updateMonth, putMonths, wipe, env };
+  return { state, mode, saveStatus, months, legacy, update, loadMonth, updateMonth, putMonths, wipe, env };
 }
 
 // ------------------------------------------------------------ uploads
