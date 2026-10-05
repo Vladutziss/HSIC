@@ -1,23 +1,65 @@
-# HSIC · Momentum habit tracker (prototype)
+# Momentum · self-improvement RPG
 
-`src/MomentumHabits.jsx` is a single self-contained React component (Tailwind, recharts, lucide-react).
+Aplicație de obiceiuri gamificată: îți crești **momentum-ul**, trimiți **dovezi** (poze, note vocale, text) pe care le verifică AI-ul, iar un **personaj** ieșit dintr-un ou evoluează odată cu tine. Interfața e un joc RPG întunecat, cu bare de XP, insigne de nivel, serii și clasament.
 
-- **Momentum score** instead of streaks: a check-in closes 8.5% of the gap to 100 (up to +50% on a 6-day run), a miss keeps 93% (95% for further consecutive misses), and the first 3 check-ins after a miss get a 1.6× comeback bonus. A "lighter version" counts for 60% and is never a miss.
-- **Screens:** Week planner (to-dos on a Mon–Sun calendar with drag-and-drop, a Later tray and each day's habit check-ins), onboarding (3–4 habits + goal), Today dashboard with an adaptive AI-suggestion card and a to-do list (Today/Later, optional habit tag), Progress (30-day trajectory + 60-day projection, streak vs momentum comparison), and habit detail (check-in calendar + templated AI insight).
-- Seeds ~30 days of simulated check-ins and sleep data so the mechanic is visible immediately.
+## Ce face
 
-Usage: `import MomentumHabits from "./src/MomentumHabits.jsx"` and render `<MomentumHabits />` in any React 18 + Tailwind project.
+| Din plan | Cum e implementat |
+| --- | --- |
+| Obiceiuri personalizate + predefinite | Catalog cu 25 de obiceiuri pe 5 drumuri (Sport, Studiu, Bani, Minte, Creativitate) și editor de obiceiuri proprii: iconiță, dificultate, zile, oră, țintă. Maxim 8 active. |
+| Momentum + niveluri, reset după inactivitate | Puncte de momentum din bife, dovezi, to-do-uri și raportul de seară, cu bonus pentru zile la rând (până la +40%). 10 niveluri (Scânteie → Supernovă). O zi ratată scade puțin; după 3 zile la rând fără activitate (configurabil 2–5), momentum-ul revine la zero. |
+| Streak-uri cu 2 revive-uri/lună | Seria numără zilele cu cel puțin o bifă. A doua zi după o zi ratată poți folosi un revive (2 pe lună). |
+| Personaj care evoluează | La onboarding primești un ou; drumul ales decide clasa: Atlet, Cărturar, Negustor, Înțelept sau Bard. Evoluează doar din dovezi: Ou → Pui → Ucenic → Adept → Maestru → Legendă, cu echipament nou la fiecare stadiu (pixel art generat procedural). |
+| AI verifică dovezile și scrie povestea | Fiecare dovadă primește un verdict (verificată / plauzibilă / respinsă) și un fragment nou din povestea personajului. |
+| Nu moare: doarme și se bucură | Doarme cât lipsești (fără activitate azi și ieri) și sare de bucurie în ziua în care revii. |
+| Grupuri / partener de progres | Grupuri cu cod de invitație, clasament săptămânal (și după momentum sau serie), remindere către o persoană, mai multe sau tot grupul. Un grup demonstrativ apare până îți faci unul. |
+| Raport zilnic la ora aleasă | La ora ritualului de seară, AI-ul rezumă ziua și dă un scor; scorul zilei = 60% activitate bifată + 40% evaluarea AI, iar jumătate din el devine momentum. |
+| Grafice | Momentum general cu praguri de nivel și resetări marcate, momentum pe fiecare obicei, scorurile zilelor, heatmap de activitate pe 26 de săptămâni. |
+| To-do + calendar | Listă de to-do-uri (+5 momentum fiecare) și calendar pe săptămână (cu ore, drag-and-drop) sau pe lună; obiceiurile cu oră apar automat. |
+| Citate la momente-cheie | Resetare, scădere de momentum, revenire, eclozare, evoluție, nivel nou, serii de 3/7/14/30… zile. Citate cu sursă, alese după moment și drum, plus o propoziție de context scrisă de AI. |
 
-## Where data is stored
+## Rulare
 
-Everything you enter (habits, goal, daily check-ins, sleep, to-dos) is kept in one JSON document, with check-ins keyed by date, so each day's check-ins become real history.
+```bash
+npm install
+npm run dev              # aplicația în browser, cu date salvate local
+npm test                 # testele motorului de joc
+npm run build            # build static (Vite) în dist/
+npm run build:artifact   # o singură pagină HTML pentru claude.ai, în dist/momentum.html
+```
 
-- **As a Claude artifact:** the artifact's database, at `data/users/<your id>/momentum`. That path is private to you, even from other people the artifact is shared with.
-- **In your own React app:** `localStorage` under `momentum-habits-v1`.
-- If neither is available, data lasts for the session only. The footer shows which one is in use.
+În afara claude.ai aplicația merge complet, dar cu înlocuitori: datele stau în `localStorage`, rapoartele și poveștile vin din șabloane, iar grupul e doar cel demonstrativ.
 
-A tracked day with no check-in counts as a miss. A habit added later starts tracking on the day it was added. Momentum is replayed over your full history, not just the last 30 days. "Edit habits → Delete all my data" wipes the document.
+## Cum funcționează în claude.ai
 
-## Theme
+Versiunea publicată folosește capabilitățile paginilor Claude:
 
-Light and dark themes share one set of colour tokens (`THEMES` in the component). By default the app follows the Claude viewer's theme, or the OS setting outside Claude. The header button cycles System → Light → Dark, and that choice is remembered on the device.
+- **db**: datele fiecărei persoane stau privat în `data/users/<id>/state` (obiceiuri, istoric, setări) și `data/users/<id>/m-AAAA-LL` (dovezi, povești, texte de raport). Grupurile sunt documente comune: `groups/<id>`, `groups/<id>/members/<uid>` (doar statistici publice) și `groups/<id>/nudges/<id>`.
+- **sample**: AI-ul (Claude) rulează pe contul celui care folosește pagina, după ce își dă acordul. Folosește modelul rapid pentru verificări, rapoarte și povești.
+- **assets**: pozele și notele vocale (WebM/M4A) se păstrează ca fișiere ale aplicației. Fără acces de încărcare, se păstrează o miniatură.
+- **user**: numele membrilor din grup.
+
+Ca să folosească grupurile, prietenii trebuie să poată deschide și edita aplicația (partajare din meniul Share).
+
+## Structură
+
+```
+src/lib/engine.js    regulile jocului (momentum, niveluri, reset, serii, revive-uri, evoluție, stări)
+src/lib/sprites.js   pixel art procedural pentru personaj
+src/lib/ai.js        prompturi pentru verificare, poveste, raport și momente + variante scrise
+src/lib/store.js     salvare în baza de date a aplicației sau local
+src/lib/groups.js    grupuri, clasament, remindere, grup demonstrativ
+src/lib/quotes.js    citate pentru momentele-cheie
+src/lib/moments.js   detectarea momentelor-cheie
+src/lib/demo.js      3 săptămâni de date demonstrative
+src/screens/         Onboarding, Acasă, Obiceiuri, Personaj, Grup, Planificator, Statistici, Setări
+src/components/      interfață comună, grafice, ferestre pentru dovezi, momente, obiceiuri, to-do
+scripts/build-artifact.mjs   construiește pagina pentru claude.ai
+tests/engine.test.mjs        teste pentru regulile jocului
+```
+
+## Limitări cunoscute
+
+- Notificările (raportul de seară, reminderele) apar în aplicație când o deschizi; nu există notificări push.
+- AI-ul nu poate asculta notele vocale: evaluează descrierea scrisă lângă ele, deci o notă vocală ajunge cel mult „plauzibilă”.
+- În pagina publicată, înregistrarea directă de la microfon nu e permisă; se pot încărca note vocale înregistrate pe telefon.
