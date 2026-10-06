@@ -158,7 +158,12 @@ export default function AuthGate({ children }) {
     let sub = null;
     let cancelled = false;
     (async () => {
-      const c = inViewer() ? null : await getClient();
+      let c = null;
+      try {
+        c = inViewer() ? null : await getClient();
+      } catch (e) {
+        console.warn("Supabase is unavailable, running without a backend:", e); // e.g. a dev server started before vite.config.js defined __SUPABASE__
+      }
       if (cancelled) return;
       if (!c) return setPhase("off");
       setClient(c);
