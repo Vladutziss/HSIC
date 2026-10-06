@@ -13,6 +13,7 @@ import { seedDemo, stripDemo } from "./lib/demo.js";
 import { DEFAULT_NAMES, uid } from "./lib/catalog.js";
 import { legacyTodos } from "./lib/legacy.js";
 import { Confirm, ToastProvider, useToast } from "./components/ui.jsx";
+import { deleteAccount } from "./lib/account.js";
 import { Shell } from "./components/Shell.jsx";
 import { ProofModal } from "./components/ProofModal.jsx";
 import { MomentModal } from "./components/MomentModal.jsx";
@@ -383,8 +384,17 @@ function Game() {
         <SettingsScreen
           {...common}
           mode={store.mode}
+          env={store.env}
           onChange={(fn) => update(fn)}
           onRemoveDemo={removeDemo}
+          onDeleteAccount={() =>
+            setConfirm({
+              title: "Ștergi contul?",
+              text: "Se șterg contul, toate datele și toate fișierele tale, definitiv. Nu se poate anula.",
+              label: "Șterge contul",
+              run: () => deleteAccount(store.env),
+            })
+          }
           onWipe={() =>
             setConfirm({
               title: "Ștergi toate datele?",
