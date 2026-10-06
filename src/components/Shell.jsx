@@ -62,6 +62,7 @@ function SaveIndicator({ mode, saveStatus }) {
   if (mode === "loading") return null;
   const map = {
     cloud: { icon: Cloud, text: "Salvat în contul tău", cls: "text-mint" },
+    supabase: { icon: Cloud, text: "Salvat în contul tău, sincronizat pe toate dispozitivele", cls: "text-mint" },
     local: { icon: HardDrive, text: "Salvat pe acest dispozitiv", cls: "text-sky" },
     memory: { icon: CloudOff, text: "Nu se salvează: stocare indisponibilă", cls: "text-rose" },
   };

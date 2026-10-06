@@ -63,7 +63,9 @@ export function demoGroup(me, today) {
 
 export function useGroups({ store, state, update, myStats, today }) {
   const env = store.env.current;
-  const cloud = store.mode === "cloud" && env?.db && env?.uid;
+  const artifactDb = store.mode === "cloud" && env?.db && env?.uid; // claude.ai artifact database
+  const sb = store.mode === "supabase" && env?.client && env?.uid; // Supabase
+  const cloud = artifactDb || sb;
   const myId = cloud ? env.uid : "me";
   const gids = state?.groups || [];
   const [infos, setInfos] = useState({});
@@ -78,7 +80,7 @@ export function useGroups({ store, state, update, myStats, today }) {
   // subscriptions to the real groups
   const key = gids.join(",");
   useEffect(() => {
-    if (!cloud || !gids.length) return undefined;
+    if (!artifactDb || !gids.length) return undefined;
     const db = env.db;
     const unsubs = [];
     for (const gid of gids) {
@@ -113,12 +115,61 @@ export function useGroups({ store, state, update, myStats, today }) {
     }
     return () => unsubs.forEach((u) => u());
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cloud, key]);
+  }, [artifactDb, key]);
+
+  // Supabase: one query per table for all my groups, refreshed on Realtime events, on focus and slowly
+  useEffect(() => {
+    if (!sb || !gids.length) return undefined;
+    const client = env.client;
+    let alive = true;
+    const load = async () => {
+      const [g, m, n, r, p] = await Promise.all([
+        client.from("groups").select("*").in("id", gids),
+        client.from("group_members").select("*").in("group_id", gids),
+        client.from("nudges").select("*").in("group_id", gids).order("at", { ascending: false }).limit(200),
+        client.from("nudge_reads").select("nudge_id").eq("user_id", env.uid),
+        client.from("group_profiles").select("*"),
+      ]);
+      if (!alive) return;
+      const by = (rows, col) => (rows || []).reduce((acc, row) => ((acc[row[col]] ||= []).push(row), acc), {});
+      const read = new Set((r.data || []).map((x) => x.nudge_id));
+      const nudge = (x) => ({ id: x.id, from: x.from_user, to: x.to_users, text: x.text, at: x.at, read: read.has(x.id) ? { [env.uid]: true } : {} });
+      const infos = {};
+      for (const row of g.data || []) infos[row.id] = { name: row.name, code: row.code, kind: row.kind, owner: row.owner, createdAt: row.created_at };
+      for (const gid of gids) infos[gid] ||= { missing: true };
+      const membersBy = by(m.data, "group_id");
+      const nudgesBy = by(n.data, "group_id");
+      setInfos(infos);
+      setMembers(Object.fromEntries(gids.map((gid) => [gid, (membersBy[gid] || []).map((x) => ({ id: x.user_id, ...x.stats, updatedAt: x.updated_at }))])));
+      setInbox(Object.fromEntries(gids.map((gid) => [gid, (nudgesBy[gid] || []).filter((x) => x.to_users.includes(env.uid)).map(nudge)])));
+      setSent(Object.fromEntries(gids.map((gid) => [gid, (nudgesBy[gid] || []).filter((x) => x.from_user === env.uid).map(nudge)])));
+      setProfiles(Object.fromEntries((p.data || []).map((x) => [x.id, { name: x.name, avatarUrl: x.avatar_url }])));
+    };
+    load().catch(() => {});
+    let timer = null;
+    const soon = () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => load().catch(() => {}), 500);
+    };
+    const channel = client.channel(`groups-${env.uid}`);
+    for (const gid of gids) {
+      for (const table of ["group_members", "nudges"]) channel.on("postgres_changes", { event: "*", schema: "public", table, filter: `group_id=eq.${gid}` }, soon);
+    }
+    channel.subscribe();
+    const poll = setInterval(() => document.visibilityState === "visible" && load().catch(() => {}), 60000);
+    return () => {
+      alive = false;
+      clearTimeout(timer);
+      clearInterval(poll);
+      client.removeChannel(channel);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sb, key]);
 
   // names of the people on screen, resolved for this viewer
   const memberIds = useMemo(() => Object.values(members).flat().map((m) => m.id), [members]);
   useEffect(() => {
-    if (!cloud || !env.user || !memberIds.length) return;
+    if (!artifactDb || !env.user || !memberIds.length) return;
     let alive = true;
     env.user
       .profiles(memberIds)
@@ -128,7 +179,7 @@ export function useGroups({ store, state, update, myStats, today }) {
       alive = false;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [cloud, memberIds.join(",")]);
+  }, [artifactDb, memberIds.join(",")]);
 
   // publish my public stats to each group (only when they change)
   const statsJson = JSON.stringify(myStats || {});
@@ -138,12 +189,16 @@ export function useGroups({ store, state, update, myStats, today }) {
       for (const gid of gids) {
         if (published.current[gid] === statsJson) continue;
         published.current[gid] = statsJson;
-        env.db
-          .doc(`groups/${gid}/members/${env.uid}`)
-          .set({ ...myStats, updatedAt: new Date().toISOString() })
-          .catch(() => {
-            published.current[gid] = null;
-          });
+        const write = sb
+          ? env.client
+              .from("group_members")
+              .update({ stats: myStats, updated_at: new Date().toISOString() })
+              .match({ group_id: gid, user_id: env.uid })
+              .then(({ error }) => error && Promise.reject(error))
+          : env.db.doc(`groups/${gid}/members/${env.uid}`).set({ ...myStats, updatedAt: new Date().toISOString() });
+        write.catch(() => {
+          published.current[gid] = null;
+        });
       }
     }, 1200);
     return () => clearTimeout(t);
@@ -200,6 +255,13 @@ export function useGroups({ store, state, update, myStats, today }) {
   const create = useCallback(
     async (name, kind) => {
       if (!cloud) throw new Error("offline");
+      if (sb) {
+        const { data, error } = await env.client.rpc("create_group", { gname: name.trim().slice(0, 40), gkind: kind, stats: myStats || {} });
+        if (error || !data?.[0]) throw error || new Error("create_failed");
+        published.current[data[0].id] = JSON.stringify(myStats || {});
+        update((d) => ({ ...d, groups: [...(d.groups || []), data[0].id] }));
+        return { gid: data[0].id, code: data[0].code };
+      }
       const gid = newId("g");
       const code = newCode();
       await env.db.doc(`groups/${gid}`).set({ name: name.trim().slice(0, 40), code, kind, owner: env.uid, createdAt: new Date().toISOString() });
@@ -216,6 +278,15 @@ export function useGroups({ store, state, update, myStats, today }) {
     async (code) => {
       if (!cloud) throw new Error("offline");
       const clean = code.trim().toUpperCase();
+      if (sb) {
+        const { data: gid, error } = await env.client.rpc("join_group", { gcode: clean, stats: myStats || {} });
+        if (error) throw error;
+        if (!gid) return { ok: false, reason: "not_found" };
+        if (gids.includes(gid)) return { ok: true, gid, already: true };
+        published.current[gid] = JSON.stringify(myStats || {});
+        update((d) => ({ ...d, groups: [...(d.groups || []), gid] }));
+        return { ok: true, gid };
+      }
       const qs = await env.db.collection("groups").where("code", "==", clean).limit(1).get();
       if (qs.empty) return { ok: false, reason: "not_found" };
       const gid = qs.docs[0].id;
@@ -231,7 +302,8 @@ export function useGroups({ store, state, update, myStats, today }) {
 
   const leave = useCallback(
     async (gid) => {
-      if (cloud) await env.db.doc(`groups/${gid}/members/${env.uid}`).delete().catch(() => {});
+      if (sb) await env.client.from("group_members").delete().match({ group_id: gid, user_id: env.uid });
+      else if (cloud) await env.db.doc(`groups/${gid}/members/${env.uid}`).delete().catch(() => {});
       update((d) => ({ ...d, groups: (d.groups || []).filter((g) => g !== gid) }));
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -265,6 +337,11 @@ export function useGroups({ store, state, update, myStats, today }) {
       }
       if (!cloud) return;
       const nid = newId("n");
+      if (sb) {
+        const { error } = await env.client.from("nudges").insert({ id: nid, group_id: gid, from_user: env.uid, to_users: to, text: body });
+        if (error) throw error;
+        return;
+      }
       await env.db.doc(`groups/${gid}/nudges/${nid}`).set({ from: env.uid, to, text: body, at: new Date().toISOString(), read: {} });
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -278,6 +355,11 @@ export function useGroups({ store, state, update, myStats, today }) {
         return;
       }
       if (!cloud) return;
+      if (sb) {
+        await env.client.from("nudge_reads").upsert({ nudge_id: nid, user_id: env.uid }, { onConflict: "nudge_id,user_id", ignoreDuplicates: true });
+        setInbox((m) => ({ ...m, [gid]: (m[gid] || []).map((n) => (n.id === nid ? { ...n, read: { [env.uid]: true } } : n)) }));
+        return;
+      }
       await env.db
         .doc(`groups/${gid}/nudges/${nid}`)
         .update({ read: { [env.uid]: true } })
