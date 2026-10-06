@@ -70,30 +70,43 @@ Deno.serve(async (req) => {
   const prompt = buildPrompt(kind, body.params, !!image);
   const content = image ? [{ type: "text", text: prompt }, { type: "image_url", image_url: { url: image } }] : prompt;
 
-  let res: Response;
-  try {
-    res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json", "X-Title": "Momentum" },
-      body: JSON.stringify({
-        model,
-        messages: [{ role: "user", content }],
-        response_format: { type: "json_object" },
-        max_tokens: 600,
-        temperature: 0.7,
-      }),
-      signal: AbortSignal.timeout(45_000),
-    });
-  } catch {
-    return fail(504, "upstream_error");
+  // AI_MODEL may list several models, comma separated. The next one is tried when a model
+  // is rate-limited, fails, or answers with something that is not JSON; the reasons go to the logs.
+  const models = model.split(",").map((m) => m.trim()).filter(Boolean);
+  let failure = { status: 502, code: "upstream_error" };
+  for (const m of models) {
+    let res: Response;
+    try {
+      res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json", "X-Title": "Momentum" },
+        body: JSON.stringify({
+          model: m,
+          messages: [{ role: "user", content }],
+          response_format: { type: "json_object" },
+          max_tokens: 600,
+          temperature: 0.7,
+        }),
+        signal: AbortSignal.timeout(30_000),
+      });
+    } catch {
+      console.error("openrouter", m, "network error or timeout");
+      failure = { status: 504, code: "upstream_error" };
+      continue;
+    }
+    if (!res.ok) {
+      console.error("openrouter", m, res.status, (await res.text()).slice(0, 300));
+      failure = res.status === 429 ? { status: 429, code: "rate_limited" } : { status: 502, code: image && res.status === 400 ? "image_rejected" : "upstream_error" };
+      continue;
+    }
+    try {
+      const data = await res.json();
+      const text = data?.choices?.[0]?.message?.content;
+      return reply(200, { result: parseJson(typeof text === "string" ? text : "") });
+    } catch {
+      console.error("openrouter", m, "the answer was not JSON");
+      failure = { status: 502, code: "invalid_json" };
+    }
   }
-  if (!res.ok) return fail(res.status === 429 ? 429 : 502, res.status === 429 ? "rate_limited" : image && res.status === 400 ? "image_rejected" : "upstream_error");
-
-  try {
-    const data = await res.json();
-    const text = data?.choices?.[0]?.message?.content;
-    return reply(200, { result: parseJson(typeof text === "string" ? text : "") });
-  } catch {
-    return fail(502, "invalid_json");
-  }
+  return fail(failure.status, failure.code);
 });
