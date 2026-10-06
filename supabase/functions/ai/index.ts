@@ -41,7 +41,8 @@ Deno.serve(async (req) => {
   // who is asking: the caller's own JWT, so the rate limit and RLS apply to them
   const auth = req.headers.get("Authorization");
   if (!auth) return fail(401, "session_expired");
-  const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!, { global: { headers: { Authorization: auth } } });
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? req.headers.get("apikey") ?? "";
+  const supabase = createClient(Deno.env.get("SUPABASE_URL")!, anonKey, { global: { headers: { Authorization: auth } } });
   const { data: who, error: authError } = await supabase.auth.getUser();
   if (authError || !who.user) return fail(401, "session_expired");
 
