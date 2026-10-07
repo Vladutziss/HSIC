@@ -4,3 +4,5 @@ dist/
 .env*.local
 supabase/.temp/
 supabase/.branches/
+
+.vercel
