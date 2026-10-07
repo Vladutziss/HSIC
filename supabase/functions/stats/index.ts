@@ -1,14 +1,14 @@
 // Statistics for Momentum, computed next to the data. Deployed as a Supabase Edge Function:
 //
-//   supabase functions deploy stats
+//   npm run sync:functions && supabase functions deploy stats
 //
 // Body: {today: "YYYY-MM-DD"} (the player's local day). Reply: {stats: {...}} (see src/lib/stats.js)
 // or {code} with a non-2xx status. It runs the same rules (src/lib/engine.js) as the client, on the
 // caller's own rows (their JWT, so RLS applies).
 
 import { createClient } from "jsr:@supabase/supabase-js@2";
-import { loadState } from "../../../src/lib/remote.js";
-import { buildStats } from "../../../src/lib/stats.js";
+import { loadState } from "../_shared/app/remote.js";
+import { buildStats } from "../_shared/app/stats.js";
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
