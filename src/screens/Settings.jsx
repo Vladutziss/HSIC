@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Bot, Database, Download, FlaskConical, LogOut, Moon, RotateCcw, Shield, Trash2, User, UserX } from "lucide-react";
+import { Bot, Database, Download, FlaskConical, LogOut, Moon, Shield, Trash2, User, UserX } from "lucide-react";
 import { Button, Chip, Field, LevelBadge, Panel, SectionTitle, Toggle } from "../components/ui.jsx";
 import { PATHS } from "../lib/catalog.js";
 import { LEVELS, RULES } from "../lib/engine.js";
@@ -7,7 +7,7 @@ import { exportData, signOut } from "../lib/account.js";
 
 const TIMES = ["18:00", "18:30", "19:00", "19:30", "20:00", "20:30", "21:00", "21:30", "22:00", "22:30", "23:00", "23:30"];
 
-export default function Settings({ state, d, ai, mode, env, onChange, onRemoveDemo, onWipe, onDeleteAccount }) {
+export default function Settings({ state, d, ai, mode, env, onChange, onWipe, onDeleteAccount }) {
   const [exporting, setExporting] = useState(false);
   const [nick, setNick] = useState(state.profile?.nick || "");
   const [goal, setGoal] = useState(state.profile?.goal || "");
@@ -152,14 +152,6 @@ export default function Settings({ state, d, ai, mode, env, onChange, onRemoveDe
                 ? "Datele se salvează în browserul acestui dispozitiv."
                 : "Stocarea nu e disponibilă: datele se pierd când închizi pagina."}
           </p>
-          {state.meta?.demo && (
-            <div className="inset flex flex-wrap items-center gap-3 p-3">
-              <span className="min-w-[180px] flex-1 text-sm text-body">Ai pornit cu 3 săptămâni de date demonstrative.</span>
-              <Button variant="ghost" size="sm" icon={RotateCcw} onClick={onRemoveDemo}>
-                Șterge datele demo
-              </Button>
-            </div>
-          )}
           {mode === "supabase" && (
             <div className="flex flex-wrap gap-2">
               <Button variant="ghost" size="sm" icon={Download} busy={exporting} onClick={download}>

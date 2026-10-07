@@ -384,7 +384,7 @@ export function useAppStore() {
     e.stateWriter.schedule(null, 0);
   }, []);
 
-  return { state, mode, saveStatus, months, legacy, update, loadMonth, updateMonth, putMonths, wipe, env };
+  return { state, mode, saveStatus, months, legacy, update, loadMonth, updateMonth, wipe, env };
 }
 
 // ------------------------------------------------------------ uploads

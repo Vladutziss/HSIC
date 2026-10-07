@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { applyOps, diff, diffMonth, fromRows, monthRange, monthToRows, rowsToMonth, toRows } from "../src/lib/remote.js";
 import { computeTimeline } from "../src/lib/engine.js";
-import { seedDemo, stripDemo } from "../src/lib/demo.js";
+import { seedHistory } from "./fixtures/history.mjs";
 import { CATALOG, habitFromCatalog } from "../src/lib/catalog.js";
 
 const UID = "00000000-0000-0000-0000-000000000001";
@@ -37,15 +37,15 @@ function database(state, months) {
   const byDay = new Map(rows.day_reviews.map((r) => [r.day, { ...r }]));
   const monthRows = Object.values(months).map((doc) => monthToRows(doc, UID));
   for (const m of monthRows) for (const r of m.day_reviews) byDay.set(r.day, { ...(byDay.get(r.day) || {}), ...r });
-  const day_reviews = [...byDay.values()].map((r) => ({ ai_score: null, at: null, summary: null, highlight: null, tip: null, ai: false, demo: false, ...r }));
+  const day_reviews = [...byDay.values()].map((r) => ({ ai_score: null, at: null, summary: null, highlight: null, tip: null, ai: false, ...r }));
   return {
     state: { ...rows, profile: { ...rows.profile, id: UID }, day_reviews },
     month: { proofs: monthRows.flatMap((m) => m.proofs), chapters: monthRows.flatMap((m) => m.chapters), day_reviews },
   };
 }
 
-test("round trip of a demo player keeps every derived number", () => {
-  const seeded = seedDemo(newState(), TODAY);
+test("round trip of a player with history keeps every derived number", () => {
+  const seeded = seedHistory(newState(), TODAY);
   const db = database(seeded.state, seeded.months);
   const back = fromRows({ ...db.state, groups: [] });
   assert.deepEqual(norm(back), norm(seeded.state));
@@ -53,7 +53,7 @@ test("round trip of a demo player keeps every derived number", () => {
 });
 
 test("month documents round trip through proofs, chapters and review text", () => {
-  const seeded = seedDemo(newState(), TODAY);
+  const seeded = seedHistory(newState(), TODAY);
   const db = database(seeded.state, seeded.months);
   for (const [ym, doc] of Object.entries(seeded.months)) {
     const [from, to] = monthRange(ym);
@@ -116,8 +116,8 @@ test("emptying the state clears the profile and deletes its rows", () => {
   assert.equal(ops.at(-1).table, "habits"); // habits last: completions go first
 });
 
-test("month diff: new proof is one upsert, removing demo data is deletes", () => {
-  const seeded = seedDemo(newState(), TODAY);
+test("month diff: new proof is one upsert, removing a proof is a delete", () => {
+  const seeded = seedHistory(newState(), TODAY);
   const [ym, doc] = Object.entries(seeded.months)[0];
   const next = { ...doc, proofs: [...doc.proofs, { id: "p-new", day: TODAY, habitId: seeded.state.habits[0].id, type: "note", note: "ok", verdict: "self", at: `${TODAY}T10:00:00Z` }] };
   const ops = diffMonth(doc, next, UID);
@@ -125,16 +125,15 @@ test("month diff: new proof is one upsert, removing demo data is deletes", () =>
   assert.equal(ops[0].table, "proofs");
   assert.equal(ops[0].rows[0].id, "p-new");
 
-  const stripped = stripDemo(structuredClone(seeded.state), structuredClone(seeded.months), TODAY);
-  const strip = diffMonth(doc, stripped.months[ym], UID);
-  assert.ok(strip.some((o) => o.op === "delete" && o.table === "proofs"));
+  const removed = diffMonth(doc, { ...doc, proofs: doc.proofs.slice(1) }, UID);
+  assert.ok(removed.some((o) => o.op === "delete" && o.table === "proofs"));
 });
 
 test("a review text removed from a month clears the text columns instead of deleting the score row", () => {
   const doc = { proofs: [], chapters: [], reviews: { "2026-10-04": { summary: "s", highlight: "h", tip: "t", ai: true } } };
   const ops = diffMonth(doc, { ...doc, reviews: {} }, UID);
   assert.deepEqual(ops, [
-    { op: "upsert", table: "day_reviews", rows: [{ user_id: UID, day: "2026-10-04", summary: null, highlight: null, tip: null, ai: false, demo: false }], onConflict: "user_id,day" },
+    { op: "upsert", table: "day_reviews", rows: [{ user_id: UID, day: "2026-10-04", summary: null, highlight: null, tip: null, ai: false }], onConflict: "user_id,day" },
   ]);
 });
 
