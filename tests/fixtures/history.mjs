@@ -1,11 +1,10 @@
-// Three weeks of example history so a new player can see every mechanic:
-// rising momentum, a reset after three quiet days, a revived streak, proofs
-// with story fragments, AI reviews and planned to-dos.
+// Test fixture: three weeks of generated history (rising momentum, a reset after three quiet
+// days, a revived streak, proofs with story fragments, AI reviews, to-dos). Not part of the app.
 
-import { CODE, DIFF, evolutionPoints, isScheduled } from "./engine.js";
-import { addDays, monthKey, weekday } from "./dates.js";
-import { uid } from "./catalog.js";
-import { TEMPLATE_TITLES, templateReview, templateStory } from "./ai.js";
+import { CODE, DIFF, isScheduled } from "../../src/lib/engine.js";
+import { addDays, monthKey, weekday } from "../../src/lib/dates.js";
+import { uid } from "../../src/lib/catalog.js";
+import { TEMPLATE_TITLES, templateReview, templateStory } from "../../src/lib/ai.js";
 
 function mulberry32(a) {
   return () => {
@@ -25,12 +24,12 @@ const NOTES = [
   "Puțin mai scurt decât planul, dar complet.",
 ];
 
-export function seedDemo(state, today) {
+export function seedHistory(state, today) {
   const rng = mulberry32(20261005);
   const start = addDays(today, -24);
   const gap = new Set([addDays(today, -17), addDays(today, -16), addDays(today, -15)]); // resets momentum
   const missed = addDays(today, -7); // a single missed day, revived the next day
-  state.meta = { ...state.meta, start, demo: { from: start, to: addDays(today, -1) } };
+  state.meta = { ...state.meta, start };
   for (const h of state.habits) h.createdAt = start;
 
   const log = {};
@@ -68,7 +67,6 @@ export function seedDemo(state, today) {
     done,
     doneOn: done ? date : null,
     createdAt: start,
-    demo: true,
   });
   state.todos = [
     T("Cumpărături pentru săptămână", addDays(today, -3), "18:30", 45, true),
@@ -100,7 +98,6 @@ export function seedDemo(state, today) {
       title: TEMPLATE_TITLES[i % TEMPLATE_TITLES.length],
       story: templateStory({ pathId: state.profile.path, name, habitName: p.habit.name, verdict, seed: `${p.day}${p.habit.id}` }),
       at: `${p.day}T19:0${i % 10}:00`,
-      demo: true,
     });
   });
   for (const d of Object.keys(reviews).sort().slice(-6)) {
@@ -112,32 +109,9 @@ export function seedDemo(state, today) {
       done: !!log[d]?.[h.id],
       proof: log[d]?.[h.id] > 1 ? VERDICT[log[d][h.id]] : null,
     }));
-    month(d).reviews[d] = { ...templateReview({ habits }, reviews[d].ai), ai: true, demo: true };
+    month(d).reviews[d] = { ...templateReview({ habits }, reviews[d].ai), ai: true };
   }
   state.meta.months = Object.keys(months);
   state.seen = null;
   return { state, months };
-}
-
-/** Removes everything dated before the real start, keeping the player's own data. */
-export function stripDemo(state, months, today) {
-  const realStart = state.meta?.demo?.to ? addDays(state.meta.demo.to, 1) : today;
-  for (const k of Object.keys(state.log || {})) if (k < realStart) delete state.log[k];
-  for (const k of Object.keys(state.reviews || {})) if (k < realStart) delete state.reviews[k];
-  state.todos = (state.todos || []).filter((t) => !t.demo);
-  const revived = state.streak?.revived || {};
-  for (const k of Object.keys(revived)) if (k < realStart) delete revived[k];
-  for (const h of state.habits || []) if (h.createdAt < realStart) h.createdAt = realStart;
-  state.meta = { ...state.meta, start: realStart, demo: null };
-  state.seen = null;
-  // the demo hatched the egg; without real proofs it is an egg again and gets named when it hatches
-  if (evolutionPoints(state).ep < 3) state.companion = { ...state.companion, name: "" };
-  const cleaned = {};
-  for (const [ym, doc] of Object.entries(months)) {
-    if (!doc) continue;
-    const proofs = (doc.proofs || []).filter((p) => !p.demo);
-    const rv = Object.fromEntries(Object.entries(doc.reviews || {}).filter(([, r]) => !r.demo));
-    cleaned[ym] = { ...doc, proofs, reviews: rv };
-  }
-  return { state, months: cleaned };
 }

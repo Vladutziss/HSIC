@@ -183,7 +183,8 @@ export function ProofModal({ open, habitId, state, d, today, ai, env, recentStor
       ai: !!verdict.ai,
       at: new Date().toISOString(),
       assetId: assetId || null,
-      thumb: !assetId && type === "photo" ? photo.thumb : null,
+      // in Supabase mode the small thumbnail stays in the row, so lists need no signed URL
+      thumb: type === "photo" && (!assetId || env?.current?.kind === "supabase") ? photo.thumb : null,
       seconds: type === "voice" ? audio.seconds || null : null,
     };
     onSave(record);

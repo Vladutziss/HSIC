@@ -99,7 +99,6 @@ export default function Onboarding({ onDone, store, today, legacy }) {
   const [habits, setHabits] = useState([]);
   const [custom, setCustom] = useState(false);
   const [reviewTime, setReviewTime] = useState("21:00");
-  const [demo, setDemo] = useState(true);
   const [filter, setFilter] = useState("rec");
   const [importOld, setImportOld] = useState(true);
   const fromLegacy = useRef(false);
@@ -109,7 +108,6 @@ export default function Onboarding({ onDone, store, today, legacy }) {
   useEffect(() => {
     if (!legacy || fromLegacy.current) return;
     fromLegacy.current = true;
-    setDemo(false);
     if (legacy.goal) setGoal((g) => g || legacy.goal);
     const hs = legacyHabits(legacy, today);
     if (hs.length) setHabits((cur) => (cur.length ? cur : hs));
@@ -152,7 +150,7 @@ export default function Onboarding({ onDone, store, today, legacy }) {
   const next = () =>
     step < STEPS.length - 1
       ? setStep(step + 1)
-      : onDone({ nick: nick.trim(), path, goal: goal.trim(), habits: habits.map((h) => ({ ...h, cat: h.catalogId ? h.cat : h.cat || path })), reviewTime, demo, importOld: !!old && importOld });
+      : onDone({ nick: nick.trim(), path, goal: goal.trim(), habits: habits.map((h) => ({ ...h, cat: h.catalogId ? h.cat : h.cat || path })), reviewTime, importOld: !!old && importOld });
 
   const eggPath = path || "creativ";
   let content;
@@ -361,20 +359,13 @@ export default function Onboarding({ onDone, store, today, legacy }) {
             <span className="font-extrabold text-ink">Seria:</span> ai 2 revive-uri pe lună ca s-o salvezi după o zi ratată.
           </p>
         </div>
-        <label className="flex items-center justify-between gap-4 rounded-2xl bg-[#120f29] p-4 ring-1 ring-edge" htmlFor="ob-demo">
-          <span>
-            <span className="block font-extrabold text-ink">Pornește cu 3 săptămâni de date demonstrative</span>
-            <span className="block text-xs font-semibold text-dim">Ca să vezi graficele, o resetare și povestea. Le ștergi oricând din Setări.</span>
-          </span>
-          <Toggle id="ob-demo" checked={demo} onChange={setDemo} label="Date demonstrative" />
-        </label>
       </div>
     );
   } else {
     content = (
       <div className="flex flex-col items-center gap-4 text-center">
         <div className="pedestal rounded-full px-10 pt-4">
-          <Sprite path={path} stage="egg" mood="joy" size={192} crack={demo ? 2 : 0} label={`Oul tău de ${PATHS[path].cls}`} />
+          <Sprite path={path} stage="egg" mood="joy" size={192} label={`Oul tău de ${PATHS[path].cls}`} />
         </div>
         <h1 className="font-pixel text-3xl text-ink">Acesta e oul tău</h1>
         <p className="max-w-md text-[15px] leading-relaxed text-body">
@@ -385,7 +376,6 @@ export default function Onboarding({ onDone, store, today, legacy }) {
             {habits.length} misiuni
           </Chip>
           <Chip tone="violet">Raport la {reviewTime}</Chip>
-          {demo && <Chip tone="mint">cu date demonstrative</Chip>}
         </div>
       </div>
     );

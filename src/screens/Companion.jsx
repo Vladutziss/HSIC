@@ -7,7 +7,7 @@ import { moodLine } from "../components/Cards.jsx";
 import { PATHS } from "../lib/catalog.js";
 import { STAGES } from "../lib/engine.js";
 import { addDays, fmtDay, monthKey, monthsBetween, relDay } from "../lib/dates.js";
-import { assetUrl } from "../lib/store.js";
+import { AssetImage } from "../components/Asset.jsx";
 
 const STAGE_TEXT = {
   egg: "Așteaptă primele dovezi ca să se deschidă.",
@@ -165,7 +165,7 @@ export default function Companion({ state, d, today, months, loadMonth, onProof,
                   </div>
                   <div className="mt-1.5 flex gap-3">
                     {(s.assetId && s.type === "photo") || s.thumb ? (
-                      <img src={s.assetId ? assetUrl(s.assetId) : s.thumb} alt={`Dovada din ${fmtDay(s.day)}`} className="h-16 w-16 shrink-0 rounded-lg object-cover ring-1 ring-edge" loading="lazy" />
+                      <AssetImage id={s.assetId} thumb={s.thumb} alt={`Dovada din ${fmtDay(s.day)}`} className="h-16 w-16 shrink-0 rounded-lg object-cover ring-1 ring-edge" loading="lazy" />
                     ) : null}
                     <p className="text-[15px] leading-relaxed text-ink">{s.story}</p>
                   </div>

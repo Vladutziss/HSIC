@@ -1,10 +1,13 @@
-// AI features run on Claude through the artifact's `sample` capability, on the
-// viewer's own account. Every feature has a written fallback for when Claude
-// is unavailable (outside claude.ai, consent declined, an error).
+// AI features. In the claude.ai artifact they run on Claude through the
+// `sample` capability, on the viewer's own account. In the Supabase build they
+// go through the `ai` Edge Function (supabase/functions/ai), which holds the
+// OpenRouter key, the prompts and the daily limit. Every feature has a written
+// fallback for when the AI is unavailable (consent declined, rate limit, an error).
 
 import { PATHS } from "./catalog.js";
 import { fmtLong } from "./dates.js";
-import { capability } from "./platform.js";
+import { capability, inViewer } from "./platform.js";
+import { getClient } from "./supabase.js";
 
 const HIDE = new Set(["not_granted", "sampling_disabled", "not_declared", "capability_disabled", "capability_removed"]);
 let disabled = false;
@@ -14,7 +17,44 @@ const clip = (s, n) => {
   return t.length > n ? t.slice(0, n - 1).trimEnd() + "…" : t;
 };
 
+/** The Supabase client when the AI should go through the Edge Function (signed in, not in the artifact), else null. */
+async function serverClient() {
+  if (inViewer()) return null;
+  const client = await getClient();
+  if (!client) return null;
+  const { data } = await client.auth.getSession();
+  return data.session ? client : null;
+}
+
+const toDataUrl = (blob) =>
+  new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(r.result);
+    r.onerror = reject;
+    r.readAsDataURL(blob);
+  });
+
+async function askServer(client, kind, params, signal, image = null) {
+  if (signal?.aborted) throw { code: "cancelled" };
+  const body = { kind, params };
+  if (image) body.image = await toDataUrl(image);
+  const { data, error } = await client.functions.invoke("ai", { body, signal });
+  if (signal?.aborted) throw { code: "cancelled" };
+  if (error) {
+    let code = "upstream_error";
+    try {
+      code = (await error.context.json()).code || code;
+    } catch {
+      /* not an error the function produced */
+    }
+    throw { code };
+  }
+  if (!data?.result) throw { code: "invalid_json" };
+  return data.result;
+}
+
 export async function aiStatus() {
+  if (await serverClient()) return { available: true, images: true };
   if (disabled) return { available: false, images: false };
   const sample = await capability("sample");
   if (!sample) return { available: false, images: false };
@@ -62,6 +102,7 @@ export function aiErrorCopy(code) {
 // ------------------------------------------------------------ proof check + story
 
 export async function verifyProof({ habit, type, note, image, seconds, companion, recent = [], pathId, canSeeImage }, signal) {
+  const server = await serverClient();
   const cls = PATHS[pathId]?.cls || "Atlet";
   const story = recent.length ? recent.slice(-3).map((s) => `- ${s}`).join("\n") : "- (the story is just beginning)";
   const kind =
@@ -93,7 +134,15 @@ ${story}
 Reply with only JSON: {"verdict":"verified|plausible|rejected","reason":"<one short sentence in Romanian about the verdict, addressing the player as tu>","title":"...","story":"..."}`;
   const opts = { modelTier: "quick", cache: false, signal };
   if (type === "photo" && image && canSeeImage) opts.images = [image];
-  const r = await askJson(prompt, opts);
+  const r = server
+    ? await askServer(
+        server,
+        "verify",
+        { habit: { name: habit.name, target: habit.target }, type, note, seconds, companion, recent: recent.slice(-3), cls },
+        signal,
+        type === "photo" && image && canSeeImage ? image : null
+      )
+    : await askJson(prompt, opts);
   let verdict = ["verified", "plausible", "rejected"].includes(r?.verdict) ? r.verdict : "plausible";
   if (verdict === "verified" && !(type === "photo" && canSeeImage)) verdict = "plausible";
   return {
@@ -108,6 +157,7 @@ Reply with only JSON: {"verdict":"verified|plausible|rejected","reason":"<one sh
 // ------------------------------------------------------------ daily review
 
 export async function dailyReview(p, signal) {
+  const server = await serverClient();
   const lines = p.habits
     .map((h) => `- ${h.name} (${h.diffLabel}${h.scheduled ? "" : ", optional today"}): ${h.done ? `done${h.proof ? `, proof ${h.proof}` : ""}` : "not done"}`)
     .join("\n");
@@ -126,7 +176,24 @@ Score the day from 0 to 100 for effort and consistency against the plan: 100 = e
 - tip: one concrete suggestion for tomorrow, at most 18 words.
 
 Reply with only JSON: {"score": <integer 0-100>, "summary": "...", "highlight": "...", "tip": "..."}`;
-  const r = await askJson(prompt, { modelTier: "quick", cache: false, signal });
+  const r = server
+    ? await askServer(
+        server,
+        "review",
+        {
+          name: p.name,
+          goal: p.goal,
+          pathLabel: PATHS[p.pathId]?.label,
+          dayLabel: fmtLong(p.day),
+          habits: p.habits,
+          todos: { done: p.todos.done, total: p.todos.total, titles: p.todos.titles },
+          level: { lvl: p.level.lvl, name: p.level.name },
+          momentum: p.momentum,
+          streak: p.streak,
+        },
+        signal
+      )
+    : await askJson(prompt, { modelTier: "quick", cache: false, signal });
   const score = Math.round(Number(r?.score));
   if (!Number.isFinite(score)) throw { code: "invalid_json" };
   return {
@@ -141,21 +208,25 @@ Reply with only JSON: {"score": <integer 0-100>, "summary": "...", "highlight": 
 // ------------------------------------------------------------ moments
 
 export async function momentLineAI(situation, quote, signal) {
+  const server = await serverClient();
   const prompt = `In one sentence in Romanian (at most 170 characters), connect this quote to the player's situation in a self-improvement game. Address the player as "tu", be warm and concrete, and do not repeat the quote.
 Situation: ${situation}.
 Quote: "${quote.text}" (${quote.author}).
 Reply with only JSON: {"line":"..."}`;
-  const r = await askJson(prompt, { modelTier: "quick", signal });
+  const r = server ? await askServer(server, "moment", { situation, quote }, signal) : await askJson(prompt, { modelTier: "quick", signal });
   return clip(r?.line, 200);
 }
 
 export async function evolutionChapter({ name, pathId, from, to, recent = [] }, signal) {
+  const server = await serverClient();
   const prompt = `In "Momentum", a self-improvement RPG, the player's companion ${name || "the creature"} (a ${PATHS[pathId]?.cls || "hero"}) just evolved from "${from}" to "${to}" thanks to the player's proofs of effort.
 Recent story (newest last):
 ${recent.slice(-3).map((s) => `- ${s}`).join("\n") || "- (none yet)"}
 Write a short celebratory chapter: 3 sentences, at most 380 characters, in Romanian, third person, present tense, describing the transformation and what the companion can do now. Give it a title of 2-4 words.
 Reply with only JSON: {"title":"...","story":"..."}`;
-  const r = await askJson(prompt, { modelTier: "quick", cache: false, signal });
+  const r = server
+    ? await askServer(server, "chapter", { name, cls: PATHS[pathId]?.cls, from, to, recent: recent.slice(-3) }, signal)
+    : await askJson(prompt, { modelTier: "quick", cache: false, signal });
   return { title: clip(r?.title, 40) || to, story: clip(r?.story, 460), ai: true };
 }
 
