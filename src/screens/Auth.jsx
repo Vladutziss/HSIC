@@ -84,6 +84,10 @@ function SignIn({ client }) {
           </div>
         </div>
 
+        <p className="text-sm text-dim">
+          Momentum este o aplicație de self-improvement gamificată: îți urmărești obiceiurile zilnice, personajul tău evoluează odată cu progresul, poți intra în grupuri cu prietenii și primești rapoarte AI. Te autentifici cu Google sau cu email ca să-ți sincronizezi progresul între dispozitive.
+        </p>
+
         {mode !== "reset" && (
           <>
             <Button type="button" variant="ghost" className="w-full" onClick={google}>
@@ -143,6 +147,15 @@ function SignIn({ client }) {
               Înapoi la autentificare
             </button>
           )}
+        </div>
+
+        <div className="flex gap-4 text-xs font-bold text-faint">
+          <a className="focus-ring underline" href="privacy.html">
+            Confidențialitate
+          </a>
+          <a className="focus-ring underline" href="terms.html">
+            Termeni
+          </a>
         </div>
       </Panel>
     </div>
