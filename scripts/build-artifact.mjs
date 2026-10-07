@@ -49,9 +49,10 @@ const result = await build({
   jsxFactory: "React.createElement",
   jsxFragment: "React.Fragment",
   loader: { ".css": "empty" },
-  define: { "process.env.NODE_ENV": '"production"' },
+  define: { "process.env.NODE_ENV": '"production"', __SUPABASE__: "false" },
   plugins: [globals],
   logLevel: "warning",
+  logOverride: { "empty-import-meta": "silent" }, // import.meta only appears in code the artifact build removes
 });
 const js = result.outputFiles[0].text.replace(/<\/script/gi, "<\\/script");
 

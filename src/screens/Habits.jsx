@@ -9,7 +9,7 @@ import { MAX_HABITS, PATHS } from "../lib/catalog.js";
 import { CODE, DIFF, habitStats, isScheduled } from "../lib/engine.js";
 import { CODE_VERDICT } from "../lib/derive.js";
 import { addDays, fmtDay, monthKey, monthsBetween, relDay } from "../lib/dates.js";
-import { assetUrl } from "../lib/store.js";
+import { AssetAudio, AssetImage } from "../components/Asset.jsx";
 
 function HabitCard({ h, stats, series, onOpen, onEdit, onProof, code, today }) {
   const Icon = iconFor(h.icon);
@@ -199,7 +199,7 @@ function HabitDetail({ h, state, d, today, months, loadMonth, onBack, onEdit, on
             {proofs.map((p) => (
               <li key={p.id} className="inset flex gap-3 p-3">
                 {p.assetId || p.thumb ? (
-                  <img src={p.assetId ? assetUrl(p.assetId) : p.thumb} alt={`Dovadă din ${fmtDay(p.day)}`} className="h-20 w-20 shrink-0 rounded-lg object-cover ring-1 ring-edge" loading="lazy" />
+                  <AssetImage id={p.assetId} thumb={p.thumb} alt={`Dovadă din ${fmtDay(p.day)}`} className="h-20 w-20 shrink-0 rounded-lg object-cover ring-1 ring-edge" loading="lazy" />
                 ) : (
                   <span className="grid h-20 w-20 shrink-0 place-items-center rounded-lg bg-panel text-faint ring-1 ring-edge">
                     <ScrollText size={22} aria-hidden="true" />
@@ -210,7 +210,7 @@ function HabitDetail({ h, state, d, today, months, loadMonth, onBack, onEdit, on
                     {relDay(p.day, today)} <ProofBadge verdict={p.verdict} />
                   </div>
                   {p.note && <p className="line-clamp-2 text-sm text-body">„{p.note}”</p>}
-                  {p.type === "voice" && p.assetId && <audio controls src={assetUrl(p.assetId)} className="h-8 w-full" />}
+                  {p.type === "voice" && p.assetId && <AssetAudio id={p.assetId} className="h-8 w-full" />}
                   <p className="line-clamp-2 text-xs italic text-dim">{p.story}</p>
                 </div>
               </li>

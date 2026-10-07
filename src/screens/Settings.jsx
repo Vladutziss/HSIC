@@ -1,17 +1,33 @@
 import React, { useState } from "react";
-import { Bot, Database, FlaskConical, Moon, RotateCcw, Shield, Trash2, User } from "lucide-react";
+import { Bot, Database, Download, FlaskConical, LogOut, Moon, Shield, Trash2, User, UserX } from "lucide-react";
 import { Button, Chip, Field, LevelBadge, Panel, SectionTitle, Toggle } from "../components/ui.jsx";
 import { PATHS } from "../lib/catalog.js";
 import { LEVELS, RULES } from "../lib/engine.js";
+import { exportData, signOut } from "../lib/account.js";
 
 const TIMES = ["18:00", "18:30", "19:00", "19:30", "20:00", "20:30", "21:00", "21:30", "22:00", "22:30", "23:00", "23:30"];
 
-export default function Settings({ state, d, ai, mode, onChange, onRemoveDemo, onWipe }) {
+export default function Settings({ state, d, ai, mode, env, onChange, onWipe, onDeleteAccount }) {
+  const [exporting, setExporting] = useState(false);
   const [nick, setNick] = useState(state.profile?.nick || "");
   const [goal, setGoal] = useState(state.profile?.goal || "");
   const settings = state.settings || {};
   const set = (patch) => onChange((s) => ({ ...s, settings: { ...s.settings, ...patch } }));
   const path = PATHS[state.profile?.path] || PATHS.sport;
+
+  async function download() {
+    setExporting(true);
+    try {
+      const blob = new Blob([JSON.stringify(await exportData(env), null, 2)], { type: "application/json" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "momentum-datele-mele.json";
+      a.click();
+      URL.revokeObjectURL(a.href);
+    } finally {
+      setExporting(false);
+    }
+  }
 
   return (
     <div className="space-y-5">
@@ -130,23 +146,34 @@ export default function Settings({ state, d, ai, mode, onChange, onRemoveDemo, o
           <p className="text-sm text-body">
             {mode === "cloud"
               ? "Datele se salvează în contul tău de claude.ai, într-o zonă privată a aplicației pe care nu o vede nimeni altcineva. Grupurile văd doar statisticile publice: nivelul, seria, momentum-ul și personajul."
-              : mode === "local"
+              : mode === "supabase"
+                ? "Datele se salvează în contul tău și se sincronizează pe toate dispozitivele. Poze și note vocale sunt private. Grupurile văd doar statisticile publice: nivelul, seria, momentum-ul și personajul."
+                : mode === "local"
                 ? "Datele se salvează în browserul acestui dispozitiv."
                 : "Stocarea nu e disponibilă: datele se pierd când închizi pagina."}
           </p>
-          {state.meta?.demo && (
-            <div className="inset flex flex-wrap items-center gap-3 p-3">
-              <span className="min-w-[180px] flex-1 text-sm text-body">Ai pornit cu 3 săptămâni de date demonstrative.</span>
-              <Button variant="ghost" size="sm" icon={RotateCcw} onClick={onRemoveDemo}>
-                Șterge datele demo
+          {mode === "supabase" && (
+            <div className="flex flex-wrap gap-2">
+              <Button variant="ghost" size="sm" icon={Download} busy={exporting} onClick={download}>
+                Descarcă datele mele
+              </Button>
+              <Button variant="ghost" size="sm" icon={LogOut} onClick={signOut}>
+                Deconectare
               </Button>
             </div>
           )}
           <div className="rounded-xl bg-rose/10 p-3 ring-1 ring-rose/30">
             <div className="mb-2 text-sm font-extrabold text-rose">Zona periculoasă</div>
-            <Button id="wipe-all" variant="rose" size="sm" icon={Trash2} onClick={onWipe}>
-              Șterge toate datele
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <Button id="wipe-all" variant="rose" size="sm" icon={Trash2} onClick={onWipe}>
+                Șterge toate datele
+              </Button>
+              {mode === "supabase" && (
+                <Button id="delete-account" variant="rose" size="sm" icon={UserX} onClick={onDeleteAccount}>
+                  Șterge contul
+                </Button>
+              )}
+            </div>
           </div>
         </Panel>
       </div>

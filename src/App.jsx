@@ -9,10 +9,10 @@ import { pickQuote } from "./lib/quotes.js";
 import { aiErrorCopy, aiStatus, dailyReview, templateReview } from "./lib/ai.js";
 import { permissionState } from "./lib/platform.js";
 import { useGroups } from "./lib/groups.js";
-import { seedDemo, stripDemo } from "./lib/demo.js";
-import { DEFAULT_NAMES, uid } from "./lib/catalog.js";
+import { uid } from "./lib/catalog.js";
 import { legacyTodos } from "./lib/legacy.js";
 import { Confirm, ToastProvider, useToast } from "./components/ui.jsx";
+import { deleteAccount } from "./lib/account.js";
 import { Shell } from "./components/Shell.jsx";
 import { ProofModal } from "./components/ProofModal.jsx";
 import { MomentModal } from "./components/MomentModal.jsx";
@@ -305,24 +305,9 @@ function Game() {
       seen: null,
       moments: [],
     };
-    let seeded = null;
-    if (draft.demo) {
-      s.companion.name = DEFAULT_NAMES[draft.path]?.[0] || "Ecou";
-      const r = seedDemo(s, today);
-      s = r.state;
-      seeded = r.months;
-    }
     if (draft.importOld && store.legacy) s.todos = [...legacyTodos(store.legacy, today), ...(s.todos || [])];
     update(() => s);
-    if (seeded) store.putMonths(seeded);
     go("home");
-  }
-
-  function removeDemo() {
-    const r = stripDemo(JSON.parse(JSON.stringify(state)), store.months, today);
-    update(() => r.state);
-    store.putMonths(r.months);
-    toast({ title: "Datele demonstrative au fost șterse", text: "Au rămas doar datele tale.", icon: CheckCircle2, tone: "mint" });
   }
 
   function wipeAll() {
@@ -378,13 +363,21 @@ function Game() {
       )}
       {view === "group" && <Group {...common} groups={groups} mode={store.mode} />}
       {view === "plan" && <Planner {...common} todo={todoActions} />}
-      {view === "stats" && <Stats {...common} />}
+      {view === "stats" && <Stats {...common} mode={store.mode} saveStatus={store.saveStatus} />}
       {view === "settings" && (
         <SettingsScreen
           {...common}
           mode={store.mode}
+          env={store.env}
           onChange={(fn) => update(fn)}
-          onRemoveDemo={removeDemo}
+          onDeleteAccount={() =>
+            setConfirm({
+              title: "Ștergi contul?",
+              text: "Se șterg contul, toate datele și toate fișierele tale, definitiv. Nu se poate anula.",
+              label: "Șterge contul",
+              run: () => deleteAccount(store.env),
+            })
+          }
           onWipe={() =>
             setConfirm({
               title: "Ștergi toate datele?",

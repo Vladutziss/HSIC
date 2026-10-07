@@ -1,0 +1,19 @@
+# Local stack settings (`npx supabase start`). The hosted project is configured in the dashboard.
+project_id = "momentum"
+
+[api]
+enabled = true
+
+[db]
+major_version = 17
+
+[auth]
+site_url = "http://localhost:5173"
+additional_redirect_urls = ["http://localhost:5173"]
+enable_signup = true
+
+[auth.email]
+enable_confirmations = true
+
+[functions.ai]
+verify_jwt = true
