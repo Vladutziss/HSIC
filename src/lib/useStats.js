@@ -29,6 +29,7 @@ export function useStats(state, today, mode, saveStatus) {
   }, [mode, saveStatus, today, state]);
 
   const fresh = remote && remote.today === today;
-  // loading: the first answer from the server has not arrived yet (local numbers are not shown meanwhile)
-  return { stats: fresh ? remote : local, loading: mode === "supabase" && !fresh && !failed };
+  // loading: the first answer from the server has not arrived yet (local numbers are not shown meanwhile);
+  // a failed save never gets one, so it shows the local numbers instead of a skeleton forever
+  return { stats: fresh ? remote : local, loading: mode === "supabase" && !fresh && !failed && saveStatus !== "error" };
 }
