@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { Activity, BarChart3, CalendarDays, Camera, Flame, Gauge, Quote, ShieldCheck, Trophy, Zap } from "lucide-react";
-import { Chip, LevelBadge, Panel, SectionTitle, Stat, Tabs } from "../components/ui.jsx";
+import { Chip, Empty, LevelBadge, Panel, SectionTitle, Skeleton, Stat, Tabs } from "../components/ui.jsx";
 import { HEAT, HabitLines, Heatmap, MomentumChart, ScoreBars, heatLevel } from "../components/Charts.jsx";
 import { MOMENT_META } from "../lib/moments.js";
 import { quoteById } from "../lib/quotes.js";
@@ -9,7 +9,7 @@ import { useStats } from "../lib/useStats.js";
 import { fmtDay, relDay } from "../lib/dates.js";
 
 export default function Stats({ state, d, today, mode, saveStatus }) {
-  const s = useStats(state, today, mode, saveStatus);
+  const { stats: s, loading } = useStats(state, today, mode, saveStatus);
   const [range, setRange] = useState(60);
   const [hidden, setHidden] = useState([]);
   const days = s.days;
@@ -26,6 +26,40 @@ export default function Stats({ state, d, today, mode, saveStatus }) {
   };
 
   const tableRows = useMemo(() => days.slice(-14).reverse(), [days]);
+
+  const head = (
+    <div>
+      <h1 className="font-pixel text-3xl text-ink">Statistici</h1>
+      <p className="text-sm font-semibold text-dim">Momentum-ul general, fiecare obicei și scorurile zilnice.</p>
+    </div>
+  );
+  if (loading)
+    return (
+      <div className="space-y-5" aria-busy="true">
+        {head}
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+          {Array.from({ length: 6 }, (_, i) => (
+            <Skeleton key={i} className="h-24" />
+          ))}
+        </div>
+        <Skeleton className="h-72" />
+        <div className="grid gap-5 xl:grid-cols-2">
+          <Skeleton className="h-60" />
+          <Skeleton className="h-60" />
+        </div>
+      </div>
+    );
+  if (!s.checkins && !days.some((x) => x.active))
+    return (
+      <div className="space-y-5">
+        {head}
+        <Panel>
+          <Empty icon={BarChart3} title="Încă nu sunt statistici">
+            Bifează primul obicei sau termină un to-do și graficele apar aici.
+          </Empty>
+        </Panel>
+      </div>
+    );
 
   return (
     <div className="space-y-5">

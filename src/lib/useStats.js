@@ -5,7 +5,7 @@ import { buildStats } from "./stats.js";
 /**
  * Stats for the Statistici screen. In Supabase mode they come from the `stats` Edge Function,
  * asked again each time the rows are saved; until then (and in the artifact, signed out, or on
- * an error) they are computed here from the same rules.
+ * an error) they are computed here from the same rules. `loading` is true until the first server answer.
  */
 export function useStats(state, today, mode, saveStatus) {
   const local = useMemo(() => buildStats(state, today), [state, today]);
@@ -25,5 +25,7 @@ export function useStats(state, today, mode, saveStatus) {
     };
   }, [mode, saveStatus, today, state]);
 
-  return remote && remote.today === today ? remote : local;
+  const fresh = remote && remote.today === today;
+  // loading: the first answer from the server has not arrived yet (local numbers are not shown meanwhile)
+  return { stats: fresh ? remote : local, loading: mode === "supabase" && !fresh };
 }
