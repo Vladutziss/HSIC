@@ -10,6 +10,7 @@ import { buildStats } from "./stats.js";
 export function useStats(state, today, mode, saveStatus) {
   const local = useMemo(() => buildStats(state, today), [state, today]);
   const [remote, setRemote] = useState(null);
+  const [failed, setFailed] = useState(false); // function not deployed or unreachable: show the local numbers
 
   useEffect(() => {
     if (mode !== "supabase" || saveStatus !== "saved") return;
@@ -18,8 +19,10 @@ export function useStats(state, today, mode, saveStatus) {
       const client = await getClient();
       if (!client) return;
       const { data, error } = await client.functions.invoke("stats", { body: { today } });
-      if (live && !error && data?.stats) setRemote(data.stats);
-    })().catch(() => {});
+      if (!live) return;
+      if (!error && data?.stats) setRemote(data.stats);
+      else setFailed(true);
+    })().catch(() => live && setFailed(true));
     return () => {
       live = false;
     };
@@ -27,5 +30,5 @@ export function useStats(state, today, mode, saveStatus) {
 
   const fresh = remote && remote.today === today;
   // loading: the first answer from the server has not arrived yet (local numbers are not shown meanwhile)
-  return { stats: fresh ? remote : local, loading: mode === "supabase" && !fresh };
+  return { stats: fresh ? remote : local, loading: mode === "supabase" && !fresh && !failed };
 }
