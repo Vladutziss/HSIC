@@ -46,7 +46,7 @@ export function toRows(state, uid) {
     start_date: nul(meta.start),
     extra: {
       v: nul(state.v),
-      meta: { created: nul(meta.created), months: meta.months || [], demo: nul(meta.demo) },
+      meta: { created: nul(meta.created), months: meta.months || [] },
       seen: nul(state.seen),
       moments: state.moments || [],
     },
@@ -90,7 +90,6 @@ export function toRows(state, uid) {
       done: !!t.done,
       done_on: nul(t.doneOn),
       created_at: nul(t.createdAt),
-      demo: !!t.demo,
     })),
     // the numeric part of a day review; its text comes with the month document
     day_reviews: Object.entries(state.reviews || {}).map(([day, r]) => ({
@@ -151,11 +150,10 @@ export function fromRows(rows) {
       done: t.done,
       doneOn: t.done_on,
       createdAt: t.created_at,
-      ...(t.demo ? { demo: true } : {}),
     })),
     streak: { revived },
     settings: p.settings || {},
-    meta: { start: p.start_date, created: meta.created, months: meta.months || [], demo: meta.demo ?? null },
+    meta: { start: p.start_date, created: meta.created, months: meta.months || [] },
     groups: rows.groups || [],
     seen: extra.seen ?? null,
     moments: extra.moments || [],
@@ -183,7 +181,6 @@ export function monthToRows(doc, uid) {
       asset_path: nul(p.assetId),
       thumb: nul(p.thumb),
       seconds: nul(p.seconds),
-      demo: !!p.demo,
     })),
     chapters: (d.chapters || []).map((c) => ({
       id: c.id,
@@ -202,7 +199,6 @@ export function monthToRows(doc, uid) {
       highlight: nul(r.highlight),
       tip: nul(r.tip),
       ai: !!r.ai,
-      demo: !!r.demo,
     })),
   };
 }
@@ -211,7 +207,7 @@ export function rowsToMonth(rows) {
   const reviews = {};
   for (const r of rows.day_reviews || []) {
     if (r.summary == null && r.highlight == null && r.tip == null) continue;
-    reviews[r.day] = { summary: r.summary, highlight: r.highlight, tip: r.tip, ai: r.ai, score: r.ai_score, ...(r.demo ? { demo: true } : {}) };
+    reviews[r.day] = { summary: r.summary, highlight: r.highlight, tip: r.tip, ai: r.ai, score: r.ai_score };
   }
   const proofs = (rows.proofs || [])
     .map((p) => ({
@@ -229,7 +225,6 @@ export function rowsToMonth(rows) {
       assetId: p.asset_path,
       thumb: p.thumb,
       seconds: p.seconds,
-      ...(p.demo ? { demo: true } : {}),
     }))
     .sort((a, b) => (a.at < b.at ? -1 : a.at > b.at ? 1 : 0));
   const chapters = (rows.chapters || [])
@@ -307,7 +302,7 @@ export function diffMonth(prev, next, uid) {
   const b = next ? monthToRows(next, uid) : {};
   const { upserts, deletes } = diffTables(a, b, ["proofs", "chapters", "day_reviews"]);
   // a removed review text clears the text columns; the score row stays with the state
-  const cleared = (deletes.day_reviews || []).map((r) => ({ user_id: r.user_id, day: r.day, summary: null, highlight: null, tip: null, ai: false, demo: false }));
+  const cleared = (deletes.day_reviews || []).map((r) => ({ user_id: r.user_id, day: r.day, summary: null, highlight: null, tip: null, ai: false }));
   delete deletes.day_reviews;
   if (cleared.length) upserts.day_reviews = [...(upserts.day_reviews || []), ...cleared];
   return toOps({ upserts, deletes });
@@ -353,7 +348,7 @@ export async function loadMonth(client, uid, ym) {
   const [proofs, chapters, day_reviews] = await Promise.all([
     inMonth("proofs", "*"),
     inMonth("chapters", "*"),
-    inMonth("day_reviews", "day, ai_score, summary, highlight, tip, ai, demo"),
+    inMonth("day_reviews", "day, ai_score, summary, highlight, tip, ai"),
   ]);
   const doc = rowsToMonth({ proofs, chapters, day_reviews });
   return doc.proofs.length || doc.chapters.length || Object.keys(doc.reviews).length ? doc : null;
