@@ -379,7 +379,7 @@ function Game() {
       )}
       {view === "group" && <Group {...common} groups={groups} mode={store.mode} />}
       {view === "plan" && <Planner {...common} todo={todoActions} />}
-      {view === "stats" && <Stats {...common} />}
+      {view === "stats" && <Stats {...common} mode={store.mode} saveStatus={store.saveStatus} />}
       {view === "settings" && (
         <SettingsScreen
           {...common}

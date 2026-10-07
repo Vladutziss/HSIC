@@ -4,21 +4,19 @@ import { Chip, LevelBadge, Panel, SectionTitle, Stat, Tabs } from "../components
 import { HEAT, HabitLines, Heatmap, MomentumChart, ScoreBars, heatLevel } from "../components/Charts.jsx";
 import { MOMENT_META } from "../lib/moments.js";
 import { quoteById } from "../lib/quotes.js";
-import { LEVELS, evolutionPoints } from "../lib/engine.js";
+import { LEVELS } from "../lib/engine.js";
+import { useStats } from "../lib/useStats.js";
 import { fmtDay, relDay } from "../lib/dates.js";
 
-export default function Stats({ state, d, today }) {
+export default function Stats({ state, d, today, mode, saveStatus }) {
+  const s = useStats(state, today, mode, saveStatus);
   const [range, setRange] = useState(60);
   const [hidden, setHidden] = useState([]);
-  const days = d.timeline.days;
+  const days = s.days;
   const shown = range === 0 ? days : days.slice(-range);
   const habits = (state.habits || []).filter((h) => !h.archivedAt);
   const visible = habits.filter((h) => !hidden.includes(h.id));
-  const ev = evolutionPoints(state);
-  const last30 = days.filter((x) => x.closed).slice(-30);
-  const avg = last30.length ? Math.round(last30.reduce((a, x) => a + x.score, 0) / last30.length) : 0;
-  const checkins = Object.values(state.log || {}).reduce((a, e) => a + Object.keys(e).length, 0);
-  const byDay = d.timeline.byDay;
+  const byDay = useMemo(() => Object.fromEntries(days.map((x) => [x.day, x])), [days]);
   const moments = (state.moments || []).slice().reverse();
 
   const cell = (day) => {
@@ -38,18 +36,18 @@ export default function Stats({ state, d, today }) {
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
         <Stat icon={Zap} tone="gold" label="Momentum" value={d.entry?.momentum ?? 0} sub={`nivel ${d.level.lvl} · ${d.level.name}`} />
-        <Stat icon={Trophy} tone="gold" label="Cel mai bun nivel" value={d.timeline.bestLevel} sub={`${d.timeline.bestMomentum} puncte`} />
-        <Stat icon={Flame} tone="ember" label="Serie" value={d.streak.current} sub={`record: ${d.streak.best} zile`} />
-        <Stat icon={Activity} tone="mint" label="Bifări" value={checkins} sub="în total" />
-        <Stat icon={ShieldCheck} tone="violet" label="Dovezi verificate" value={ev.verified} sub={`din ${ev.proofs} trimise`} />
-        <Stat icon={Gauge} tone="sky" label="Scor mediu" value={avg} sub="ultimele 30 de zile" />
+        <Stat icon={Trophy} tone="gold" label="Cel mai bun nivel" value={s.bestLevel} sub={`${s.bestMomentum} puncte`} />
+        <Stat icon={Flame} tone="ember" label="Serie" value={s.streak.current} sub={`record: ${s.streak.best} zile`} />
+        <Stat icon={Activity} tone="mint" label="Bifări" value={s.checkins} sub="în total" />
+        <Stat icon={ShieldCheck} tone="violet" label="Dovezi verificate" value={s.evidence.verified} sub={`din ${s.evidence.proofs} trimise`} />
+        <Stat icon={Gauge} tone="sky" label="Scor mediu" value={s.avg} sub="ultimele 30 de zile" />
       </div>
 
       <Panel tone="gold" corners className="p-4 sm:p-5">
         <SectionTitle
           icon={Zap}
           tone="gold"
-          sub={`Liniile punctate sunt pragurile de nivel. Punctele roz marchează resetările după ${d.resetAfter} zile fără activitate.`}
+          sub={`Liniile punctate sunt pragurile de nivel. Punctele roz marchează resetările după ${s.resetAfter} zile fără activitate.`}
           action={
             <Tabs
               size="sm"
@@ -121,7 +119,7 @@ export default function Stats({ state, d, today }) {
               );
             })}
           </div>
-          <HabitLines habits={visible} series={d.timeline.habitSeries} days={shown} />
+          <HabitLines habits={visible} series={s.habitSeries} days={shown} />
         </Panel>
         <Panel className="min-w-0 p-4 sm:p-5">
           <SectionTitle icon={BarChart3} tone="violet" sub="60% activitate bifată + 40% evaluarea AI de seară">
