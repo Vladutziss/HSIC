@@ -1,7 +1,7 @@
 // Sign-in gate for the Supabase build: email + password, or Google.
 // Where Supabase is off (the claude.ai artifact, or no env configured) it renders the app straight away.
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Leaf, LogIn, Mail, UserPlus } from "lucide-react";
 import { getClient } from "../lib/supabase.js";
 import { inViewer } from "../lib/platform.js";
@@ -11,8 +11,50 @@ const ERRORS = {
   "Invalid login credentials": "Email sau parolă greșite.",
   "User already registered": "Există deja un cont cu acest email. Intră în cont.",
   "Email not confirmed": "Confirmă emailul din mesajul primit, apoi intră în cont.",
-  "Password should be at least 6 characters.": "Parola trebuie să aibă cel puțin 6 caractere.",
+  "Password should be at least 6 characters.": "Parola trebuie să aibă cel puțin 8 caractere.",
 };
+const SITE_KEY = import.meta.env?.VITE_TURNSTILE_SITE_KEY || "";
+const weakPassword = (p) => (p.length < 8 || !/[a-zA-Z]/.test(p) || !/\d/.test(p) ? "Parola trebuie să aibă cel puțin 8 caractere, cu litere și cifre." : "");
+
+// Cloudflare Turnstile (bot check). Renders nothing when no site key is configured.
+function Captcha({ onToken, resetKey }) {
+  const box = useRef(null);
+  const id = useRef(null);
+  useEffect(() => {
+    if (!SITE_KEY) return;
+    let dead = false;
+    const mount = () => {
+      if (dead || !box.current || !window.turnstile) return;
+      id.current = window.turnstile.render(box.current, {
+        sitekey: SITE_KEY,
+        theme: "dark",
+        callback: onToken,
+        "expired-callback": () => onToken(""),
+        "error-callback": () => onToken(""),
+      });
+    };
+    if (window.turnstile) mount();
+    else {
+      let s = document.getElementById("cf-turnstile");
+      if (!s) {
+        s = document.createElement("script");
+        s.id = "cf-turnstile";
+        s.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+        s.async = true;
+        document.head.appendChild(s);
+      }
+      s.addEventListener("load", mount);
+    }
+    return () => {
+      dead = true;
+      if (id.current != null) window.turnstile?.remove(id.current);
+    };
+  }, []);
+  useEffect(() => {
+    if (id.current != null) window.turnstile?.reset(id.current); // tokens are single-use
+  }, [resetKey]);
+  return SITE_KEY ? <div ref={box} className="flex justify-center" /> : null;
+}
 const errorCopy = (e) => ERRORS[e?.message] || (e?.status === 429 ? "Prea multe încercări. Mai așteaptă puțin." : "Nu a mers. Încearcă din nou.");
 
 function Splash({ text }) {
@@ -44,6 +86,8 @@ function SignIn({ client }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [note, setNote] = useState("");
+  const [captcha, setCaptcha] = useState("");
+  const [attempt, setAttempt] = useState(0);
 
   async function submit(e) {
     e.preventDefault();
@@ -51,18 +95,26 @@ function SignIn({ client }) {
     setError("");
     setNote("");
     const address = email.trim();
+    const captchaToken = captcha || undefined;
+    if (mode === "up" && weakPassword(password)) {
+      setError(weakPassword(password));
+      setBusy(false);
+      return;
+    }
     if (mode === "in") {
-      const { error: err } = await client.auth.signInWithPassword({ email: address, password });
+      const { error: err } = await client.auth.signInWithPassword({ email: address, password, options: { captchaToken } });
       if (err) setError(errorCopy(err));
     } else if (mode === "up") {
-      const { data, error: err } = await client.auth.signUp({ email: address, password, options: { emailRedirectTo: window.location.origin } });
+      const { data, error: err } = await client.auth.signUp({ email: address, password, options: { emailRedirectTo: window.location.origin, captchaToken } });
       if (err) setError(errorCopy(err));
       else if (!data.session) setNote("Ți-am trimis un email de confirmare. Deschide linkul, apoi intră în cont.");
     } else {
-      const { error: err } = await client.auth.resetPasswordForEmail(address, { redirectTo: window.location.origin });
+      const { error: err } = await client.auth.resetPasswordForEmail(address, { redirectTo: window.location.origin, captchaToken });
       if (err) setError(errorCopy(err));
       else setNote("Dacă există un cont cu acest email, ai primit un link pentru parolă nouă.");
     }
+    setCaptcha("");
+    setAttempt((n) => n + 1);
     setBusy(false);
   }
 
@@ -111,12 +163,13 @@ function SignIn({ client }) {
                 type="password"
                 autoComplete={mode === "up" ? "new-password" : "current-password"}
                 required
-                minLength={6}
+                minLength={mode === "up" ? 8 : undefined}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
             </Field>
           )}
+          <Captcha onToken={setCaptcha} resetKey={attempt} />
           {error && (
             <p role="alert" className="text-sm font-bold text-rose">
               {error}
@@ -127,7 +180,7 @@ function SignIn({ client }) {
               {note}
             </p>
           )}
-          <Button type="submit" busy={busy} icon={mode === "in" ? LogIn : mode === "up" ? UserPlus : Mail} className="w-full">
+          <Button type="submit" busy={busy} disabled={!!SITE_KEY && !captcha} icon={mode === "in" ? LogIn : mode === "up" ? UserPlus : Mail} className="w-full">
             {mode === "in" ? "Intră în cont" : mode === "up" ? "Creează contul" : "Trimite linkul"}
           </Button>
         </form>
