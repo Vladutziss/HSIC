@@ -149,12 +149,11 @@ export default function Settings({ state, d, ai, mode, env, onChange, onWipe, on
             <span>
               {ai.available ? (
                 <>
-                  <span className="font-extrabold text-mint">AI disponibil{ai.images ? ", inclusiv pentru poze" : ""}.</span> Verifică dovezile, scrie povestea și rapoartele de seară
-                  folosind Claude din contul tău de claude.ai.
+                  <span className="font-extrabold text-mint">AI disponibil.</span> Scrie rapoartele de seară și capitolele poveștii folosind Claude din contul tău de claude.ai.
                 </>
               ) : (
                 <>
-                  <span className="font-extrabold text-ink">AI indisponibil aici.</span> Rapoartele și poveștile vin din șabloane, iar dovezile se salvează nevalidate.
+                  <span className="font-extrabold text-ink">AI indisponibil aici.</span> Rapoartele și poveștile vin din șabloane.
                   În aplicația publicată pe claude.ai, AI-ul funcționează după ce îi dai permisiunea.
                 </>
               )}
@@ -175,7 +174,7 @@ export default function Settings({ state, d, ai, mode, env, onChange, onWipe, on
             />
           </Field>
           <ul className="space-y-1.5 text-sm text-body">
-            <li>· Bifă: +10 / +20 / +30 după dificultate; dovada verificată de AI dă ×1,5.</li>
+            <li>· Bifă: +10 / +20 / +30 momentum după dificultate, plus 1 / 2 / 3 puncte de evoluție pentru personaj.</li>
             <li>· Zile active la rând: până la +40% la tot ce câștigi.</li>
             <li>· Toate misiunile programate bifate: cufărul zilei, +{RULES.chestXp}.</li>
             <li>· Raportul de seară: jumătate din scorul zilei devine momentum.</li>
@@ -201,7 +200,7 @@ export default function Settings({ state, d, ai, mode, env, onChange, onWipe, on
             {mode === "cloud"
               ? "Datele se salvează în contul tău de claude.ai, într-o zonă privată a aplicației pe care nu o vede nimeni altcineva. Grupurile văd doar statisticile publice: nivelul, seria, momentum-ul și personajul."
               : mode === "supabase"
-                ? "Datele se salvează în contul tău și se sincronizează pe toate dispozitivele. Poze și note vocale sunt private. Grupurile văd doar statisticile publice: nivelul, seria, momentum-ul și personajul."
+                ? "Datele se salvează în contul tău și se sincronizează pe toate dispozitivele. Grupurile văd doar statisticile publice: nivelul, seria, momentum-ul și personajul."
                 : mode === "local"
                 ? "Datele se salvează în browserul acestui dispozitiv."
                 : "Stocarea nu e disponibilă: datele se pierd când închizi pagina."}

@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { CheckCircle2, FlaskConical, Leaf, Zap } from "lucide-react";
 import { useAppStore } from "./lib/store.js";
 import { checkInGain, derive, reviewPayload } from "./lib/derive.js";
-import { CODE, VERDICT_CODE } from "./lib/engine.js";
+import { CODE } from "./lib/engine.js";
 import { addDays, monthKey, nowMinutes, parseHM, todayKey } from "./lib/dates.js";
 import { detectMoments } from "./lib/moments.js";
 import { pickQuote } from "./lib/quotes.js";
@@ -14,7 +14,6 @@ import { legacyTodos } from "./lib/legacy.js";
 import { Confirm, ToastProvider, useToast } from "./components/ui.jsx";
 import { deleteAccount } from "./lib/account.js";
 import { Shell } from "./components/Shell.jsx";
-import { ProofModal } from "./components/ProofModal.jsx";
 import { MomentModal } from "./components/MomentModal.jsx";
 import { HabitEditor } from "./components/HabitEditor.jsx";
 import { TodoEditor } from "./components/TodoEditor.jsx";
@@ -49,7 +48,7 @@ function useNow() {
 }
 
 function useAi() {
-  const [ai, setAi] = useState({ available: false, images: false, checked: false });
+  const [ai, setAi] = useState({ available: false, checked: false });
   useEffect(() => {
     let alive = true;
     aiStatus().then((s) => alive && setAi({ ...s, checked: true }));
@@ -91,7 +90,6 @@ function Game() {
 
   const [view, setView] = useState("home");
   const [focusHabit, setFocusHabit] = useState(null);
-  const [proof, setProof] = useState(null); // { habitId } or { habitId: null } to pick
   const [habitEd, setHabitEd] = useState(null); // { habit?, tab? }
   const [todoEd, setTodoEd] = useState(null); // a draft to-do
   const [confirm, setConfirm] = useState(null);
@@ -137,7 +135,7 @@ function Game() {
   const recentStories = useMemo(() => {
     const all = Object.values(months)
       .filter(Boolean)
-      .flatMap((m) => [...(m.proofs || []), ...(m.chapters || [])]);
+      .flatMap((m) => m.chapters || []);
     return all.sort((a, b) => (a.at < b.at ? -1 : 1));
   }, [months]);
 
@@ -145,17 +143,8 @@ function Game() {
     (habitId) => {
       const h = state.habits.find((x) => x.id === habitId);
       const code = state.log?.[today]?.[habitId] || 0;
-      if (code > CODE.DONE) {
-        setConfirm({
-          title: "Anulezi bifa?",
-          text: "Misiunea are deja o dovadă. Dacă anulezi bifa, dovada rămâne în jurnal, dar nu mai aduce momentum și puncte de evoluție.",
-          label: "Anulează bifa",
-          run: () => setCode(habitId, 0),
-        });
-        return;
-      }
       setCode(habitId, code ? 0 : CODE.DONE);
-      if (!code) toast({ title: `+${checkInGain(h, CODE.DONE, d.runMult)} momentum`, text: h.name, icon: Zap, tone: "gold", ms: 2200 });
+      if (!code) toast({ title: `+${checkInGain(h, d.runMult)} momentum`, text: h.name, icon: Zap, tone: "gold", ms: 2200 });
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [state, today, d]
@@ -170,27 +159,6 @@ function Game() {
       if (Object.keys(day).length) log[today] = day;
       else delete log[today];
       return { ...s, log };
-    });
-  }
-
-  function saveProof(record) {
-    const ym = monthKey(record.day);
-    update((s) => {
-      const day = { ...(s.log?.[record.day] || {}), [record.habitId]: VERDICT_CODE[record.verdict] || CODE.SELF };
-      return { ...s, log: { ...(s.log || {}), [record.day]: day }, meta: { ...s.meta, months: uniq([...(s.meta?.months || []), ym]) } };
-    });
-    store.updateMonth(ym, (m) => {
-      const proofs = [...(m.proofs || []), record];
-      // keep the document small when thumbnails are stored inline
-      let size = JSON.stringify(proofs).length;
-      for (const p of proofs) {
-        if (size < 200000) break;
-        if (p.thumb) {
-          size -= p.thumb.length;
-          p.thumb = null;
-        }
-      }
-      return { ...m, proofs };
     });
   }
 
@@ -323,7 +291,6 @@ function Game() {
   if (!d) return <Loading />;
 
   const common = { state, d, today, go, ai, months, recentStories };
-  const openProof = (habitId = null) => setProof({ habitId });
   const reviewInfo = { ...review, run: runReview, reviewMin, now };
 
   return (
@@ -334,7 +301,6 @@ function Game() {
           groups={groups}
           review={reviewInfo}
           onCheck={checkIn}
-          onProof={openProof}
           onRevive={applyRevive}
           todo={todoActions}
           onAddHabit={() => setHabitEd({ tab: "catalog" })}
@@ -346,18 +312,15 @@ function Game() {
           focus={focusHabit}
           setFocus={setFocusHabit}
           onCheck={checkIn}
-          onProof={openProof}
           onAdd={() => setHabitEd({ tab: "catalog" })}
           onEdit={(habit) => setHabitEd({ habit, tab: "custom" })}
           onArchive={archiveHabit}
-          loadMonth={store.loadMonth}
         />
       )}
       {view === "companion" && (
         <Companion
           {...common}
           loadMonth={store.loadMonth}
-          onProof={openProof}
           onRename={(name) => update((s) => ({ ...s, companion: { ...s.companion, name } }))}
         />
       )}
@@ -373,7 +336,7 @@ function Game() {
           onDeleteAccount={() =>
             setConfirm({
               title: "Ștergi contul?",
-              text: "Se șterg contul, toate datele și toate fișierele tale, definitiv. Nu se poate anula.",
+              text: "Se șterg contul și toate datele tale, definitiv. Nu se poate anula.",
               label: "Șterge contul",
               run: () => deleteAccount(store.env),
             })
@@ -381,7 +344,7 @@ function Game() {
           onWipe={() =>
             setConfirm({
               title: "Ștergi toate datele?",
-              text: "Se șterg obiceiurile, istoricul, dovezile, to-do-urile și personajul. Nu se poate anula.",
+              text: "Se șterg obiceiurile, istoricul, to-do-urile și personajul. Nu se poate anula.",
               label: "Șterge tot",
               run: wipeAll,
             })
@@ -389,19 +352,7 @@ function Game() {
         />
       )}
 
-      <ProofModal
-        open={!!proof}
-        habitId={proof?.habitId}
-        state={state}
-        d={d}
-        today={today}
-        ai={ai}
-        env={store.env}
-        recentStories={recentStories}
-        onSave={saveProof}
-        onClose={() => setProof(null)}
-      />
-      {queue[0] && !proof && (
+      {queue[0] && (
         <MomentModal
           key={queue[0].id}
           moment={queue[0]}

@@ -180,14 +180,9 @@ export function HabitForm({ draft, setDraft }) {
         <span className="mb-1.5 block text-xs font-extrabold uppercase tracking-wider text-dim">Zile</span>
         <DayPicker value={draft.days} onChange={set("days")} />
       </div>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Țintă" htmlFor="habit-target">
-          <input id="habit-target" className="field" value={draft.target} maxLength={60} placeholder="ex.: 30 de minute" onChange={(e) => set("target")(e.target.value)} />
-        </Field>
-        <Field label="Ce dovadă trimiți" htmlFor="habit-proof">
-          <input id="habit-proof" className="field" value={draft.proofHint || ""} maxLength={60} placeholder="ex.: o poză de la bazin" onChange={(e) => set("proofHint")(e.target.value)} />
-        </Field>
-      </div>
+      <Field label="Țintă" htmlFor="habit-target">
+        <input id="habit-target" className="field" value={draft.target} maxLength={60} placeholder="ex.: 30 de minute" onChange={(e) => set("target")(e.target.value)} />
+      </Field>
     </div>
   );
 }
@@ -205,7 +200,6 @@ export function HabitEditor({ open, initial, tab: initialTab = "catalog", state,
       days: [0, 1, 2, 3, 4, 5, 6],
       time: null,
       target: "",
-      proofHint: "",
       color: nextColor(state.habits || []),
       createdAt: today,
     }),
@@ -264,7 +258,7 @@ export function HabitEditor({ open, initial, tab: initialTab = "catalog", state,
           <HabitForm draft={draft} setDraft={setDraft} />
           <div className="mt-4 flex items-center gap-2 text-xs font-semibold text-dim">
             <Chip tone="gold">+{DIFF[draft.diff].xp} momentum pe bifă</Chip>
-            <span>× 1,5 cu dovadă verificată</span>
+            <span>+{DIFF[draft.diff].ep} puncte de evoluție</span>
           </div>
         </>
       )}

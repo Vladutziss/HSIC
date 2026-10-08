@@ -85,9 +85,9 @@ export function momentLine(m, { name, resetAfter = 3 }) {
     case "return":
       return `Ai lipsit ${m.away} zile și ${n} a dormit tot timpul ăsta. Acum s-a trezit și sare de bucurie că te vede.`;
     case "hatch":
-      return "Dovezile tale au încălzit oul destul cât să se deschidă. De acum, personajul tău crește odată cu tine.";
+      return "Bifările tale au încălzit oul destul cât să se deschidă. De acum, personajul tău crește odată cu tine.";
     case "evolve":
-      return `${n} a devenit ${m.stage}. Fiecare dovadă trimisă a contat.`;
+      return `${n} a devenit ${m.stage}. Fiecare bifă a contat.`;
     case "levelup":
       return `Ai ajuns la nivelul ${m.lvl}, ${m.name}. Consecvența din ultimele zile se vede.`;
     case "streak":
@@ -107,9 +107,9 @@ export function momentSituation(m, { name, resetAfter = 3 }) {
     case "return":
       return `the player came back after ${m.away} days away; their companion ${name} woke up happy`;
     case "hatch":
-      return "the player's first proofs hatched their companion's egg";
+      return "the player's first check-ins hatched their companion's egg";
     case "evolve":
-      return `the player's companion ${name} evolved to the ${m.stage} stage thanks to their proofs`;
+      return `the player's companion ${name} evolved to the ${m.stage} stage thanks to their check-ins`;
     case "levelup":
       return `the player reached momentum level ${m.lvl} (${m.name})`;
     case "streak":

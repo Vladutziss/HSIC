@@ -1,20 +1,18 @@
 import React, { useEffect, useState } from "react";
-import { BookOpenText, Camera, Clock, Crown, ListTodo, MessageCircle, Moon, Plus, ScrollText, Sparkles, Users } from "lucide-react";
+import { BookOpenText, Clock, Crown, ListTodo, MessageCircle, Moon, Plus, ScrollText, Sparkles, Users } from "lucide-react";
 import { Bar, Button, Chip, CheckButton, Gems, Panel, Ring, SectionTitle, Skeleton } from "./ui.jsx";
 import { Sprite, eggCrack } from "./Sprite.jsx";
-import { ProofBadge } from "./ProofModal.jsx";
 import { iconFor } from "./icons.js";
 import { PATHS } from "../lib/catalog.js";
-import { CODE_VERDICT, checkInGain } from "../lib/derive.js";
+import { checkInGain } from "../lib/derive.js";
 import { fmtDay, monthKey } from "../lib/dates.js";
 import { c as tc } from "../lib/themes.js";
 
 // ------------------------------------------------------------ quests
 
-export function QuestCard({ h, code, scheduled, runMult, onCheck, onProof, onOpen }) {
+export function QuestCard({ h, code, scheduled, runMult, onCheck, onOpen }) {
   const Icon = iconFor(h.icon);
   const done = code > 0;
-  const verdict = CODE_VERDICT[code];
   const [burst, setBurst] = useState(0);
   useEffect(() => {
     if (!burst) return undefined;
@@ -22,7 +20,7 @@ export function QuestCard({ h, code, scheduled, runMult, onCheck, onProof, onOpe
     return () => clearTimeout(t);
   }, [burst]);
   const click = () => {
-    if (!done) setBurst(checkInGain(h, 1, runMult));
+    if (!done) setBurst(checkInGain(h, runMult));
     onCheck(h.id);
   };
   return (
@@ -54,25 +52,9 @@ export function QuestCard({ h, code, scheduled, runMult, onCheck, onProof, onOpe
               {h.time}
             </span>
           )}
-          {done ? (
-            verdict ? (
-              <ProofBadge verdict={verdict} />
-            ) : (
-              <span className="font-extrabold text-mint">Bifat · adaugă o dovadă pentru bonus</span>
-            )
-          ) : (
-            <span className="font-extrabold text-gold-hi">
-              +{checkInGain(h, 1, runMult)}
-              <span className="hidden sm:inline"> · până la +{checkInGain(h, 4, runMult)} cu dovadă</span>
-            </span>
-          )}
+          {done ? <span className="font-extrabold text-mint">Bifat</span> : <span className="font-extrabold text-gold-hi">+{checkInGain(h, runMult)}</span>}
         </div>
       </div>
-      {!verdict && (
-        <Button variant={done ? "violet" : "ghost"} size="sm" icon={Camera} onClick={() => onProof(h.id)} aria-label={`Trimite o dovadă pentru ${h.name}`}>
-          <span className="hidden sm:inline">Dovadă</span>
-        </Button>
-      )}
       <CheckButton checked={done} onClick={click} label={done ? `Anulează bifa pentru ${h.name}` : `Bifează ${h.name}`} />
       {burst > 0 && <span className="anim-rise font-pixel pointer-events-none absolute right-6 top-0 text-lg font-bold text-gold">+{burst}</span>}
     </div>
@@ -84,16 +66,16 @@ export function QuestCard({ h, code, scheduled, runMult, onCheck, onProof, onOpe
 export function moodLine(c, name) {
   const n = name || "Molt-ul tău";
   if (c.stage.id === "egg") {
-    if (c.mood === "sleep") return "Oul e rece și liniștit. Se încălzește din nou cu prima ta dovadă.";
-    return c.ep > 0 ? "Oul a început să crape! Încă o dovadă și se deschide." : "Oul se încălzește cu fiecare dovadă pe care o trimiți.";
+    if (c.mood === "sleep") return "Oul e rece și liniștit. Se încălzește din nou cu prima ta bifă.";
+    return c.ep > 0 ? "Oul a început să crape! Încă o bifă și se deschide." : "Oul se încălzește cu fiecare obicei pe care îl bifezi.";
   }
   if (c.mood === "sleep") return `${n} doarme. Se trezește când revii.`;
   if (c.mood === "joy") return `${n} sare de bucurie că ai revenit!`;
   if (c.mood === "happy") return `${n} e mândru de tine: toate misiunile de azi sunt gata.`;
-  return `${n} te așteaptă la următoarea dovadă.`;
+  return `${n} te așteaptă la următoarea bifă.`;
 }
 
-export function CompanionCard({ c, path, lastStory, onOpen, onProof }) {
+export function CompanionCard({ c, path, lastStory, onOpen }) {
   const cls = PATHS[path]?.cls;
   return (
     <Panel tone="violet" corners className="overflow-hidden">
@@ -137,10 +119,7 @@ export function CompanionCard({ c, path, lastStory, onOpen, onProof }) {
           </figure>
         )}
         <div className="flex flex-wrap gap-2">
-          <Button variant="violet" size="sm" icon={Camera} onClick={onProof}>
-            Trimite o dovadă
-          </Button>
-          <Button variant="ghost" size="sm" icon={BookOpenText} onClick={onOpen}>
+          <Button variant="violet" size="sm" icon={BookOpenText} onClick={onOpen}>
             Povestea
           </Button>
         </div>
