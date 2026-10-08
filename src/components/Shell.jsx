@@ -79,14 +79,16 @@ function SaveIndicator({ mode, saveStatus }) {
   );
 }
 
-function Hud({ d, state, setView, unread, mode, saveStatus, now }) {
+function Hud({ d, state, setView, onReview, unread, mode, saveStatus, now }) {
   const { level, entry, streak, revive, scheduled, doneScheduled } = d;
   const reviewMin = parseHM(state.settings?.reviewTime || "21:00");
   const reviewed = !!state.reviews?.[d.today];
   const left = reviewMin - now;
-  // the report card lives on the home screen: go there, then bring it into view once it has rendered
+  // same as pressing "Generează raportul": go to the card on the home screen, bring it into view
+  // once it has rendered, and start the report unless today's is already written
   const openReview = () => {
     setView("home");
+    onReview?.();
     setTimeout(() => {
       const card = document.getElementById("review-card");
       card?.scrollIntoView({ block: "center" });
@@ -166,7 +168,7 @@ function Hud({ d, state, setView, unread, mode, saveStatus, now }) {
   );
 }
 
-export function Shell({ view, setView, d, state, unread, mode, saveStatus, now, children }) {
+export function Shell({ view, setView, onReview, d, state, unread, mode, saveStatus, now, children }) {
   const c = d.companion;
   const path = state.profile?.path || "sport";
   return (
@@ -204,7 +206,7 @@ export function Shell({ view, setView, d, state, unread, mode, saveStatus, now, 
       </aside>
 
       <div className="lg:pl-64">
-        <Hud d={d} state={state} setView={setView} unread={unread} mode={mode} saveStatus={saveStatus} now={now} />
+        <Hud d={d} state={state} setView={setView} onReview={onReview} unread={unread} mode={mode} saveStatus={saveStatus} now={now} />
         <main className="mx-auto max-w-[1240px] px-3 pb-28 pt-5 sm:px-4 lg:px-8 lg:pb-12 lg:pt-7">{children}</main>
       </div>
 
