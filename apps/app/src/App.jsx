@@ -87,7 +87,7 @@ function Game() {
   const ai = useAi();
   const toast = useToast();
   const d = useMemo(() => (state ? derive(state, today) : null), [state, today]);
-  const groups = useGroups({ store, state, update, myStats: d?.publicStats, today });
+  const groups = useGroups({ store, state, update, myStats: d?.publicStats });
 
   const [view, setView] = useState("home");
   const [focusHabit, setFocusHabit] = useState(null);
@@ -361,7 +361,7 @@ function Game() {
           onRename={(name) => update((s) => ({ ...s, companion: { ...s.companion, name } }))}
         />
       )}
-      {view === "group" && <Group {...common} groups={groups} mode={store.mode} />}
+      {view === "group" && <Group {...common} groups={groups} />}
       {view === "plan" && <Planner {...common} todo={todoActions} />}
       {view === "stats" && <Stats {...common} mode={store.mode} saveStatus={store.saveStatus} />}
       {view === "settings" && (
