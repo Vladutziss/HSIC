@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { Bell, Check, Copy, Crown, Flame, Handshake, Inbox, LogOut, Medal, Send, UserPlus, Users } from "lucide-react";
-import { Button, Chip, Empty, Field, LevelBadge, Panel, SectionTitle, Tabs, useToast } from "../components/ui.jsx";
+import { Button, Chip, Empty, Field, LevelBadge, Panel, SectionTitle, Skeleton, Tabs, useToast } from "../components/ui.jsx";
 import { Sprite } from "../components/Sprite.jsx";
 import { NUDGE_TEMPLATES } from "../lib/groups.js";
 import { PATHS } from "../lib/catalog.js";
@@ -14,6 +14,16 @@ const timeAgo = (iso) => {
   const d = Math.round(h / 24);
   return d === 1 ? "ieri" : `acum ${d} zile`;
 };
+
+function RowsSkeleton({ rows = 3 }) {
+  return (
+    <div className="space-y-2" aria-busy="true" aria-label="Se încarcă…">
+      {Array.from({ length: rows }, (_, i) => (
+        <Skeleton key={i} className="h-14 w-full rounded-2xl" />
+      ))}
+    </div>
+  );
+}
 
 function CreateJoin({ groups }) {
   const toast = useToast();
@@ -89,7 +99,7 @@ function CreateJoin({ groups }) {
   );
 }
 
-function Leaderboard({ g }) {
+function Leaderboard({ g, loading }) {
   const [by, setBy] = useState("weekGain");
   const ranked = useMemo(() => [...g.members].sort((a, b) => (b[by] || 0) - (a[by] || 0)), [g.members, by]);
   const unit = { weekGain: "momentum", momentum: "puncte", streak: "zile" }[by];
@@ -109,6 +119,13 @@ function Leaderboard({ g }) {
           { value: "streak", label: "Serie" },
         ]}
       />
+      {loading ? (
+        <RowsSkeleton />
+      ) : ranked.length === 0 ? (
+        <Empty icon={Users} title="Încă nu are membri">
+          Clasamentul apare imediat ce intră primul membru.
+        </Empty>
+      ) : (
       <ol className="space-y-2">
         {ranked.map((m, i) => {
           const rank = i + 1;
@@ -156,11 +173,12 @@ function Leaderboard({ g }) {
           );
         })}
       </ol>
+      )}
     </Panel>
   );
 }
 
-function Composer({ g, groups }) {
+function Composer({ g, groups, loading }) {
   const toast = useToast();
   const others = g.members.filter((m) => !m.isMe);
   const [to, setTo] = useState([]);
@@ -185,8 +203,12 @@ function Composer({ g, groups }) {
       <SectionTitle icon={Send} tone="mint" sub="Unui prieten, mai multora sau întregului grup">
         Trimite un reminder
       </SectionTitle>
-      {others.length === 0 ? (
-        <p className="text-sm text-dim">Încă nu mai e nimeni în grup. Trimite codul prietenilor tăi.</p>
+      {loading ? (
+        <RowsSkeleton rows={2} />
+      ) : others.length === 0 ? (
+        <Empty icon={UserPlus} title="Nu mai e nimeni în grup">
+          Trimite codul de invitație prietenilor tăi, apoi le poți trimite remindere.
+        </Empty>
       ) : (
         <>
           <div className="flex flex-wrap gap-2">
@@ -230,7 +252,7 @@ function Composer({ g, groups }) {
   );
 }
 
-function InboxPanel({ g, groups }) {
+function InboxPanel({ g, groups, loading }) {
   const [tab, setTab] = useState("in");
   const names = Object.fromEntries(g.members.map((m) => [m.id, m]));
   const list = tab === "in" ? g.inbox : g.sent;
@@ -250,8 +272,12 @@ function InboxPanel({ g, groups }) {
           { value: "out", label: "Trimise" },
         ]}
       />
-      {list.length === 0 ? (
-        <p className="py-4 text-center text-sm font-semibold text-dim">{tab === "in" ? "Niciun reminder primit." : "Nu ai trimis încă niciun reminder."}</p>
+      {loading ? (
+        <RowsSkeleton rows={2} />
+      ) : list.length === 0 ? (
+        <Empty icon={Inbox} title={tab === "in" ? "Niciun reminder primit" : "Niciun reminder trimis"}>
+          {tab === "in" ? "Când un prieten îți trimite un reminder, apare aici." : "Remindere trimise de tine apar aici."}
+        </Empty>
       ) : (
         <ul className="space-y-2">
           {list.slice(0, 20).map((n) => {
@@ -284,7 +310,7 @@ function InboxPanel({ g, groups }) {
   );
 }
 
-function GroupView({ g, groups }) {
+function GroupView({ g, groups, loading }) {
   const toast = useToast();
   const copy = async () => {
     try {
@@ -307,7 +333,6 @@ function GroupView({ g, groups }) {
             <span>
               {g.members.length} {g.members.length === 1 ? "membru" : "membri"}
             </span>
-            {g.demo && <Chip tone="violet">demonstrativ: membrii sunt simulați</Chip>}
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -315,31 +340,30 @@ function GroupView({ g, groups }) {
             <span className="font-pixel text-lg tracking-[0.25em] text-gold-hi">{g.info.code}</span>
             <Copy size={15} className="text-dim" aria-hidden="true" />
           </button>
-          {!g.demo && (
-            <Button variant="ghost" size="sm" icon={LogOut} onClick={() => groups.leave(g.id)}>
-              Ieși
-            </Button>
-          )}
+          <Button variant="ghost" size="sm" icon={LogOut} onClick={() => groups.leave(g.id)}>
+            Ieși
+          </Button>
         </div>
       </Panel>
       <div className="grid gap-5 lg:grid-cols-5">
         <div className="min-w-0 lg:col-span-3">
-          <Leaderboard g={g} />
+          <Leaderboard g={g} loading={loading} />
         </div>
         <div className="min-w-0 space-y-5 lg:col-span-2">
-          <Composer g={g} groups={groups} />
-          <InboxPanel g={g} groups={groups} />
+          <Composer g={g} groups={groups} loading={loading} />
+          <InboxPanel g={g} groups={groups} loading={loading} />
         </div>
       </div>
     </div>
   );
 }
 
-export default function Group({ groups, mode }) {
-  const real = groups.groups.real;
+export default function Group({ groups }) {
+  const list = groups.groups;
   const [active, setActive] = useState(null);
   const [adding, setAdding] = useState(false);
-  const current = real.find((g) => g.id === active) || real[0] || null;
+  const current = list.find((g) => g.id === active) || list[0] || null;
+  const { status } = groups;
 
   return (
     <div className="space-y-5">
@@ -348,38 +372,29 @@ export default function Group({ groups, mode }) {
           <h1 className="font-pixel text-3xl text-ink">Grup</h1>
           <p className="text-sm font-semibold text-dim">Progres împreună: clasament săptămânal și remindere între prieteni.</p>
         </div>
-        {groups.cloud && real.length > 0 && (
+        {groups.cloud && list.length > 0 && (
           <Button variant="ghost" size="sm" icon={UserPlus} onClick={() => setAdding((x) => !x)}>
             {adding ? "Închide" : "Grup nou sau cod"}
           </Button>
         )}
       </div>
 
-      {groups.cloud ? (
-        <>
-          {(real.length === 0 || adding) && <CreateJoin groups={groups} />}
-          {real.length > 1 && (
-            <Tabs value={current?.id} onChange={setActive} items={real.map((g) => ({ value: g.id, label: g.info.name || "Grup" }))} />
-          )}
-          {current && <GroupView g={current} groups={groups} />}
-          {real.length === 0 && (
-            <>
-              <p className="text-sm font-semibold text-dim">Până îți faci un grup, uite cum arată unul:</p>
-              <GroupView g={groups.groups.demo} groups={groups} />
-            </>
-          )}
-        </>
+      {!groups.cloud ? (
+        <Panel>
+          <Empty icon={Users} title="Grupurile au nevoie de cont">
+            Intră în cont, ca tu și prietenii tăi să vedeți același clasament și aceleași remindere.
+          </Empty>
+        </Panel>
       ) : (
         <>
-          <Panel className="flex flex-wrap items-center gap-4 p-4">
-            <Users size={22} className="text-sky" aria-hidden="true" />
-            <p className="min-w-[220px] flex-1 text-sm text-body">
-              {mode === "loading"
-                ? "Se încarcă…"
-                : "Grupurile reale au nevoie de baza de date a aplicației publicate pe claude.ai, ca toți membrii să vadă același clasament. Aici vezi un grup demonstrativ."}
+          {status === "error" && (
+            <p role="alert" className="rounded-xl bg-rose/10 p-3 text-sm font-semibold text-rose ring-1 ring-rose/30">
+              Nu am putut citi datele grupului. Se reîncearcă automat.
             </p>
-          </Panel>
-          <GroupView g={groups.groups.demo} groups={groups} />
+          )}
+          {(list.length === 0 || adding) && <CreateJoin groups={groups} />}
+          {list.length > 1 && <Tabs value={current?.id} onChange={setActive} items={list.map((g) => ({ value: g.id, label: g.info.name || "Grup" }))} />}
+          {current && <GroupView g={current} groups={groups} loading={status === "loading"} />}
         </>
       )}
     </div>
