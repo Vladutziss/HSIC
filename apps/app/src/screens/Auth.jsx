@@ -203,10 +203,10 @@ function SignIn({ client }) {
         </div>
 
         <div className="flex gap-4 text-xs font-bold text-faint">
-          <a className="focus-ring underline" href="privacy.html">
+          <a className="focus-ring underline" href="https://molted.eu/privacy.html">
             Confidențialitate
           </a>
-          <a className="focus-ring underline" href="terms.html">
+          <a className="focus-ring underline" href="https://molted.eu/terms.html">
             Termeni
           </a>
         </div>
