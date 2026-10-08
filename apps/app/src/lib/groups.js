@@ -3,11 +3,11 @@
 //   groups/<gid>                 {name, code, kind, owner, createdAt}
 //   groups/<gid>/members/<uid>   public stats each member publishes for themselves
 //   groups/<gid>/nudges/<nid>    reminders: {from, to: [uid], text, at, read: {uid: true}}
-// Without the database a demo group with simulated members stands in.
+// Everything is read from the backend; there is no demo or seed data. `status` tells
+// the screen whether to show a loading state, an error, or the (possibly empty) data.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { addDays, mondayOf } from "./dates.js";
-import { levelInfo } from "./engine.js";
+import { mondayOf } from "./dates.js";
 
 const CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 const newCode = () => Array.from({ length: 6 }, () => CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)]).join("");
@@ -20,48 +20,9 @@ export const NUDGE_TEMPLATES = [
   "Mâine dimineață facem împreună?",
 ];
 
-// ------------------------------------------------------------ demo group
-
-function seeded(seed) {
-  let s = seed % 2147483647 || 1;
-  return () => (s = (s * 16807) % 2147483647) / 2147483647;
-}
-
-export function demoGroup(me, today) {
-  const rnd = seeded([...today].reduce((a, c) => a + c.charCodeAt(0), 0));
-  const base = Math.max(120, me.weekGain || 300);
-  const mk = (id, nick, path, stage, factor, streak, mood = "idle") => {
-    const weekGain = Math.round(base * factor * (0.9 + rnd() * 0.2));
-    const momentum = Math.round((me.momentum || 400) * factor * (0.85 + rnd() * 0.3));
-    const lvl = levelInfo(momentum);
-    return { id, nick, path, stage, mood, weekGain, momentum, level: lvl.lvl, levelName: lvl.name, streak, todayDone: Math.round(rnd() * 3), todayTotal: 4, demo: true };
-  };
-  const members = [
-    mk("demo-ana", "Ana", "sport", "adept", 1.18, 12),
-    mk("demo-ioana", "Ioana", "minte", "master", 1.42, 23, "happy"),
-    mk("demo-mihai", "Mihai", "studiu", "apprentice", 0.82, 4),
-    mk("demo-radu", "Radu", "bani", "hatchling", 0.38, 0, "sleep"),
-  ];
-  return {
-    id: "demo",
-    demo: true,
-    info: { name: "Clubul de dimineață", code: "DEMO42", kind: "group" },
-    members,
-    startInbox: [
-      {
-        id: "demo-n1",
-        from: "demo-ana",
-        text: "Hai că poți! Ne vedem diseară la raport.",
-        at: `${addDays(today, 0)}T08:12:00`,
-        read: false,
-      },
-    ],
-  };
-}
-
 // ------------------------------------------------------------ hook
 
-export function useGroups({ store, state, update, myStats, today }) {
+export function useGroups({ store, state, update, myStats }) {
   const env = store.env.current;
   const artifactDb = store.mode === "cloud" && env?.db && env?.uid; // claude.ai artifact database
   const sb = store.mode === "supabase" && env?.client && env?.uid; // Supabase
@@ -73,8 +34,8 @@ export function useGroups({ store, state, update, myStats, today }) {
   const [inbox, setInbox] = useState({});
   const [sent, setSent] = useState({});
   const [profiles, setProfiles] = useState({});
-  const [demoInbox, setDemoInbox] = useState(null);
-  const [demoSent, setDemoSent] = useState([]);
+  const [loaded, setLoaded] = useState({}); // gid -> true after its first successful read
+  const [failed, setFailed] = useState(false);
   const published = useRef({});
 
   // subscriptions to the real groups
@@ -90,8 +51,11 @@ export function useGroups({ store, state, update, myStats, today }) {
         .catch(() => {});
       unsubs.push(
         db.collection(`groups/${gid}/members`).onSnapshot(
-          (qs) => setMembers((m) => ({ ...m, [gid]: qs.docs.map((d) => ({ id: d.id, ...d.data() })) })),
-          () => {}
+          (qs) => {
+            setMembers((m) => ({ ...m, [gid]: qs.docs.map((d) => ({ id: d.id, ...d.data() })) }));
+            setLoaded((l) => ({ ...l, [gid]: true }));
+          },
+          () => setFailed(true)
         )
       );
       unsubs.push(
@@ -131,6 +95,8 @@ export function useGroups({ store, state, update, myStats, today }) {
         client.from("group_profiles").select("*"),
       ]);
       if (!alive) return;
+      const bad = [g, m, n, r, p].find((x) => x.error);
+      if (bad) throw bad.error;
       const by = (rows, col) => (rows || []).reduce((acc, row) => ((acc[row[col]] ||= []).push(row), acc), {});
       const read = new Set((r.data || []).map((x) => x.nudge_id));
       const nudge = (x) => ({ id: x.id, from: x.from_user, to: x.to_users, text: x.text, at: x.at, read: read.has(x.id) ? { [env.uid]: true } : {} });
@@ -144,19 +110,22 @@ export function useGroups({ store, state, update, myStats, today }) {
       setInbox(Object.fromEntries(gids.map((gid) => [gid, (nudgesBy[gid] || []).filter((x) => x.to_users.includes(env.uid)).map(nudge)])));
       setSent(Object.fromEntries(gids.map((gid) => [gid, (nudgesBy[gid] || []).filter((x) => x.from_user === env.uid).map(nudge)])));
       setProfiles(Object.fromEntries((p.data || []).map((x) => [x.id, { name: x.name, avatarUrl: x.avatar_url }])));
+      setLoaded(Object.fromEntries(gids.map((gid) => [gid, true])));
+      setFailed(false);
     };
-    load().catch(() => {});
+    const fail = () => alive && setFailed(true);
+    load().catch(fail);
     let timer = null;
     const soon = () => {
       clearTimeout(timer);
-      timer = setTimeout(() => load().catch(() => {}), 500);
+      timer = setTimeout(() => load().catch(fail), 500);
     };
     const channel = client.channel(`groups-${env.uid}`);
     for (const gid of gids) {
       for (const table of ["group_members", "nudges"]) channel.on("postgres_changes", { event: "*", schema: "public", table, filter: `group_id=eq.${gid}` }, soon);
     }
     channel.subscribe();
-    const poll = setInterval(() => document.visibilityState === "visible" && load().catch(() => {}), 60000);
+    const poll = setInterval(() => document.visibilityState === "visible" && load().catch(fail), 60000);
     return () => {
       alive = false;
       clearTimeout(timer);
@@ -205,50 +174,29 @@ export function useGroups({ store, state, update, myStats, today }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cloud, key, statsJson]);
 
-  const demo = useMemo(() => demoGroup(myStats || {}, today), [today, myStats?.weekGain, myStats?.momentum]);
-  useEffect(() => {
-    if (demoInbox === null) setDemoInbox(demo.startInbox);
-  }, [demo, demoInbox]);
+  const groups = useMemo(
+    () =>
+      gids.map((gid) => {
+        const list = (members[gid] || []).map((m) => ({
+          ...m,
+          isMe: m.id === myId,
+          name: profiles[m.id]?.name || m.nick || "Membru",
+          avatarUrl: profiles[m.id]?.avatarUrl || null,
+        }));
+        if (!list.some((m) => m.isMe) && myStats) list.push({ id: myId, ...myStats, isMe: true, name: myStats.nick || "Tu" });
+        return {
+          id: gid,
+          info: infos[gid] || {},
+          members: list,
+          inbox: (inbox[gid] || []).map((n) => ({ ...n, read: !!n.read?.[myId] })).sort((a, b) => (a.at < b.at ? 1 : -1)),
+          sent: (sent[gid] || []).sort((a, b) => (a.at < b.at ? 1 : -1)),
+        };
+      }),
+    [gids, infos, members, inbox, sent, profiles, myId, myStats]
+  );
 
-  const groups = useMemo(() => {
-    const real = gids.map((gid) => {
-      const info = infos[gid] || {};
-      const list = (members[gid] || []).map((m) => ({
-        ...m,
-        isMe: m.id === myId,
-        name: profiles[m.id]?.name || m.nick || "Membru",
-        avatarUrl: profiles[m.id]?.avatarUrl || null,
-      }));
-      if (!list.some((m) => m.isMe) && myStats) list.push({ id: myId, ...myStats, isMe: true, name: myStats.nick || "Tu" });
-      return {
-        id: gid,
-        demo: false,
-        info,
-        members: list,
-        inbox: (inbox[gid] || []).map((n) => ({ ...n, read: !!n.read?.[myId] })).sort((a, b) => (a.at < b.at ? 1 : -1)),
-        sent: (sent[gid] || []).sort((a, b) => (a.at < b.at ? 1 : -1)),
-      };
-    });
-    const demoMembers = [...demo.members, { id: "me", ...(myStats || {}), isMe: true, name: myStats?.nick || "Tu" }].map((m) => ({
-      ...m,
-      name: m.isMe ? m.name : m.nick,
-    }));
-    const demoEntry = {
-      id: "demo",
-      demo: true,
-      info: demo.info,
-      members: demoMembers,
-      inbox: demoInbox || [],
-      sent: demoSent,
-    };
-    return { real, demo: demoEntry };
-  }, [gids, infos, members, inbox, sent, profiles, myId, myStats, demo, demoInbox, demoSent]);
-
-  const unread = useMemo(() => {
-    const realUnread = groups.real.reduce((a, g) => a + g.inbox.filter((n) => !n.read).length, 0);
-    const demoUnread = groups.real.length ? 0 : (demoInbox || []).filter((n) => !n.read).length;
-    return realUnread + demoUnread;
-  }, [groups, demoInbox]);
+  const status = !cloud ? "offline" : failed ? "error" : gids.every((gid) => loaded[gid]) ? "ready" : "loading";
+  const unread = useMemo(() => groups.reduce((a, g) => a + g.inbox.filter((n) => !n.read).length, 0), [groups]);
 
   // ------------------------------------------------------------ actions
 
@@ -314,27 +262,6 @@ export function useGroups({ store, state, update, myStats, today }) {
     async (gid, to, text) => {
       const body = text.trim().slice(0, 200);
       if (!body || !to.length) return;
-      if (gid === "demo") {
-        const n = { id: newId("n"), from: "me", to, text: body, at: new Date().toISOString() };
-        setDemoSent((s) => [n, ...s]);
-        const replier = to.find((t) => t !== "me");
-        if (replier) {
-          const who = demo.members.find((m) => m.id === replier);
-          setTimeout(() => {
-            setDemoInbox((list) => [
-              {
-                id: newId("n"),
-                from: replier,
-                text: who?.mood === "sleep" ? "Mersi că mi-ai amintit! Mă trezesc și mă apuc." : "Mersi! Tocmai mă apucam. Spor și ție!",
-                at: new Date().toISOString(),
-                read: false,
-              },
-              ...(list || []),
-            ]);
-          }, 2500);
-        }
-        return;
-      }
       if (!cloud) return;
       const nid = newId("n");
       if (sb) {
@@ -345,15 +272,11 @@ export function useGroups({ store, state, update, myStats, today }) {
       await env.db.doc(`groups/${gid}/nudges/${nid}`).set({ from: env.uid, to, text: body, at: new Date().toISOString(), read: {} });
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [cloud, demo]
+    [cloud]
   );
 
   const markRead = useCallback(
     async (gid, nid) => {
-      if (gid === "demo") {
-        setDemoInbox((list) => (list || []).map((n) => (n.id === nid ? { ...n, read: true } : n)));
-        return;
-      }
       if (!cloud) return;
       if (sb) {
         await env.client.from("nudge_reads").upsert({ nudge_id: nid, user_id: env.uid }, { onConflict: "nudge_id,user_id", ignoreDuplicates: true });
@@ -369,7 +292,7 @@ export function useGroups({ store, state, update, myStats, today }) {
     [cloud]
   );
 
-  return { cloud: !!cloud, myId, groups, unread, create, join, leave, send, markRead };
+  return { cloud: !!cloud, status, myId, groups, unread, create, join, leave, send, markRead };
 }
 
 /** Points earned since Monday; the leaderboard ranks by this. */
