@@ -9,6 +9,7 @@ export const THEMES = [
   { id: "noapte", name: "Noapte", mode: "dark", blurb: "Violet închis, cu accente aurii. Tema originală." },
   { id: "pergament", name: "Pergament", mode: "light", blurb: "Crem cald, salvie și miere, text maro închis." },
   { id: "piersica", name: "Piersică", mode: "light", blurb: "Unt, piersică și roz pal, text roșu-brun." },
+  { id: "padure", name: "Pădure", mode: "dark", blurb: "Verde-închis, cu accente de salvie. Calm și contrastat." },
 ];
 
 export const DEFAULT_THEME = "noapte";
