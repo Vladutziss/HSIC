@@ -24,8 +24,9 @@ Aplicație de obiceiuri gamificată: îți crești **momentum-ul**, trimiți **d
 npm install
 npm run dev              # aplicația în browser, cu date salvate local
 npm test                 # testele motorului de joc
-npm run build            # build static (Vite) în dist/
-npm run build:artifact   # o singură pagină HTML pentru claude.ai, în dist/momentum.html
+npm run build            # build static al aplicației (Vite) în apps/app/dist/
+npm run build:web        # build static al landing-ului în apps/web/dist/
+npm run build:artifact   # o singură pagină HTML pentru claude.ai, în apps/app/dist/momentum.html
 ```
 
 În afara claude.ai aplicația merge complet, dar cu înlocuitori: datele stau în `localStorage`, rapoartele și poveștile vin din șabloane, iar grupul e doar cel demonstrativ.
@@ -46,17 +47,17 @@ Ca să folosească grupurile, prietenii trebuie să poată deschide și edita ap
 ## Structură
 
 ```
-src/lib/engine.js    regulile jocului (momentum, niveluri, reset, serii, revive-uri, evoluție, stări)
-src/lib/sprites.js   pixel art procedural pentru personaj
-src/lib/ai.js        prompturi pentru verificare, poveste, raport și momente + variante scrise
-src/lib/store.js     salvare în baza de date a aplicației sau local
-src/lib/groups.js    grupuri, clasament, remindere, grup demonstrativ
-src/lib/quotes.js    citate pentru momentele-cheie
-src/lib/moments.js   detectarea momentelor-cheie
-src/lib/demo.js      3 săptămâni de date demonstrative
-src/lib/legacy.js    import din prima versiune a aplicației
-src/screens/         Onboarding, Acasă, Obiceiuri, Personaj, Grup, Planificator, Statistici, Setări
-src/components/      interfață comună, grafice, ferestre pentru dovezi, momente, obiceiuri, to-do
+apps/app/src/lib/engine.js    regulile jocului (momentum, niveluri, reset, serii, revive-uri, evoluție, stări)
+apps/app/src/lib/sprites.js   pixel art procedural pentru personaj
+apps/app/src/lib/ai.js        prompturi pentru verificare, poveste, raport și momente + variante scrise
+apps/app/src/lib/store.js     salvare în baza de date a aplicației sau local
+apps/app/src/lib/groups.js    grupuri, clasament, remindere, grup demonstrativ
+apps/app/src/lib/quotes.js    citate pentru momentele-cheie
+apps/app/src/lib/moments.js   detectarea momentelor-cheie
+apps/app/src/lib/demo.js      3 săptămâni de date demonstrative
+apps/app/src/lib/legacy.js    import din prima versiune a aplicației
+apps/app/src/screens/         Onboarding, Acasă, Obiceiuri, Personaj, Grup, Planificator, Statistici, Setări
+apps/app/src/components/      interfață comună, grafice, ferestre pentru dovezi, momente, obiceiuri, to-do
 scripts/build-artifact.mjs   construiește pagina pentru claude.ai
 tests/engine.test.mjs        teste pentru regulile jocului
 ```

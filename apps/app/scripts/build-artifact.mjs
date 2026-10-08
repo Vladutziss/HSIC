@@ -10,6 +10,7 @@ import { build, transform } from "esbuild";
 import postcss from "postcss";
 import tailwindcss from "tailwindcss";
 import autoprefixer from "autoprefixer";
+import postcssImport from "postcss-import";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -24,6 +25,7 @@ await fs.mkdir(outDir, { recursive: true });
 const cssPath = path.join(root, "src/styles.css");
 const cssIn = await fs.readFile(cssPath, "utf8");
 const processed = await postcss([
+  postcssImport(),
   tailwindcss({ ...tailwindConfig, content: [path.join(root, "src/**/*.{js,jsx}")] }),
   autoprefixer(),
 ]).process(cssIn, { from: cssPath });
