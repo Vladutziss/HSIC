@@ -266,7 +266,7 @@ export function ProofModal({ open, habitId, state, d, today, ai, env, recentStor
 
         {type === "photo" && (
           <div className="space-y-3">
-            <label htmlFor="proof-file" className="focus-ring block cursor-pointer rounded-2xl border-2 border-dashed border-edge-hi bg-[#120f29] p-4 text-center transition hover:border-gold/70">
+            <label htmlFor="proof-file" className="focus-ring block cursor-pointer rounded-2xl border-2 border-dashed border-edge-hi bg-well p-4 text-center transition hover:border-gold/70">
               {photo ? (
                 <img src={photo.url} alt="Previzualizarea dovezii" className="mx-auto max-h-56 rounded-xl object-contain" />
               ) : (

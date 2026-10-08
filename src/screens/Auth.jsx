@@ -27,7 +27,7 @@ function Captcha({ onToken, resetKey }) {
       if (dead || !box.current || !window.turnstile) return;
       id.current = window.turnstile.render(box.current, {
         sitekey: SITE_KEY,
-        theme: "dark",
+        theme: document.documentElement.dataset.mode === "light" ? "light" : "dark",
         callback: onToken,
         "expired-callback": () => onToken(""),
         "error-callback": () => onToken(""),

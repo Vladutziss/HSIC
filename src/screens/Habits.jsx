@@ -10,6 +10,7 @@ import { CODE, DIFF, habitStats, isScheduled } from "../lib/engine.js";
 import { CODE_VERDICT } from "../lib/derive.js";
 import { addDays, fmtDay, monthKey, monthsBetween, relDay } from "../lib/dates.js";
 import { AssetAudio, AssetImage } from "../components/Asset.jsx";
+import { c } from "../lib/themes.js";
 
 function HabitCard({ h, stats, series, onOpen, onEdit, onProof, code, today }) {
   const Icon = iconFor(h.icon);
@@ -91,12 +92,12 @@ function HabitDetail({ h, state, d, today, months, loadMonth, onBack, onEdit, on
   );
 
   const cell = (day) => {
-    const c = state.log?.[day]?.[h.id];
+    const code = state.log?.[day]?.[h.id];
     const sched = isScheduled(h, day);
-    if (c === CODE.VERIFIED) return { color: "#3fe0a5", title: `${fmtDay(day)}: bifat, dovadă verificată` };
-    if (c) return { color: "#ffc542", title: `${fmtDay(day)}: bifat${c > 1 ? ", cu dovadă" : ""}` };
-    if (sched && day < today) return { color: "#1c1838", ring: "#5a4fa8", title: `${fmtDay(day)}: ratat` };
-    return { color: "#16122f", title: `${fmtDay(day)}: ${sched ? "programat" : "liber"}` };
+    if (code === CODE.VERIFIED) return { color: c("mint"), title: `${fmtDay(day)}: bifat, dovadă verificată` };
+    if (code) return { color: c("gold"), title: `${fmtDay(day)}: bifat${code > 1 ? ", cu dovadă" : ""}` };
+    if (sched && day < today) return { color: c("panel-lo"), ring: c("mark"), title: `${fmtDay(day)}: ratat` };
+    return { color: c("well"), title: `${fmtDay(day)}: ${sched ? "programat" : "liber"}` };
   };
 
   return (
@@ -180,7 +181,7 @@ function HabitDetail({ h, state, d, today, months, loadMonth, onBack, onEdit, on
               <span className="h-3 w-3 rounded-[3px] bg-gold" /> bifat
             </span>
             <span className="inline-flex items-center gap-1.5">
-              <span className="h-3 w-3 rounded-[3px] ring-1 ring-inset ring-[#5a4fa8]" /> ratat
+              <span className="h-3 w-3 rounded-[3px] ring-1 ring-inset ring-mark" /> ratat
             </span>
           </div>
         </Panel>

@@ -1,11 +1,64 @@
 import React, { useState } from "react";
-import { Bot, Database, Download, FlaskConical, LogOut, Moon, Shield, Trash2, User, UserX } from "lucide-react";
+import { Bot, Check, Database, Download, FlaskConical, LogOut, Moon, Palette, Shield, Trash2, User, UserX } from "lucide-react";
 import { Button, Chip, Field, LevelBadge, Panel, SectionTitle, Toggle } from "../components/ui.jsx";
 import { PATHS } from "../lib/catalog.js";
 import { LEVELS, RULES } from "../lib/engine.js";
 import { exportData, signOut } from "../lib/account.js";
+import { THEMES, setTheme, useTheme } from "../lib/themes.js";
 
 const TIMES = ["18:00", "18:30", "19:00", "19:30", "20:00", "20:30", "21:00", "21:30", "22:00", "22:30", "23:00", "23:30"];
+
+// Each card carries data-theme/data-mode, so it paints itself with that theme's real colours
+// even while another theme is active.
+function ThemePicker() {
+  const active = useTheme();
+  return (
+    <div role="radiogroup" aria-label="Temă de culori" className="grid gap-3 sm:grid-cols-3">
+      {THEMES.map((t) => {
+        const on = t.id === active;
+        return (
+          <button
+            key={t.id}
+            type="button"
+            role="radio"
+            aria-checked={on}
+            onClick={() => setTheme(t.id)}
+            data-theme={t.id}
+            data-mode={t.mode}
+            className={`focus-ring flex flex-col rounded-2xl bg-night p-3 text-left ring-2 transition ${on ? "ring-gold-deep" : "ring-edge hover:ring-edge-hi"}`}
+          >
+            <div className="flex h-16 overflow-hidden rounded-xl ring-1 ring-edge">
+              <div className="flex w-1/3 flex-col gap-1 bg-deep p-1.5">
+                <span className="h-1.5 w-full rounded-full bg-gold" />
+                <span className="h-1.5 w-2/3 rounded-full bg-edge" />
+                <span className="h-1.5 w-3/4 rounded-full bg-edge" />
+              </div>
+              <div className="flex flex-1 flex-col justify-between bg-night p-1.5">
+                <div className="rounded-md bg-panel p-1 ring-1 ring-edge">
+                  <span className="block h-1.5 w-1/2 rounded-full bg-ink" />
+                  <span className="mt-1 block h-1 w-3/4 rounded-full bg-dim" />
+                </div>
+                <div className="flex gap-1">
+                  <span className="h-3 w-8 rounded-md bg-violet" />
+                  <span className="h-3 w-6 rounded-md bg-gold" />
+                  <span className="h-3 w-4 rounded-md bg-mint" />
+                </div>
+              </div>
+            </div>
+            <div className="mt-2 flex items-center justify-between gap-2">
+              <span className="font-pixel text-lg text-ink">{t.name}</span>
+              <span className="inline-flex items-center gap-1 text-[11px] font-extrabold text-dim">
+                {on && <Check size={13} strokeWidth={3} aria-hidden="true" />}
+                {t.mode === "dark" ? "Întunecat" : "Luminos"}
+              </span>
+            </div>
+            <p className="mt-0.5 text-xs font-semibold text-dim">{t.blurb}</p>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
 
 export default function Settings({ state, d, ai, mode, env, onChange, onWipe, onDeleteAccount }) {
   const [exporting, setExporting] = useState(false);
@@ -37,6 +90,13 @@ export default function Settings({ state, d, ai, mode, env, onChange, onWipe, on
       </div>
 
       <div className="grid gap-5 lg:grid-cols-2 [&>*]:min-w-0">
+        <Panel className="space-y-4 p-4 sm:p-5 lg:col-span-2">
+          <SectionTitle icon={Palette} tone="violet">
+            Aspect
+          </SectionTitle>
+          <ThemePicker />
+          <p className="text-xs font-semibold text-dim">Se păstrează pe acest dispozitiv.</p>
+        </Panel>
         <Panel className="space-y-4 p-4 sm:p-5">
           <SectionTitle icon={User} tone="gold">
             Profil
@@ -132,7 +192,7 @@ export default function Settings({ state, d, ai, mode, env, onChange, onWipe, on
           </ul>
           <div className="flex flex-wrap gap-1.5">
             {LEVELS.map((l) => (
-              <span key={l.lvl} className="inline-flex items-center gap-1 rounded-full bg-[#120f29] py-0.5 pl-0.5 pr-2 text-[11px] font-bold text-dim ring-1 ring-edge">
+              <span key={l.lvl} className="inline-flex items-center gap-1 rounded-full bg-well py-0.5 pl-0.5 pr-2 text-[11px] font-bold text-dim ring-1 ring-edge">
                 <LevelBadge lvl={l.lvl} size={20} tone={l.lvl <= d.level.lvl ? "gold" : "dim"} /> {l.name} · {l.min}
               </span>
             ))}

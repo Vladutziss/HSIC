@@ -7,6 +7,7 @@ import { iconFor } from "./icons.js";
 import { PATHS } from "../lib/catalog.js";
 import { CODE_VERDICT, checkInGain } from "../lib/derive.js";
 import { fmtDay, monthKey } from "../lib/dates.js";
+import { c as tc } from "../lib/themes.js";
 
 // ------------------------------------------------------------ quests
 
@@ -112,8 +113,8 @@ export function CompanionCard({ c, path, lastStory, onOpen, onProof }) {
             {c.ep} PE
           </Chip>
         </div>
-        <div className="relative rounded-xl bg-[#120f29] p-3 text-sm font-semibold text-body ring-1 ring-edge">
-          <span className="absolute -top-1.5 left-8 h-3 w-3 rotate-45 bg-[#120f29] ring-1 ring-edge [clip-path:polygon(0_0,100%_0,0_100%)]" aria-hidden="true" />
+        <div className="relative rounded-xl bg-well p-3 text-sm font-semibold text-body ring-1 ring-edge">
+          <span className="absolute -top-1.5 left-8 h-3 w-3 rotate-45 bg-well ring-1 ring-edge [clip-path:polygon(0_0,100%_0,0_100%)]" aria-hidden="true" />
           {moodLine(c, c.name)}
         </div>
         {c.next && (
@@ -173,7 +174,7 @@ export function ReviewCard({ d, state, months, review, ai, today }) {
     body = (
       <div className="space-y-3">
         <div className="flex items-center gap-4">
-          <Ring value={(entry?.score || 0) / 100} size={70} stroke={7} color="#ffc542">
+          <Ring value={(entry?.score || 0) / 100} size={70} stroke={7} color={tc("gold-ink")}>
             <span className="font-pixel text-xl text-ink">{entry?.score ?? 0}</span>
           </Ring>
           <div>
@@ -271,7 +272,7 @@ export function GroupMini({ groups, go }) {
         {top.map((m) => {
           const rank = ranked.indexOf(m) + 1;
           return (
-            <li key={m.id} className={`flex items-center gap-3 rounded-xl px-2.5 py-2 ${m.isMe ? "bg-gold/10 ring-1 ring-gold/30" : "bg-[#120f29]"}`}>
+            <li key={m.id} className={`flex items-center gap-3 rounded-xl px-2.5 py-2 ${m.isMe ? "bg-gold/10 ring-1 ring-gold/30" : "bg-well"}`}>
               <span className={`w-5 text-center font-pixel text-base ${rank === 1 ? "text-gold" : rank === 2 ? "text-body" : rank === 3 ? "text-ember" : "text-dim"}`}>
                 {rank === 1 ? <Crown size={16} className="mx-auto text-gold" aria-label="Locul 1" /> : rank}
               </span>
@@ -329,7 +330,7 @@ export function TodayTodos({ state, today, todo, go }) {
       ) : (
         <ul className="space-y-1.5">
           {todos.map((t) => (
-            <li key={t.id} className="flex items-center gap-3 rounded-xl bg-[#120f29] px-3 py-2">
+            <li key={t.id} className="flex items-center gap-3 rounded-xl bg-well px-3 py-2">
               <CheckButton size="sm" checked={t.done} onClick={() => todo.toggle(t.id)} label={t.done ? `Debifează ${t.title}` : `Bifează ${t.title}`} />
               <button type="button" onClick={() => todo.edit(t)} className={`min-w-0 flex-1 truncate text-left text-sm font-bold ${t.done ? "text-faint line-through" : "text-ink"}`}>
                 {t.title}

@@ -1,13 +1,14 @@
 import React, { createContext, useCallback, useContext, useEffect, useId, useRef, useState } from "react";
 import { Check, Gem, Loader2, X } from "lucide-react";
 import { DIFF } from "../lib/engine.js";
+import { c, mix } from "../lib/themes.js";
 
 // ------------------------------------------------------------ panels
 
-const CORNER = { gold: "#ffc542", violet: "#b19bff", mint: "#3fe0a5", rose: "#ff5f87" };
+const CORNER = { gold: c("gold"), violet: c("violet-hi"), mint: c("mint"), rose: c("rose") };
 
 export function Corners({ tone }) {
-  const c = CORNER[tone] || "#5a4fa8";
+  const col = CORNER[tone] || c("mark");
   const at = [
     { left: -4, top: -4, r: 0 },
     { right: -4, top: -4, r: 90 },
@@ -25,9 +26,9 @@ export function Corners({ tone }) {
       className="pointer-events-none absolute z-10"
       style={{ ...pos, transform: `rotate(${r}deg)` }}
     >
-      <rect x="0" y="0" width="7" height="2" fill={c} />
-      <rect x="0" y="0" width="2" height="7" fill={c} />
-      <rect x="3" y="3" width="1" height="1" fill={c} opacity="0.7" />
+      <rect x="0" y="0" width="7" height="2" fill={col} />
+      <rect x="0" y="0" width="2" height="7" fill={col} />
+      <rect x="3" y="3" width="1" height="1" fill={col} opacity="0.7" />
     </svg>
   ));
 }
@@ -96,7 +97,7 @@ export function IconButton({ icon: Icon, label, className = "", size = 18, ...re
 
 export function Tabs({ value, onChange, items, className = "", size = "md" }) {
   return (
-    <div role="tablist" className={`inline-flex max-w-full gap-1 overflow-x-auto rounded-xl bg-[#120f29] p-1 ring-1 ring-edge ${className}`}>
+    <div role="tablist" className={`inline-flex max-w-full gap-1 overflow-x-auto rounded-xl bg-well p-1 ring-1 ring-edge ${className}`}>
       {items.map((it) => {
         const on = value === it.value;
         const Icon = it.icon;
@@ -110,12 +111,12 @@ export function Tabs({ value, onChange, items, className = "", size = "md" }) {
             onClick={() => onChange(it.value)}
             className={`focus-ring flex shrink-0 items-center gap-1.5 rounded-lg font-extrabold transition ${
               size === "sm" ? "px-2.5 py-1 text-xs" : "px-3 py-1.5 text-sm"
-            } ${on ? "bg-gold text-[#2a1b00] shadow-[0_2px_0_#a8740a]" : "text-dim hover:text-ink"}`}
+            } ${on ? "bg-gold text-on-gold shadow-key-gold-sm" : "text-dim hover:text-ink"}`}
           >
             {Icon && <Icon size={14} strokeWidth={2.5} aria-hidden="true" />}
             {it.label}
             {it.count != null && it.count > 0 && (
-              <span className={`rounded-full px-1.5 text-[10px] ${on ? "bg-[#2a1b00]/15" : "bg-rose text-white"}`}>{it.count}</span>
+              <span className={`rounded-full px-1.5 text-[10px] ${on ? "bg-on-gold/15" : "bg-rose text-on-rose"}`}>{it.count}</span>
             )}
           </button>
         );
@@ -133,7 +134,7 @@ export function Toggle({ checked, onChange, label, id }) {
       aria-checked={checked}
       aria-label={label}
       onClick={() => onChange(!checked)}
-      className={`focus-ring relative h-7 w-12 shrink-0 rounded-full border transition ${checked ? "border-mint-deep bg-mint/80" : "border-edge bg-[#120f29]"}`}
+      className={`focus-ring relative h-7 w-12 shrink-0 rounded-full border transition ${checked ? "border-mint-deep bg-mint/80" : "border-edge bg-well"}`}
     >
       <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all ${checked ? "left-[22px]" : "left-0.5"}`} />
     </button>
@@ -159,11 +160,12 @@ export function Bar({ value, tone = "gold", segmented = true, className = "", la
   );
 }
 
+// [top of the gradient, bottom, outline, number]
 const BADGE = {
-  gold: ["#ffe08a", "#f0a31f", "#7a4f05", "#3b2400"],
-  violet: ["#cbbcff", "#7b55f5", "#36208a", "#ffffff"],
-  mint: ["#a6f7d6", "#22b47f", "#0b5a3d", "#03261a"],
-  dim: ["#5f5699", "#332b66", "#1b1640", "#cfc8f0"],
+  gold: [c("gold-hi"), mix(c("gold-deep"), 35, c("gold")), mix(c("gold-deep"), 73, "black"), c("on-gold")],
+  violet: [mix(c("violet-hi"), 70, "white"), mix(c("violet-deep"), 25, c("violet")), mix(c("violet-deep"), 60, "black"), c("on-violet")],
+  mint: [mix(c("mint"), 60, "white"), mix(c("mint-deep"), 50, c("mint")), mix(c("mint-deep"), 50, "black"), c("on-mint")],
+  dim: [c("faint"), c("edge"), c("panel"), c("body")],
 };
 
 export function LevelBadge({ lvl, size = 44, tone = "gold", label }) {
@@ -174,14 +176,14 @@ export function LevelBadge({ lvl, size = 44, tone = "gold", label }) {
     <svg width={size} height={size} viewBox="0 0 40 40" role="img" aria-label={label || `Nivel ${lvl}`} className="shrink-0">
       <defs>
         <linearGradient id={id} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor={a} />
-          <stop offset="1" stopColor={b} />
+          <stop offset="0" style={{ stopColor: a }} />
+          <stop offset="1" style={{ stopColor: b }} />
         </linearGradient>
       </defs>
-      <polygon points="20,1.5 36.5,11 36.5,29 20,38.5 3.5,29 3.5,11" fill={edge} />
+      <polygon points="20,1.5 36.5,11 36.5,29 20,38.5 3.5,29 3.5,11" style={{ fill: edge }} />
       <polygon points="20,5 33,12.6 33,27.4 20,35 7,27.4 7,12.6" fill={`url(#${id})`} />
       <polygon points="20,5 33,12.6 20,13.5 7,12.6" fill="#ffffff" opacity="0.22" />
-      <text x="20" y="26" textAnchor="middle" fontFamily="'Pixelify Sans', Nunito, monospace" fontSize={lvl >= 10 ? 13 : 16} fontWeight="700" fill={ink}>
+      <text x="20" y="26" textAnchor="middle" fontFamily="'Pixelify Sans', Nunito, monospace" fontSize={lvl >= 10 ? 13 : 16} fontWeight="700" style={{ fill: ink }}>
         {lvl}
       </text>
     </svg>
@@ -198,7 +200,7 @@ export function Gems({ n, size = 12 }) {
           strokeWidth={2.5}
           aria-hidden="true"
           className={i <= n ? "text-sky" : "text-faint/50"}
-          fill={i <= n ? "rgba(92,184,255,0.35)" : "none"}
+          fill={i <= n ? c("sky", 0.35) : "none"}
         />
       ))}
     </span>
@@ -212,7 +214,7 @@ const CHIP = {
   ember: "bg-ember/10 text-ember ring-ember/30",
   sky: "bg-sky/10 text-sky ring-sky/30",
   rose: "bg-rose/10 text-rose ring-rose/30",
-  dim: "bg-white/5 text-dim ring-white/10",
+  dim: "bg-ink/5 text-dim ring-ink/10",
 };
 
 export function Chip({ tone = "dim", icon: Icon, children, className = "" }) {
@@ -224,9 +226,9 @@ export function Chip({ tone = "dim", icon: Icon, children, className = "" }) {
   );
 }
 
-export function Ring({ value, size = 44, stroke = 5, color = "#3fe0a5", track = "#2a2456", children }) {
+export function Ring({ value, size = 44, stroke = 5, color = c("mint-ink"), track = c("edge"), children }) {
   const r = (size - stroke) / 2;
-  const c = 2 * Math.PI * r;
+  const circ = 2 * Math.PI * r;
   return (
     <div className="relative shrink-0" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="-rotate-90" aria-hidden="true">
@@ -239,7 +241,7 @@ export function Ring({ value, size = 44, stroke = 5, color = "#3fe0a5", track = 
           stroke={color}
           strokeWidth={stroke}
           strokeLinecap="round"
-          strokeDasharray={`${Math.max(0, Math.min(1, value)) * c} ${c}`}
+          strokeDasharray={`${Math.max(0, Math.min(1, value)) * circ} ${circ}`}
           style={{ transition: "stroke-dasharray .6s ease" }}
         />
       </svg>
@@ -295,9 +297,9 @@ export function CheckButton({ checked, onClick, label, size = "md", tone = "mint
       className={`focus-ring grid shrink-0 place-items-center rounded-xl border-2 transition active:translate-y-0.5 ${dim} ${
         checked
           ? tone === "mint"
-            ? "border-mint bg-mint text-[#04261a] shadow-[0_3px_0_#157a55]"
-            : "border-gold bg-gold text-[#2a1b00] shadow-[0_3px_0_#a8740a]"
-          : "border-edge-hi bg-[#120f29] text-transparent shadow-[0_3px_0_#0b0920] hover:border-mint/70"
+            ? "border-mint bg-mint text-on-mint shadow-key-mint"
+            : "border-gold bg-gold text-on-gold shadow-key-gold"
+          : "border-edge-hi bg-well text-transparent shadow-key-ghost hover:border-mint/70"
       }`}
     >
       <Check size={size === "sm" ? 14 : 20} strokeWidth={3.5} aria-hidden="true" />
@@ -325,7 +327,7 @@ export function Modal({ open, onClose, title, icon: Icon, tone = "violet", wide 
   if (!open) return null;
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center bg-[#05030f]/80 p-2 backdrop-blur-[2px] sm:items-center sm:p-6"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-scrim/80 p-2 backdrop-blur-[2px] sm:items-center sm:p-6"
       onMouseDown={(e) => {
         if (e.target === e.currentTarget && dismissable) onClose?.();
       }}

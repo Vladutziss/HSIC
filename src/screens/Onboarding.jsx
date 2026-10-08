@@ -49,7 +49,7 @@ function CustomHabitForm({ path, habits, onAdd, onCancel }) {
               aria-label={k}
               aria-pressed={icon === k}
               onClick={() => setIcon(k)}
-              className={`focus-ring grid h-9 w-9 place-items-center rounded-lg ${icon === k ? "bg-gold text-[#2a1b00]" : "bg-panel text-dim ring-1 ring-edge"}`}
+              className={`focus-ring grid h-9 w-9 place-items-center rounded-lg ${icon === k ? "bg-gold text-on-gold" : "bg-panel text-dim ring-1 ring-edge"}`}
             >
               <Icon size={16} aria-hidden="true" />
             </button>
@@ -211,7 +211,7 @@ export default function Onboarding({ onDone, store, today, legacy }) {
                 aria-pressed={on}
                 onClick={() => choosePath(p.id)}
                 className={`focus-ring relative flex items-center gap-3 rounded-2xl border-2 p-4 text-left transition ${
-                  on ? "border-gold bg-gold/10 shadow-[0_4px_0_#a8740a]" : "border-edge bg-panel-hi/60 hover:border-edge-hi"
+                  on ? "border-gold bg-gold/10 shadow-key-gold-lg" : "border-edge bg-panel-hi/60 hover:border-edge-hi"
                 }`}
               >
                 <Sprite path={p.id} stage="apprentice" size={64} still />
@@ -261,7 +261,7 @@ export default function Onboarding({ onDone, store, today, legacy }) {
               type="button"
               aria-pressed={filter === p.id}
               onClick={() => setFilter(p.id)}
-              className={`focus-ring rounded-full px-3 py-1.5 text-xs font-extrabold ${filter === p.id ? "bg-gold text-[#2a1b00]" : "text-dim ring-1 ring-edge hover:text-ink"}`}
+              className={`focus-ring rounded-full px-3 py-1.5 text-xs font-extrabold ${filter === p.id ? "bg-gold text-on-gold" : "text-dim ring-1 ring-edge hover:text-ink"}`}
             >
               {p.label}
             </button>
@@ -288,7 +288,7 @@ export default function Onboarding({ onDone, store, today, legacy }) {
                     <Gems n={c.diff} size={10} /> {scheduleLabel(c.days)}
                   </span>
                 </span>
-                <span className={`grid h-6 w-6 shrink-0 place-items-center rounded-md ${on ? "bg-gold text-[#2a1b00]" : "ring-1 ring-edge-hi"}`}>{on && <Check size={14} strokeWidth={3} aria-hidden="true" />}</span>
+                <span className={`grid h-6 w-6 shrink-0 place-items-center rounded-md ${on ? "bg-gold text-on-gold" : "ring-1 ring-edge-hi"}`}>{on && <Check size={14} strokeWidth={3} aria-hidden="true" />}</span>
               </button>
             );
           })}
@@ -340,7 +340,7 @@ export default function Onboarding({ onDone, store, today, legacy }) {
               type="button"
               aria-pressed={reviewTime === t}
               onClick={() => setReviewTime(t)}
-              className={`focus-ring rounded-xl px-4 py-2.5 font-pixel text-lg transition ${reviewTime === t ? "bg-gold text-[#2a1b00] shadow-[0_3px_0_#a8740a]" : "bg-[#120f29] text-body ring-1 ring-edge hover:text-ink"}`}
+              className={`focus-ring rounded-xl px-4 py-2.5 font-pixel text-lg transition ${reviewTime === t ? "bg-gold text-on-gold shadow-key-gold" : "bg-well text-body ring-1 ring-edge hover:text-ink"}`}
             >
               {t}
             </button>

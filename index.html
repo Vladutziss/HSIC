@@ -3,7 +3,20 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="dark" />
     <title>Molted</title>
+    <script>
+      // Applies the saved colour theme before the first paint, so there is no flash of the dark one.
+      // Keep the key in step with src/lib/themes.js.
+      try {
+        var t = (localStorage.getItem("molted.theme") || "").split(":");
+        if (/^[a-z]+$/.test(t[0] || "") && (t[1] === "light" || t[1] === "dark")) {
+          document.documentElement.dataset.theme = t[0];
+          document.documentElement.dataset.mode = t[1];
+          document.querySelector('meta[name="color-scheme"]').setAttribute("content", t[1]);
+        }
+      } catch (e) {}
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link

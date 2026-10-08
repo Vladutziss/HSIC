@@ -119,7 +119,7 @@ export default function Companion({ state, d, today, months, loadMonth, onProof,
               <li
                 key={s.id}
                 className={`flex flex-col items-center gap-1 rounded-2xl p-3 text-center ring-1 ${
-                  current ? "bg-violet/15 ring-violet" : reached ? "bg-[#120f29] ring-gold/40" : "bg-[#120f29] ring-edge"
+                  current ? "bg-violet/15 ring-violet" : reached ? "bg-well ring-gold/40" : "bg-well ring-edge"
                 }`}
               >
                 <Sprite path={path} stage={s.id} size={64} still silhouette={!reached} />

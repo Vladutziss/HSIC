@@ -38,7 +38,7 @@ export function DayPicker({ value, onChange, idPrefix = "day" }) {
               aria-pressed={on}
               onClick={() => toggle(d)}
               className={`focus-ring h-10 w-10 rounded-xl text-sm font-black transition ${
-                on ? "bg-gold text-[#2a1b00] shadow-[0_3px_0_#a8740a]" : "bg-[#120f29] text-dim ring-1 ring-edge hover:text-ink"
+                on ? "bg-gold text-on-gold shadow-key-gold" : "bg-well text-dim ring-1 ring-edge hover:text-ink"
               }`}
             >
               {RO_DAYS_MIN[d]}
@@ -67,7 +67,7 @@ export function DifficultyPicker({ value, onChange }) {
           aria-pressed={value === n}
           onClick={() => onChange(n)}
           className={`focus-ring flex flex-col items-center gap-1 rounded-xl p-2.5 transition ${
-            value === n ? "bg-sky/15 ring-2 ring-sky" : "bg-[#120f29] ring-1 ring-edge hover:ring-edge-hi"
+            value === n ? "bg-sky/15 ring-2 ring-sky" : "bg-well ring-1 ring-edge hover:ring-edge-hi"
           }`}
         >
           <Gems n={n} size={13} />
@@ -94,7 +94,7 @@ function CatalogTab({ state, today, onAdd }) {
             type="button"
             aria-pressed={cat === p.id}
             onClick={() => setCat(p.id)}
-            className={`focus-ring rounded-full px-3 py-1.5 text-xs font-extrabold transition ${cat === p.id ? "bg-gold text-[#2a1b00]" : "text-dim ring-1 ring-edge hover:text-ink"}`}
+            className={`focus-ring rounded-full px-3 py-1.5 text-xs font-extrabold transition ${cat === p.id ? "bg-gold text-on-gold" : "text-dim ring-1 ring-edge hover:text-ink"}`}
           >
             {p.label}
           </button>
@@ -155,7 +155,7 @@ export function HabitForm({ draft, setDraft }) {
                 aria-label={k}
                 aria-pressed={on}
                 onClick={() => set("icon")(k)}
-                className={`focus-ring grid h-10 place-items-center rounded-lg transition ${on ? "bg-gold text-[#2a1b00]" : "bg-[#120f29] text-dim ring-1 ring-edge hover:text-ink"}`}
+                className={`focus-ring grid h-10 place-items-center rounded-lg transition ${on ? "bg-gold text-on-gold" : "bg-well text-dim ring-1 ring-edge hover:text-ink"}`}
               >
                 <Icon size={17} aria-hidden="true" />
               </button>

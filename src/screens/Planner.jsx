@@ -16,6 +16,7 @@ import {
   parseHM,
   relDay,
 } from "../lib/dates.js";
+import { c } from "../lib/themes.js";
 
 const START = 6 * 60;
 const END = 24 * 60;
@@ -60,7 +61,7 @@ function TodoRow({ t, today, habits, todo }) {
         e.dataTransfer.setData("text/plain", t.id);
         e.dataTransfer.effectAllowed = "move";
       }}
-      className="group flex items-center gap-2.5 rounded-xl bg-[#120f29] px-2.5 py-2 ring-1 ring-edge"
+      className="group flex items-center gap-2.5 rounded-xl bg-well px-2.5 py-2 ring-1 ring-edge"
     >
       <GripVertical size={14} className="hidden shrink-0 cursor-grab text-faint sm:block" aria-hidden="true" />
       <CheckButton size="sm" checked={t.done} onClick={() => todo.toggle(t.id)} label={t.done ? `Debifează ${t.title}` : `Bifează ${t.title}`} />
@@ -205,7 +206,7 @@ function WeekView({ state, today, anchor, todo }) {
             return (
               <div key={day} className="px-1 pb-2 text-center">
                 <div className={`text-[11px] font-extrabold uppercase tracking-wider ${isToday ? "text-gold" : "text-dim"}`}>{RO_DAYS_SHORT[d.getDay()]}</div>
-                <div className={`mx-auto mt-0.5 grid h-8 w-8 place-items-center rounded-lg font-pixel text-lg ${isToday ? "bg-gold text-[#2a1b00]" : "text-ink"}`}>{d.getDate()}</div>
+                <div className={`mx-auto mt-0.5 grid h-8 w-8 place-items-center rounded-lg font-pixel text-lg ${isToday ? "bg-gold text-on-gold" : "text-ink"}`}>{d.getDate()}</div>
                 {sched > 0 && day <= today && (
                   <div className="mx-auto mt-1 h-1 w-10 overflow-hidden rounded-full bg-edge" title={`${done}/${sched} obiceiuri bifate`}>
                     <div className="h-full bg-mint" style={{ width: `${Math.min(100, (done / sched) * 100)}%` }} />
@@ -244,7 +245,7 @@ function WeekView({ state, today, anchor, todo }) {
                     draggable
                     onDragStart={(e) => e.dataTransfer.setData("text/plain", t.id)}
                     onClick={() => todo.edit(t)}
-                    className={`block w-full truncate rounded-md px-1.5 py-1 text-left text-[11px] font-bold ${t.done ? "bg-white/5 text-faint line-through" : "bg-violet/20 text-ink ring-1 ring-violet/40"}`}
+                    className={`block w-full truncate rounded-md px-1.5 py-1 text-left text-[11px] font-bold ${t.done ? "bg-ink/5 text-faint line-through" : "bg-violet/20 text-ink ring-1 ring-violet/40"}`}
                   >
                     {t.title}
                   </button>
@@ -316,7 +317,7 @@ function WeekView({ state, today, anchor, todo }) {
                             height,
                             width,
                             left,
-                            color: "#f3efff",
+                            color: c("ink"),
                             background: `repeating-linear-gradient(135deg, ${it.h.color}40 0 6px, ${it.h.color}26 6px 12px)`,
                             boxShadow: `inset 3px 0 0 ${it.h.color}`,
                           }}
@@ -337,7 +338,7 @@ function WeekView({ state, today, anchor, todo }) {
                         onDragStart={(e) => e.dataTransfer.setData("text/plain", t.id)}
                         onClick={() => todo.edit(t)}
                         className={`absolute overflow-hidden rounded-lg px-1.5 py-1 text-left text-[11px] font-extrabold ring-1 ${
-                          t.done ? "bg-[#1d1840] text-faint line-through ring-edge" : "bg-violet/30 text-ink ring-violet/60 hover:bg-violet/40"
+                          t.done ? "bg-panel-lo text-faint line-through ring-edge" : "bg-violet/30 text-ink ring-violet/60 hover:bg-violet/40"
                         }`}
                         style={{ top, height, width, left }}
                       >
@@ -391,7 +392,7 @@ function MonthView({ state, today, anchor, onPick }) {
               type="button"
               onClick={() => onPick(day)}
               className={`focus-ring flex min-h-[92px] flex-col gap-1 rounded-xl p-1.5 text-left ring-1 transition hover:ring-gold/60 ${
-                day === today ? "bg-gold/10 ring-gold" : inMonth ? "bg-[#120f29] ring-edge" : "bg-transparent ring-edge/40"
+                day === today ? "bg-gold/10 ring-gold" : inMonth ? "bg-well ring-edge" : "bg-transparent ring-edge/40"
               }`}
             >
               <span className="flex items-center justify-between">
@@ -485,7 +486,7 @@ export default function Planner({ state, today, todo }) {
           <span className="h-3 w-3 rounded bg-violet/40 ring-1 ring-violet/60" /> to-do
         </span>
         <span className="inline-flex items-center gap-1.5">
-          <span className="h-3 w-3 rounded" style={{ background: "repeating-linear-gradient(135deg,#ffc54266 0 3px,#ffc54233 3px 6px)" }} /> obicei programat
+          <span className="h-3 w-3 rounded" style={{ background: `repeating-linear-gradient(135deg, ${c("gold", 0.4)} 0 3px, ${c("gold", 0.2)} 3px 6px)` }} /> obicei programat
         </span>
         <span>Apasă pe un loc liber ca să adaugi un to-do la ora aceea.</span>
       </div>

@@ -21,6 +21,7 @@ import { Sprite, eggCrack } from "./Sprite.jsx";
 import { PATHS } from "../lib/catalog.js";
 import { parseHM } from "../lib/dates.js";
 import { REVIVES_PER_MONTH } from "../lib/derive.js";
+import { c as tc } from "../lib/themes.js";
 
 export const NAV = [
   { id: "home", label: "Acasă", icon: House },
@@ -106,10 +107,10 @@ function Hud({ d, state, setView, unread, mode, saveStatus, now }) {
 
         <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
           <div
-            className="flex items-center gap-1.5 rounded-xl bg-[#120f29] px-2.5 py-1.5 ring-1 ring-edge"
+            className="flex items-center gap-1.5 rounded-xl bg-well px-2.5 py-1.5 ring-1 ring-edge"
             title={`Serie de ${streak.current} ${streak.current === 1 ? "zi" : "zile"} · ${revive.left === 1 ? "1 revive rămas" : `${revive.left} revive-uri rămase`} luna aceasta`}
           >
-            <Flame size={18} className={streak.todayDone ? "anim-flicker text-ember" : "text-faint"} fill={streak.todayDone ? "#ff7b47" : "none"} aria-hidden="true" />
+            <Flame size={18} className={streak.todayDone ? "anim-flicker text-ember" : "text-faint"} fill={streak.todayDone ? tc("ember") : "none"} aria-hidden="true" />
             <span className="font-pixel tabular text-lg leading-none text-ink">{streak.current}</span>
             <span className="sr-only">zile la rând</span>
             <span className="ml-1 hidden items-center gap-0.5 sm:flex" aria-label={`${revive.left} revive-uri rămase`}>
@@ -120,12 +121,12 @@ function Hud({ d, state, setView, unread, mode, saveStatus, now }) {
                   strokeWidth={2.5}
                   aria-hidden="true"
                   className={i < revive.left ? "text-mint" : "text-faint/60"}
-                  fill={i < revive.left ? "rgba(63,224,165,.35)" : "none"}
+                  fill={i < revive.left ? tc("mint", 0.35) : "none"}
                 />
               ))}
             </span>
           </div>
-          <button type="button" onClick={() => setView("home")} className="focus-ring hidden items-center gap-2 rounded-xl bg-[#120f29] px-2 py-1 ring-1 ring-edge sm:flex" title="Misiunile de azi">
+          <button type="button" onClick={() => setView("home")} className="focus-ring hidden items-center gap-2 rounded-xl bg-well px-2 py-1 ring-1 ring-edge sm:flex" title="Misiunile de azi">
             <Ring value={scheduled.length ? doneScheduled / scheduled.length : 0} size={30} stroke={4}>
               <span className="text-[9px] font-black text-ink">{doneScheduled}</span>
             </Ring>
@@ -133,13 +134,13 @@ function Hud({ d, state, setView, unread, mode, saveStatus, now }) {
               {doneScheduled}/{scheduled.length}
             </span>
           </button>
-          <span className="hidden items-center gap-1.5 rounded-xl bg-[#120f29] px-2.5 py-2 text-xs font-extrabold ring-1 ring-edge md:flex" title="Raportul zilei">
+          <span className="hidden items-center gap-1.5 rounded-xl bg-well px-2.5 py-2 text-xs font-extrabold ring-1 ring-edge md:flex" title="Raportul zilei">
             <Clock size={14} className={reviewed ? "text-mint" : left <= 0 ? "text-gold" : "text-dim"} aria-hidden="true" />
             <span className={reviewed ? "text-mint" : left <= 0 ? "text-gold" : "text-body"}>{reviewText}</span>
           </span>
           <button type="button" onClick={() => setView("group")} className="focus-ring relative grid h-9 w-9 place-items-center rounded-xl text-dim hover:bg-panel-hi hover:text-ink" aria-label={`Remindere${unread ? `: ${unread} necitite` : ""}`}>
             <Bell size={18} aria-hidden="true" />
-            {unread > 0 && <span className="absolute -right-0.5 -top-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-rose px-1 text-[10px] font-black text-white">{unread}</span>}
+            {unread > 0 && <span className="absolute -right-0.5 -top-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-rose px-1 text-[10px] font-black text-on-rose">{unread}</span>}
           </button>
           <SaveIndicator mode={mode} saveStatus={saveStatus} />
           <button type="button" onClick={() => setView("settings")} className="focus-ring grid h-9 w-9 place-items-center rounded-xl text-dim hover:bg-panel-hi hover:text-ink lg:hidden" aria-label="Setări">
@@ -165,7 +166,7 @@ export function Shell({ view, setView, d, state, unread, mode, saveStatus, now, 
               <button key={n.id} type="button" onClick={() => setView(n.id)} aria-current={view === n.id ? "page" : undefined} className="nav-item focus-ring">
                 <Icon size={19} strokeWidth={2.25} aria-hidden="true" />
                 <span>{n.label}</span>
-                {n.id === "group" && unread > 0 && <span className="ml-auto rounded-full bg-rose px-1.5 text-[11px] font-black text-white">{unread}</span>}
+                {n.id === "group" && unread > 0 && <span className="ml-auto rounded-full bg-rose px-1.5 text-[11px] font-black text-on-rose">{unread}</span>}
               </button>
             );
           })}
