@@ -124,7 +124,7 @@ export default function Dashboard({ state, d, today, go, ai, months, recentStori
             action={
               <div
                 className={`flex items-center gap-2 rounded-xl px-3 py-1.5 text-xs font-extrabold ring-1 ${
-                  chestOpen ? "bg-gold/15 text-gold-hi ring-gold/40" : "bg-[#120f29] text-dim ring-edge"
+                  chestOpen ? "bg-gold/15 text-gold-hi ring-gold/40" : "bg-well text-dim ring-edge"
                 }`}
                 title="Cufărul zilei: toate misiunile programate bifate"
               >

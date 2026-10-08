@@ -2,18 +2,204 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
+/* ============================================================ themes
+   Every colour in the UI comes from the --c-* variables below, stored as
+   space-separated RGB channels so Tailwind can add opacity (bg-gold/10) and
+   so CSS can write rgb(var(--c-gold) / .3).
+   A theme = one block. The active one is set on <html data-theme data-mode>
+   (src/lib/themes.js). Any element can carry data-theme to preview a theme
+   locally (the picker in Settings does this).
+   Token roles:
+     night/deep         page background
+     panel(-hi/-lo)     cards, raised / sunken
+     well               inputs and inset areas
+     edge(-hi)          borders
+     ink/body/dim/faint text, strongest to weakest
+     gold/violet/mint/ember/sky/rose   accent FILLS (buttons, bars, badges)
+     *-ink              the same accents for text and thin lines (darker on light themes)
+     *-deep / *-key     the "3D" bottom edge of buttons
+     on-*               text that sits on an accent fill
+   Adding a theme: copy a block, change the values, add it to THEMES in themes.js. */
+
+:root,
+[data-theme="noapte"] {
+  --c-night: 12 10 29;
+  --c-deep: 17 14 39;
+  --c-panel: 26 22 54;
+  --c-panel-hi: 34 29 69;
+  --c-panel-lo: 21 18 45;
+  --c-edge: 46 40 96;
+  --c-edge-hi: 70 60 140;
+  --c-well: 18 15 41;
+  --c-mark: 90 79 168;
+  --c-key: 13 10 34;
+  --c-scrim: 5 3 15;
+  --c-ink: 243 239 255;
+  --c-body: 207 200 240;
+  --c-dim: 154 145 201;
+  --c-faint: 109 100 163;
+  --c-gold: 255 197 66;
+  --c-gold-hi: 255 217 120;
+  --c-gold-deep: 168 116 10;
+  --c-gold-ink: 255 197 66;
+  --c-gold-text: 255 217 120;
+  --c-violet: 143 107 255;
+  --c-violet-hi: 177 155 255;
+  --c-violet-deep: 84 53 201;
+  --c-violet-key: 74 47 187;
+  --c-violet-ink: 143 107 255;
+  --c-mint: 63 224 165;
+  --c-mint-deep: 26 158 111;
+  --c-mint-key: 21 122 85;
+  --c-mint-ink: 63 224 165;
+  --c-ember: 255 123 71;
+  --c-ember-ink: 255 123 71;
+  --c-sky: 92 184 255;
+  --c-sky-ink: 92 184 255;
+  --c-rose: 255 95 135;
+  --c-rose-key: 163 38 74;
+  --c-rose-ink: 255 95 135;
+  --c-on-gold: 42 27 0;
+  --c-on-violet: 255 255 255;
+  --c-on-mint: 4 38 26;
+  --c-on-rose: 255 255 255;
+  --c-shadow: 0 0 0;
+  --c-star: 255 255 255;
+  --shadow-a: 0.7;
+  --gloss-a: 0.04;
+  --star-a: 0.3;
+  --glow: 1;
   color-scheme: dark;
-  --night: #0c0a1d;
-  --panel: #1a1636;
-  --edge: #2e2860;
-  --gold: #ffc542;
+}
+
+/* Pergament: cream paper, sage and honey, dark brown ink. Base palette #FCF0DA #AEAC78 #F2C46A #4C4541 */
+[data-theme="pergament"] {
+  --c-night: 252 240 218; /* #FCF0DA */
+  --c-deep: 246 232 204;
+  --c-panel: 255 248 234;
+  --c-panel-hi: 255 253 246;
+  --c-panel-lo: 247 235 211;
+  --c-edge: 226 210 170;
+  --c-edge-hi: 200 183 135;
+  --c-well: 246 234 208;
+  --c-mark: 170 154 112;
+  --c-key: 205 187 144;
+  --c-scrim: 60 45 25;
+  --c-ink: 76 69 65; /* #4C4541 */
+  --c-body: 92 84 78;
+  --c-dim: 112 101 92;
+  --c-faint: 142 130 117;
+  --c-gold: 242 196 106; /* #F2C46A */
+  --c-gold-hi: 250 218 150;
+  --c-gold-deep: 176 125 30;
+  --c-gold-ink: 133 88 6;
+  --c-gold-text: 133 88 6;
+  --c-violet: 174 172 120; /* #AEAC78 */
+  --c-violet-hi: 202 200 152;
+  --c-violet-deep: 110 108 66;
+  --c-violet-key: 122 120 74;
+  --c-violet-ink: 94 92 46;
+  --c-mint: 134 170 98;
+  --c-mint-deep: 92 128 62;
+  --c-mint-key: 74 106 48;
+  --c-mint-ink: 62 98 36;
+  --c-ember: 224 134 66;
+  --c-ember-ink: 160 74 16;
+  --c-sky: 104 160 176;
+  --c-sky-ink: 36 98 120;
+  --c-rose: 190 70 62;
+  --c-rose-key: 134 44 38;
+  --c-rose-ink: 168 46 42;
+  --c-on-gold: 62 44 8;
+  --c-on-violet: 46 41 34;
+  --c-on-mint: 24 38 12;
+  --c-on-rose: 255 250 240;
+  --c-shadow: 120 90 40;
+  --c-star: 110 92 58;
+  --shadow-a: 0.3;
+  --gloss-a: 0.55;
+  --star-a: 0.16;
+  --glow: 0.45;
+  color-scheme: light;
+}
+
+/* Piersică: pale butter, peach and blush, rosewood ink. Base palette #FFFAD3 #FFDBB0 #FFCCB8 #FFB1B1 */
+[data-theme="piersica"] {
+  --c-night: 255 250 211; /* #FFFAD3 */
+  --c-deep: 255 240 190;
+  --c-panel: 255 252 232;
+  --c-panel-hi: 255 255 246;
+  --c-panel-lo: 255 243 204;
+  --c-edge: 255 219 176; /* #FFDBB0 */
+  --c-edge-hi: 240 176 140;
+  --c-well: 255 240 200;
+  --c-mark: 226 168 140;
+  --c-key: 240 200 160;
+  --c-scrim: 74 40 40;
+  --c-ink: 74 40 40;
+  --c-body: 98 62 60;
+  --c-dim: 124 84 78;
+  --c-faint: 156 118 108;
+  --c-gold: 255 204 184; /* #FFCCB8 */
+  --c-gold-hi: 255 222 206;
+  --c-gold-deep: 214 130 100;
+  --c-gold-ink: 160 70 36;
+  --c-gold-text: 160 70 36;
+  --c-violet: 255 177 177; /* #FFB1B1 */
+  --c-violet-hi: 255 208 208;
+  --c-violet-deep: 208 104 110;
+  --c-violet-key: 214 112 118;
+  --c-violet-ink: 168 48 62;
+  --c-mint: 168 214 168;
+  --c-mint-deep: 100 160 108;
+  --c-mint-key: 84 140 92;
+  --c-mint-ink: 40 106 58;
+  --c-ember: 255 168 128;
+  --c-ember-ink: 184 78 36;
+  --c-sky: 166 205 230;
+  --c-sky-ink: 36 94 138;
+  --c-rose: 192 56 70;
+  --c-rose-key: 138 38 52;
+  --c-rose-ink: 170 34 52;
+  --c-on-gold: 80 36 24;
+  --c-on-violet: 74 30 34;
+  --c-on-mint: 24 52 30;
+  --c-on-rose: 255 250 240;
+  --c-shadow: 150 80 60;
+  --c-star: 170 100 80;
+  --shadow-a: 0.28;
+  --gloss-a: 0.6;
+  --star-a: 0.16;
+  --glow: 0.45;
+  color-scheme: light;
+}
+
+/* On light themes text-<accent> has to be the dark variant to stay readable. */
+[data-mode="light"] .text-gold,
+[data-mode="light"] .text-gold-hi {
+  color: rgb(var(--c-gold-ink));
+}
+[data-mode="light"] .text-violet,
+[data-mode="light"] .text-violet-hi {
+  color: rgb(var(--c-violet-ink));
+}
+[data-mode="light"] .text-mint {
+  color: rgb(var(--c-mint-ink));
+}
+[data-mode="light"] .text-ember {
+  color: rgb(var(--c-ember-ink));
+}
+[data-mode="light"] .text-sky {
+  color: rgb(var(--c-sky-ink));
+}
+[data-mode="light"] .text-rose {
+  color: rgb(var(--c-rose-ink));
 }
 
 html,
 body {
-  background: #0c0a1d;
-  color: #cfc8f0;
+  background: rgb(var(--c-night));
+  color: rgb(var(--c-body));
 }
 body {
   font-family: Nunito, ui-rounded, system-ui, "Segoe UI", sans-serif;
@@ -32,18 +218,18 @@ h3 {
   font-variant-numeric: tabular-nums;
 }
 
-/* starry night behind everything */
+/* starry night behind everything (a faint paper grain on the light themes) */
 .app-bg {
-  background-color: #0c0a1d;
+  background-color: rgb(var(--c-night));
   background-image:
-    radial-gradient(1px 1px at 22px 34px, rgba(255, 255, 255, 0.4) 50%, transparent 52%),
-    radial-gradient(1px 1px at 128px 86px, rgba(255, 255, 255, 0.25) 50%, transparent 52%),
-    radial-gradient(1.5px 1.5px at 206px 158px, rgba(255, 214, 120, 0.45) 50%, transparent 52%),
-    radial-gradient(1px 1px at 268px 44px, rgba(177, 155, 255, 0.5) 50%, transparent 52%),
-    radial-gradient(1px 1px at 334px 214px, rgba(255, 255, 255, 0.22) 50%, transparent 52%),
-    radial-gradient(1px 1px at 60px 210px, rgba(255, 255, 255, 0.3) 50%, transparent 52%),
-    radial-gradient(1100px 600px at 85% -15%, rgba(143, 107, 255, 0.18), transparent 60%),
-    radial-gradient(900px 520px at -10% 115%, rgba(255, 197, 66, 0.08), transparent 60%);
+    radial-gradient(1px 1px at 22px 34px, rgb(var(--c-star) / calc(var(--star-a) * 1.33)) 50%, transparent 52%),
+    radial-gradient(1px 1px at 128px 86px, rgb(var(--c-star) / calc(var(--star-a) * 0.83)) 50%, transparent 52%),
+    radial-gradient(1.5px 1.5px at 206px 158px, rgb(var(--c-gold-hi) / calc(var(--star-a) * 1.5)) 50%, transparent 52%),
+    radial-gradient(1px 1px at 268px 44px, rgb(var(--c-violet-hi) / calc(var(--star-a) * 1.67)) 50%, transparent 52%),
+    radial-gradient(1px 1px at 334px 214px, rgb(var(--c-star) / calc(var(--star-a) * 0.73)) 50%, transparent 52%),
+    radial-gradient(1px 1px at 60px 210px, rgb(var(--c-star) / var(--star-a)) 50%, transparent 52%),
+    radial-gradient(1100px 600px at 85% -15%, rgb(var(--c-violet) / calc(0.18 * var(--glow))), transparent 60%),
+    radial-gradient(900px 520px at -10% 115%, rgb(var(--c-gold) / calc(0.08 * var(--glow))), transparent 60%);
   background-size: 360px 260px, 360px 260px, 360px 260px, 360px 260px, 360px 260px, 360px 260px, auto, auto;
   background-attachment: fixed;
 }
@@ -51,35 +237,35 @@ h3 {
 /* ------------------------------------------------------------ panels */
 .panel {
   position: relative;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0) 38%), #1a1636;
-  border: 1px solid #2e2860;
+  background: linear-gradient(180deg, rgb(255 255 255 / var(--gloss-a)), rgb(255 255 255 / 0) 38%), rgb(var(--c-panel));
+  border: 1px solid rgb(var(--c-edge));
   border-radius: 18px;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.05),
-    0 14px 34px -16px rgba(0, 0, 0, 0.7);
+    inset 0 1px 0 rgb(255 255 255 / calc(var(--gloss-a) * 1.25)),
+    0 14px 34px -16px rgb(var(--c-shadow) / var(--shadow-a));
 }
 .panel-gold {
-  border-color: #6b5222;
+  border-color: color-mix(in srgb, rgb(var(--c-gold)) 38%, rgb(var(--c-night)));
   box-shadow:
-    inset 0 1px 0 rgba(255, 214, 120, 0.14),
-    0 0 0 1px rgba(255, 197, 66, 0.06),
-    0 16px 36px -16px rgba(255, 170, 40, 0.28);
+    inset 0 1px 0 rgb(var(--c-gold-hi) / 0.14),
+    0 0 0 1px rgb(var(--c-gold) / 0.06),
+    0 16px 36px -16px rgb(var(--c-gold) / calc(0.3 * var(--glow)));
 }
 .panel-violet {
-  border-color: #4a3a98;
+  border-color: color-mix(in srgb, rgb(var(--c-violet)) 50%, rgb(var(--c-night)));
   box-shadow:
-    inset 0 1px 0 rgba(177, 155, 255, 0.14),
-    0 16px 36px -16px rgba(120, 80, 255, 0.4);
+    inset 0 1px 0 rgb(var(--c-violet-hi) / 0.14),
+    0 16px 36px -16px rgb(var(--c-violet) / calc(0.4 * var(--glow)));
 }
 .panel-mint {
-  border-color: #1f6b52;
+  border-color: color-mix(in srgb, rgb(var(--c-mint)) 42%, rgb(var(--c-night)));
   box-shadow:
-    inset 0 1px 0 rgba(127, 242, 198, 0.12),
-    0 16px 36px -16px rgba(63, 224, 165, 0.3);
+    inset 0 1px 0 rgb(var(--c-mint) / 0.12),
+    0 16px 36px -16px rgb(var(--c-mint) / calc(0.3 * var(--glow)));
 }
 .inset {
-  background: #120f29;
-  border: 1px solid #262052;
+  background: rgb(var(--c-well));
+  border: 1px solid color-mix(in srgb, rgb(var(--c-edge)) 70%, rgb(var(--c-well)));
   border-radius: 14px;
 }
 
@@ -103,7 +289,7 @@ h3 {
 }
 .btn:focus-visible,
 .focus-ring:focus-visible {
-  outline: 2px solid #ffd978;
+  outline: 2px solid rgb(var(--c-gold-text));
   outline-offset: 3px;
 }
 .btn:active:not(:disabled) {
@@ -127,62 +313,62 @@ h3 {
   border-radius: 14px;
 }
 .btn-gold {
-  color: #2a1b00;
-  background: linear-gradient(180deg, #ffe08a 0%, #ffc542 55%, #f5b22a 100%);
+  color: rgb(var(--c-on-gold));
+  background: linear-gradient(180deg, rgb(var(--c-gold-hi)) 0%, rgb(var(--c-gold)) 55%, color-mix(in srgb, rgb(var(--c-gold)) 85%, rgb(var(--c-gold-deep))) 100%);
   box-shadow:
-    0 4px 0 #a8740a,
-    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    0 4px 0 rgb(var(--c-gold-deep)),
+    inset 0 1px 0 rgb(255 255 255 / 0.6);
 }
 .btn-gold:active:not(:disabled) {
   box-shadow:
-    0 1px 0 #a8740a,
-    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    0 1px 0 rgb(var(--c-gold-deep)),
+    inset 0 1px 0 rgb(255 255 255 / 0.6);
 }
 .btn-violet {
-  color: #fff;
-  background: linear-gradient(180deg, #ad94ff 0%, #8f6bff 55%, #7b55f5 100%);
+  color: rgb(var(--c-on-violet));
+  background: linear-gradient(180deg, rgb(var(--c-violet-hi)) 0%, rgb(var(--c-violet)) 55%, color-mix(in srgb, rgb(var(--c-violet)) 80%, rgb(var(--c-violet-deep))) 100%);
   box-shadow:
-    0 4px 0 #4a2fbb,
-    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+    0 4px 0 rgb(var(--c-violet-key)),
+    inset 0 1px 0 rgb(255 255 255 / 0.35);
 }
 .btn-violet:active:not(:disabled) {
   box-shadow:
-    0 1px 0 #4a2fbb,
-    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+    0 1px 0 rgb(var(--c-violet-key)),
+    inset 0 1px 0 rgb(255 255 255 / 0.35);
 }
 .btn-mint {
-  color: #04261a;
-  background: linear-gradient(180deg, #8af5cd 0%, #3fe0a5 60%, #2ccf91 100%);
+  color: rgb(var(--c-on-mint));
+  background: linear-gradient(180deg, color-mix(in srgb, rgb(var(--c-mint)) 55%, white) 0%, rgb(var(--c-mint)) 60%, color-mix(in srgb, rgb(var(--c-mint)) 80%, rgb(var(--c-mint-deep))) 100%);
   box-shadow:
-    0 4px 0 #157a55,
-    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    0 4px 0 rgb(var(--c-mint-key)),
+    inset 0 1px 0 rgb(255 255 255 / 0.5);
 }
 .btn-mint:active:not(:disabled) {
-  box-shadow: 0 1px 0 #157a55;
+  box-shadow: 0 1px 0 rgb(var(--c-mint-key));
 }
 .btn-ghost {
-  color: #f3efff;
-  background: #251f4b;
-  border: 1px solid #3a3275;
-  box-shadow: 0 4px 0 #0d0a22;
+  color: rgb(var(--c-ink));
+  background: rgb(var(--c-panel-hi));
+  border: 1px solid color-mix(in srgb, rgb(var(--c-edge)) 50%, rgb(var(--c-edge-hi)));
+  box-shadow: 0 4px 0 rgb(var(--c-key));
 }
 .btn-ghost:hover:not(:disabled) {
-  background: #2c2559;
+  background: color-mix(in srgb, rgb(var(--c-panel-hi)) 88%, rgb(var(--c-violet)));
 }
 .btn-ghost:active:not(:disabled) {
-  box-shadow: 0 1px 0 #0d0a22;
+  box-shadow: 0 1px 0 rgb(var(--c-key));
 }
 .btn-rose {
-  color: #fff;
-  background: linear-gradient(180deg, #ff93ad, #ff5f87);
-  box-shadow: 0 4px 0 #a3264a;
+  color: rgb(var(--c-on-rose));
+  background: linear-gradient(180deg, color-mix(in srgb, rgb(var(--c-rose)) 65%, white), rgb(var(--c-rose)));
+  box-shadow: 0 4px 0 rgb(var(--c-rose-key));
 }
 .btn-flat {
-  color: #9a91c9;
+  color: rgb(var(--c-dim));
 }
 .btn-flat:hover:not(:disabled) {
-  color: #f3efff;
-  background: rgba(143, 107, 255, 0.1);
+  color: rgb(var(--c-ink));
+  background: rgb(var(--c-violet) / 0.1);
 }
 .btn-gold:hover:not(:disabled),
 .btn-violet:hover:not(:disabled),
@@ -194,14 +380,17 @@ h3 {
   filter: grayscale(0.7) brightness(0.65);
   cursor: not-allowed;
 }
+[data-mode="light"] .btn:disabled {
+  filter: grayscale(0.7) opacity(0.55);
+}
 
 /* ------------------------------------------------------------ progress bars */
 .xpbar {
   position: relative;
   height: 14px;
   border-radius: 8px;
-  background: #0d0a24;
-  border: 2px solid #2f2763;
+  background: color-mix(in srgb, rgb(var(--c-well)) 80%, rgb(var(--c-night)));
+  border: 2px solid color-mix(in srgb, rgb(var(--c-edge)) 94%, rgb(var(--c-night)));
   overflow: hidden;
 }
 .xpbar > .fill {
@@ -215,23 +404,37 @@ h3 {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: repeating-linear-gradient(90deg, transparent 0 10px, rgba(13, 10, 36, 0.75) 10px 12px);
+  background: repeating-linear-gradient(90deg, transparent 0 10px, rgb(var(--c-well) / 0.75) 10px 12px);
 }
 .fill-gold {
-  background: linear-gradient(90deg, #ff9f2e, #ffc542 60%, #ffe08a);
-  box-shadow: 0 0 14px rgba(255, 197, 66, 0.55);
+  background: linear-gradient(90deg, color-mix(in srgb, rgb(var(--c-gold)) 55%, rgb(var(--c-ember))), rgb(var(--c-gold)) 60%, rgb(var(--c-gold-hi)));
+  box-shadow: 0 0 14px rgb(var(--c-gold) / calc(0.55 * var(--glow)));
 }
 .fill-violet {
-  background: linear-gradient(90deg, #6e4cf0, #b19bff);
-  box-shadow: 0 0 14px rgba(143, 107, 255, 0.55);
+  background: linear-gradient(90deg, color-mix(in srgb, rgb(var(--c-violet)) 82%, rgb(var(--c-violet-deep))), rgb(var(--c-violet-hi)));
+  box-shadow: 0 0 14px rgb(var(--c-violet) / calc(0.55 * var(--glow)));
 }
 .fill-mint {
-  background: linear-gradient(90deg, #1fb37b, #7ff2c6);
-  box-shadow: 0 0 14px rgba(63, 224, 165, 0.5);
+  background: linear-gradient(90deg, rgb(var(--c-mint-deep)), color-mix(in srgb, rgb(var(--c-mint)) 60%, white));
+  box-shadow: 0 0 14px rgb(var(--c-mint) / calc(0.5 * var(--glow)));
 }
 .fill-ember {
-  background: linear-gradient(90deg, #ff5f3a, #ffb04a);
-  box-shadow: 0 0 14px rgba(255, 123, 71, 0.5);
+  background: linear-gradient(90deg, color-mix(in srgb, rgb(var(--c-ember)) 80%, rgb(var(--c-rose))), color-mix(in srgb, rgb(var(--c-ember)) 70%, rgb(var(--c-gold))));
+  box-shadow: 0 0 14px rgb(var(--c-ember) / calc(0.5 * var(--glow)));
+}
+
+/* on light themes the bars start from a deeper tone so the fill stands out from the track */
+[data-mode="light"] .fill-gold {
+  background: linear-gradient(90deg, color-mix(in srgb, rgb(var(--c-gold)) 45%, rgb(var(--c-gold-deep))), rgb(var(--c-gold)));
+}
+[data-mode="light"] .fill-violet {
+  background: linear-gradient(90deg, color-mix(in srgb, rgb(var(--c-violet)) 45%, rgb(var(--c-violet-deep))), rgb(var(--c-violet)));
+}
+[data-mode="light"] .fill-mint {
+  background: linear-gradient(90deg, rgb(var(--c-mint-deep)), rgb(var(--c-mint)));
+}
+[data-mode="light"] .fill-ember {
+  background: linear-gradient(90deg, color-mix(in srgb, rgb(var(--c-ember)) 50%, rgb(var(--c-ember-ink))), rgb(var(--c-ember)));
 }
 
 /* ------------------------------------------------------------ navigation */
@@ -241,50 +444,50 @@ h3 {
   gap: 12px;
   padding: 10px 12px;
   border-radius: 12px;
-  color: #9a91c9;
+  color: rgb(var(--c-dim));
   font-weight: 800;
   transition:
     background-color 0.15s,
     color 0.15s;
 }
 .nav-item:hover {
-  background: rgba(143, 107, 255, 0.1);
-  color: #f3efff;
+  background: rgb(var(--c-violet) / 0.1);
+  color: rgb(var(--c-ink));
 }
 .nav-item[aria-current="page"] {
-  color: #ffd978;
-  background: linear-gradient(90deg, rgba(255, 197, 66, 0.18), rgba(255, 197, 66, 0));
-  box-shadow: inset 3px 0 0 #ffc542;
+  color: rgb(var(--c-gold-text));
+  background: linear-gradient(90deg, rgb(var(--c-gold) / 0.18), rgb(var(--c-gold) / 0));
+  box-shadow: inset 3px 0 0 rgb(var(--c-gold));
 }
 .tabbar-item[aria-current="page"] {
-  color: #ffd978;
+  color: rgb(var(--c-gold-text));
 }
 
 /* ------------------------------------------------------------ form fields */
 .field {
   width: 100%;
-  background: #120f29;
-  border: 1px solid #2e2860;
+  background: rgb(var(--c-well));
+  border: 1px solid rgb(var(--c-edge));
   border-radius: 12px;
   padding: 10px 12px;
-  color: #f3efff;
+  color: rgb(var(--c-ink));
   font-weight: 600;
   transition:
     border-color 0.15s,
     box-shadow 0.15s;
 }
 .field::placeholder {
-  color: #6d64a3;
+  color: rgb(var(--c-faint));
   font-weight: 600;
 }
 .field:focus {
   outline: none;
-  border-color: #ffc542;
-  box-shadow: 0 0 0 3px rgba(255, 197, 66, 0.15);
+  border-color: rgb(var(--c-gold-ink));
+  box-shadow: 0 0 0 3px rgb(var(--c-gold-ink) / 0.18);
 }
 select.field {
   appearance: none;
-  background-image: linear-gradient(45deg, transparent 50%, #9a91c9 50%), linear-gradient(135deg, #9a91c9 50%, transparent 50%);
+  background-image: linear-gradient(45deg, transparent 50%, rgb(var(--c-dim)) 50%), linear-gradient(135deg, rgb(var(--c-dim)) 50%, transparent 50%);
   background-position:
     calc(100% - 18px) 55%,
     calc(100% - 13px) 55%;
@@ -295,16 +498,16 @@ select.field {
   padding-right: 32px;
 }
 .field option {
-  background: #1a1636;
-  color: #f3efff;
+  background: rgb(var(--c-panel));
+  color: rgb(var(--c-ink));
 }
 
 /* ------------------------------------------------------------ companion stage */
 .pedestal {
   position: relative;
   background:
-    radial-gradient(closest-side, rgba(255, 214, 120, 0.22), rgba(255, 214, 120, 0) 70%),
-    radial-gradient(120% 80% at 50% 120%, rgba(143, 107, 255, 0.35), transparent 60%);
+    radial-gradient(closest-side, rgb(var(--c-gold-hi) / calc(0.22 * var(--glow))), rgb(var(--c-gold-hi) / 0) 70%),
+    radial-gradient(120% 80% at 50% 120%, rgb(var(--c-violet) / calc(0.35 * var(--glow))), transparent 60%);
 }
 .pedestal::after {
   content: "";
@@ -315,28 +518,28 @@ select.field {
   height: 9%;
   transform: translateX(-50%);
   border-radius: 50%;
-  background: radial-gradient(closest-side, rgba(5, 3, 18, 0.65), transparent);
+  background: radial-gradient(closest-side, rgb(var(--c-scrim) / 0.65), transparent);
 }
 .scene-ground {
   background:
-    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.04) 0 8px, transparent 8px 16px),
-    linear-gradient(180deg, #241e4d, #191435);
-  border-top: 2px solid #3b3279;
+    repeating-linear-gradient(90deg, rgb(255 255 255 / var(--gloss-a)) 0 8px, transparent 8px 16px),
+    linear-gradient(180deg, color-mix(in srgb, rgb(var(--c-panel-hi)) 90%, rgb(var(--c-edge))), rgb(var(--c-panel-lo)));
+  border-top: 2px solid color-mix(in srgb, rgb(var(--c-edge)) 60%, rgb(var(--c-edge-hi)));
 }
 
 /* ------------------------------------------------------------ scrollbars */
 * {
   scrollbar-width: thin;
-  scrollbar-color: #3a3275 transparent;
+  scrollbar-color: color-mix(in srgb, rgb(var(--c-edge)) 50%, rgb(var(--c-edge-hi))) transparent;
 }
 *::-webkit-scrollbar {
   width: 10px;
   height: 10px;
 }
 *::-webkit-scrollbar-thumb {
-  background: #3a3275;
+  background: color-mix(in srgb, rgb(var(--c-edge)) 50%, rgb(var(--c-edge-hi)));
   border-radius: 10px;
-  border: 2px solid #0c0a1d;
+  border: 2px solid rgb(var(--c-night));
 }
 
 /* ------------------------------------------------------------ motion */
@@ -426,10 +629,10 @@ select.field {
 @keyframes legend-glow {
   0%,
   100% {
-    filter: drop-shadow(0 0 4px rgba(255, 207, 74, 0.45));
+    filter: drop-shadow(0 0 4px rgb(var(--c-gold) / 0.45));
   }
   50% {
-    filter: drop-shadow(0 0 12px rgba(255, 207, 74, 0.9));
+    filter: drop-shadow(0 0 12px rgb(var(--c-gold) / 0.9));
   }
 }
 @keyframes pop {
@@ -530,7 +733,7 @@ select.field {
   animation: twinkle 1.6s ease-in-out infinite;
 }
 .skeleton {
-  background: linear-gradient(90deg, #1f1a40 0%, #2b2456 50%, #1f1a40 100%);
+  background: linear-gradient(90deg, rgb(var(--c-panel-lo)) 0%, rgb(var(--c-panel-hi)) 50%, rgb(var(--c-panel-lo)) 100%);
   background-size: 200% 100%;
   animation: shimmer 1.4s linear infinite;
   border-radius: 8px;

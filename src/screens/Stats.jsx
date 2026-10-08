@@ -165,7 +165,7 @@ export default function Stats({ state, d, today, mode, saveStatus }) {
               <span className="h-3 w-3 rounded-sm bg-violet" /> cu raport AI
             </span>
             <span className="inline-flex items-center gap-1.5">
-              <span className="h-3 w-3 rounded-sm bg-[#5a5296]" /> fără AI
+              <span className="h-3 w-3 rounded-sm bg-mark" /> fără AI
             </span>
           </div>
         </Panel>
@@ -184,7 +184,7 @@ export default function Stats({ state, d, today, mode, saveStatus }) {
           </SectionTitle>
           <ol className="grid grid-cols-2 gap-1.5">
             {LEVELS.map((l) => (
-              <li key={l.lvl} className={`flex items-center gap-2 rounded-xl px-2 py-1.5 ${l.lvl === d.level.lvl ? "bg-gold/10 ring-1 ring-gold/40" : "bg-[#120f29]"}`}>
+              <li key={l.lvl} className={`flex items-center gap-2 rounded-xl px-2 py-1.5 ${l.lvl === d.level.lvl ? "bg-gold/10 ring-1 ring-gold/40" : "bg-well"}`}>
                 <LevelBadge lvl={l.lvl} size={28} tone={l.lvl <= d.level.lvl ? "gold" : "dim"} />
                 <span className="min-w-0">
                   <span className="block truncate text-xs font-extrabold text-ink">{l.name}</span>
