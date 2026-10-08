@@ -174,6 +174,57 @@
   color-scheme: light;
 }
 
+/* Pădure: deep forest teal with sage accents. Base palette #092328 #12544F #2A835F #8BBB92 */
+[data-theme="padure"] {
+  --c-night: 9 35 40; /* #092328 */
+  --c-deep: 6 27 31;
+  --c-panel: 14 48 53;
+  --c-panel-hi: 19 63 67;
+  --c-panel-lo: 11 41 46;
+  --c-edge: 18 84 79; /* #12544F */
+  --c-edge-hi: 42 131 95; /* #2A835F */
+  --c-well: 7 30 34;
+  --c-mark: 72 140 112;
+  --c-key: 4 22 26;
+  --c-scrim: 2 13 15;
+  --c-ink: 233 246 236;
+  --c-body: 201 226 206;
+  --c-dim: 156 196 166;
+  --c-faint: 130 174 146;
+  --c-gold: 139 187 146; /* #8BBB92 */
+  --c-gold-hi: 181 217 186;
+  --c-gold-deep: 62 120 82;
+  --c-gold-ink: 139 187 146;
+  --c-gold-text: 181 217 186;
+  --c-violet: 66 158 114;
+  --c-violet-hi: 122 198 150;
+  --c-violet-deep: 42 131 95; /* #2A835F */
+  --c-violet-key: 28 98 70;
+  --c-violet-ink: 122 198 150;
+  --c-mint: 74 214 150;
+  --c-mint-deep: 30 150 100;
+  --c-mint-key: 20 112 74;
+  --c-mint-ink: 74 214 150;
+  --c-ember: 255 156 96;
+  --c-ember-ink: 255 156 96;
+  --c-sky: 112 198 222;
+  --c-sky-ink: 112 198 222;
+  --c-rose: 255 122 134;
+  --c-rose-key: 163 38 62;
+  --c-rose-ink: 255 122 134;
+  --c-on-gold: 8 36 38;
+  --c-on-violet: 4 30 30;
+  --c-on-mint: 3 32 22;
+  --c-on-rose: 45 6 16;
+  --c-shadow: 0 0 0;
+  --c-star: 220 255 232;
+  --shadow-a: 0.7;
+  --gloss-a: 0.04;
+  --star-a: 0.3;
+  --glow: 1;
+  color-scheme: dark;
+}
+
 /* On light themes text-<accent> has to be the dark variant to stay readable. */
 [data-mode="light"] .text-gold,
 [data-mode="light"] .text-gold-hi {
