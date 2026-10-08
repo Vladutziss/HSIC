@@ -3,7 +3,7 @@ import { Check, ListTodo, Repeat, Trash2 } from "lucide-react";
 import { Button, Field, Modal } from "./ui.jsx";
 import { DateSelect, Select, TimeSelect } from "./Select.jsx";
 import { DayPicker } from "./HabitEditor.jsx";
-import { RO_DAYS, fmtDuration, weekday } from "../lib/dates.js";
+import { fmtDuration } from "../lib/dates.js";
 import { makeRepeat } from "../lib/todos.js";
 
 const DURATIONS = [15, 30, 45, 60, 90, 120, 180];
@@ -11,8 +11,9 @@ const DURATIONS = [15, 30, 45, 60, 90, 120, 180];
 export function TodoEditor({ todo, state, today, onSave, onDelete, onClose }) {
   const [draft, setDraft] = useState({ ...todo });
   // the repeat settings are edited as flat fields and put together on save
-  const [kind, setKind] = useState(todo.repeat?.kind || "none");
-  const [picked, setPicked] = useState(todo.repeat?.kind === "days" ? todo.repeat.days : [1, 2, 3, 4, 5]);
+  // "weekly" is no longer offered; a series saved that way opens as one chosen day
+  const [kind, setKind] = useState(todo.repeat ? (todo.repeat.kind === "weekly" ? "days" : todo.repeat.kind) : "none");
+  const [picked, setPicked] = useState(todo.repeat && todo.repeat.kind !== "daily" ? todo.repeat.days : [1, 2, 3, 4, 5]);
   const [until, setUntil] = useState(todo.repeat?.until || null);
   const set = (k) => (v) => setDraft((x) => ({ ...x, [k]: v }));
   const repeating = kind !== "none";
@@ -97,7 +98,6 @@ export function TodoEditor({ todo, state, today, onSave, onDelete, onClose }) {
               options={[
                 { value: "none", label: "Nu se repetă" },
                 { value: "daily", label: "În fiecare zi" },
-                { value: "weekly", label: draft.date ? `În fiecare săptămână, ${RO_DAYS[weekday(draft.date)]}` : "În fiecare săptămână" },
                 { value: "days", label: "În anumite zile ale săptămânii" },
               ]}
             />
