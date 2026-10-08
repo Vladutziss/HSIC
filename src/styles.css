@@ -542,6 +542,13 @@ select.field {
   border: 2px solid rgb(var(--c-night));
 }
 
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
 /* ------------------------------------------------------------ motion */
 @keyframes bob {
   0%,

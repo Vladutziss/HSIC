@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Bot, Check, Database, Download, FlaskConical, LogOut, Moon, Palette, Shield, Trash2, User, UserX } from "lucide-react";
 import { Button, Chip, Field, LevelBadge, Panel, SectionTitle, Toggle } from "../components/ui.jsx";
+import { Select } from "../components/Select.jsx";
 import { PATHS } from "../lib/catalog.js";
 import { LEVELS, RULES } from "../lib/engine.js";
 import { exportData, signOut } from "../lib/account.js";
@@ -134,13 +135,7 @@ export default function Settings({ state, d, ai, mode, env, onChange, onWipe, on
             Ritualul de seară
           </SectionTitle>
           <Field label="Ora raportului" htmlFor="set-time">
-            <select id="set-time" className="field" value={settings.reviewTime || "21:00"} onChange={(e) => set({ reviewTime: e.target.value })}>
-              {TIMES.map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
-            </select>
+            <Select id="set-time" value={settings.reviewTime || "21:00"} onChange={(v) => set({ reviewTime: v })} options={TIMES.map((t) => ({ value: t, label: t }))} />
           </Field>
           <label className="flex items-center justify-between gap-4" htmlFor="set-auto">
             <span>
@@ -172,13 +167,12 @@ export default function Settings({ state, d, ai, mode, env, onChange, onWipe, on
             Regulile jocului
           </SectionTitle>
           <Field label="Momentum-ul se resetează după" htmlFor="set-reset">
-            <select id="set-reset" className="field" value={settings.resetAfter || RULES.resetAfter} onChange={(e) => set({ resetAfter: Number(e.target.value) })}>
-              {[2, 3, 4, 5].map((n) => (
-                <option key={n} value={n}>
-                  {n} zile la rând fără activitate
-                </option>
-              ))}
-            </select>
+            <Select
+              id="set-reset"
+              value={settings.resetAfter || RULES.resetAfter}
+              onChange={(v) => set({ resetAfter: v })}
+              options={[2, 3, 4, 5].map((n) => ({ value: n, label: `${n} zile la rând fără activitate` }))}
+            />
           </Field>
           <ul className="space-y-1.5 text-sm text-body">
             <li>· Bifă: +10 / +20 / +30 după dificultate; dovada verificată de AI dă ×1,5.</li>

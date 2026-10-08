@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { Archive, Check, Plus, ScrollText, Wand2 } from "lucide-react";
 import { Button, Chip, Field, Gems, Modal, Tabs } from "./ui.jsx";
+import { Select, TimeSelect } from "./Select.jsx";
 import { HABIT_ICONS, iconFor } from "./icons.js";
 import { CATALOG, ICON_KEYS, MAX_HABITS, PATHS, PATH_LIST, habitFromCatalog, nextColor, uid } from "../lib/catalog.js";
 import { DIFF } from "../lib/engine.js";
@@ -165,16 +166,10 @@ export function HabitForm({ draft, setDraft }) {
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Categorie" htmlFor="habit-cat">
-          <select id="habit-cat" className="field" value={draft.cat} onChange={(e) => set("cat")(e.target.value)}>
-            {PATH_LIST.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.label}
-              </option>
-            ))}
-          </select>
+          <Select id="habit-cat" value={draft.cat} onChange={set("cat")} options={PATH_LIST.map((p) => ({ value: p.id, label: p.label }))} />
         </Field>
         <Field label="Ora (opțional)" htmlFor="habit-time" hint="Apare în calendar.">
-          <input id="habit-time" type="time" className="field" value={draft.time || ""} onChange={(e) => set("time")(e.target.value || null)} />
+          <TimeSelect id="habit-time" value={draft.time || null} onChange={set("time")} />
         </Field>
       </div>
       <div>
