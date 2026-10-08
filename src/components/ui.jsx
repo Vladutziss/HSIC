@@ -314,7 +314,7 @@ export function Modal({ open, onClose, title, icon: Icon, tone = "violet", wide 
   useEffect(() => {
     if (!open) return undefined;
     const onKey = (e) => {
-      if (e.key === "Escape" && dismissable) onClose?.();
+      if (e.key === "Escape" && dismissable && !e.defaultPrevented) onClose?.();
     };
     window.addEventListener("keydown", onKey);
     const prev = document.activeElement;

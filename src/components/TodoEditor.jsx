@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Check, ListTodo, Trash2 } from "lucide-react";
 import { Button, Field, Modal } from "./ui.jsx";
+import { DateSelect, Select, TimeSelect } from "./Select.jsx";
 import { fmtDuration } from "../lib/dates.js";
 
 const DURATIONS = [15, 30, 45, 60, 90, 120, 180];
@@ -50,19 +51,13 @@ export function TodoEditor({ todo, state, today, onSave, onDelete, onClose }) {
         </Field>
         <div className="grid gap-4 sm:grid-cols-3">
           <Field label="Zi" htmlFor="todo-date">
-            <input id="todo-date" type="date" className="field" value={draft.date || ""} onChange={(e) => set("date")(e.target.value || null)} />
+            <DateSelect id="todo-date" value={draft.date || null} onChange={(v) => setDraft((x) => ({ ...x, date: v, time: v ? x.time : null }))} />
           </Field>
           <Field label="Ora" htmlFor="todo-time" hint="Opțional">
-            <input id="todo-time" type="time" className="field" value={draft.time || ""} disabled={!draft.date} onChange={(e) => set("time")(e.target.value || null)} />
+            <TimeSelect id="todo-time" value={draft.time || null} disabled={!draft.date} onChange={set("time")} />
           </Field>
           <Field label="Durată" htmlFor="todo-dur">
-            <select id="todo-dur" className="field" value={draft.dur || 30} onChange={(e) => set("dur")(Number(e.target.value))}>
-              {DURATIONS.map((m) => (
-                <option key={m} value={m}>
-                  {fmtDuration(m)}
-                </option>
-              ))}
-            </select>
+            <Select id="todo-dur" value={draft.dur || 30} onChange={set("dur")} options={DURATIONS.map((m) => ({ value: m, label: fmtDuration(m) }))} />
           </Field>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -74,14 +69,12 @@ export function TodoEditor({ todo, state, today, onSave, onDelete, onClose }) {
           </button>
         </div>
         <Field label="Legat de un obicei" htmlFor="todo-habit" hint="Pregătirile pentru un obicei apar lângă el în calendar.">
-          <select id="todo-habit" className="field" value={draft.habitId || ""} onChange={(e) => set("habitId")(e.target.value || null)}>
-            <option value="">Niciunul</option>
-            {habits.map((h) => (
-              <option key={h.id} value={h.id}>
-                {h.name}
-              </option>
-            ))}
-          </select>
+          <Select
+            id="todo-habit"
+            value={draft.habitId || null}
+            onChange={set("habitId")}
+            options={[{ value: null, label: "Niciunul" }, ...habits.map((h) => ({ value: h.id, label: h.name }))]}
+          />
         </Field>
         <button type="submit" className="hidden" aria-hidden="true" tabIndex={-1} />
       </form>
