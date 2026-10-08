@@ -505,6 +505,7 @@ select.field {
 /* ------------------------------------------------------------ companion stage */
 .pedestal {
   position: relative;
+  isolation: isolate; /* keeps the ground shadow (z-index -1) inside, behind the sprite */
   background:
     radial-gradient(closest-side, rgb(var(--c-gold-hi) / calc(0.22 * var(--glow))), rgb(var(--c-gold-hi) / 0) 70%),
     radial-gradient(120% 80% at 50% 120%, rgb(var(--c-violet) / calc(0.35 * var(--glow))), transparent 60%);
@@ -514,6 +515,7 @@ select.field {
   position: absolute;
   left: 50%;
   bottom: 6%;
+  z-index: -1;
   width: 46%;
   height: 9%;
   transform: translateX(-50%);
