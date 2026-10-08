@@ -11,6 +11,7 @@ import { permissionState } from "./lib/platform.js";
 import { useGroups } from "./lib/groups.js";
 import { uid } from "./lib/catalog.js";
 import { legacyTodos } from "./lib/legacy.js";
+import { toggleDone } from "./lib/todos.js";
 import { Confirm, ToastProvider, useToast } from "./components/ui.jsx";
 import { deleteAccount } from "./lib/account.js";
 import { Shell } from "./components/Shell.jsx";
@@ -195,14 +196,11 @@ function Game() {
   }
   const todoActions = {
     add: (t) => saveTodo({ id: uid("t"), title: "", date: today, time: null, dur: 30, done: false, doneOn: null, createdAt: today, ...t }),
-    toggle: (id) =>
-      update((s) => ({
-        ...s,
-        todos: s.todos.map((t) => (t.id === id ? { ...t, done: !t.done, doneOn: t.done ? null : today } : t)),
-      })),
+    // `day` is the occurrence of a repeating to-do (calendar and lists pass it); defaults to today
+    toggle: (id, day = today) => update((s) => ({ ...s, todos: s.todos.map((t) => (t.id === id ? toggleDone(t, day) : t)) })),
     move: (id, date, time) => update((s) => ({ ...s, todos: s.todos.map((t) => (t.id === id ? { ...t, date, time: time === undefined ? t.time : time } : t)) })),
     remove: (id) => update((s) => ({ ...s, todos: s.todos.filter((t) => t.id !== id) })),
-    edit: (todo) => setTodoEd(todo),
+    edit: (todo) => setTodoEd(state.todos.find((t) => t.id === todo.id) || todo), // a series is edited as a whole, not as the day it was clicked on
     create: (draft) => setTodoEd({ id: uid("t"), title: "", date: today, time: null, dur: 30, done: false, doneOn: null, createdAt: today, ...draft, isNew: true }),
   };
 

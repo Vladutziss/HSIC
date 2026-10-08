@@ -19,7 +19,7 @@ import {
 import { Bar, LevelBadge, Ring } from "./ui.jsx";
 import { Sprite, eggCrack } from "./Sprite.jsx";
 import { PATHS } from "../lib/catalog.js";
-import { parseHM } from "../lib/dates.js";
+import { fmt12, parseHM } from "../lib/dates.js";
 import { REVIVES_PER_MONTH } from "../lib/derive.js";
 import { c as tc } from "../lib/themes.js";
 
@@ -27,8 +27,8 @@ export const NAV = [
   { id: "home", label: "Acasă", icon: House },
   { id: "habits", label: "Obiceiuri", icon: ScrollText },
   { id: "companion", label: "Molt", icon: Egg },
-  { id: "group", label: "Grup", icon: Users },
   { id: "plan", label: "Plan", icon: CalendarDays },
+  { id: "group", label: "Grup", icon: Users },
   { id: "stats", label: "Statistici", icon: ChartLine },
   { id: "settings", label: "Setări", icon: Settings },
 ];
@@ -95,7 +95,7 @@ function Hud({ d, state, setView, onReview, unread, mode, saveStatus, now }) {
       document.getElementById("review-run")?.focus({ preventScroll: true });
     }, 60);
   };
-  const reviewText = reviewed ? "Raport gata" : left > 0 ? `Raport ${state.settings?.reviewTime}` : "E ora raportului";
+  const reviewText = reviewed ? "Raport gata" : left > 0 ? `Raport ${fmt12(state.settings?.reviewTime)}` : "E ora raportului";
   return (
     <header className="sticky top-0 z-30 border-b border-edge bg-night/85 backdrop-blur" style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}>
       <div className="mx-auto flex h-16 max-w-[1240px] items-center gap-2 px-3 sm:gap-3 sm:px-4 lg:px-8">

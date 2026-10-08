@@ -87,6 +87,8 @@ export function toRows(state, uid) {
       dur: t.dur ?? 30,
       done: !!t.done,
       done_on: nul(t.doneOn),
+      repeat: nul(t.repeat),
+      done_days: t.repeat ? t.doneDays || [] : [],
       created_at: nul(t.createdAt),
     })),
     // the numeric part of a day review; its text comes with the month document
@@ -146,6 +148,7 @@ export function fromRows(rows) {
       dur: t.dur,
       done: t.done,
       doneOn: t.done_on,
+      ...(t.repeat ? { repeat: t.repeat, doneDays: t.done_days || [] } : {}),
       createdAt: t.created_at,
     })),
     streak: { revived },

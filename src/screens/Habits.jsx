@@ -6,7 +6,7 @@ import { iconFor } from "../components/icons.js";
 import { scheduleLabel } from "../components/HabitEditor.jsx";
 import { MAX_HABITS, PATHS } from "../lib/catalog.js";
 import { DIFF, habitStats, isScheduled } from "../lib/engine.js";
-import { fmtDay } from "../lib/dates.js";
+import { fmt12, fmtDay } from "../lib/dates.js";
 import { c } from "../lib/themes.js";
 
 function HabitCard({ h, stats, series, onOpen, onEdit, code, today }) {
@@ -25,7 +25,7 @@ function HabitCard({ h, stats, series, onOpen, onEdit, code, today }) {
           </div>
           <div className="text-xs font-semibold text-dim">
             {h.target} · {scheduleLabel(h.days)}
-            {h.time ? ` · ${h.time}` : ""}
+            {h.time ? ` · ${fmt12(h.time)}` : ""}
           </div>
         </div>
         {code ? <Chip tone="mint">azi ✓</Chip> : isScheduled(h, today) ? <Chip tone="gold">azi</Chip> : null}
@@ -97,7 +97,7 @@ function HabitDetail({ h, state, d, today, onBack, onEdit, onArchive }) {
               </span>
               {h.time && (
                 <span className="inline-flex items-center gap-1">
-                  <Clock size={13} aria-hidden="true" /> {h.time}
+                  <Clock size={13} aria-hidden="true" /> {fmt12(h.time)}
                 </span>
               )}
             </div>

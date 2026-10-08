@@ -5,7 +5,8 @@ import { Sprite, eggCrack } from "./Sprite.jsx";
 import { iconFor } from "./icons.js";
 import { PATHS } from "../lib/catalog.js";
 import { checkInGain } from "../lib/derive.js";
-import { fmtDay, monthKey } from "../lib/dates.js";
+import { fmt12, fmtDay, monthKey } from "../lib/dates.js";
+import { isDoneOn, repeatLabel, todosForToday } from "../lib/todos.js";
 import { c as tc } from "../lib/themes.js";
 
 // ------------------------------------------------------------ quests
@@ -49,7 +50,7 @@ export function QuestCard({ h, code, scheduled, runMult, onCheck, onOpen }) {
           {h.time && (
             <span className="inline-flex items-center gap-1">
               <Clock size={12} aria-hidden="true" />
-              {h.time}
+              {fmt12(h.time)}
             </span>
           )}
           {done ? <span className="font-extrabold text-mint">Bifat</span> : <span className="font-extrabold text-gold-hi">+{checkInGain(h, runMult)}</span>}
@@ -190,7 +191,7 @@ export function ReviewCard({ d, state, months, review, ai, today }) {
             </>
           ) : (
             <>
-              La <span className="font-extrabold text-ink">{time}</span> ({countdown}) AI-ul face rezumatul zilei și îi dă un scor care intră în momentum.
+              La <span className="font-extrabold text-ink">{fmt12(time)}</span> ({countdown}) AI-ul face rezumatul zilei și îi dă un scor care intră în momentum.
             </>
           )}
         </p>
@@ -217,7 +218,7 @@ export function ReviewCard({ d, state, months, review, ai, today }) {
 
   return (
     <Panel id="review-card" tone="gold" corners className="p-4 sm:p-5">
-      <SectionTitle icon={Moon} tone="gold" sub={saved ? "Ziua de azi e închisă" : `Ritualul de seară · ${time}`}>
+      <SectionTitle icon={Moon} tone="gold" sub={saved ? "Ziua de azi e închisă" : `Ritualul de seară · ${fmt12(time)}`}>
         Raportul zilei
       </SectionTitle>
       {body}
@@ -274,7 +275,7 @@ export function GroupMini({ groups, go }) {
 
 export function TodayTodos({ state, today, todo, go }) {
   const [text, setText] = useState("");
-  const todos = (state.todos || []).filter((t) => (t.date === today && (!t.done || t.doneOn === today)) || (!t.done && t.date && t.date < today));
+  const todos = todosForToday(state.todos, today);
   todos.sort((a, b) => Number(a.done) - Number(b.done) || (a.time || "99").localeCompare(b.time || "99"));
   return (
     <Panel className="p-4 sm:p-5">
@@ -310,14 +311,14 @@ export function TodayTodos({ state, today, todo, go }) {
         <ul className="space-y-1.5">
           {todos.map((t) => (
             <li key={t.id} className="flex items-center gap-3 rounded-xl bg-well px-3 py-2">
-              <CheckButton size="sm" checked={t.done} onClick={() => todo.toggle(t.id)} label={t.done ? `Debifează ${t.title}` : `Bifează ${t.title}`} />
+              <CheckButton size="sm" checked={t.done} onClick={() => todo.toggle(t.id, today)} label={t.done ? `Debifează ${t.title}` : `Bifează ${t.title}`} />
               <button type="button" onClick={() => todo.edit(t)} className={`min-w-0 flex-1 truncate text-left text-sm font-bold ${t.done ? "text-faint line-through" : "text-ink"}`}>
                 {t.title}
               </button>
               {t.date < today && !t.done ? (
                 <Chip tone="ember">din {fmtDay(t.date)}</Chip>
               ) : (
-                t.time && <span className="text-xs font-bold text-dim">{t.time}</span>
+                t.time && <span className="text-xs font-bold text-dim">{fmt12(t.time)}</span>
               )}
             </li>
           ))}
