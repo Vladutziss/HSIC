@@ -14,6 +14,7 @@ import {
   Loader2,
   ScrollText,
   Settings,
+  Timer,
   Users,
 } from "lucide-react";
 import { Bar, LevelBadge, Ring } from "./ui.jsx";
@@ -168,7 +169,7 @@ function Hud({ d, state, setView, onReview, unread, mode, saveStatus, now }) {
   );
 }
 
-export function Shell({ view, setView, onReview, d, state, unread, mode, saveStatus, now, children }) {
+export function Shell({ view, setView, onReview, onFocus, d, state, unread, mode, saveStatus, now, children }) {
   const c = d.companion;
   const path = state.profile?.path || "sport";
   return (
@@ -187,6 +188,10 @@ export function Shell({ view, setView, onReview, d, state, unread, mode, saveSta
             );
           })}
         </nav>
+        <button type="button" onClick={onFocus} className="nav-item focus-ring mt-4 ring-1 ring-edge">
+          <Timer size={19} strokeWidth={2.25} aria-hidden="true" />
+          <span>Focus</span>
+        </button>
         <button
           type="button"
           onClick={() => setView("companion")}

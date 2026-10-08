@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { CheckCircle2, FlaskConical, Leaf, Zap } from "lucide-react";
+import { CheckCircle2, FlaskConical, Leaf, Timer, Zap } from "lucide-react";
 import { useAppStore } from "./lib/store.js";
 import { checkInGain, derive, reviewPayload } from "./lib/derive.js";
 import { CODE } from "./lib/engine.js";
@@ -15,6 +15,7 @@ import { toggleDone } from "./lib/todos.js";
 import { Confirm, ToastProvider, useToast } from "./components/ui.jsx";
 import { deleteAccount } from "./lib/account.js";
 import { Shell } from "./components/Shell.jsx";
+import { FocusMode, readFocusStart, saveFocusStart } from "./components/Focus.jsx";
 import { MomentModal } from "./components/MomentModal.jsx";
 import { HabitEditor } from "./components/HabitEditor.jsx";
 import { TodoEditor } from "./components/TodoEditor.jsx";
@@ -94,6 +95,22 @@ function Game() {
   const [habitEd, setHabitEd] = useState(null); // { habit?, tab? }
   const [todoEd, setTodoEd] = useState(null); // a draft to-do
   const [confirm, setConfirm] = useState(null);
+  const [focusStart, setFocusStart] = useState(readFocusStart); // ms timestamp while Focus is on, else null
+  const startFocus = () => {
+    const now = Date.now();
+    saveFocusStart(now);
+    setFocusStart(now);
+  };
+  const focusRef = useRef(focusStart);
+  focusRef.current = focusStart;
+  const endFocus = useCallback(() => {
+    const start = focusRef.current;
+    const mins = start ? Math.floor((Date.now() - start) / 60000) : 0;
+    if (mins >= 1) toast({ title: "Sesiune de Focus încheiată", text: mins < 60 ? `${mins} min de concentrare` : `${Math.floor(mins / 60)} h ${mins % 60} min de concentrare`, icon: Timer, tone: "mint" });
+    saveFocusStart(null);
+    setFocusStart(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [queue, setQueue] = useState([]);
   const [review, setReview] = useState({ status: "idle", error: null });
   const autoTried = useRef(null);
@@ -292,12 +309,13 @@ function Game() {
   const reviewInfo = { ...review, run: runReview, reviewMin, now };
 
   return (
-    <Shell view={view} setView={go} onReview={() => !state.reviews?.[today] && runReview(today)} d={d} state={state} unread={groups.unread} mode={store.mode} saveStatus={store.saveStatus} now={now}>
+    <Shell view={view} setView={go} onFocus={startFocus} onReview={() => !state.reviews?.[today] && runReview(today)} d={d} state={state} unread={groups.unread} mode={store.mode} saveStatus={store.saveStatus} now={now}>
       {view === "home" && (
         <Dashboard
           {...common}
           groups={groups}
           review={reviewInfo}
+          onFocus={startFocus}
           onCheck={checkIn}
           onRevive={applyRevive}
           todo={todoActions}
@@ -350,6 +368,7 @@ function Game() {
         />
       )}
 
+      {focusStart && <FocusMode start={focusStart} onExit={endFocus} />}
       {queue[0] && (
         <MomentModal
           key={queue[0].id}
