@@ -1,5 +1,5 @@
 import React from "react";
-import { AlertTriangle, CalendarCheck, Flame, FlaskConical, Gift, Plus, Swords, TrendingUp, Zap } from "lucide-react";
+import { AlertTriangle, CalendarCheck, Flame, FlaskConical, Gift, Plus, Swords, Timer, TrendingUp, Zap } from "lucide-react";
 import { Bar, Button, Chip, LevelBadge, Panel, SectionTitle } from "../components/ui.jsx";
 import { CompanionCard, GroupMini, QuestCard, ReviewCard, TodayTodos } from "../components/Cards.jsx";
 import { fmtDay, fmtLong } from "../lib/dates.js";
@@ -13,7 +13,7 @@ function greeting() {
   return "Bună seara";
 }
 
-function Hero({ state, d, today }) {
+function Hero({ state, d, today, onFocus }) {
   const { level, entry, week, streak } = d;
   const nick = state.profile?.nick || "aventurierule";
   const left = d.scheduled.length - d.doneScheduled;
@@ -33,6 +33,9 @@ function Hero({ state, d, today }) {
             {greeting()}, {nick}!
           </h1>
           <p className="mt-2 max-w-xl text-sm font-semibold leading-relaxed text-body">{sub}</p>
+          <Button variant="violet" size="sm" icon={Timer} className="mt-3" onClick={onFocus}>
+            Focus
+          </Button>
         </div>
         <div className="flex w-full items-center gap-4 sm:w-auto">
           <LevelBadge lvl={level.lvl} size={76} />
@@ -107,13 +110,13 @@ function ResetWarning({ d }) {
   );
 }
 
-export default function Dashboard({ state, d, today, go, ai, months, recentStories, groups, review, onCheck, onRevive, todo, onAddHabit }) {
+export default function Dashboard({ state, d, today, go, ai, months, recentStories, groups, review, onFocus, onCheck, onRevive, todo, onAddHabit }) {
   const chestOpen = d.scheduled.length > 0 && d.doneScheduled === d.scheduled.length;
   const lastStory = [...recentStories].reverse().find((s) => s.story);
   return (
     <div className="grid gap-5 lg:grid-cols-12">
       <div className="min-w-0 space-y-5 lg:col-span-8">
-        <Hero state={state} d={d} today={today} />
+        <Hero state={state} d={d} today={today} onFocus={onFocus} />
         <ReviveBanner d={d} onRevive={onRevive} />
         <ResetWarning d={d} />
 
