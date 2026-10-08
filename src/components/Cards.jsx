@@ -195,19 +195,16 @@ export function ReviewCard({ d, state, months, review, ai, today }) {
             </>
           )}
         </p>
-        <div className="inset flex items-center justify-between gap-3 px-3 py-2">
-          <span className="text-xs font-bold text-dim">{d.pending > 0 ? "Raportul ar adăuga acum" : "Bifează ceva ca raportul să aducă momentum"}</span>
-          {d.pending > 0 && <span className="font-pixel text-lg text-gold-hi">+{d.pending}</span>}
-        </div>
+        {d.pending === 0 && <p className="text-xs font-semibold text-dim">Bifează ceva ca raportul să aducă momentum.</p>}
         {review.status === "error" && (
           <p className="rounded-xl bg-rose/10 p-3 text-sm font-semibold text-rose ring-1 ring-rose/30">{review.error}</p>
         )}
-        <div className="flex flex-wrap gap-2">
-          <Button id="review-run" variant={due ? "gold" : "ghost"} size="sm" icon={Sparkles} onClick={() => review.run(today)}>
+        <div className="flex flex-col gap-2">
+          <Button id="review-run" variant={due ? "gold" : "ghost"} size="md" icon={Sparkles} className="w-full" onClick={() => review.run(today)}>
             {ai.available ? (due ? "Generează raportul" : "Generează acum") : "Închide ziua"}
           </Button>
           {review.status === "error" && (
-            <Button variant="ghost" size="sm" onClick={() => review.run(today, { allowTemplate: true })}>
+            <Button variant="ghost" size="md" className="w-full" onClick={() => review.run(today, { allowTemplate: true })}>
               Închide fără AI
             </Button>
           )}
@@ -218,7 +215,18 @@ export function ReviewCard({ d, state, months, review, ai, today }) {
 
   return (
     <Panel id="review-card" tone="gold" corners className="p-4 sm:p-5">
-      <SectionTitle icon={Moon} tone="gold" sub={saved ? "Ziua de azi e închisă" : `Ritualul de seară · ${fmt12(time)}`}>
+      <SectionTitle
+        icon={Moon}
+        tone="gold"
+        sub={saved ? "Ziua de azi e închisă" : `Ritualul de seară · ${fmt12(time)}`}
+        action={
+          !saved && d.pending > 0 ? (
+            <span className="font-pixel text-xl text-gold-hi" title="Momentum pe care îl aduce raportul dacă închizi ziua acum">
+              +{d.pending}
+            </span>
+          ) : null
+        }
+      >
         Raportul zilei
       </SectionTitle>
       {body}
