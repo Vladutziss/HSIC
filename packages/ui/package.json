@@ -1,0 +1,10 @@
+{
+  "name": "@molted/ui",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "exports": {
+    "./base.css": "./base.css",
+    "./tailwind-preset.js": "./tailwind-preset.js"
+  }
+}
