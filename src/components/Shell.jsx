@@ -84,6 +84,15 @@ function Hud({ d, state, setView, unread, mode, saveStatus, now }) {
   const reviewMin = parseHM(state.settings?.reviewTime || "21:00");
   const reviewed = !!state.reviews?.[d.today];
   const left = reviewMin - now;
+  // the report card lives on the home screen: go there, then bring it into view once it has rendered
+  const openReview = () => {
+    setView("home");
+    setTimeout(() => {
+      const card = document.getElementById("review-card");
+      card?.scrollIntoView({ block: "center" });
+      document.getElementById("review-run")?.focus({ preventScroll: true });
+    }, 60);
+  };
   const reviewText = reviewed ? "Raport gata" : left > 0 ? `Raport ${state.settings?.reviewTime}` : "E ora raportului";
   return (
     <header className="sticky top-0 z-30 border-b border-edge bg-night/85 backdrop-blur" style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}>
@@ -134,10 +143,15 @@ function Hud({ d, state, setView, unread, mode, saveStatus, now }) {
               {doneScheduled}/{scheduled.length}
             </span>
           </button>
-          <span className="hidden items-center gap-1.5 rounded-xl bg-well px-2.5 py-2 text-xs font-extrabold ring-1 ring-edge md:flex" title="Raportul zilei">
+          <button
+            type="button"
+            onClick={openReview}
+            className="focus-ring hidden items-center gap-1.5 rounded-xl bg-well px-2.5 py-2 text-xs font-extrabold ring-1 ring-edge transition hover:bg-panel-hi md:flex"
+            title="Deschide raportul zilei"
+          >
             <Clock size={14} className={reviewed ? "text-mint" : left <= 0 ? "text-gold" : "text-dim"} aria-hidden="true" />
             <span className={reviewed ? "text-mint" : left <= 0 ? "text-gold" : "text-body"}>{reviewText}</span>
-          </span>
+          </button>
           <button type="button" onClick={() => setView("group")} className="focus-ring relative grid h-9 w-9 place-items-center rounded-xl text-dim hover:bg-panel-hi hover:text-ink" aria-label={`Remindere${unread ? `: ${unread} necitite` : ""}`}>
             <Bell size={18} aria-hidden="true" />
             {unread > 0 && <span className="absolute -right-0.5 -top-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-rose px-1 text-[10px] font-black text-on-rose">{unread}</span>}

@@ -237,7 +237,7 @@ export function ReviewCard({ d, state, months, review, ai, today }) {
   }
 
   return (
-    <Panel tone="gold" corners className="p-4 sm:p-5">
+    <Panel id="review-card" tone="gold" corners className="p-4 sm:p-5">
       <SectionTitle icon={Moon} tone="gold" sub={saved ? "Ziua de azi e închisă" : `Ritualul de seară · ${time}`}>
         Raportul zilei
       </SectionTitle>
