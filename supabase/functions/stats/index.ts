@@ -1,4 +1,4 @@
-// Statistics for Momentum, computed next to the data. Deployed as a Supabase Edge Function:
+// Statistics for Molted, computed next to the data. Deployed as a Supabase Edge Function:
 //
 //   npm run sync:functions && supabase functions deploy stats
 //

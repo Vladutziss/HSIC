@@ -28,13 +28,13 @@ function verify(p: any, hasImage: boolean): string {
       : type === "voice"
         ? `a voice note of about ${Number(p.seconds) || "?"} seconds (you cannot hear it; judge from the player's description only)`
         : "a written note";
-  return `You are the game master of "Momentum", a self-improvement RPG. The player submitted proof for today's habit check-in.
+  return `You are the game master of "Molted", a self-improvement RPG. The player submitted proof for today's habit check-in.
 
 Habit: "${clip(habit.name, 80)}". Target: "${clip(habit.target, 80) || "-"}".
 Proof: ${kind}.
 Player's note: "${clip(p.note, 500)}"
 
-The player's companion is ${clip(companion.name, 30) || "a small creature"}, a ${clip(p.cls, 30) || "Atlet"} at the "${clip(companion.stage, 30)}" stage.
+The player's companion is ${clip(companion.name, 30) || "a Molt"}, a ${clip(p.cls, 30) || "Atlet"} at the "${clip(companion.stage, 30)}" stage.
 Story so far (newest last):
 ${story}
 
@@ -59,7 +59,7 @@ function review(p: any): string {
   const todos = p.todos ?? {};
   const titles = list(todos.titles, 5, 60);
   const level = p.level ?? {};
-  return `You are the evening coach in "Momentum", a self-improvement RPG. Review the player's day and score it.
+  return `You are the evening coach in "Molted", a self-improvement RPG. Review the player's day and score it.
 
 Player: ${clip(p.name, 40) || "the player"}. Goal: "${clip(p.goal, 200) || "-"}" (path: ${clip(p.pathLabel, 30) || "-"}).
 Day: ${clip(p.dayLabel, 40)}.
@@ -86,7 +86,7 @@ Reply with only JSON: {"line":"..."}`;
 
 function chapter(p: any): string {
   const recent = list(p.recent, 3, 420);
-  return `In "Momentum", a self-improvement RPG, the player's companion ${clip(p.name, 30) || "the creature"} (a ${clip(p.cls, 30) || "hero"}) just evolved from "${clip(p.from, 30)}" to "${clip(p.to, 30)}" thanks to the player's proofs of effort.
+  return `In "Molted", a self-improvement RPG, the player's companion ${clip(p.name, 30) || "the Molt"} (a ${clip(p.cls, 30) || "hero"}) just evolved from "${clip(p.from, 30)}" to "${clip(p.to, 30)}" thanks to the player's proofs of effort.
 Recent story (newest last):
 ${recent.map((s) => `- ${s}`).join("\n") || "- (none yet)"}
 Write a short celebratory chapter: 3 sentences, at most 380 characters, in Romanian, third person, present tense, describing the transformation and what the companion can do now. Give it a title of 2-4 words.

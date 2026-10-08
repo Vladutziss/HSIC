@@ -387,7 +387,7 @@ export default function Onboarding({ onDone, store, today, legacy }) {
         <Corners tone="gold" />
         <div className="panel panel-gold p-5 sm:p-8">
           <div className="mb-6 flex items-center justify-between gap-4">
-            <div className="font-pixel text-lg font-bold tracking-wide text-gold">MOMENTUM</div>
+            <div className="font-pixel text-lg font-bold tracking-wide text-gold">MOLTED</div>
             <StepDots step={step} />
           </div>
           {content}

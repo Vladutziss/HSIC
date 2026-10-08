@@ -15,7 +15,7 @@ export function MomentModal({ moment, state, d, ai, recentStories, onName, onCha
   const c = d.companion;
   const needsName = moment.type === "hatch" && !state.companion?.name;
   const [name, setName] = useState(state.companion?.name || DEFAULT_NAMES[path]?.[0] || "");
-  const displayName = needsName ? name || "Puiul tău" : c.name || "Personajul tău";
+  const displayName = needsName ? name || "Molt-ul tău" : c.name || "Molt-ul tău";
   const ctx = { name: displayName, resetAfter: d.resetAfter };
   const [line, setLine] = useState(momentLine(moment, ctx));
   const [chapter, setChapter] = useState(null);

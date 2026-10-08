@@ -12,7 +12,7 @@ export const MOMENT_META = {
   drop: { title: "Momentum-ul încetinește", tone: "ember" },
   return: { title: "Bine ai revenit!", tone: "mint" },
   hatch: { title: "Oul s-a deschis!", tone: "gold" },
-  evolve: { title: "Personajul tău a evoluat", tone: "gold" },
+  evolve: { title: "Molt-ul tău a evoluat", tone: "gold" },
   levelup: { title: "Nivel nou de momentum", tone: "gold" },
   streak: { title: "Serie nouă", tone: "ember" },
 };
@@ -76,7 +76,7 @@ export function detectMoments({ seen, timeline, companion, streak, today }) {
 
 /** One sentence linking the moment to the player; the AI may replace it. */
 export function momentLine(m, { name, resetAfter = 3 }) {
-  const n = name || "Personajul tău";
+  const n = name || "Molt-ul tău";
   switch (m.type) {
     case "reset":
       return `După ${resetAfter} zile fără activitate, momentum-ul a revenit la zero. ${n} te așteaptă: o singură misiune azi aprinde din nou focul.`;

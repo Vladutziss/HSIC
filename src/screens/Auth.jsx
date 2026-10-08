@@ -131,13 +131,13 @@ function SignIn({ client }) {
         <div className="flex items-center gap-3">
           <Leaf className="text-gold" size={28} aria-hidden="true" />
           <div>
-            <div className="font-pixel text-2xl leading-none text-ink">Momentum</div>
+            <div className="font-pixel text-2xl leading-none text-ink">Molted</div>
             <h1 className="text-sm font-bold text-dim">{title}</h1>
           </div>
         </div>
 
         <p className="text-sm text-dim">
-          Momentum este o aplicație de self-improvement gamificată: îți urmărești obiceiurile zilnice, personajul tău evoluează odată cu progresul, poți intra în grupuri cu prietenii și primești rapoarte AI. Te autentifici cu Google sau cu email ca să-ți sincronizezi progresul între dispozitive.
+          Molted este o aplicație de self-improvement gamificată: îți urmărești obiceiurile zilnice, personajul tău evoluează odată cu progresul, poți intra în grupuri cu prietenii și primești rapoarte AI. Te autentifici cu Google sau cu email ca să-ți sincronizezi progresul între dispozitive.
         </p>
 
         {mode !== "reset" && (

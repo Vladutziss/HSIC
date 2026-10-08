@@ -68,7 +68,7 @@ const libs = [
 const src = ([name, cdn]) =>
   local ? `/node_modules/${name}/${cdn.split("/").slice(1).join("/")}` : `https://cdn.jsdelivr.net/npm/${cdn}`;
 
-const html = `<title>Momentum</title>
+const html = `<title>Molted</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Pixelify+Sans:wght@400;500;600;700&display=swap">

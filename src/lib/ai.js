@@ -113,13 +113,13 @@ export async function verifyProof({ habit, type, note, image, seconds, companion
       : type === "voice"
         ? `a voice note of about ${seconds || "?"} seconds (you cannot hear it; judge from the player's description only)`
         : "a written note";
-  const prompt = `You are the game master of "Momentum", a self-improvement RPG. The player submitted proof for today's habit check-in.
+  const prompt = `You are the game master of "Molted", a self-improvement RPG. The player submitted proof for today's habit check-in.
 
 Habit: "${habit.name}". Target: "${habit.target || "-"}".
 Proof: ${kind}.
 Player's note: "${clip(note, 500)}"
 
-The player's companion is ${companion.name || "a small creature"}, a ${cls} at the "${companion.stage}" stage.
+The player's companion is ${companion.name || "a Molt"}, a ${cls} at the "${companion.stage}" stage.
 Story so far (newest last):
 ${story}
 
@@ -161,7 +161,7 @@ export async function dailyReview(p, signal) {
   const lines = p.habits
     .map((h) => `- ${h.name} (${h.diffLabel}${h.scheduled ? "" : ", optional today"}): ${h.done ? `done${h.proof ? `, proof ${h.proof}` : ""}` : "not done"}`)
     .join("\n");
-  const prompt = `You are the evening coach in "Momentum", a self-improvement RPG. Review the player's day and score it.
+  const prompt = `You are the evening coach in "Molted", a self-improvement RPG. Review the player's day and score it.
 
 Player: ${p.name || "the player"}. Goal: "${clip(p.goal, 200) || "-"}" (path: ${PATHS[p.pathId]?.label || "-"}).
 Day: ${fmtLong(p.day)}.
@@ -219,7 +219,7 @@ Reply with only JSON: {"line":"..."}`;
 
 export async function evolutionChapter({ name, pathId, from, to, recent = [] }, signal) {
   const server = await serverClient();
-  const prompt = `In "Momentum", a self-improvement RPG, the player's companion ${name || "the creature"} (a ${PATHS[pathId]?.cls || "hero"}) just evolved from "${from}" to "${to}" thanks to the player's proofs of effort.
+  const prompt = `In "Molted", a self-improvement RPG, the player's companion ${name || "the Molt"} (a ${PATHS[pathId]?.cls || "hero"}) just evolved from "${from}" to "${to}" thanks to the player's proofs of effort.
 Recent story (newest last):
 ${recent.slice(-3).map((s) => `- ${s}`).join("\n") || "- (none yet)"}
 Write a short celebratory chapter: 3 sentences, at most 380 characters, in Romanian, third person, present tense, describing the transformation and what the companion can do now. Give it a title of 2-4 words.

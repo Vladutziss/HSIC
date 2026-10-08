@@ -1,4 +1,4 @@
-// AI for Momentum, through OpenRouter. Deployed as a Supabase Edge Function:
+// AI for Molted, through OpenRouter. Deployed as a Supabase Edge Function:
 //
 //   supabase secrets set OPENROUTER_API_KEY=... AI_MODEL=<a vision-capable model id from openrouter.ai/models>
 //   supabase functions deploy ai
@@ -79,7 +79,7 @@ Deno.serve(async (req) => {
     try {
       res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
         method: "POST",
-        headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json", "X-Title": "Momentum" },
+        headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json", "X-Title": "Molted" },
         body: JSON.stringify({
           model: m,
           messages: [{ role: "user", content }],
