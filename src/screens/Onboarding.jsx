@@ -6,6 +6,7 @@ import { HABIT_ICONS, iconFor } from "../components/icons.js";
 import { DayPicker, DifficultyPicker, scheduleLabel } from "../components/HabitEditor.jsx";
 import { CATALOG, MAX_HABITS, PATHS, PATH_LIST, RECOMMENDED, habitFromCatalog, nextColor, uid } from "../lib/catalog.js";
 import { legacyHabits, legacySummary } from "../lib/legacy.js";
+import { fmt12 } from "../lib/dates.js";
 
 const GOAL_EXAMPLES = {
   sport: "Să alerg primul meu semimaraton până în primăvară.",
@@ -341,7 +342,7 @@ export default function Onboarding({ onDone, store, today, legacy }) {
               onClick={() => setReviewTime(t)}
               className={`focus-ring rounded-xl px-4 py-2.5 font-pixel text-lg transition ${reviewTime === t ? "bg-gold text-on-gold shadow-key-gold" : "bg-well text-body ring-1 ring-edge hover:text-ink"}`}
             >
-              {t}
+              {fmt12(t)}
             </button>
           ))}
         </div>
@@ -374,7 +375,7 @@ export default function Onboarding({ onDone, store, today, legacy }) {
           <Chip tone="gold" icon={Sparkles}>
             {habits.length} misiuni
           </Chip>
-          <Chip tone="violet">Raport la {reviewTime}</Chip>
+          <Chip tone="violet">Raport la {fmt12(reviewTime)}</Chip>
         </div>
       </div>
     );

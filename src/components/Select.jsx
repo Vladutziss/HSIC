@@ -5,7 +5,7 @@
 import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight, Clock, X } from "lucide-react";
-import { RO_DAYS_MIN, RO_DAYS_SHORT, RO_MONTHS, addDays, dayKey, fmtDay, fmtLong, mondayOf, parseDay, todayKey } from "../lib/dates.js";
+import { RO_DAYS_MIN, RO_DAYS_SHORT, RO_MONTHS, addDays, dayKey, fmt12, fmtDay, fmtLong, mondayOf, parseDay, parseHM, todayKey } from "../lib/dates.js";
 
 const pad = (n) => String(n).padStart(2, "0");
 
@@ -177,25 +177,32 @@ export function Select({ id, value, onChange, options, disabled, placeholder = "
 
 // ------------------------------------------------------------ TimeSelect
 
-const HOURS = Array.from({ length: 24 }, (_, i) => pad(i));
+const HOURS = Array.from({ length: 12 }, (_, i) => String(i + 1));
 const MINUTES = Array.from({ length: 12 }, (_, i) => pad(i * 5));
 
-/** value: "HH:MM" or null. Hours and minutes (5-minute steps) are picked in two columns. */
-export function TimeSelect({ id, value, onChange, disabled, clearable = true, placeholder = "--:--" }) {
+/** value: "HH:MM" (24-hour, as stored) or null. Picked as hour 1-12, minute (5-minute steps) and AM/PM. */
+export function TimeSelect({ id, value, onChange, disabled, clearable = true, placeholder = "--:-- --" }) {
   const pop = usePopover();
   useFocusOnOpen(pop);
-  const [h, m] = value ? value.split(":") : [null, null];
-  // bring both selected cells into view, not just the focused one
+  const min = value ? parseHM(value) : null;
+  const h24 = min == null ? null : Math.floor(min / 60) % 24;
+  const sel = { h: h24 == null ? null : String(h24 % 12 || 12), m: min == null ? null : pad(min % 60), pm: h24 == null ? null : h24 >= 12 };
+  // an empty field starts from 9:00 AM; each pick changes one part and keeps the others
+  const pick = (part) => {
+    const h = Number(part.h ?? sel.h ?? 9);
+    const pm = part.pm ?? sel.pm ?? false;
+    onChange(`${pad((h % 12) + (pm ? 12 : 0))}:${part.m ?? sel.m ?? "00"}`);
+  };
+  // bring the selected hour and minute into view, not just the focused cell
   useEffect(() => {
     if (!pop.open) return undefined;
-    const t = requestAnimationFrame(() => pop.menu.current?.querySelectorAll('[aria-selected="true"]').forEach((el) => el.scrollIntoView({ block: "center" })));
+    const t = requestAnimationFrame(() => pop.menu.current?.querySelectorAll('[role="option"][aria-selected="true"]').forEach((el) => el.scrollIntoView({ block: "center" })));
     return () => cancelAnimationFrame(t);
   }, [pop.open]); // eslint-disable-line react-hooks/exhaustive-deps
-  const pick = (nh, nm) => onChange(`${nh}:${nm}`);
-  const col = (items, sel, onPick, label) => (
-    <div role="listbox" aria-label={label} className="no-scrollbar max-h-56 flex-1 overflow-y-auto" onKeyDownCapture={arrowNav}>
+  const col = (items, selected, onPick, label, extra = "") => (
+    <div role="listbox" aria-label={label} className={`no-scrollbar max-h-56 flex-1 overflow-y-auto ${extra}`} onKeyDownCapture={arrowNav}>
       {items.map((x) => (
-        <button key={x} type="button" role="option" aria-selected={x === sel} data-opt className={`${optionCls(x === sel)} justify-center tabular`} onClick={() => onPick(x)}>
+        <button key={x} type="button" role="option" aria-selected={x === selected} data-opt className={`${optionCls(x === selected)} justify-center tabular`} onClick={() => onPick(x)}>
           {x}
         </button>
       ))}
@@ -204,32 +211,36 @@ export function TimeSelect({ id, value, onChange, disabled, clearable = true, pl
   return (
     <>
       <Trigger pop={pop} id={id} disabled={disabled} icon={Clock} placeholder={placeholder}>
-        {value || null}
+        {value ? fmt12(value) : null}
       </Trigger>
-      <Menu pop={pop} minWidth={190} aria-label="Alege ora">
-        <div className="mb-1 grid grid-cols-2 px-1 text-center text-[10px] font-extrabold uppercase tracking-wider text-dim">
+      <Menu pop={pop} minWidth={236} aria-label="Alege ora">
+        <div className="mb-1 grid grid-cols-3 px-1 text-center text-[10px] font-extrabold uppercase tracking-wider text-dim">
           <span>Ora</span>
           <span>Minut</span>
+          <span>AM / PM</span>
         </div>
         <div className="flex gap-1.5">
-          {col(HOURS, h, (x) => pick(x, m || "00"), "Ora")}
-          {col(MINUTES, m, (x) => {
-            pick(h || "09", x);
-            pop.close();
-          }, "Minut")}
+          {col(HOURS, sel.h, (x) => pick({ h: x }), "Ora")}
+          {col(MINUTES, sel.m, (x) => pick({ m: x }), "Minut")}
+          {col(["AM", "PM"], sel.pm == null ? null : sel.pm ? "PM" : "AM", (x) => pick({ pm: x === "PM" }), "AM sau PM", "!max-h-none")}
         </div>
-        {clearable && value && (
-          <button
-            type="button"
-            className="focus-ring mt-1.5 flex w-full items-center justify-center gap-1.5 rounded-lg py-1.5 text-xs font-extrabold text-dim hover:bg-violet/10 hover:text-ink"
-            onClick={() => {
-              onChange(null);
-              pop.close();
-            }}
-          >
-            <X size={13} aria-hidden="true" /> Fără oră
+        <div className="mt-1.5 flex gap-1.5">
+          <button type="button" className="focus-ring flex-1 rounded-lg bg-gold py-1.5 text-xs font-extrabold text-on-gold" onClick={() => pop.close()}>
+            Gata
           </button>
-        )}
+          {clearable && value && (
+            <button
+              type="button"
+              className="focus-ring flex flex-1 items-center justify-center gap-1.5 rounded-lg py-1.5 text-xs font-extrabold text-dim hover:bg-violet/10 hover:text-ink"
+              onClick={() => {
+                onChange(null);
+                pop.close();
+              }}
+            >
+              <X size={13} aria-hidden="true" /> Fără oră
+            </button>
+          )}
+        </div>
       </Menu>
     </>
   );

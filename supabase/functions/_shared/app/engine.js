@@ -81,7 +81,11 @@ export function computeTimeline(state, today) {
   const resetAfter = state.settings?.resetAfter || RULES.resetAfter;
 
   const todosByDay = {};
-  for (const t of state.todos || []) if (t.done && t.doneOn) todosByDay[t.doneOn] = (todosByDay[t.doneOn] || 0) + 1;
+  const tick = (day) => (todosByDay[day] = (todosByDay[day] || 0) + 1);
+  for (const t of state.todos || []) {
+    if (t.repeat) for (const day of t.doneDays || []) tick(day); // a series counts once per ticked day
+    else if (t.done && t.doneOn) tick(t.doneOn);
+  }
 
   const days = [];
   const byDay = {};

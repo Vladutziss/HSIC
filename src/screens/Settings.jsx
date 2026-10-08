@@ -6,6 +6,7 @@ import { PATHS } from "../lib/catalog.js";
 import { LEVELS, RULES } from "../lib/engine.js";
 import { exportData, signOut } from "../lib/account.js";
 import { THEMES, setTheme, useTheme } from "../lib/themes.js";
+import { fmt12 } from "../lib/dates.js";
 
 const TIMES = ["18:00", "18:30", "19:00", "19:30", "20:00", "20:30", "21:00", "21:30", "22:00", "22:30", "23:00", "23:30"];
 
@@ -135,7 +136,7 @@ export default function Settings({ state, d, ai, mode, env, onChange, onWipe, on
             Ritualul de seară
           </SectionTitle>
           <Field label="Ora raportului" htmlFor="set-time">
-            <Select id="set-time" value={settings.reviewTime || "21:00"} onChange={(v) => set({ reviewTime: v })} options={TIMES.map((t) => ({ value: t, label: t }))} />
+            <Select id="set-time" value={settings.reviewTime || "21:00"} onChange={(v) => set({ reviewTime: v })} options={TIMES.map((t) => ({ value: t, label: fmt12(t) }))} />
           </Field>
           <label className="flex items-center justify-between gap-4" htmlFor="set-auto">
             <span>

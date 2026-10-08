@@ -14,6 +14,7 @@ import {
   weekGain,
 } from "./engine.js";
 import { addDays } from "./dates.js";
+import { occursOn, viewOn } from "./todos.js";
 
 export function activeHabits(state, day) {
   return (state.habits || []).filter((h) => habitExists(h, day));
@@ -86,7 +87,7 @@ export function reviewPayload(state, d, day) {
     scheduled: isScheduled(h, day),
     done: !!log[h.id],
   }));
-  const dayTodos = (state.todos || []).filter((t) => t.date === day || t.doneOn === day);
+  const dayTodos = (state.todos || []).filter((t) => (t.repeat ? occursOn(t, day) : t.date === day || t.doneOn === day)).map((t) => viewOn(t, day));
   const done = dayTodos.filter((t) => t.done && t.doneOn === day);
   return {
     day,
