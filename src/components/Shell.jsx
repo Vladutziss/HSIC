@@ -25,7 +25,7 @@ import { REVIVES_PER_MONTH } from "../lib/derive.js";
 export const NAV = [
   { id: "home", label: "Acasă", icon: House },
   { id: "habits", label: "Obiceiuri", icon: ScrollText },
-  { id: "companion", label: "Personaj", icon: Egg },
+  { id: "companion", label: "Molt", icon: Egg },
   { id: "group", label: "Grup", icon: Users },
   { id: "plan", label: "Plan", icon: CalendarDays },
   { id: "stats", label: "Statistici", icon: ChartLine },
@@ -50,7 +50,7 @@ function Logo({ compact = false }) {
       </svg>
       {!compact && (
         <div className="leading-none">
-          <div className="font-pixel text-xl font-bold tracking-wide text-ink">MOMENTUM</div>
+          <div className="font-pixel text-xl font-bold tracking-wide text-ink">MOLTED</div>
           <div className="mt-1 text-[10px] font-extrabold uppercase tracking-[0.2em] text-gold">self-improvement RPG</div>
         </div>
       )}

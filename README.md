@@ -1,4 +1,4 @@
-# Momentum · self-improvement RPG
+# Molted · self-improvement RPG
 
 Aplicație de obiceiuri gamificată: îți crești **momentum-ul**, trimiți **dovezi** (poze, note vocale, text) pe care le verifică AI-ul, iar un **personaj** ieșit dintr-un ou evoluează odată cu tine. Interfața e un joc RPG întunecat, cu bare de XP, insigne de nivel, serii și clasament.
 

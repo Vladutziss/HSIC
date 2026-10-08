@@ -144,7 +144,7 @@ export default function Companion({ state, d, today, months, loadMonth, onProof,
 
       <Panel tone="gold" className="p-4 sm:p-5">
         <SectionTitle icon={ScrollText} tone="gold" sub="Scrisă de AI din dovezile tale, capitol cu capitol">
-          Povestea lui {c.name || "personajului tău"}
+          Povestea lui {c.name || "Molt-ului tău"}
         </SectionTitle>
         {story.length === 0 ? (
           <Empty icon={ScrollText} title="Povestea nu a început încă" action={<Button icon={Camera} onClick={() => onProof(null)}>Trimite prima dovadă</Button>}>

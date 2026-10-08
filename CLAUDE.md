@@ -1,4 +1,4 @@
-# Momentum RPG — note pentru Claude
+# Molted RPG — note pentru Claude
 
 - Acesta e repo-ul proiectului (Vladutziss/HSIC). Toată munca la aplicație se face aici.
 - Artifact publicat: https://claude.ai/artifact/5CVNPku5rNoHFQAV2bk65E — se actualizează la același URL (`url` la publish), fără a schimba capabilitățile (sample, assets, db, user).

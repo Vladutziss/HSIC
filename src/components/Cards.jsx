@@ -81,7 +81,7 @@ export function QuestCard({ h, code, scheduled, runMult, onCheck, onProof, onOpe
 // ------------------------------------------------------------ companion
 
 export function moodLine(c, name) {
-  const n = name || "Personajul tău";
+  const n = name || "Molt-ul tău";
   if (c.stage.id === "egg") {
     if (c.mood === "sleep") return "Oul e rece și liniștit. Se încălzește din nou cu prima ta dovadă.";
     return c.ep > 0 ? "Oul a început să crape! Încă o dovadă și se deschide." : "Oul se încălzește cu fiecare dovadă pe care o trimiți.";

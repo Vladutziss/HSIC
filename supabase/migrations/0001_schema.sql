@@ -1,4 +1,4 @@
--- Momentum: schema. Ids are text because the app generates them client-side
+-- Molted: schema. Ids are text because the app generates them client-side
 -- (uid("h"), uid("t"), ...). Scores, levels and streaks are NOT stored: the
 -- client derives them from these raw rows with src/lib/engine.js.
 
