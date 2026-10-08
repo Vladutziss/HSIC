@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { Activity, BarChart3, CalendarDays, Camera, Flame, Gauge, Quote, ShieldCheck, Trophy, Zap } from "lucide-react";
+import { Activity, BarChart3, CalendarDays, Flame, Gauge, Quote, Sparkles, Trophy, Zap } from "lucide-react";
 import { Chip, Empty, LevelBadge, Panel, SectionTitle, Skeleton, Stat, Tabs } from "../components/ui.jsx";
 import { HEAT, HabitLines, Heatmap, MomentumChart, ScoreBars, heatLevel } from "../components/Charts.jsx";
 import { MOMENT_META } from "../lib/moments.js";
@@ -73,7 +73,7 @@ export default function Stats({ state, d, today, mode, saveStatus }) {
         <Stat icon={Trophy} tone="gold" label="Cel mai bun nivel" value={s.bestLevel} sub={`${s.bestMomentum} puncte`} />
         <Stat icon={Flame} tone="ember" label="Serie" value={s.streak.current} sub={`record: ${s.streak.best} zile`} />
         <Stat icon={Activity} tone="mint" label="Bifări" value={s.checkins} sub="în total" />
-        <Stat icon={ShieldCheck} tone="violet" label="Dovezi verificate" value={s.evidence.verified} sub={`din ${s.evidence.proofs} trimise`} />
+        <Stat icon={Sparkles} tone="violet" label="Puncte de evoluție" value={s.evolution?.ep ?? s.evidence?.ep ?? 0} sub={`${d.companion.stage.name} · personajul tău`} />
         <Stat icon={Gauge} tone="sky" label="Scor mediu" value={s.avg} sub="ultimele 30 de zile" />
       </div>
 

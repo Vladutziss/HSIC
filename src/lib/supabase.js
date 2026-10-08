@@ -21,16 +21,3 @@ export function getClient() {
   return clientPromise || Promise.resolve(null);
 }
 
-const signed = new Map(); // storage path -> {url, until}
-
-/** A temporary URL for a private proof file (path as stored in proofs.asset_path). */
-export async function signedUrl(path) {
-  const hit = signed.get(path);
-  if (hit && hit.until > Date.now()) return hit.url;
-  const client = await getClient();
-  if (!client) return null;
-  const { data, error } = await client.storage.from("proofs").createSignedUrl(path, 3600);
-  if (error || !data) return null;
-  signed.set(path, { url: data.signedUrl, until: Date.now() + 50 * 60 * 1000 });
-  return data.signedUrl;
-}

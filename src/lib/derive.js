@@ -1,7 +1,6 @@
 // Everything the screens show, derived from the stored state for one day.
 
 import {
-  CODE,
   DIFF,
   RULES,
   companionInfo,
@@ -15,14 +14,6 @@ import {
   weekGain,
 } from "./engine.js";
 import { addDays } from "./dates.js";
-
-export const VERDICT_LABEL = {
-  verified: "verificată",
-  plausible: "plauzibilă",
-  self: "nevalidată",
-  rejected: "respinsă",
-};
-export const CODE_VERDICT = { [CODE.SELF]: "self", [CODE.PLAUSIBLE]: "plausible", [CODE.VERIFIED]: "verified", [CODE.REJECTED]: "rejected" };
 
 export function activeHabits(state, day) {
   return (state.habits || []).filter((h) => habitExists(h, day));
@@ -84,7 +75,7 @@ export function derive(state, today) {
 }
 
 /** Momentum a check-in adds right now, before the evening review. */
-export const checkInGain = (h, code, runMult) => Math.round(diffXp(h.diff) * (code >= 2 && code <= 4 ? [1, 1, 1.1, 1.25, 1.5][code] : 1) * runMult);
+export const checkInGain = (h, runMult) => Math.round(diffXp(h.diff) * runMult);
 
 export function reviewPayload(state, d, day) {
   const log = state.log?.[day] || {};
@@ -94,7 +85,6 @@ export function reviewPayload(state, d, day) {
     diffLabel: DIFF[h.diff]?.label || "Mediu",
     scheduled: isScheduled(h, day),
     done: !!log[h.id],
-    proof: log[h.id] > 1 ? CODE_VERDICT[log[h.id]] : null,
   }));
   const dayTodos = (state.todos || []).filter((t) => t.date === day || t.doneOn === day);
   const done = dayTodos.filter((t) => t.done && t.doneOn === day);

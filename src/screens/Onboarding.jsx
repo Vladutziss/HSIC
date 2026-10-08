@@ -79,7 +79,6 @@ function CustomHabitForm({ path, habits, onAdd, onCancel }) {
               days,
               time: null,
               target: target.trim() || "o dată pe zi",
-              proofHint: "",
               color: nextColor(habits),
             })
           }
@@ -163,8 +162,8 @@ export default function Onboarding({ onDone, store, today, legacy }) {
         <div className="space-y-4">
           <h1 className="font-pixel text-3xl leading-tight text-ink sm:text-4xl">Fiecare erou începe cu un ou.</h1>
           <p className="text-[15px] leading-relaxed text-body">
-            Bifezi obiceiuri, trimiți dovezi și îți crești <span className="font-extrabold text-gold-hi">momentum-ul</span>. Din ou iese un personaj care evoluează cu
-            fiecare dovadă, doarme când lipsești și se bucură când revii.
+            Bifezi obiceiuri și îți crești <span className="font-extrabold text-gold-hi">momentum-ul</span>. Din ou iese un personaj care evoluează cu
+            fiecare bifă, doarme când lipsești și se bucură când revii.
           </p>
           <Field label="Cum să-ți spunem?" htmlFor="ob-nick">
             <input id="ob-nick" className="field" value={nick} maxLength={24} placeholder="Numele sau porecla ta" onChange={(e) => setNick(e.target.value)} />
@@ -235,7 +234,7 @@ export default function Onboarding({ onDone, store, today, legacy }) {
     content = (
       <div className="space-y-4">
         <h1 className="font-pixel text-3xl text-ink">Care e obiectivul tău?</h1>
-        <p className="text-sm text-body">O propoziție. AI-ul o folosește în rapoartele de seară și în povestea personajului.</p>
+        <p className="text-sm text-body">O propoziție. AI-ul o folosește în rapoartele de seară.</p>
         <textarea id="ob-goal" className="field min-h-[110px] text-base" value={goal} maxLength={160} placeholder={GOAL_EXAMPLES[path]} onChange={(e) => setGoal(e.target.value)} />
         <button type="button" className="text-xs font-bold text-dim underline hover:text-ink" onClick={() => setGoal(GOAL_EXAMPLES[path])}>
           Folosește exemplul

@@ -22,7 +22,7 @@ function Hero({ state, d, today }) {
       ? "Azi nu ai misiuni programate. Poți face oricare obicei ca bonus."
       : left === 0
         ? "Toate misiunile de azi sunt gata. Cufărul zilei e deschis!"
-        : `Mai ai ${left} ${left === 1 ? "misiune" : "misiuni"} azi. ${d.companion.stage.id === "egg" ? "Prima dovadă îți încălzește oul." : "Fiecare dovadă îl ajută pe " + (d.companion.name || "personajul tău") + " să crească."}`;
+        : `Mai ai ${left} ${left === 1 ? "misiune" : "misiuni"} azi. ${d.companion.stage.id === "egg" ? "Prima bifă îți încălzește oul." : "Fiecare bifă îl ajută pe " + (d.companion.name || "personajul tău") + " să crească."}`;
   return (
     <Panel tone="gold" corners className="overflow-hidden p-5 sm:p-6">
       <div className="pointer-events-none absolute -right-16 -top-24 h-64 w-64 rounded-full bg-gold/10 blur-3xl" aria-hidden="true" />
@@ -107,7 +107,7 @@ function ResetWarning({ d }) {
   );
 }
 
-export default function Dashboard({ state, d, today, go, ai, months, recentStories, groups, review, onCheck, onProof, onRevive, todo, onAddHabit }) {
+export default function Dashboard({ state, d, today, go, ai, months, recentStories, groups, review, onCheck, onRevive, todo, onAddHabit }) {
   const chestOpen = d.scheduled.length > 0 && d.doneScheduled === d.scheduled.length;
   const lastStory = [...recentStories].reverse().find((s) => s.story);
   return (
@@ -137,7 +137,7 @@ export default function Dashboard({ state, d, today, go, ai, months, recentStori
           </SectionTitle>
           <div className="space-y-2.5">
             {d.scheduled.map(({ h, code, scheduled }) => (
-              <QuestCard key={h.id} h={h} code={code} scheduled={scheduled} runMult={d.runMult} onCheck={onCheck} onProof={onProof} onOpen={() => go("habits", h.id)} />
+              <QuestCard key={h.id} h={h} code={code} scheduled={scheduled} runMult={d.runMult} onCheck={onCheck} onOpen={() => go("habits", h.id)} />
             ))}
             {d.scheduled.length === 0 && <p className="inset p-4 text-center text-sm font-semibold text-dim">Nicio misiune programată azi. Zi de odihnă sau de bonusuri!</p>}
           </div>
@@ -150,7 +150,7 @@ export default function Dashboard({ state, d, today, go, ai, months, recentStori
               </summary>
               <div className="mt-2.5 space-y-2.5">
                 {d.optional.map(({ h, code, scheduled }) => (
-                  <QuestCard key={h.id} h={h} code={code} scheduled={scheduled} runMult={d.runMult} onCheck={onCheck} onProof={onProof} onOpen={() => go("habits", h.id)} />
+                  <QuestCard key={h.id} h={h} code={code} scheduled={scheduled} runMult={d.runMult} onCheck={onCheck} onOpen={() => go("habits", h.id)} />
                 ))}
               </div>
             </details>
@@ -167,7 +167,7 @@ export default function Dashboard({ state, d, today, go, ai, months, recentStori
       </div>
 
       <div className="min-w-0 space-y-5 lg:col-span-4">
-        <CompanionCard c={d.companion} path={state.profile.path} lastStory={lastStory} onOpen={() => go("companion")} onProof={() => onProof(null)} />
+        <CompanionCard c={d.companion} path={state.profile.path} lastStory={lastStory} onOpen={() => go("companion")} />
         <ReviewCard d={d} state={state} months={months} review={review} ai={ai} today={today} />
         <GroupMini groups={groups} go={go} />
       </div>

@@ -1,17 +1,16 @@
 // AI for Molted, through OpenRouter. Deployed as a Supabase Edge Function:
 //
-//   supabase secrets set OPENROUTER_API_KEY=... AI_MODEL=<a vision-capable model id from openrouter.ai/models>
+//   supabase secrets set OPENROUTER_API_KEY=... AI_MODEL=<a model id from openrouter.ai/models>
 //   supabase functions deploy ai
 //
-// Body: {kind: "verify"|"review"|"moment"|"chapter", params: {...}, image?: "data:image/jpeg;base64,..."}
+// Body: {kind: "review"|"moment"|"chapter", params: {...}}
 // Reply: {result: {...}} or {code: "..."} with a non-2xx status. Codes match aiErrorCopy() in src/lib/ai.js.
 
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { buildPrompt, KINDS, type Kind } from "../_shared/prompts.ts";
 
 const DAILY_MAX = Number(Deno.env.get("AI_DAILY_MAX") ?? 40); // calls per user per day
-const MAX_BODY = 3_000_000; // bytes; a 1600px JPEG is well below this
-const MAX_IMAGE = 2_500_000; // characters of the data URL
+const MAX_BODY = 100_000; // bytes; the prompts only carry short texts
 
 const cors = {
   "Access-Control-Allow-Origin": "*",
@@ -57,18 +56,11 @@ Deno.serve(async (req) => {
   const kind = body?.kind as Kind;
   if (!KINDS.includes(kind)) return fail(400, "bad_request");
 
-  let image: string | null = null;
-  if (body.image != null) {
-    image = String(body.image);
-    if (kind !== "verify" || !image.startsWith("data:image/jpeg;base64,") || image.length > MAX_IMAGE) return fail(400, "image_rejected");
-  }
-
   const { data: allowed, error: usageError } = await supabase.rpc("bump_ai_usage", { daily_max: DAILY_MAX });
   if (usageError) return fail(500, "upstream_error");
   if (!allowed) return fail(429, "rate_limited");
 
-  const prompt = buildPrompt(kind, body.params, !!image);
-  const content = image ? [{ type: "text", text: prompt }, { type: "image_url", image_url: { url: image } }] : prompt;
+  const content = buildPrompt(kind, body.params);
 
   // AI_MODEL may list several models, comma separated. The next one is tried when a model
   // is rate-limited, fails, or answers with something that is not JSON; the reasons go to the logs.
@@ -96,7 +88,7 @@ Deno.serve(async (req) => {
     }
     if (!res.ok) {
       console.error("openrouter", m, res.status, (await res.text()).slice(0, 300));
-      failure = res.status === 429 ? { status: 429, code: "rate_limited" } : { status: 502, code: image && res.status === 400 ? "image_rejected" : "upstream_error" };
+      failure = res.status === 429 ? { status: 429, code: "rate_limited" } : { status: 502, code: "upstream_error" };
       continue;
     }
     try {

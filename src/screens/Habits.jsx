@@ -1,18 +1,15 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { Archive, ArrowLeft, Camera, CalendarDays, Clock, Flame, Pencil, Plus, RotateCcw, ScrollText, Sparkles, Target, Trophy } from "lucide-react";
+import React, { useState } from "react";
+import { Archive, ArrowLeft, CalendarDays, Clock, Flame, Pencil, Plus, RotateCcw, ScrollText, Sparkles, Target, Trophy } from "lucide-react";
 import { Button, Chip, Empty, Gems, Panel, SectionTitle, Stat } from "../components/ui.jsx";
 import { HabitArea, Heatmap, Sparkline } from "../components/Charts.jsx";
-import { ProofBadge } from "../components/ProofModal.jsx";
 import { iconFor } from "../components/icons.js";
 import { scheduleLabel } from "../components/HabitEditor.jsx";
 import { MAX_HABITS, PATHS } from "../lib/catalog.js";
-import { CODE, DIFF, habitStats, isScheduled } from "../lib/engine.js";
-import { CODE_VERDICT } from "../lib/derive.js";
-import { addDays, fmtDay, monthKey, monthsBetween, relDay } from "../lib/dates.js";
-import { AssetAudio, AssetImage } from "../components/Asset.jsx";
+import { DIFF, habitStats, isScheduled } from "../lib/engine.js";
+import { fmtDay } from "../lib/dates.js";
 import { c } from "../lib/themes.js";
 
-function HabitCard({ h, stats, series, onOpen, onEdit, onProof, code, today }) {
+function HabitCard({ h, stats, series, onOpen, onEdit, code, today }) {
   const Icon = iconFor(h.icon);
   const spark = series.slice(-30).map((p) => p.m);
   return (
@@ -50,8 +47,8 @@ function HabitCard({ h, stats, series, onOpen, onEdit, onProof, code, today }) {
           <div className="text-[10px] font-extrabold uppercase tracking-wider text-dim">la rând</div>
         </div>
         <div className="inset px-2 py-1.5">
-          <div className="font-pixel text-lg text-ink">{stats.proofs}</div>
-          <div className="text-[10px] font-extrabold uppercase tracking-wider text-dim">dovezi</div>
+          <div className="font-pixel text-lg text-ink">{stats.total}</div>
+          <div className="text-[10px] font-extrabold uppercase tracking-wider text-dim">bifări</div>
         </div>
       </div>
       <div className="mt-auto flex flex-wrap gap-2">
@@ -61,41 +58,20 @@ function HabitCard({ h, stats, series, onOpen, onEdit, onProof, code, today }) {
         <Button size="sm" variant="ghost" icon={Pencil} onClick={onEdit}>
           Editează
         </Button>
-        {code <= CODE.DONE && (
-          <Button size="sm" variant="violet" icon={Camera} onClick={onProof}>
-            Dovadă
-          </Button>
-        )}
       </div>
     </Panel>
   );
 }
 
-function HabitDetail({ h, state, d, today, months, loadMonth, onBack, onEdit, onProof, onArchive }) {
+function HabitDetail({ h, state, d, today, onBack, onEdit, onArchive }) {
   const Icon = iconFor(h.icon);
   const stats = habitStats(h, state, d.timeline, today);
   const series = d.timeline.habitSeries[h.id] || [];
-  const code = state.log?.[today]?.[h.id] || 0;
-
-  useEffect(() => {
-    for (const ym of monthsBetween(addDays(today, -90), today)) loadMonth(ym);
-  }, [h.id, today, loadMonth]);
-
-  const proofs = useMemo(
-    () =>
-      Object.values(months)
-        .filter(Boolean)
-        .flatMap((m) => m.proofs || [])
-        .filter((p) => p.habitId === h.id)
-        .sort((a, b) => (a.at < b.at ? 1 : -1)),
-    [months, h.id]
-  );
 
   const cell = (day) => {
     const code = state.log?.[day]?.[h.id];
     const sched = isScheduled(h, day);
-    if (code === CODE.VERIFIED) return { color: c("mint"), title: `${fmtDay(day)}: bifat, dovadă verificată` };
-    if (code) return { color: c("gold"), title: `${fmtDay(day)}: bifat${code > 1 ? ", cu dovadă" : ""}` };
+    if (code) return { color: c("gold"), title: `${fmtDay(day)}: bifat` };
     if (sched && day < today) return { color: c("panel-lo"), ring: c("mark"), title: `${fmtDay(day)}: ratat` };
     return { color: c("well"), title: `${fmtDay(day)}: ${sched ? "programat" : "liber"}` };
   };
@@ -127,15 +103,9 @@ function HabitDetail({ h, state, d, today, months, loadMonth, onBack, onEdit, on
             </div>
             <p className="mt-1 text-sm text-body">
               Țintă: {h.target}
-              {h.proofHint ? ` · Dovadă: ${h.proofHint}` : ""}
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
-            {code <= CODE.DONE && !h.archivedAt && (
-              <Button variant="violet" size="sm" icon={Camera} onClick={onProof}>
-                Trimite dovadă
-              </Button>
-            )}
             <Button variant="ghost" size="sm" icon={Pencil} onClick={onEdit}>
               Editează
             </Button>
@@ -152,7 +122,7 @@ function HabitDetail({ h, state, d, today, months, loadMonth, onBack, onEdit, on
         <Stat icon={Flame} tone="ember" label="Momentum" value={stats.momentum} sub="al acestui obicei" />
         <Stat icon={Target} tone="mint" label="Ultimele 30 de zile" value={stats.rate === null ? "–" : `${Math.round(stats.rate * 100)}%`} sub={`${stats.done} din ${stats.sched} programate`} />
         <Stat icon={Trophy} tone="gold" label="La rând" value={stats.run} sub={`record: ${stats.bestRun}`} />
-        <Stat icon={Sparkles} tone="violet" label="Dovezi" value={stats.proofs} sub={`din ${stats.total} bifări`} />
+        <Stat icon={Sparkles} tone="violet" label="Bifări" value={stats.total} sub="în total" />
       </div>
 
       <div className="grid gap-5 lg:grid-cols-5">
@@ -175,9 +145,6 @@ function HabitDetail({ h, state, d, today, months, loadMonth, onBack, onEdit, on
           />
           <div className="mt-3 flex flex-wrap gap-3 text-[11px] font-bold text-dim">
             <span className="inline-flex items-center gap-1.5">
-              <span className="h-3 w-3 rounded-[3px] bg-mint" /> cu dovadă verificată
-            </span>
-            <span className="inline-flex items-center gap-1.5">
               <span className="h-3 w-3 rounded-[3px] bg-gold" /> bifat
             </span>
             <span className="inline-flex items-center gap-1.5">
@@ -186,44 +153,11 @@ function HabitDetail({ h, state, d, today, months, loadMonth, onBack, onEdit, on
           </div>
         </Panel>
       </div>
-
-      <Panel className="p-4 sm:p-5">
-        <SectionTitle icon={Camera} tone="violet" sub="Ultimele 90 de zile">
-          Dovezi
-        </SectionTitle>
-        {proofs.length === 0 ? (
-          <Empty icon={Camera} title="Nicio dovadă încă">
-            O poză, o notă vocală sau câteva rânduri. AI-ul le verifică și scrie povestea personajului tău.
-          </Empty>
-        ) : (
-          <ul className="grid gap-3 sm:grid-cols-2">
-            {proofs.map((p) => (
-              <li key={p.id} className="inset flex gap-3 p-3">
-                {p.assetId || p.thumb ? (
-                  <AssetImage id={p.assetId} thumb={p.thumb} alt={`Dovadă din ${fmtDay(p.day)}`} className="h-20 w-20 shrink-0 rounded-lg object-cover ring-1 ring-edge" loading="lazy" />
-                ) : (
-                  <span className="grid h-20 w-20 shrink-0 place-items-center rounded-lg bg-panel text-faint ring-1 ring-edge">
-                    <ScrollText size={22} aria-hidden="true" />
-                  </span>
-                )}
-                <div className="min-w-0 space-y-1">
-                  <div className="flex flex-wrap items-center gap-2 text-xs font-bold text-dim">
-                    {relDay(p.day, today)} <ProofBadge verdict={p.verdict} />
-                  </div>
-                  {p.note && <p className="line-clamp-2 text-sm text-body">„{p.note}”</p>}
-                  {p.type === "voice" && p.assetId && <AssetAudio id={p.assetId} className="h-8 w-full" />}
-                  <p className="line-clamp-2 text-xs italic text-dim">{p.story}</p>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </Panel>
     </div>
   );
 }
 
-export default function Habits({ state, d, today, months, focus, setFocus, onCheck, onProof, onAdd, onEdit, onArchive, loadMonth }) {
+export default function Habits({ state, d, today, focus, setFocus, onAdd, onEdit, onArchive }) {
   const [showArchived, setShowArchived] = useState(false);
   const habits = state.habits || [];
   const active = habits.filter((h) => !h.archivedAt);
@@ -237,11 +171,8 @@ export default function Habits({ state, d, today, months, focus, setFocus, onChe
         state={state}
         d={d}
         today={today}
-        months={months}
-        loadMonth={loadMonth}
         onBack={() => setFocus(null)}
         onEdit={() => onEdit(selected)}
-        onProof={() => onProof(selected.id)}
         onArchive={onArchive}
       />
     );
@@ -278,7 +209,6 @@ export default function Habits({ state, d, today, months, focus, setFocus, onChe
               series={d.timeline.habitSeries[h.id] || []}
               onOpen={() => setFocus(h.id)}
               onEdit={() => onEdit(h)}
-              onProof={() => onProof(h.id)}
             />
           ))}
         </div>
