@@ -248,8 +248,9 @@ export function ReviewCard({ d, state, months, review, ai, today }) {
 // ------------------------------------------------------------ group
 
 export function GroupMini({ groups, go }) {
-  const g = groups.groups.real[0] || groups.groups.demo;
-  const ranked = [...g.members].sort((a, b) => (b.weekGain || 0) - (a.weekGain || 0));
+  const g = groups.groups[0];
+  const loading = groups.status === "loading";
+  const ranked = g ? [...g.members].sort((a, b) => (b.weekGain || 0) - (a.weekGain || 0)) : [];
   const myRank = ranked.findIndex((m) => m.isMe);
   const top = ranked.slice(0, 3);
   if (myRank >= 3) top.push(ranked[myRank]);
@@ -258,34 +259,45 @@ export function GroupMini({ groups, go }) {
       <SectionTitle
         icon={Users}
         tone="sky"
-        sub={g.demo ? "Grup demonstrativ" : g.info?.kind === "partner" ? "Partener de progres" : g.info?.name}
+        sub={g ? (g.info?.kind === "partner" ? "Partener de progres" : g.info?.name) : undefined}
         action={
           <Button variant="ghost" size="sm" icon={MessageCircle} onClick={() => go("group")}>
-            Reminder
+            {g ? "Reminder" : "Grup"}
           </Button>
         }
       >
         Clasament
       </SectionTitle>
-      <ol className="space-y-1.5">
-        {top.map((m) => {
-          const rank = ranked.indexOf(m) + 1;
-          return (
-            <li key={m.id} className={`flex items-center gap-3 rounded-xl px-2.5 py-2 ${m.isMe ? "bg-gold/10 ring-1 ring-gold/30" : "bg-[#120f29]"}`}>
-              <span className={`w-5 text-center font-pixel text-base ${rank === 1 ? "text-gold" : rank === 2 ? "text-body" : rank === 3 ? "text-ember" : "text-dim"}`}>
-                {rank === 1 ? <Crown size={16} className="mx-auto text-gold" aria-label="Locul 1" /> : rank}
-              </span>
-              <Sprite path={m.path || "sport"} stage={m.stage || "egg"} mood={m.mood || "idle"} size={32} still />
-              <span className="min-w-0 flex-1 truncate text-sm font-extrabold text-ink">
-                {m.name}
-                {m.isMe && <span className="ml-1 text-xs text-gold-hi">(tu)</span>}
-              </span>
-              <span className="font-pixel tabular text-sm text-gold-hi">{m.weekGain || 0}</span>
-            </li>
-          );
-        })}
-      </ol>
-      <p className="mt-2 text-[11px] font-semibold text-faint">Momentum câștigat de luni încoace.</p>
+      {loading ? (
+        <div className="space-y-1.5" aria-busy="true" aria-label="Se încarcă…">
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full" />
+        </div>
+      ) : !g ? (
+        <p className="py-3 text-sm font-semibold text-dim">{groups.cloud ? "Nu ești într-un grup. Creează unul sau intră cu un cod." : "Intră în cont ca să vezi clasamentul."}</p>
+      ) : (
+        <>
+          <ol className="space-y-1.5">
+            {top.map((m) => {
+              const rank = ranked.indexOf(m) + 1;
+              return (
+                <li key={m.id} className={`flex items-center gap-3 rounded-xl px-2.5 py-2 ${m.isMe ? "bg-gold/10 ring-1 ring-gold/30" : "bg-[#120f29]"}`}>
+                  <span className={`w-5 text-center font-pixel text-base ${rank === 1 ? "text-gold" : rank === 2 ? "text-body" : rank === 3 ? "text-ember" : "text-dim"}`}>
+                    {rank === 1 ? <Crown size={16} className="mx-auto text-gold" aria-label="Locul 1" /> : rank}
+                  </span>
+                  <Sprite path={m.path || "sport"} stage={m.stage || "egg"} mood={m.mood || "idle"} size={32} still />
+                  <span className="min-w-0 flex-1 truncate text-sm font-extrabold text-ink">
+                    {m.name}
+                    {m.isMe && <span className="ml-1 text-xs text-gold-hi">(tu)</span>}
+                  </span>
+                  <span className="font-pixel tabular text-sm text-gold-hi">{m.weekGain || 0}</span>
+                </li>
+              );
+            })}
+          </ol>
+          <p className="mt-2 text-[11px] font-semibold text-faint">Momentum câștigat de luni încoace.</p>
+        </>
+      )}
     </Panel>
   );
 }

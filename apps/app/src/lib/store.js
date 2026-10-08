@@ -346,17 +346,6 @@ export function useAppStore() {
     [loadMonth]
   );
 
-  /** Seeds several month documents at once (demo data). */
-  const putMonths = useCallback((docs) => {
-    const e = env.current;
-    if (!e) return;
-    for (const [ym, doc] of Object.entries(docs)) {
-      e.monthCache[ym] = doc;
-      monthWriter(e, ym).schedule(doc, 50);
-    }
-    setMonths((m) => ({ ...m, ...docs }));
-  }, []);
-
   const wipe = useCallback(async (monthKeys = []) => {
     const e = env.current;
     if (!e) return;
