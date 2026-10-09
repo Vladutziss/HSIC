@@ -176,6 +176,251 @@
   --glow: 1;
   color-scheme: dark;
 }
+[data-theme="grafit"] {
+  --c-night: 24 24 27; /* #18181B */
+  --c-deep: 20 20 22;
+  --c-panel: 36 36 40;
+  --c-panel-hi: 46 46 51;
+  --c-panel-lo: 30 30 34;
+  --c-edge: 58 58 64;
+  --c-edge-hi: 82 82 90;
+  --c-well: 27 27 30;
+  --c-mark: 113 113 122;
+  --c-key: 12 12 14;
+  --c-scrim: 6 6 8;
+  --c-ink: 244 244 245;
+  --c-body: 212 212 216;
+  --c-dim: 161 161 170;
+  --c-faint: 128 128 138;
+  --c-gold: 228 228 231; /* accent alb-gri */
+  --c-gold-hi: 250 250 250;
+  --c-gold-deep: 113 113 122;
+  --c-gold-ink: 228 228 231;
+  --c-gold-text: 244 244 245;
+  --c-violet: 96 165 250;
+  --c-violet-hi: 147 197 253;
+  --c-violet-deep: 37 99 235;
+  --c-violet-key: 29 78 216;
+  --c-violet-ink: 147 197 253;
+  --c-mint: 74 222 128;
+  --c-mint-deep: 22 163 74;
+  --c-mint-key: 21 128 61;
+  --c-mint-ink: 74 222 128;
+  --c-ember: 251 146 60;
+  --c-ember-ink: 251 146 60;
+  --c-sky: 56 189 248;
+  --c-sky-ink: 56 189 248;
+  --c-rose: 248 113 113;
+  --c-rose-key: 153 27 27;
+  --c-rose-ink: 248 113 113;
+  --c-on-gold: 24 24 27;
+  --c-on-violet: 10 20 40;
+  --c-on-mint: 5 30 15;
+  --c-on-rose: 40 6 6;
+  --c-shadow: 0 0 0;
+  --c-star: 255 255 255;
+  --shadow-a: 0.6;
+  --gloss-a: 0.03;
+  --star-a: 0;
+  --glow: 0.3;
+  color-scheme: dark;
+}
+[data-theme="ceata"] {
+  --c-night: 241 242 244; /* #F1F2F4 */
+  --c-deep: 232 234 237;
+  --c-panel: 255 255 255;
+  --c-panel-hi: 255 255 255;
+  --c-panel-lo: 246 247 249;
+  --c-edge: 218 221 226;
+  --c-edge-hi: 190 195 203;
+  --c-well: 236 238 241;
+  --c-mark: 156 163 175;
+  --c-key: 200 204 211;
+  --c-scrim: 30 32 36;
+  --c-ink: 31 33 37;
+  --c-body: 55 60 68;
+  --c-dim: 90 97 108;
+  --c-faint: 120 127 138;
+  --c-gold: 75 85 99; /* accent gri-închis */
+  --c-gold-hi: 107 114 128;
+  --c-gold-deep: 31 41 55;
+  --c-gold-ink: 55 65 81;
+  --c-gold-text: 31 41 55;
+  --c-violet: 99 132 199;
+  --c-violet-hi: 147 172 222;
+  --c-violet-deep: 59 89 152;
+  --c-violet-key: 45 70 125;
+  --c-violet-ink: 45 75 140;
+  --c-mint: 72 160 110;
+  --c-mint-deep: 40 120 76;
+  --c-mint-key: 30 96 60;
+  --c-mint-ink: 26 100 58;
+  --c-ember: 220 120 50;
+  --c-ember-ink: 160 70 10;
+  --c-sky: 70 150 200;
+  --c-sky-ink: 20 95 145;
+  --c-rose: 205 70 75;
+  --c-rose-key: 140 40 45;
+  --c-rose-ink: 170 40 48;
+  --c-on-gold: 255 255 255;
+  --c-on-violet: 255 255 255;
+  --c-on-mint: 255 255 255;
+  --c-on-rose: 255 255 255;
+  --c-shadow: 60 66 76;
+  --c-star: 120 126 136;
+  --shadow-a: 0.18;
+  --gloss-a: 0.5;
+  --star-a: 0;
+  --glow: 0.2;
+  color-scheme: light;
+}
+[data-theme="cod"] {
+  --c-night: 30 30 30; /* #1E1E1E, VS Code Dark+ */
+  --c-deep: 24 24 24;
+  --c-panel: 37 37 38; /* #252526 */
+  --c-panel-hi: 45 45 48; /* #2D2D30 */
+  --c-panel-lo: 33 33 33;
+  --c-edge: 62 62 66; /* #3E3E42 */
+  --c-edge-hi: 0 122 204;
+  --c-well: 28 28 28;
+  --c-mark: 106 153 85; /* #6A9955 */
+  --c-key: 14 14 14;
+  --c-scrim: 8 8 8;
+  --c-ink: 230 230 230;
+  --c-body: 212 212 212; /* #D4D4D4 */
+  --c-dim: 156 156 156;
+  --c-faint: 128 128 128;
+  --c-gold: 220 220 170; /* #DCDCAA */
+  --c-gold-hi: 236 236 196;
+  --c-gold-deep: 150 150 100;
+  --c-gold-ink: 220 220 170;
+  --c-gold-text: 220 220 170;
+  --c-violet: 0 122 204; /* #007ACC */
+  --c-violet-hi: 86 156 214; /* #569CD6 */
+  --c-violet-deep: 0 94 160;
+  --c-violet-key: 0 70 122;
+  --c-violet-ink: 86 156 214;
+  --c-mint: 78 201 176; /* #4EC9B0 */
+  --c-mint-deep: 40 150 128;
+  --c-mint-key: 28 112 95;
+  --c-mint-ink: 78 201 176;
+  --c-ember: 206 145 120; /* #CE9178 */
+  --c-ember-ink: 206 145 120;
+  --c-sky: 156 220 254; /* #9CDCFE */
+  --c-sky-ink: 156 220 254;
+  --c-rose: 244 135 113; /* #F48771 */
+  --c-rose-key: 150 45 35;
+  --c-rose-ink: 244 135 113;
+  --c-on-gold: 30 30 30;
+  --c-on-violet: 255 255 255;
+  --c-on-mint: 10 35 30;
+  --c-on-rose: 40 8 4;
+  --c-shadow: 0 0 0;
+  --c-star: 255 255 255;
+  --shadow-a: 0.6;
+  --gloss-a: 0.03;
+  --star-a: 0;
+  --glow: 0.35;
+  color-scheme: dark;
+}
+[data-theme="nord"] {
+  --c-night: 46 52 64; /* #2E3440 */
+  --c-deep: 40 45 56;
+  --c-panel: 59 66 82; /* #3B4252 */
+  --c-panel-hi: 67 76 94; /* #434C5E */
+  --c-panel-lo: 52 59 73;
+  --c-edge: 76 86 106; /* #4C566A */
+  --c-edge-hi: 100 112 136;
+  --c-well: 42 48 60;
+  --c-mark: 129 161 193;
+  --c-key: 30 34 42;
+  --c-scrim: 20 23 30;
+  --c-ink: 236 239 244; /* #ECEFF4 */
+  --c-body: 216 222 233; /* #D8DEE9 */
+  --c-dim: 170 180 198;
+  --c-faint: 140 152 172;
+  --c-gold: 235 203 139; /* #EBCB8B */
+  --c-gold-hi: 245 222 176;
+  --c-gold-deep: 170 140 80;
+  --c-gold-ink: 235 203 139;
+  --c-gold-text: 235 203 139;
+  --c-violet: 136 192 208; /* #88C0D0 */
+  --c-violet-hi: 143 188 187;
+  --c-violet-deep: 94 129 172; /* #5E81AC */
+  --c-violet-key: 70 100 140;
+  --c-violet-ink: 136 192 208;
+  --c-mint: 163 190 140; /* #A3BE8C */
+  --c-mint-deep: 110 140 90;
+  --c-mint-key: 85 110 68;
+  --c-mint-ink: 163 190 140;
+  --c-ember: 208 135 112; /* #D08770 */
+  --c-ember-ink: 208 135 112;
+  --c-sky: 129 161 193; /* #81A1C1 */
+  --c-sky-ink: 129 161 193;
+  --c-rose: 191 97 106; /* #BF616A */
+  --c-rose-key: 130 55 62;
+  --c-rose-ink: 220 130 138;
+  --c-on-gold: 46 52 64;
+  --c-on-violet: 46 52 64;
+  --c-on-mint: 46 52 64;
+  --c-on-rose: 255 255 255;
+  --c-shadow: 15 18 24;
+  --c-star: 236 239 244;
+  --shadow-a: 0.5;
+  --gloss-a: 0.04;
+  --star-a: 0.15;
+  --glow: 0.5;
+  color-scheme: dark;
+}
+[data-theme="lavanda"] {
+  --c-night: 245 239 255; /* #F5EFFF, colorhunt pastel */
+  --c-deep: 236 228 252;
+  --c-panel: 255 252 255;
+  --c-panel-hi: 255 255 255;
+  --c-panel-lo: 243 236 255;
+  --c-edge: 229 217 242; /* #E5D9F2 */
+  --c-edge-hi: 205 193 255; /* #CDC1FF */
+  --c-well: 238 230 252;
+  --c-mark: 160 140 210;
+  --c-key: 200 185 235;
+  --c-scrim: 40 30 70;
+  --c-ink: 45 35 75;
+  --c-body: 65 55 98;
+  --c-dim: 95 84 130;
+  --c-faint: 125 114 160;
+  --c-gold: 167 148 255; /* #A594F9 */
+  --c-gold-hi: 205 193 255;
+  --c-gold-deep: 110 90 210;
+  --c-gold-ink: 92 70 190;
+  --c-gold-text: 92 70 190;
+  --c-violet: 120 160 230;
+  --c-violet-hi: 170 200 245;
+  --c-violet-deep: 70 110 190;
+  --c-violet-key: 55 90 160;
+  --c-violet-ink: 50 85 160;
+  --c-mint: 100 180 150;
+  --c-mint-deep: 60 140 110;
+  --c-mint-key: 45 112 88;
+  --c-mint-ink: 35 110 82;
+  --c-ember: 235 140 100;
+  --c-ember-ink: 170 75 35;
+  --c-sky: 100 170 220;
+  --c-sky-ink: 35 105 160;
+  --c-rose: 225 95 130;
+  --c-rose-key: 150 50 80;
+  --c-rose-ink: 175 45 85;
+  --c-on-gold: 255 255 255;
+  --c-on-violet: 255 255 255;
+  --c-on-mint: 255 255 255;
+  --c-on-rose: 255 255 255;
+  --c-shadow: 90 70 150;
+  --c-star: 150 130 210;
+  --shadow-a: 0.2;
+  --gloss-a: 0.5;
+  --star-a: 0.12;
+  --glow: 0.35;
+  color-scheme: light;
+}
 
 /* On light themes text-<accent> has to be the dark variant to stay readable. */
 [data-mode="light"] .text-gold,
