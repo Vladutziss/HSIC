@@ -4,24 +4,18 @@
 
 import { addDays, diffDays, mondayOf, weekday } from "./dates.js";
 
+// xp: momentum for a check-in; ep: evolution points the companion earns from it
 export const DIFF = {
-  1: { xp: 10, label: "Ușor" },
-  2: { xp: 20, label: "Mediu" },
-  3: { xp: 30, label: "Greu" },
+  1: { xp: 10, ep: 1, label: "Ușor" },
+  2: { xp: 20, ep: 2, label: "Mediu" },
+  3: { xp: 30, ep: 3, label: "Greu" },
 };
+export const diffEp = (d) => (DIFF[d] || DIFF[2]).ep;
 export const diffXp = (d) => (DIFF[d] || DIFF[2]).xp;
 
-// What the log stores for a habit on a day.
-export const CODE = { DONE: 1, SELF: 2, PLAUSIBLE: 3, VERIFIED: 4, REJECTED: 5 };
-export const PROOF = {
-  1: { mult: 1, ep: 0, key: "none" },
-  2: { mult: 1.1, ep: 1, key: "self" },
-  3: { mult: 1.25, ep: 2, key: "plausible" },
-  4: { mult: 1.5, ep: 3, key: "verified" },
-  5: { mult: 1, ep: 0, key: "rejected" },
-};
-export const VERDICT_CODE = { self: 2, plausible: 3, verified: 4, rejected: 5 };
-export const hasProof = (code) => code >= 2;
+// What the log stores for a habit on a day. Any truthy value counts as done: older data
+// also holds 2-5 from the time check-ins could carry a proof, and they are read as 1.
+export const CODE = { DONE: 1 };
 
 export const RULES = {
   todoXp: 5,
@@ -87,7 +81,11 @@ export function computeTimeline(state, today) {
   const resetAfter = state.settings?.resetAfter || RULES.resetAfter;
 
   const todosByDay = {};
-  for (const t of state.todos || []) if (t.done && t.doneOn) todosByDay[t.doneOn] = (todosByDay[t.doneOn] || 0) + 1;
+  const tick = (day) => (todosByDay[day] = (todosByDay[day] || 0) + 1);
+  for (const t of state.todos || []) {
+    if (t.repeat) for (const day of t.doneDays || []) tick(day); // a series counts once per ticked day
+    else if (t.done && t.doneOn) tick(t.doneOn);
+  }
 
   const days = [];
   const byDay = {};
@@ -116,7 +114,6 @@ export function computeTimeline(state, today) {
     let doneSched = 0;
     let doneCount = 0;
     let habitXp = 0;
-    let proofs = 0;
     for (const h of habits) {
       if (!habitExists(h, d)) continue;
       const base = diffXp(h.diff);
@@ -132,8 +129,7 @@ export function computeTimeline(state, today) {
           doneSchedBase += base;
           doneSched++;
         }
-        habitXp += base * (PROOF[code]?.mult || 1);
-        if (code >= 2 && code <= 4) proofs++;
+        habitXp += base;
       }
     }
     const todos = todosByDay[d] || 0;
@@ -141,7 +137,7 @@ export function computeTimeline(state, today) {
     const completion = schedBase ? doneSchedBase / schedBase : active ? 1 : null;
     const computed = Math.min(
       100,
-      Math.round((schedBase ? (100 * doneSchedBase) / schedBase : active ? 70 : 0) + 3 * proofs + 2 * Math.min(todos, 5))
+      Math.round((schedBase ? (100 * doneSchedBase) / schedBase : active ? 70 : 0) + 2 * Math.min(todos, 5))
     );
     const ai = review && typeof review.ai === "number" ? review.ai : null;
     const score = ai === null ? computed : Math.round((1 - RULES.reviewWeight) * computed + RULES.reviewWeight * ai);
@@ -182,7 +178,7 @@ export function computeTimeline(state, today) {
       const sched = isScheduled(h, d);
       if (code) {
         if (sched) hrun[h.id]++;
-        hm[h.id] += diffXp(h.diff) * (PROOF[code]?.mult || 1) * (1 + RULES.habitRunBonus * Math.min(Math.max(hrun[h.id] - 1, 0), RULES.runCap));
+        hm[h.id] += diffXp(h.diff) * (1 + RULES.habitRunBonus * Math.min(Math.max(hrun[h.id] - 1, 0), RULES.runCap));
       } else if (sched && closed) {
         hm[h.id] *= RULES.habitMissKeep;
         hrun[h.id] = 0;
@@ -200,7 +196,6 @@ export function computeTimeline(state, today) {
       schedCount,
       doneSched,
       doneCount,
-      proofs,
       todos,
       habitXp: Math.round(habitXp),
       todoXp,
@@ -313,18 +308,19 @@ export const STAGES = [
   { id: "legend", name: "Legendă", min: 210 },
 ];
 
+/** The companion grows from check-ins: each one earns the habit's difficulty in points (1, 2 or 3). */
 export function evolutionPoints(state) {
+  const diff = Object.fromEntries((state.habits || []).map((h) => [h.id, h.diff]));
   let ep = 0;
-  let proofs = 0;
-  let verified = 0;
+  let checkins = 0;
   for (const entries of Object.values(state.log || {})) {
-    for (const code of Object.values(entries)) {
-      ep += PROOF[code]?.ep || 0;
-      if (hasProof(code)) proofs++;
-      if (code === CODE.VERIFIED) verified++;
+    for (const [habitId, code] of Object.entries(entries)) {
+      if (!code) continue;
+      ep += diffEp(diff[habitId]);
+      checkins++;
     }
   }
-  return { ep, proofs, verified };
+  return { ep, checkins };
 }
 
 export function stageFor(ep) {
@@ -337,7 +333,7 @@ export function stageFor(ep) {
 
 /** Moods: "sleep" while the player is away, "joy" on the day they come back. */
 export function companionInfo(state, timeline, today) {
-  const { ep, proofs, verified } = evolutionPoints(state);
+  const { ep, checkins } = evolutionPoints(state);
   const { stage, index, next, progress } = stageFor(ep);
   const todayEntry = timeline.byDay[today];
   const yesterday = timeline.byDay[addDays(today, -1)];
@@ -356,8 +352,7 @@ export function companionInfo(state, timeline, today) {
   else if (todayEntry && todayEntry.schedCount > 0 && todayEntry.doneSched === todayEntry.schedCount) mood = "happy";
   return {
     ep,
-    proofs,
-    verified,
+    checkins,
     stage,
     stageIndex: index,
     next,
@@ -376,7 +371,6 @@ export function habitStats(h, state, timeline, today, window = 30) {
   const log = state.log || {};
   let sched = 0;
   let done = 0;
-  let proofs = 0;
   let total = 0;
   for (let i = 0; i < window; i++) {
     const d = addDays(today, -i);
@@ -392,10 +386,7 @@ export function habitStats(h, state, timeline, today, window = 30) {
   const days = Object.keys(log).sort();
   for (const d of days) {
     const code = log[d][h.id];
-    if (code) {
-      total++;
-      if (hasProof(code)) proofs++;
-    }
+    if (code) total++;
   }
   for (let d = h.createdAt || today; d <= today; d = addDays(d, 1)) {
     if (!isScheduled(h, d)) continue;
@@ -407,5 +398,5 @@ export function habitStats(h, state, timeline, today, window = 30) {
   run = cur;
   const series = timeline.habitSeries[h.id] || [];
   const last = series.length ? series[series.length - 1].m || 0 : 0;
-  return { rate: sched ? done / sched : null, sched, done, run, bestRun, proofs, total, momentum: last };
+  return { rate: sched ? done / sched : null, sched, done, run, bestRun, total, momentum: last };
 }

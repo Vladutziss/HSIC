@@ -1,19 +1,19 @@
 import React, { useEffect, useState } from "react";
-import { BookOpenText, Camera, Clock, Crown, ListTodo, MessageCircle, Moon, Plus, ScrollText, Sparkles, Users } from "lucide-react";
+import { BookOpenText, Clock, Crown, ListTodo, MessageCircle, Moon, Plus, ScrollText, Sparkles, Users } from "lucide-react";
 import { Bar, Button, Chip, CheckButton, Gems, Panel, Ring, SectionTitle, Skeleton } from "./ui.jsx";
 import { Sprite, eggCrack } from "./Sprite.jsx";
-import { ProofBadge } from "./ProofModal.jsx";
 import { iconFor } from "./icons.js";
 import { PATHS } from "../lib/catalog.js";
-import { CODE_VERDICT, checkInGain } from "../lib/derive.js";
-import { fmtDay, monthKey } from "../lib/dates.js";
+import { checkInGain } from "../lib/derive.js";
+import { fmt12, fmtDay, monthKey } from "../lib/dates.js";
+import { isDoneOn, repeatLabel, todosForToday } from "../lib/todos.js";
+import { c as tc } from "../lib/themes.js";
 
 // ------------------------------------------------------------ quests
 
-export function QuestCard({ h, code, scheduled, runMult, onCheck, onProof, onOpen }) {
+export function QuestCard({ h, code, scheduled, runMult, onCheck, onOpen }) {
   const Icon = iconFor(h.icon);
   const done = code > 0;
-  const verdict = CODE_VERDICT[code];
   const [burst, setBurst] = useState(0);
   useEffect(() => {
     if (!burst) return undefined;
@@ -21,7 +21,7 @@ export function QuestCard({ h, code, scheduled, runMult, onCheck, onProof, onOpe
     return () => clearTimeout(t);
   }, [burst]);
   const click = () => {
-    if (!done) setBurst(checkInGain(h, 1, runMult));
+    if (!done) setBurst(checkInGain(h, runMult));
     onCheck(h.id);
   };
   return (
@@ -50,28 +50,12 @@ export function QuestCard({ h, code, scheduled, runMult, onCheck, onProof, onOpe
           {h.time && (
             <span className="inline-flex items-center gap-1">
               <Clock size={12} aria-hidden="true" />
-              {h.time}
+              {fmt12(h.time)}
             </span>
           )}
-          {done ? (
-            verdict ? (
-              <ProofBadge verdict={verdict} />
-            ) : (
-              <span className="font-extrabold text-mint">Bifat · adaugă o dovadă pentru bonus</span>
-            )
-          ) : (
-            <span className="font-extrabold text-gold-hi">
-              +{checkInGain(h, 1, runMult)}
-              <span className="hidden sm:inline"> · până la +{checkInGain(h, 4, runMult)} cu dovadă</span>
-            </span>
-          )}
+          {done ? <span className="font-extrabold text-mint">Bifat</span> : <span className="font-extrabold text-gold-hi">+{checkInGain(h, runMult)}</span>}
         </div>
       </div>
-      {!verdict && (
-        <Button variant={done ? "violet" : "ghost"} size="sm" icon={Camera} onClick={() => onProof(h.id)} aria-label={`Trimite o dovadă pentru ${h.name}`}>
-          <span className="hidden sm:inline">Dovadă</span>
-        </Button>
-      )}
       <CheckButton checked={done} onClick={click} label={done ? `Anulează bifa pentru ${h.name}` : `Bifează ${h.name}`} />
       {burst > 0 && <span className="anim-rise font-pixel pointer-events-none absolute right-6 top-0 text-lg font-bold text-gold">+{burst}</span>}
     </div>
@@ -83,16 +67,16 @@ export function QuestCard({ h, code, scheduled, runMult, onCheck, onProof, onOpe
 export function moodLine(c, name) {
   const n = name || "Molt-ul tău";
   if (c.stage.id === "egg") {
-    if (c.mood === "sleep") return "Oul e rece și liniștit. Se încălzește din nou cu prima ta dovadă.";
-    return c.ep > 0 ? "Oul a început să crape! Încă o dovadă și se deschide." : "Oul se încălzește cu fiecare dovadă pe care o trimiți.";
+    if (c.mood === "sleep") return "Oul e rece și liniștit. Se încălzește din nou cu prima ta bifă.";
+    return c.ep > 0 ? "Oul a început să crape! Încă o bifă și se deschide." : "Oul se încălzește cu fiecare obicei pe care îl bifezi.";
   }
   if (c.mood === "sleep") return `${n} doarme. Se trezește când revii.`;
   if (c.mood === "joy") return `${n} sare de bucurie că ai revenit!`;
   if (c.mood === "happy") return `${n} e mândru de tine: toate misiunile de azi sunt gata.`;
-  return `${n} te așteaptă la următoarea dovadă.`;
+  return `${n} te așteaptă la următoarea bifă.`;
 }
 
-export function CompanionCard({ c, path, lastStory, onOpen, onProof }) {
+export function CompanionCard({ c, path, lastStory, onOpen }) {
   const cls = PATHS[path]?.cls;
   return (
     <Panel tone="violet" corners className="overflow-hidden">
@@ -112,8 +96,8 @@ export function CompanionCard({ c, path, lastStory, onOpen, onProof }) {
             {c.ep} PE
           </Chip>
         </div>
-        <div className="relative rounded-xl bg-[#120f29] p-3 text-sm font-semibold text-body ring-1 ring-edge">
-          <span className="absolute -top-1.5 left-8 h-3 w-3 rotate-45 bg-[#120f29] ring-1 ring-edge [clip-path:polygon(0_0,100%_0,0_100%)]" aria-hidden="true" />
+        <div className="relative rounded-xl bg-well p-3 text-sm font-semibold text-body ring-1 ring-edge">
+          <span className="absolute -top-1.5 left-8 h-3 w-3 rotate-45 bg-well ring-1 ring-edge [clip-path:polygon(0_0,100%_0,0_100%)]" aria-hidden="true" />
           {moodLine(c, c.name)}
         </div>
         {c.next && (
@@ -136,10 +120,7 @@ export function CompanionCard({ c, path, lastStory, onOpen, onProof }) {
           </figure>
         )}
         <div className="flex flex-wrap gap-2">
-          <Button variant="violet" size="sm" icon={Camera} onClick={onProof}>
-            Trimite o dovadă
-          </Button>
-          <Button variant="ghost" size="sm" icon={BookOpenText} onClick={onOpen}>
+          <Button variant="violet" size="sm" icon={BookOpenText} onClick={onOpen}>
             Povestea
           </Button>
         </div>
@@ -173,7 +154,7 @@ export function ReviewCard({ d, state, months, review, ai, today }) {
     body = (
       <div className="space-y-3">
         <div className="flex items-center gap-4">
-          <Ring value={(entry?.score || 0) / 100} size={70} stroke={7} color="#ffc542">
+          <Ring value={(entry?.score || 0) / 100} size={70} stroke={7} color={tc("gold-ink")}>
             <span className="font-pixel text-xl text-ink">{entry?.score ?? 0}</span>
           </Ring>
           <div>
@@ -210,23 +191,20 @@ export function ReviewCard({ d, state, months, review, ai, today }) {
             </>
           ) : (
             <>
-              La <span className="font-extrabold text-ink">{time}</span> ({countdown}) AI-ul face rezumatul zilei și îi dă un scor care intră în momentum.
+              La <span className="font-extrabold text-ink">{fmt12(time)}</span> ({countdown}) AI-ul face rezumatul zilei și îi dă un scor care intră în momentum.
             </>
           )}
         </p>
-        <div className="inset flex items-center justify-between gap-3 px-3 py-2">
-          <span className="text-xs font-bold text-dim">{d.pending > 0 ? "Raportul ar adăuga acum" : "Bifează ceva ca raportul să aducă momentum"}</span>
-          {d.pending > 0 && <span className="font-pixel text-lg text-gold-hi">+{d.pending}</span>}
-        </div>
+        {d.pending === 0 && <p className="text-xs font-semibold text-dim">Bifează ceva ca raportul să aducă momentum.</p>}
         {review.status === "error" && (
           <p className="rounded-xl bg-rose/10 p-3 text-sm font-semibold text-rose ring-1 ring-rose/30">{review.error}</p>
         )}
-        <div className="flex flex-wrap gap-2">
-          <Button id="review-run" variant={due ? "gold" : "ghost"} size="sm" icon={Sparkles} onClick={() => review.run(today)}>
+        <div className="flex flex-col gap-2">
+          <Button id="review-run" variant={due ? "gold" : "ghost"} size="md" icon={Sparkles} className="w-full" onClick={() => review.run(today)}>
             {ai.available ? (due ? "Generează raportul" : "Generează acum") : "Închide ziua"}
           </Button>
           {review.status === "error" && (
-            <Button variant="ghost" size="sm" onClick={() => review.run(today, { allowTemplate: true })}>
+            <Button variant="ghost" size="md" className="w-full" onClick={() => review.run(today, { allowTemplate: true })}>
               Închide fără AI
             </Button>
           )}
@@ -236,8 +214,19 @@ export function ReviewCard({ d, state, months, review, ai, today }) {
   }
 
   return (
-    <Panel tone="gold" corners className="p-4 sm:p-5">
-      <SectionTitle icon={Moon} tone="gold" sub={saved ? "Ziua de azi e închisă" : `Ritualul de seară · ${time}`}>
+    <Panel id="review-card" tone="gold" corners className="p-4 sm:p-5">
+      <SectionTitle
+        icon={Moon}
+        tone="gold"
+        sub={saved ? "Ziua de azi e închisă" : `Ritualul de seară · ${fmt12(time)}`}
+        action={
+          !saved && d.pending > 0 ? (
+            <span className="font-pixel text-xl text-gold-hi" title="Momentum pe care îl aduce raportul dacă închizi ziua acum">
+              +{d.pending}
+            </span>
+          ) : null
+        }
+      >
         Raportul zilei
       </SectionTitle>
       {body}
@@ -281,7 +270,7 @@ export function GroupMini({ groups, go }) {
             {top.map((m) => {
               const rank = ranked.indexOf(m) + 1;
               return (
-                <li key={m.id} className={`flex items-center gap-3 rounded-xl px-2.5 py-2 ${m.isMe ? "bg-gold/10 ring-1 ring-gold/30" : "bg-[#120f29]"}`}>
+                <li key={m.id} className={`flex items-center gap-3 rounded-xl px-2.5 py-2 ${m.isMe ? "bg-gold/10 ring-1 ring-gold/30" : "bg-well"}`}>
                   <span className={`w-5 text-center font-pixel text-base ${rank === 1 ? "text-gold" : rank === 2 ? "text-body" : rank === 3 ? "text-ember" : "text-dim"}`}>
                     {rank === 1 ? <Crown size={16} className="mx-auto text-gold" aria-label="Locul 1" /> : rank}
                   </span>
@@ -306,7 +295,7 @@ export function GroupMini({ groups, go }) {
 
 export function TodayTodos({ state, today, todo, go }) {
   const [text, setText] = useState("");
-  const todos = (state.todos || []).filter((t) => (t.date === today && (!t.done || t.doneOn === today)) || (!t.done && t.date && t.date < today));
+  const todos = todosForToday(state.todos, today);
   todos.sort((a, b) => Number(a.done) - Number(b.done) || (a.time || "99").localeCompare(b.time || "99"));
   return (
     <Panel className="p-4 sm:p-5">
@@ -341,15 +330,15 @@ export function TodayTodos({ state, today, todo, go }) {
       ) : (
         <ul className="space-y-1.5">
           {todos.map((t) => (
-            <li key={t.id} className="flex items-center gap-3 rounded-xl bg-[#120f29] px-3 py-2">
-              <CheckButton size="sm" checked={t.done} onClick={() => todo.toggle(t.id)} label={t.done ? `Debifează ${t.title}` : `Bifează ${t.title}`} />
+            <li key={t.id} className="flex items-center gap-3 rounded-xl bg-well px-3 py-2">
+              <CheckButton size="sm" checked={t.done} onClick={() => todo.toggle(t.id, today)} label={t.done ? `Debifează ${t.title}` : `Bifează ${t.title}`} />
               <button type="button" onClick={() => todo.edit(t)} className={`min-w-0 flex-1 truncate text-left text-sm font-bold ${t.done ? "text-faint line-through" : "text-ink"}`}>
                 {t.title}
               </button>
               {t.date < today && !t.done ? (
                 <Chip tone="ember">din {fmtDay(t.date)}</Chip>
               ) : (
-                t.time && <span className="text-xs font-bold text-dim">{t.time}</span>
+                t.time && <span className="text-xs font-bold text-dim">{fmt12(t.time)}</span>
               )}
             </li>
           ))}

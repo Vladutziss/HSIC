@@ -40,7 +40,7 @@ function database(state, months) {
   const day_reviews = [...byDay.values()].map((r) => ({ ai_score: null, at: null, summary: null, highlight: null, tip: null, ai: false, ...r }));
   return {
     state: { ...rows, profile: { ...rows.profile, id: UID }, day_reviews },
-    month: { proofs: monthRows.flatMap((m) => m.proofs), chapters: monthRows.flatMap((m) => m.chapters), day_reviews },
+    month: { chapters: monthRows.flatMap((m) => m.chapters), day_reviews },
   };
 }
 
@@ -52,14 +52,14 @@ test("round trip of a player with history keeps every derived number", () => {
   assert.deepEqual(computeTimeline(back, TODAY).current, computeTimeline(seeded.state, TODAY).current);
 });
 
-test("month documents round trip through proofs, chapters and review text", () => {
+test("month documents round trip through chapters and review text", () => {
   const seeded = seedHistory(newState(), TODAY);
   const db = database(seeded.state, seeded.months);
   for (const [ym, doc] of Object.entries(seeded.months)) {
     const [from, to] = monthRange(ym);
     const slice = (rows) => rows.filter((r) => r.day >= from && r.day < to);
-    const back = rowsToMonth({ proofs: slice(db.month.proofs), chapters: slice(db.month.chapters), day_reviews: slice(db.month.day_reviews) });
-    assert.deepEqual(norm(back.proofs), norm(doc.proofs));
+    const back = rowsToMonth({ chapters: slice(db.month.chapters), day_reviews: slice(db.month.day_reviews) });
+    assert.deepEqual(norm(back.chapters), norm(doc.chapters));
     for (const [day, r] of Object.entries(doc.reviews)) assert.deepEqual(norm(back.reviews[day]), norm({ ...r, score: seeded.state.reviews[day].ai }));
   }
 });
@@ -116,21 +116,21 @@ test("emptying the state clears the profile and deletes its rows", () => {
   assert.equal(ops.at(-1).table, "habits"); // habits last: completions go first
 });
 
-test("month diff: new proof is one upsert, removing a proof is a delete", () => {
+test("month diff: new chapter is one upsert, removing a chapter is a delete", () => {
   const seeded = seedHistory(newState(), TODAY);
   const [ym, doc] = Object.entries(seeded.months)[0];
-  const next = { ...doc, proofs: [...doc.proofs, { id: "p-new", day: TODAY, habitId: seeded.state.habits[0].id, type: "note", note: "ok", verdict: "self", at: `${TODAY}T10:00:00Z` }] };
+  const next = { ...doc, chapters: [...doc.chapters, { id: "c-new", type: "chapter", day: TODAY, stage: "adept", title: "Nou", story: "ok", at: `${TODAY}T10:00:00Z` }] };
   const ops = diffMonth(doc, next, UID);
   assert.equal(ops.length, 1);
-  assert.equal(ops[0].table, "proofs");
-  assert.equal(ops[0].rows[0].id, "p-new");
+  assert.equal(ops[0].table, "chapters");
+  assert.equal(ops[0].rows[0].id, "c-new");
 
-  const removed = diffMonth(doc, { ...doc, proofs: doc.proofs.slice(1) }, UID);
-  assert.ok(removed.some((o) => o.op === "delete" && o.table === "proofs"));
+  const removed = diffMonth(doc, { ...doc, chapters: doc.chapters.slice(1) }, UID);
+  assert.ok(removed.some((o) => o.op === "delete" && o.table === "chapters"));
 });
 
 test("a review text removed from a month clears the text columns instead of deleting the score row", () => {
-  const doc = { proofs: [], chapters: [], reviews: { "2026-10-04": { summary: "s", highlight: "h", tip: "t", ai: true } } };
+  const doc = { chapters: [], reviews: { "2026-10-04": { summary: "s", highlight: "h", tip: "t", ai: true } } };
   const ops = diffMonth(doc, { ...doc, reviews: {} }, UID);
   assert.deepEqual(ops, [
     { op: "upsert", table: "day_reviews", rows: [{ user_id: UID, day: "2026-10-04", summary: null, highlight: null, tip: null, ai: false }], onConflict: "user_id,day" },

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { CalendarDays, CalendarRange, Check, ChevronLeft, ChevronRight, Clock, GripVertical, ListTodo, Plus } from "lucide-react";
+import { CalendarDays, CalendarPlus, CalendarRange, Check, ChevronLeft, ChevronRight, Clock, GripVertical, ListTodo, Plus, Repeat } from "lucide-react";
 import { Button, CheckButton, Chip, Panel, SectionTitle, Tabs } from "../components/ui.jsx";
 import { iconFor } from "../components/icons.js";
 import { isScheduled } from "../lib/engine.js";
@@ -8,14 +8,18 @@ import {
   RO_MONTHS,
   addDays,
   dayRange,
+  fmt12,
   fmtDay,
   fmtHM,
+  fmtHour12,
   mondayOf,
   nowMinutes,
   parseDay,
   parseHM,
   relDay,
 } from "../lib/dates.js";
+import { c } from "../lib/themes.js";
+import { firstOccurrence, occursOn, repeatLabel, todosByDay, viewOn } from "../lib/todos.js";
 
 const START = 6 * 60;
 const END = 24 * 60;
@@ -55,23 +59,32 @@ function TodoRow({ t, today, habits, todo }) {
   const h = habits.find((x) => x.id === t.habitId);
   return (
     <li
-      draggable
+      draggable={!t.repeat}
       onDragStart={(e) => {
         e.dataTransfer.setData("text/plain", t.id);
         e.dataTransfer.effectAllowed = "move";
       }}
-      className="group flex items-center gap-2.5 rounded-xl bg-[#120f29] px-2.5 py-2 ring-1 ring-edge"
+      className="group flex items-center gap-2.5 rounded-xl bg-well px-2.5 py-2 ring-1 ring-edge"
     >
-      <GripVertical size={14} className="hidden shrink-0 cursor-grab text-faint sm:block" aria-hidden="true" />
-      <CheckButton size="sm" checked={t.done} onClick={() => todo.toggle(t.id)} label={t.done ? `Debifează ${t.title}` : `Bifează ${t.title}`} />
+      <GripVertical size={14} className={`hidden shrink-0 text-faint sm:block ${t.repeat ? "invisible" : "cursor-grab"}`} aria-hidden="true" />
+      <CheckButton size="sm" checked={t.done} onClick={() => todo.toggle(t.id, t.viewDay || today)} label={t.done ? `Debifează ${t.title}` : `Bifează ${t.title}`} />
       <button type="button" onClick={() => todo.edit(t)} className="min-w-0 flex-1 text-left">
         <span className={`block truncate text-sm font-bold ${t.done ? "text-faint line-through" : "text-ink"}`}>{t.title}</span>
         <span className="flex flex-wrap items-center gap-x-2 text-[11px] font-bold text-dim">
-          {t.date ? relDay(t.date, today) : "fără dată"}
+          {t.repeat ? (
+            <span className="inline-flex items-center gap-0.5">
+              <Repeat size={10} aria-hidden="true" />
+              {repeatLabel(t.repeat)}
+            </span>
+          ) : t.date ? (
+            relDay(t.date, today)
+          ) : (
+            "fără dată"
+          )}
           {t.time && (
             <span className="inline-flex items-center gap-0.5">
               <Clock size={10} aria-hidden="true" />
-              {t.time}
+              {fmt12(t.time)}
             </span>
           )}
           {h && <span style={{ color: h.color }}>· {h.name}</span>}
@@ -84,22 +97,36 @@ function TodoRow({ t, today, habits, todo }) {
 function TodoList({ state, today, todo }) {
   const [filter, setFilter] = useState("today");
   const [text, setText] = useState("");
-  const all = state.todos || [];
+  const raw = state.todos || [];
   const habits = state.habits || [];
   const weekEnd = addDays(mondayOf(today), 6);
+  // a repeating to-do is one row, shown as its occurrence in the period the filter covers
+  const span = { today: [today, today], week: [mondayOf(today), weekEnd], all: [today, addDays(today, 366)] }[filter];
+  const series = span
+    ? raw
+        .filter((t) => t.repeat)
+        .map((t) => {
+          const day = firstOccurrence(t, span[0], span[1]);
+          return day ? viewOn(t, day) : null;
+        })
+        .filter(Boolean)
+    : [];
+  const singles = raw.filter((t) => !t.repeat);
   const inFilter = (t) => {
     if (filter === "today") return t.date === today || (!t.done && t.date && t.date < today);
     if (filter === "week") return t.date && t.date >= mondayOf(today) && t.date <= weekEnd;
     if (filter === "nodate") return !t.date;
     return true;
   };
-  const list = all.filter(inFilter);
+  const list = [...singles.filter(inFilter), ...series];
   const overdue = list.filter((t) => !t.done && t.date && t.date < today);
   const open = list.filter((t) => !t.done && !(t.date && t.date < today)).sort((a, b) => (a.date || "9").localeCompare(b.date || "9") || (a.time || "99").localeCompare(b.time || "99"));
   const done = list.filter((t) => t.done).sort((a, b) => (b.doneOn || "").localeCompare(a.doneOn || ""));
   const counts = {
-    today: all.filter((t) => !t.done && (t.date === today || (t.date && t.date < today))).length,
-    nodate: all.filter((t) => !t.done && !t.date).length,
+    today:
+      singles.filter((t) => !t.done && t.date && t.date <= today).length +
+      raw.filter((t) => t.repeat && occursOn(t, today) && !viewOn(t, today).done).length,
+    nodate: singles.filter((t) => !t.done && !t.date).length,
   };
 
   return (
@@ -111,7 +138,8 @@ function TodoList({ state, today, todo }) {
         className="mb-3 flex gap-2"
         onSubmit={(e) => {
           e.preventDefault();
-          if (!text.trim()) return;
+          // an empty field opens the full card instead (date, time, duration, repeat)
+          if (!text.trim()) return todo.create({ date: filter === "nodate" ? null : today });
           todo.add({ title: text.trim().slice(0, 80), date: filter === "nodate" ? null : today });
           setText("");
         }}
@@ -119,9 +147,9 @@ function TodoList({ state, today, todo }) {
         <input id="planner-todo" className="field" value={text} onChange={(e) => setText(e.target.value)} placeholder={filter === "nodate" ? "Idee fără dată…" : "To-do pentru azi…"} aria-label="To-do nou" />
         <Button type="submit" variant="mint" icon={Plus} aria-label="Adaugă" />
       </form>
-      <button type="button" className="mb-3 text-xs font-bold text-dim underline hover:text-ink" onClick={() => todo.create({ date: today })}>
-        Cu dată, oră și durată…
-      </button>
+      <Button variant="ghost" size="sm" icon={CalendarPlus} className="mb-3 w-full" onClick={() => todo.create({ date: today, title: text.trim().slice(0, 80) })}>
+        Programează: dată, oră, repetare
+      </Button>
       <Tabs
         className="mb-3"
         size="sm"
@@ -185,11 +213,7 @@ function WeekView({ state, today, anchor, todo }) {
     return Math.max(START, Math.min(END - 30, START + Math.floor(y / (ROW / 2)) * 30));
   };
 
-  const todosByDay = useMemo(() => {
-    const m = {};
-    for (const t of state.todos || []) if (t.date) (m[t.date] ||= []).push(t);
-    return m;
-  }, [state.todos]);
+  const byDay = useMemo(() => todosByDay(state.todos, days[0], days[6]), [state.todos, days[0]]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div ref={scroller} className="max-h-[620px] overflow-auto rounded-xl ring-1 ring-edge">
@@ -205,7 +229,7 @@ function WeekView({ state, today, anchor, todo }) {
             return (
               <div key={day} className="px-1 pb-2 text-center">
                 <div className={`text-[11px] font-extrabold uppercase tracking-wider ${isToday ? "text-gold" : "text-dim"}`}>{RO_DAYS_SHORT[d.getDay()]}</div>
-                <div className={`mx-auto mt-0.5 grid h-8 w-8 place-items-center rounded-lg font-pixel text-lg ${isToday ? "bg-gold text-[#2a1b00]" : "text-ink"}`}>{d.getDate()}</div>
+                <div className={`mx-auto mt-0.5 grid h-8 w-8 place-items-center rounded-lg font-pixel text-lg ${isToday ? "bg-gold text-on-gold" : "text-ink"}`}>{d.getDate()}</div>
                 {sched > 0 && day <= today && (
                   <div className="mx-auto mt-1 h-1 w-10 overflow-hidden rounded-full bg-edge" title={`${done}/${sched} obiceiuri bifate`}>
                     <div className="h-full bg-mint" style={{ width: `${Math.min(100, (done / sched) * 100)}%` }} />
@@ -235,18 +259,19 @@ function WeekView({ state, today, anchor, todo }) {
               }}
               className={`min-h-[42px] min-w-0 space-y-1 border-l border-edge p-1 ${over === `${day}-allday` ? "bg-gold/10" : ""}`}
             >
-              {(todosByDay[day] || [])
+              {(byDay[day] || [])
                 .filter((t) => !t.time)
                 .map((t) => (
                   <button
                     key={t.id}
                     type="button"
-                    draggable
+                    draggable={!t.repeat}
                     onDragStart={(e) => e.dataTransfer.setData("text/plain", t.id)}
                     onClick={() => todo.edit(t)}
-                    className={`block w-full truncate rounded-md px-1.5 py-1 text-left text-[11px] font-bold ${t.done ? "bg-white/5 text-faint line-through" : "bg-violet/20 text-ink ring-1 ring-violet/40"}`}
+                    className={`flex w-full items-center gap-1 rounded-md px-1.5 py-1 text-left text-[11px] font-bold ${t.done ? "bg-ink/5 text-faint line-through" : "bg-violet/20 text-ink ring-1 ring-violet/40"}`}
                   >
-                    {t.title}
+                    {t.repeat && <Repeat size={10} className="shrink-0" aria-label="se repetă" />}
+                    <span className="truncate">{t.title}</span>
                   </button>
                 ))}
             </div>
@@ -258,7 +283,7 @@ function WeekView({ state, today, anchor, todo }) {
             <div className="relative">
               {Array.from({ length: (END - START) / 60 }, (_, i) => (
                 <span key={i} className="absolute right-2 -translate-y-1/2 text-[10px] font-extrabold text-faint" style={{ top: i * ROW }}>
-                  {i === 0 ? "" : fmtHM(START + i * 60)}
+                  {i === 0 ? "" : fmtHour12(START + i * 60)}
                 </span>
               ))}
             </div>
@@ -269,7 +294,7 @@ function WeekView({ state, today, anchor, todo }) {
                 const s = parseHM(h.time);
                 items.push({ kind: "habit", id: `h-${h.id}`, h, start: s, end: Math.min(END, s + (HABIT_MIN[h.diff] || 30)) });
               }
-              for (const t of todosByDay[day] || []) {
+              for (const t of byDay[day] || []) {
                 if (!t.time) continue;
                 const s = parseHM(t.time);
                 items.push({ kind: "todo", id: t.id, t, start: s, end: Math.min(END, s + (t.dur || 30)) });
@@ -309,14 +334,14 @@ function WeekView({ state, today, anchor, todo }) {
                       return (
                         <div
                           key={it.id}
-                          title={`${it.h.name} · ${it.h.time}`}
+                          title={`${it.h.name} · ${fmt12(it.h.time)}`}
                           className="pointer-events-none absolute overflow-hidden rounded-lg px-1.5 py-1 text-[11px] font-extrabold"
                           style={{
                             top,
                             height,
                             width,
                             left,
-                            color: "#f3efff",
+                            color: c("ink"),
                             background: `repeating-linear-gradient(135deg, ${it.h.color}40 0 6px, ${it.h.color}26 6px 12px)`,
                             boxShadow: `inset 3px 0 0 ${it.h.color}`,
                           }}
@@ -333,16 +358,19 @@ function WeekView({ state, today, anchor, todo }) {
                       <button
                         key={it.id}
                         type="button"
-                        draggable
+                        draggable={!t.repeat}
                         onDragStart={(e) => e.dataTransfer.setData("text/plain", t.id)}
                         onClick={() => todo.edit(t)}
                         className={`absolute overflow-hidden rounded-lg px-1.5 py-1 text-left text-[11px] font-extrabold ring-1 ${
-                          t.done ? "bg-[#1d1840] text-faint line-through ring-edge" : "bg-violet/30 text-ink ring-violet/60 hover:bg-violet/40"
+                          t.done ? "bg-panel-lo text-faint line-through ring-edge" : "bg-violet/30 text-ink ring-violet/60 hover:bg-violet/40"
                         }`}
                         style={{ top, height, width, left }}
                       >
-                        <span className="block truncate">{t.title}</span>
-                        {height > 34 && <span className="block text-[10px] font-bold text-dim">{t.time}</span>}
+                        <span className="flex items-center gap-1">
+                          {t.repeat && <Repeat size={10} className="shrink-0" aria-label="se repetă" />}
+                          <span className="truncate">{t.title}</span>
+                        </span>
+                        {height > 34 && <span className="block text-[10px] font-bold text-dim">{fmt12(t.time)}</span>}
                       </button>
                     );
                   })}
@@ -369,8 +397,7 @@ function MonthView({ state, today, anchor, onPick }) {
   const month = parseDay(first).getMonth();
   const days = dayRange(start, addDays(start, 41));
   const habits = (state.habits || []).filter((h) => !h.archivedAt);
-  const byDay = {};
-  for (const t of state.todos || []) if (t.date) (byDay[t.date] ||= []).push(t);
+  const byDay = todosByDay(state.todos, days[0], days[41]);
   return (
     <div className="overflow-x-auto">
       <div className="grid min-w-[640px] grid-cols-7 gap-1.5">
@@ -391,7 +418,7 @@ function MonthView({ state, today, anchor, onPick }) {
               type="button"
               onClick={() => onPick(day)}
               className={`focus-ring flex min-h-[92px] flex-col gap-1 rounded-xl p-1.5 text-left ring-1 transition hover:ring-gold/60 ${
-                day === today ? "bg-gold/10 ring-gold" : inMonth ? "bg-[#120f29] ring-edge" : "bg-transparent ring-edge/40"
+                day === today ? "bg-gold/10 ring-gold" : inMonth ? "bg-well ring-edge" : "bg-transparent ring-edge/40"
               }`}
             >
               <span className="flex items-center justify-between">
@@ -404,7 +431,7 @@ function MonthView({ state, today, anchor, onPick }) {
               </span>
               {todos.slice(0, 3).map((t) => (
                 <span key={t.id} className={`truncate rounded px-1 py-0.5 text-[10px] font-bold ${t.done ? "text-faint line-through" : "bg-violet/20 text-ink"}`}>
-                  {t.time ? `${t.time} ` : ""}
+                  {t.time ? `${fmt12(t.time)} ` : ""}
                   {t.title}
                 </span>
               ))}
@@ -485,7 +512,7 @@ export default function Planner({ state, today, todo }) {
           <span className="h-3 w-3 rounded bg-violet/40 ring-1 ring-violet/60" /> to-do
         </span>
         <span className="inline-flex items-center gap-1.5">
-          <span className="h-3 w-3 rounded" style={{ background: "repeating-linear-gradient(135deg,#ffc54266 0 3px,#ffc54233 3px 6px)" }} /> obicei programat
+          <span className="h-3 w-3 rounded" style={{ background: `repeating-linear-gradient(135deg, ${c("gold", 0.4)} 0 3px, ${c("gold", 0.2)} 3px 6px)` }} /> obicei programat
         </span>
         <span>Apasă pe un loc liber ca să adaugi un to-do la ora aceea.</span>
       </div>
