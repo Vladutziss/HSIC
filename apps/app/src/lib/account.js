@@ -1,9 +1,8 @@
 // Account actions for the Supabase build: sign out, export, delete.
 
 import { getClient } from "./supabase.js";
-import { removeAllFiles } from "./store.js";
 
-const TABLES = ["profiles", "habits", "completions", "day_reviews", "todos", "proofs", "chapters", "streak_revives"];
+const TABLES = ["profiles", "habits", "completions", "day_reviews", "todos", "chapters", "streak_revives"];
 
 export async function signOut() {
   const client = await getClient();
@@ -22,10 +21,9 @@ export async function exportData(env) {
   return out;
 }
 
-/** Removes the stored files, then the account and (by cascade) every row. */
+/** Removes the account and (by cascade) every row. */
 export async function deleteAccount(env) {
   const e = env.current;
-  await removeAllFiles(e);
   const { error } = await e.client.rpc("delete_my_account");
   if (error) throw error;
   await e.client.auth.signOut();

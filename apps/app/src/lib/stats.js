@@ -17,7 +17,7 @@ export function buildStats(state, today) {
     resetAfter: t.resetAfter,
     streak: streakInfo(state, today),
     checkins: Object.values(state.log || {}).reduce((a, e) => a + Object.keys(e).length, 0),
-    evidence: evolutionPoints(state),
+    evolution: evolutionPoints(state),
     avg: last30.length ? Math.round(last30.reduce((a, x) => a + x.score, 0) / last30.length) : 0,
   };
 }

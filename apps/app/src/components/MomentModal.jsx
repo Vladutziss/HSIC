@@ -7,6 +7,7 @@ import { quoteById } from "../lib/quotes.js";
 import { evolutionChapter, momentLineAI } from "../lib/ai.js";
 import { DEFAULT_NAMES, PATHS, uid } from "../lib/catalog.js";
 import { STAGES } from "../lib/engine.js";
+import { c as tc } from "../lib/themes.js";
 
 export function MomentModal({ moment, state, d, ai, recentStories, onName, onChapter, onClose }) {
   const meta = MOMENT_META[moment.type] || MOMENT_META.levelup;
@@ -80,7 +81,7 @@ export function MomentModal({ moment, state, d, ai, recentStories, onName, onCha
   } else if (moment.type === "streak") {
     hero = (
       <div className="flex flex-col items-center gap-1">
-        <Flame size={84} className="anim-flicker text-ember" fill="#ff7b47" aria-hidden="true" />
+        <Flame size={84} className="anim-flicker text-ember" fill={tc("ember")} aria-hidden="true" />
         <div className="font-pixel text-4xl text-ink">{moment.n} zile</div>
       </div>
     );
@@ -90,7 +91,7 @@ export function MomentModal({ moment, state, d, ai, recentStories, onName, onCha
       <div className="pedestal flex flex-col items-center rounded-3xl px-10 pt-2">
         <Sprite path={path} stage={c.stage.id} mood={mood} size={160} label={displayName} />
         {(moment.type === "reset" || moment.type === "drop") && (
-          <span className="mb-2 inline-flex items-center gap-1 rounded-full bg-[#120f29] px-3 py-1 text-xs font-extrabold text-dim ring-1 ring-edge">
+          <span className="mb-2 inline-flex items-center gap-1 rounded-full bg-well px-3 py-1 text-xs font-extrabold text-dim ring-1 ring-edge">
             {moment.type === "reset" ? <RotateCcw size={13} aria-hidden="true" /> : <TrendingDown size={13} aria-hidden="true" />}
             {moment.type === "reset" ? "momentum: 0" : `${moment.from} → ${moment.to}`}
           </span>
