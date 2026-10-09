@@ -12,9 +12,9 @@ export const THEMES = [
   { id: "padure", name: "Pădure", mode: "dark", blurb: "Verde-închis, cu accente de salvie. Calm și contrastat." },
   { id: "grafit", name: "Grafit", mode: "dark", blurb: "Gri închis neutru, fără stele. Simplu și sobru." },
   { id: "ceata", name: "Ceață", mode: "light", blurb: "Gri deschis și alb, accente discrete." },
-  { id: "cod", name: "Cod", mode: "dark", blurb: "Ca VS Code Dark+: #1E1E1E, albastru și turcoaz." },
+  { id: "cod", name: "Cod", mode: "dark", blurb: "Pentru programatori: gri cărbune, albastru și turcoaz." },
   { id: "nord", name: "Nord", mode: "dark", blurb: "Gri-albastru arctic, culori pastelate." },
-  { id: "lavanda", name: "Lavandă", mode: "light", blurb: "Paletă pastel de pe Color Hunt: lavandă și liliac." },
+  { id: "lavanda", name: "Lavandă", mode: "light", blurb: "Pastel luminos, lavandă și liliac, text violet-închis." },
 ];
 
 export const DEFAULT_THEME = "noapte";
