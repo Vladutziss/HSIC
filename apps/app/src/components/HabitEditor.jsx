@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { Archive, Check, Plus, ScrollText, Wand2 } from "lucide-react";
 import { Button, Chip, Field, Gems, Modal, Tabs } from "./ui.jsx";
+import { Select, TimeSelect } from "./Select.jsx";
 import { HABIT_ICONS, iconFor } from "./icons.js";
 import { CATALOG, ICON_KEYS, MAX_HABITS, PATHS, PATH_LIST, habitFromCatalog, nextColor, uid } from "../lib/catalog.js";
 import { DIFF } from "../lib/engine.js";
@@ -38,7 +39,7 @@ export function DayPicker({ value, onChange, idPrefix = "day" }) {
               aria-pressed={on}
               onClick={() => toggle(d)}
               className={`focus-ring h-10 w-10 rounded-xl text-sm font-black transition ${
-                on ? "bg-gold text-[#2a1b00] shadow-[0_3px_0_#a8740a]" : "bg-[#120f29] text-dim ring-1 ring-edge hover:text-ink"
+                on ? "bg-gold text-on-gold shadow-key-gold" : "bg-well text-dim ring-1 ring-edge hover:text-ink"
               }`}
             >
               {RO_DAYS_MIN[d]}
@@ -67,7 +68,7 @@ export function DifficultyPicker({ value, onChange }) {
           aria-pressed={value === n}
           onClick={() => onChange(n)}
           className={`focus-ring flex flex-col items-center gap-1 rounded-xl p-2.5 transition ${
-            value === n ? "bg-sky/15 ring-2 ring-sky" : "bg-[#120f29] ring-1 ring-edge hover:ring-edge-hi"
+            value === n ? "bg-sky/15 ring-2 ring-sky" : "bg-well ring-1 ring-edge hover:ring-edge-hi"
           }`}
         >
           <Gems n={n} size={13} />
@@ -94,7 +95,7 @@ function CatalogTab({ state, today, onAdd }) {
             type="button"
             aria-pressed={cat === p.id}
             onClick={() => setCat(p.id)}
-            className={`focus-ring rounded-full px-3 py-1.5 text-xs font-extrabold transition ${cat === p.id ? "bg-gold text-[#2a1b00]" : "text-dim ring-1 ring-edge hover:text-ink"}`}
+            className={`focus-ring rounded-full px-3 py-1.5 text-xs font-extrabold transition ${cat === p.id ? "bg-gold text-on-gold" : "text-dim ring-1 ring-edge hover:text-ink"}`}
           >
             {p.label}
           </button>
@@ -155,7 +156,7 @@ export function HabitForm({ draft, setDraft }) {
                 aria-label={k}
                 aria-pressed={on}
                 onClick={() => set("icon")(k)}
-                className={`focus-ring grid h-10 place-items-center rounded-lg transition ${on ? "bg-gold text-[#2a1b00]" : "bg-[#120f29] text-dim ring-1 ring-edge hover:text-ink"}`}
+                className={`focus-ring grid h-10 place-items-center rounded-lg transition ${on ? "bg-gold text-on-gold" : "bg-well text-dim ring-1 ring-edge hover:text-ink"}`}
               >
                 <Icon size={17} aria-hidden="true" />
               </button>
@@ -165,16 +166,10 @@ export function HabitForm({ draft, setDraft }) {
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Categorie" htmlFor="habit-cat">
-          <select id="habit-cat" className="field" value={draft.cat} onChange={(e) => set("cat")(e.target.value)}>
-            {PATH_LIST.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.label}
-              </option>
-            ))}
-          </select>
+          <Select id="habit-cat" value={draft.cat} onChange={set("cat")} options={PATH_LIST.map((p) => ({ value: p.id, label: p.label }))} />
         </Field>
         <Field label="Ora (opțional)" htmlFor="habit-time" hint="Apare în calendar.">
-          <input id="habit-time" type="time" className="field" value={draft.time || ""} onChange={(e) => set("time")(e.target.value || null)} />
+          <TimeSelect id="habit-time" value={draft.time || null} onChange={set("time")} />
         </Field>
       </div>
       <div>
@@ -185,14 +180,9 @@ export function HabitForm({ draft, setDraft }) {
         <span className="mb-1.5 block text-xs font-extrabold uppercase tracking-wider text-dim">Zile</span>
         <DayPicker value={draft.days} onChange={set("days")} />
       </div>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Țintă" htmlFor="habit-target">
-          <input id="habit-target" className="field" value={draft.target} maxLength={60} placeholder="ex.: 30 de minute" onChange={(e) => set("target")(e.target.value)} />
-        </Field>
-        <Field label="Ce dovadă trimiți" htmlFor="habit-proof">
-          <input id="habit-proof" className="field" value={draft.proofHint || ""} maxLength={60} placeholder="ex.: o poză de la bazin" onChange={(e) => set("proofHint")(e.target.value)} />
-        </Field>
-      </div>
+      <Field label="Țintă" htmlFor="habit-target">
+        <input id="habit-target" className="field" value={draft.target} maxLength={60} placeholder="ex.: 30 de minute" onChange={(e) => set("target")(e.target.value)} />
+      </Field>
     </div>
   );
 }
@@ -210,7 +200,6 @@ export function HabitEditor({ open, initial, tab: initialTab = "catalog", state,
       days: [0, 1, 2, 3, 4, 5, 6],
       time: null,
       target: "",
-      proofHint: "",
       color: nextColor(state.habits || []),
       createdAt: today,
     }),
@@ -269,7 +258,7 @@ export function HabitEditor({ open, initial, tab: initialTab = "catalog", state,
           <HabitForm draft={draft} setDraft={setDraft} />
           <div className="mt-4 flex items-center gap-2 text-xs font-semibold text-dim">
             <Chip tone="gold">+{DIFF[draft.diff].xp} momentum pe bifă</Chip>
-            <span>× 1,5 cu dovadă verificată</span>
+            <span>+{DIFF[draft.diff].ep} puncte de evoluție</span>
           </div>
         </>
       )}

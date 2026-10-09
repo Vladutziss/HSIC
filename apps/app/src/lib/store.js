@@ -3,7 +3,7 @@
 // back to localStorage, and failing that it lasts for the session only.
 //
 //   data/users/<id>/state      habits, log, reviews (scores), to-dos, settings
-//   data/users/<id>/m-YYYY-MM  proofs with their story fragments, review texts
+//   data/users/<id>/m-YYYY-MM  evolution chapters, review texts
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { capability, inViewer } from "./platform.js";
@@ -216,7 +216,7 @@ export function useAppStore() {
         else unsub = cleanup || null;
         return;
       }
-      const [db, user, assets] = await Promise.all([capability("db"), capability("user"), capability("assets")]);
+      const [db, user] = await Promise.all([capability("db"), capability("user")]);
       let uid = null;
       try {
         uid = user ? await user.id() : null;
@@ -232,7 +232,6 @@ export function useAppStore() {
         db,
         uid,
         user,
-        assets,
         stateRef,
         monthRef: (ym) => db.doc(`data/users/${uid}/m-${ym}`),
         writers: {},
@@ -338,7 +337,7 @@ export function useAppStore() {
       if (!e) return;
       if (e.monthCache[ym] === undefined) await loadMonth(ym);
       if (e.monthCache[ym] === undefined) return; // the month could not be read: do not overwrite it
-      const next = fn(clone(e.monthCache[ym]) || { proofs: [], reviews: {} });
+      const next = fn(clone(e.monthCache[ym]) || { chapters: [], reviews: {} });
       e.monthCache[ym] = next;
       setMonths((m) => ({ ...m, [ym]: next }));
       monthWriter(e, ym).schedule(next, 150);
@@ -351,8 +350,7 @@ export function useAppStore() {
     if (!e) return;
     if (e.kind === "supabase") {
       await Promise.allSettled([e.stateWriter.flush(), ...Object.values(e.writers).map((w) => w.flush())]);
-      await removeAllFiles(e);
-      for (const t of ["proofs", "chapters", "day_reviews", "streak_revives", "todos", "habits"]) await e.client.from(t).delete().eq("user_id", e.uid);
+      for (const t of ["chapters", "day_reviews", "streak_revives", "todos", "habits"]) await e.client.from(t).delete().eq("user_id", e.uid);
       await e.client.from("profiles").update(remote.EMPTY_PROFILE).eq("id", e.uid);
       e.monthCache = {};
       e.monthSaved = {};
@@ -376,49 +374,3 @@ export function useAppStore() {
   return { state, mode, saveStatus, months, legacy, update, loadMonth, updateMonth, wipe, env };
 }
 
-// ------------------------------------------------------------ uploads
-
-const FILE_EXT = { "image/jpeg": "jpg", "video/webm": "webm", "video/mp4": "mp4", "audio/webm": "webm", "audio/mp4": "mp4" };
-
-/** Deletes every file the user stored (called before wiping data or the account; SQL cannot remove stored objects). */
-export async function removeAllFiles(e) {
-  const bucket = e.client.storage.from("proofs");
-  for (;;) {
-    const { data } = await bucket.list(e.uid, { limit: 100 });
-    if (!data?.length) return;
-    const { error } = await bucket.remove(data.map((f) => `${e.uid}/${f.name}`));
-    if (error) return;
-  }
-}
-
-/**
- * Stores a proof file and returns the id the proof record keeps: an artifact
- * asset id, or in Supabase mode a path in the private `proofs` bucket.
- */
-export async function uploadAsset(env, blob, type) {
-  const e = env?.current;
-  if (e?.kind === "supabase") {
-    const path = `${e.uid}/${crypto.randomUUID()}.${FILE_EXT[type] || "bin"}`;
-    const { error } = await e.client.storage.from("proofs").upload(path, blob, { contentType: type });
-    return error ? null : path;
-  }
-  const assets = e?.assets;
-  if (!assets) return null;
-  try {
-    const res = await assets.upload(blob, type ? { type } : undefined);
-    return res?.id || null;
-  } catch (e) {
-    if (e && e.code === "store_unavailable") {
-      try {
-        await sleep(800);
-        const res = await assets.upload(blob, type ? { type } : undefined);
-        return res?.id || null;
-      } catch {
-        return null;
-      }
-    }
-    return null;
-  }
-}
-
-export const assetUrl = (id) => (id ? "/_blob/" + id : null);

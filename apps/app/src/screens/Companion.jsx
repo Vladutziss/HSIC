@@ -1,16 +1,14 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { BookOpenText, Camera, Check, Lock, Pencil, ScrollText, ShieldCheck, Sparkles } from "lucide-react";
+import { BookOpenText, Check, Lock, Pencil, ScrollText, Sparkles, Zap } from "lucide-react";
 import { Bar, Button, Chip, Empty, Panel, SectionTitle, Stat } from "../components/ui.jsx";
 import { Sprite, eggCrack } from "../components/Sprite.jsx";
-import { ProofBadge } from "../components/ProofModal.jsx";
 import { moodLine } from "../components/Cards.jsx";
 import { PATHS } from "../lib/catalog.js";
 import { STAGES } from "../lib/engine.js";
-import { addDays, fmtDay, monthKey, monthsBetween, relDay } from "../lib/dates.js";
-import { AssetImage } from "../components/Asset.jsx";
+import { addDays, monthsBetween, relDay } from "../lib/dates.js";
 
 const STAGE_TEXT = {
-  egg: "Așteaptă primele dovezi ca să se deschidă.",
+  egg: "Așteaptă primele bifări ca să se deschidă.",
   hatchling: "Abia ieșit din ou, curios și mic.",
   apprentice: "Primește primul echipament al drumului său.",
   adept: "Poartă unealta clasei sale.",
@@ -18,7 +16,7 @@ const STAGE_TEXT = {
   legend: "Contur de aur și aură. Rar întâlnit.",
 };
 
-export default function Companion({ state, d, today, months, loadMonth, onProof, onRename }) {
+export default function Companion({ state, d, today, months, loadMonth, onRename }) {
   const c = d.companion;
   const path = state.profile?.path || "sport";
   const p = PATHS[path];
@@ -34,12 +32,11 @@ export default function Companion({ state, d, today, months, loadMonth, onProof,
   const story = useMemo(() => {
     const items = span.flatMap((ym) => {
       const m = months[ym];
-      return m ? [...(m.proofs || []), ...(m.chapters || [])] : [];
+      return m ? m.chapters || [] : [];
     });
     return items.filter((x) => x.story).sort((a, b) => (a.at < b.at ? 1 : -1));
   }, [months, span]);
 
-  const habitsById = Object.fromEntries((state.habits || []).map((h) => [h.id, h]));
   const oldest = (state.meta?.months || []).slice().sort()[0];
   const canLoadMore = oldest && span[0] > oldest;
 
@@ -91,24 +88,19 @@ export default function Companion({ state, d, today, months, loadMonth, onProof,
                   </span>
                 </div>
                 <Bar value={c.progress} tone="violet" label="Progres spre evoluția următoare" />
-                <p className="mt-1 text-xs font-semibold text-faint">Puncte de evoluție (PE): dovadă verificată +3, plauzibilă +2, nevalidată +1.</p>
+                <p className="mt-1 text-xs font-semibold text-faint">Puncte de evoluție (PE): fiecare bifă aduce 1, 2 sau 3, după dificultatea obiceiului.</p>
               </div>
             ) : (
               <Chip tone="gold" icon={Sparkles}>
                 Evoluție completă
               </Chip>
             )}
-            <div className="flex flex-wrap gap-2">
-              <Button variant="violet" icon={Camera} onClick={() => onProof(null)}>
-                Trimite o dovadă
-              </Button>
-            </div>
           </div>
         </div>
       </Panel>
 
       <Panel className="p-4 sm:p-5">
-        <SectionTitle icon={Sparkles} tone="violet" sub="Evoluția vine doar din dovezile activității tale">
+        <SectionTitle icon={Sparkles} tone="violet" sub="Evoluția vine din obiceiurile pe care le bifezi">
           Drumul evoluției
         </SectionTitle>
         <ol className="grid grid-cols-3 gap-3 sm:grid-cols-6">
@@ -119,7 +111,7 @@ export default function Companion({ state, d, today, months, loadMonth, onProof,
               <li
                 key={s.id}
                 className={`flex flex-col items-center gap-1 rounded-2xl p-3 text-center ring-1 ${
-                  current ? "bg-violet/15 ring-violet" : reached ? "bg-[#120f29] ring-gold/40" : "bg-[#120f29] ring-edge"
+                  current ? "bg-violet/15 ring-violet" : reached ? "bg-well ring-gold/40" : "bg-well ring-edge"
                 }`}
               >
                 <Sprite path={path} stage={s.id} size={64} still silhouette={!reached} />
@@ -137,41 +129,31 @@ export default function Companion({ state, d, today, months, loadMonth, onProof,
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Stat icon={Sparkles} tone="violet" label="Puncte de evoluție" value={c.ep} />
-        <Stat icon={Camera} tone="gold" label="Dovezi trimise" value={c.proofs} />
-        <Stat icon={ShieldCheck} tone="mint" label="Verificate de AI" value={c.verified} />
+        <Stat icon={Zap} tone="gold" label="Bifări" value={c.checkins} sub="în total" />
         <Stat icon={BookOpenText} tone="sky" label="Capitole" value={story.length} sub="în perioada afișată" />
       </div>
 
       <Panel tone="gold" className="p-4 sm:p-5">
-        <SectionTitle icon={ScrollText} tone="gold" sub="Scrisă de AI din dovezile tale, capitol cu capitol">
+        <SectionTitle icon={ScrollText} tone="gold" sub="Un capitol nou la fiecare evoluție">
           Povestea lui {c.name || "Molt-ului tău"}
         </SectionTitle>
         {story.length === 0 ? (
-          <Empty icon={ScrollText} title="Povestea nu a început încă" action={<Button icon={Camera} onClick={() => onProof(null)}>Trimite prima dovadă</Button>}>
-            Fiecare dovadă adaugă un fragment nou: ce ai făcut tu devine aventura personajului.
+          <Empty icon={ScrollText} title="Povestea nu a început încă">
+            Primul capitol apare când oul se deschide. Bifează-ți obiceiurile și ai răbdare.
           </Empty>
         ) : (
           <ol className="relative space-y-4 border-l-2 border-dashed border-edge-hi pl-5">
-            {story.map((s) => {
-              const h = habitsById[s.habitId];
-              return (
-                <li key={s.id} className="relative">
-                  <span className={`absolute -left-[27px] top-1.5 h-3 w-3 rounded-sm ${s.type === "chapter" ? "bg-gold" : "bg-violet"}`} aria-hidden="true" />
-                  <div className="flex flex-wrap items-center gap-2 text-xs font-bold text-dim">
-                    <span className="font-extrabold text-gold-hi">{s.title || "Capitol"}</span>
-                    <span>· {relDay(s.day, today)}</span>
-                    {h && <Chip>{h.name}</Chip>}
-                    {s.type === "chapter" ? <Chip tone="gold">evoluție: {s.stage}</Chip> : <ProofBadge verdict={s.verdict} />}
-                  </div>
-                  <div className="mt-1.5 flex gap-3">
-                    {(s.assetId && s.type === "photo") || s.thumb ? (
-                      <AssetImage id={s.assetId} thumb={s.thumb} alt={`Dovada din ${fmtDay(s.day)}`} className="h-16 w-16 shrink-0 rounded-lg object-cover ring-1 ring-edge" loading="lazy" />
-                    ) : null}
-                    <p className="text-[15px] leading-relaxed text-ink">{s.story}</p>
-                  </div>
-                </li>
-              );
-            })}
+            {story.map((s) => (
+              <li key={s.id} className="relative">
+                <span className="absolute -left-[27px] top-1.5 h-3 w-3 rounded-sm bg-gold" aria-hidden="true" />
+                <div className="flex flex-wrap items-center gap-2 text-xs font-bold text-dim">
+                  <span className="font-extrabold text-gold-hi">{s.title || "Capitol"}</span>
+                  <span>· {relDay(s.day, today)}</span>
+                  {s.stage && <Chip tone="gold">evoluție: {s.stage}</Chip>}
+                </div>
+                <p className="mt-1.5 text-[15px] leading-relaxed text-ink">{s.story}</p>
+              </li>
+            ))}
           </ol>
         )}
         {canLoadMore && (

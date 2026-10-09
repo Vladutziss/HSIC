@@ -14,20 +14,22 @@ import {
   Loader2,
   ScrollText,
   Settings,
+  Timer,
   Users,
 } from "lucide-react";
 import { Bar, LevelBadge, Ring } from "./ui.jsx";
 import { Sprite, eggCrack } from "./Sprite.jsx";
 import { PATHS } from "../lib/catalog.js";
-import { parseHM } from "../lib/dates.js";
+import { fmt12, parseHM } from "../lib/dates.js";
 import { REVIVES_PER_MONTH } from "../lib/derive.js";
+import { c as tc } from "../lib/themes.js";
 
 export const NAV = [
   { id: "home", label: "Acasă", icon: House },
   { id: "habits", label: "Obiceiuri", icon: ScrollText },
   { id: "companion", label: "Molt", icon: Egg },
-  { id: "group", label: "Grup", icon: Users },
   { id: "plan", label: "Plan", icon: CalendarDays },
+  { id: "group", label: "Grup", icon: Users },
   { id: "stats", label: "Statistici", icon: ChartLine },
   { id: "settings", label: "Setări", icon: Settings },
 ];
@@ -78,12 +80,23 @@ function SaveIndicator({ mode, saveStatus }) {
   );
 }
 
-function Hud({ d, state, setView, unread, mode, saveStatus, now }) {
+function Hud({ d, state, setView, onReview, unread, mode, saveStatus, now }) {
   const { level, entry, streak, revive, scheduled, doneScheduled } = d;
   const reviewMin = parseHM(state.settings?.reviewTime || "21:00");
   const reviewed = !!state.reviews?.[d.today];
   const left = reviewMin - now;
-  const reviewText = reviewed ? "Raport gata" : left > 0 ? `Raport ${state.settings?.reviewTime}` : "E ora raportului";
+  // same as pressing "Generează raportul": go to the card on the home screen, bring it into view
+  // once it has rendered, and start the report unless today's is already written
+  const openReview = () => {
+    setView("home");
+    onReview?.();
+    setTimeout(() => {
+      const card = document.getElementById("review-card");
+      card?.scrollIntoView({ block: "center" });
+      document.getElementById("review-run")?.focus({ preventScroll: true });
+    }, 60);
+  };
+  const reviewText = reviewed ? "Raport gata" : left > 0 ? `Raport ${fmt12(state.settings?.reviewTime)}` : "E ora raportului";
   return (
     <header className="sticky top-0 z-30 border-b border-edge bg-night/85 backdrop-blur" style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}>
       <div className="mx-auto flex h-16 max-w-[1240px] items-center gap-2 px-3 sm:gap-3 sm:px-4 lg:px-8">
@@ -106,10 +119,10 @@ function Hud({ d, state, setView, unread, mode, saveStatus, now }) {
 
         <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
           <div
-            className="flex items-center gap-1.5 rounded-xl bg-[#120f29] px-2.5 py-1.5 ring-1 ring-edge"
+            className="flex items-center gap-1.5 rounded-xl bg-well px-2.5 py-1.5 ring-1 ring-edge"
             title={`Serie de ${streak.current} ${streak.current === 1 ? "zi" : "zile"} · ${revive.left === 1 ? "1 revive rămas" : `${revive.left} revive-uri rămase`} luna aceasta`}
           >
-            <Flame size={18} className={streak.todayDone ? "anim-flicker text-ember" : "text-faint"} fill={streak.todayDone ? "#ff7b47" : "none"} aria-hidden="true" />
+            <Flame size={18} className={streak.todayDone ? "anim-flicker text-ember" : "text-faint"} fill={streak.todayDone ? tc("ember") : "none"} aria-hidden="true" />
             <span className="font-pixel tabular text-lg leading-none text-ink">{streak.current}</span>
             <span className="sr-only">zile la rând</span>
             <span className="ml-1 hidden items-center gap-0.5 sm:flex" aria-label={`${revive.left} revive-uri rămase`}>
@@ -120,12 +133,12 @@ function Hud({ d, state, setView, unread, mode, saveStatus, now }) {
                   strokeWidth={2.5}
                   aria-hidden="true"
                   className={i < revive.left ? "text-mint" : "text-faint/60"}
-                  fill={i < revive.left ? "rgba(63,224,165,.35)" : "none"}
+                  fill={i < revive.left ? tc("mint", 0.35) : "none"}
                 />
               ))}
             </span>
           </div>
-          <button type="button" onClick={() => setView("home")} className="focus-ring hidden items-center gap-2 rounded-xl bg-[#120f29] px-2 py-1 ring-1 ring-edge sm:flex" title="Misiunile de azi">
+          <button type="button" onClick={() => setView("home")} className="focus-ring hidden items-center gap-2 rounded-xl bg-well px-2 py-1 ring-1 ring-edge sm:flex" title="Misiunile de azi">
             <Ring value={scheduled.length ? doneScheduled / scheduled.length : 0} size={30} stroke={4}>
               <span className="text-[9px] font-black text-ink">{doneScheduled}</span>
             </Ring>
@@ -133,13 +146,18 @@ function Hud({ d, state, setView, unread, mode, saveStatus, now }) {
               {doneScheduled}/{scheduled.length}
             </span>
           </button>
-          <span className="hidden items-center gap-1.5 rounded-xl bg-[#120f29] px-2.5 py-2 text-xs font-extrabold ring-1 ring-edge md:flex" title="Raportul zilei">
+          <button
+            type="button"
+            onClick={openReview}
+            className="focus-ring hidden items-center gap-1.5 rounded-xl bg-well px-2.5 py-2 text-xs font-extrabold ring-1 ring-edge transition hover:bg-panel-hi md:flex"
+            title="Deschide raportul zilei"
+          >
             <Clock size={14} className={reviewed ? "text-mint" : left <= 0 ? "text-gold" : "text-dim"} aria-hidden="true" />
             <span className={reviewed ? "text-mint" : left <= 0 ? "text-gold" : "text-body"}>{reviewText}</span>
-          </span>
+          </button>
           <button type="button" onClick={() => setView("group")} className="focus-ring relative grid h-9 w-9 place-items-center rounded-xl text-dim hover:bg-panel-hi hover:text-ink" aria-label={`Remindere${unread ? `: ${unread} necitite` : ""}`}>
             <Bell size={18} aria-hidden="true" />
-            {unread > 0 && <span className="absolute -right-0.5 -top-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-rose px-1 text-[10px] font-black text-white">{unread}</span>}
+            {unread > 0 && <span className="absolute -right-0.5 -top-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-rose px-1 text-[10px] font-black text-on-rose">{unread}</span>}
           </button>
           <SaveIndicator mode={mode} saveStatus={saveStatus} />
           <button type="button" onClick={() => setView("settings")} className="focus-ring grid h-9 w-9 place-items-center rounded-xl text-dim hover:bg-panel-hi hover:text-ink lg:hidden" aria-label="Setări">
@@ -151,7 +169,7 @@ function Hud({ d, state, setView, unread, mode, saveStatus, now }) {
   );
 }
 
-export function Shell({ view, setView, d, state, unread, mode, saveStatus, now, children }) {
+export function Shell({ view, setView, onReview, onFocus, d, state, unread, mode, saveStatus, now, children }) {
   const c = d.companion;
   const path = state.profile?.path || "sport";
   return (
@@ -165,11 +183,15 @@ export function Shell({ view, setView, d, state, unread, mode, saveStatus, now, 
               <button key={n.id} type="button" onClick={() => setView(n.id)} aria-current={view === n.id ? "page" : undefined} className="nav-item focus-ring">
                 <Icon size={19} strokeWidth={2.25} aria-hidden="true" />
                 <span>{n.label}</span>
-                {n.id === "group" && unread > 0 && <span className="ml-auto rounded-full bg-rose px-1.5 text-[11px] font-black text-white">{unread}</span>}
+                {n.id === "group" && unread > 0 && <span className="ml-auto rounded-full bg-rose px-1.5 text-[11px] font-black text-on-rose">{unread}</span>}
               </button>
             );
           })}
         </nav>
+        <button type="button" onClick={onFocus} className="nav-item focus-ring mt-4 ring-1 ring-edge">
+          <Timer size={19} strokeWidth={2.25} aria-hidden="true" />
+          <span>Focus</span>
+        </button>
         <button
           type="button"
           onClick={() => setView("companion")}
@@ -189,7 +211,7 @@ export function Shell({ view, setView, d, state, unread, mode, saveStatus, now, 
       </aside>
 
       <div className="lg:pl-64">
-        <Hud d={d} state={state} setView={setView} unread={unread} mode={mode} saveStatus={saveStatus} now={now} />
+        <Hud d={d} state={state} setView={setView} onReview={onReview} unread={unread} mode={mode} saveStatus={saveStatus} now={now} />
         <main className="mx-auto max-w-[1240px] px-3 pb-28 pt-5 sm:px-4 lg:px-8 lg:pb-12 lg:pt-7">{children}</main>
       </div>
 

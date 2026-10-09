@@ -10,7 +10,7 @@
 ## Backend (Supabase)
 
 - Aceeași sursă dă două build-uri: **web** (`npm run build`, Vite, în `apps/app`, `__SUPABASE__=true`, hosting pe Vercel) și **artifact** (`npm run build:artifact`, `__SUPABASE__=false`, fără supabase-js, rămâne demo fără sincronizare). Cod nou care atinge Supabase se ascunde în spatele `getClient()` din `apps/app/src/lib/supabase.js`.
-- Proiect Supabase `Momentum`, ref `ssisfijdypneapohbkak` (eu-west-2), în organizația „Duku's projects". Variabilele clientului (publice) sunt în `.env.local` (necomis; model în `.env.example`).
+- Proiect Supabase `Momentum`, ref `ldggxdgrmlhcfoherdlu` (eu-west-2), în organizația „Molted" (cont hsicmomentum@proton.me); proiectul vechi `ssisfijdypneapohbkak` e abandonat. Variabilele clientului (publice) sunt în `.env.local` (necomis; model în `.env.example`).
 - Schema: `supabase/migrations/000N_*.sql`, aplicate în ordine (în dashboard: SQL editor). Orice tabel nou primește RLS în aceeași migrare. După schimbări în DB rulează `supabase/tests/rls.sql` (într-o tranzacție cu rollback).
 - Starea aplicației ↔ rânduri: `apps/app/src/lib/remote.js` (funcții pure, testate în `apps/app/tests/remote.test.mjs`); `store.js` are modul `supabase` lângă `cloud`/`local`/`memory`.
 - AI: Edge Function `supabase/functions/ai` (OpenRouter). Secretele (`OPENROUTER_API_KEY`, `AI_MODEL`) se setează doar cu `supabase secrets set`, niciodată în repo sau în chat.

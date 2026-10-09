@@ -145,19 +145,26 @@ test("no revive for three missed days or when the month's revives are used", () 
   assert.equal(r.offer.affordable, false);
 });
 
-test("the companion hatches and evolves from proof points", () => {
+test("the companion hatches and evolves from check-ins, by difficulty", () => {
   assert.equal(stageFor(0).stage.id, "egg");
   assert.equal(stageFor(3).stage.id, "hatchling");
   assert.equal(stageFor(15).stage.id, "apprentice");
   assert.equal(stageFor(210).stage.id, "legend");
 
-  const codes = { "2026-10-04": { a: CODE.VERIFIED, b: CODE.PLAUSIBLE } };
-  const s = stateWith({ activeDays: ["2026-10-04"], codes, extra: { profile: { path: "studiu" } } });
+  // an easy habit is worth 1 point, a hard one 3
+  const habits = [habit("a", { diff: 1 }), habit("b", { diff: 3 })];
+  const s = stateWith({ habits, activeDays: ["2026-10-04"], extra: { profile: { path: "studiu" } } });
   const t = computeTimeline(s, TODAY);
   const c = companionInfo(s, t, TODAY);
-  assert.equal(c.ep, 5);
+  assert.equal(c.ep, 4);
+  assert.equal(c.checkins, 2);
   assert.equal(c.stage.id, "hatchling");
   assert.equal(c.path, "studiu");
+
+  // legacy values 2-5 (from the time check-ins carried proofs) count as plain check-ins
+  const old = stateWith({ habits, activeDays: ["2026-10-04"], codes: { "2026-10-04": { a: 4, b: 2 } } });
+  assert.equal(companionInfo(old, computeTimeline(old, TODAY), TODAY).ep, 4);
+  assert.equal(computeTimeline(old, TODAY).byDay["2026-10-04"].habitXp, 40);
 });
 
 test("the companion sleeps while the player is away and is happy on return", () => {

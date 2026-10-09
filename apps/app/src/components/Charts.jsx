@@ -17,16 +17,17 @@ import {
 } from "recharts";
 import { RO_DAYS_MIN, RO_MONTHS_SHORT, addDays, fmtDay, mondayOf, parseDay } from "../lib/dates.js";
 import { LEVELS } from "../lib/engine.js";
+import { c as tc, mix } from "../lib/themes.js";
 
-export const AXIS = { fill: "#9a91c9", fontSize: 11, fontWeight: 700, fontFamily: "Nunito, system-ui, sans-serif" };
-export const GRID = "#262052";
+export const AXIS = { fill: tc("dim"), fontSize: 11, fontWeight: 700, fontFamily: "Nunito, system-ui, sans-serif" };
+export const GRID = tc("edge", 0.7);
 
 export function ChartTip({ active, payload, label, format = {}, extra }) {
   if (!active || !payload?.length) return null;
   const rows = payload.filter((p) => p.value != null);
   if (!rows.length) return null;
   return (
-    <div className="rounded-xl border border-edge-hi bg-[#120f29]/95 px-3 py-2 text-xs shadow-xl">
+    <div className="rounded-xl border border-edge-hi bg-well/95 px-3 py-2 text-xs shadow-xl">
       <div className="mb-1 font-extrabold text-ink">{fmtDay(label)}</div>
       {rows.map((p) => (
         <div key={p.dataKey} className="flex items-center gap-2 font-semibold text-body">
@@ -39,7 +40,7 @@ export function ChartTip({ active, payload, label, format = {}, extra }) {
   );
 }
 
-export function Sparkline({ points, color = "#ffc542", width = 120, height = 34 }) {
+export function Sparkline({ points, color = tc("gold-ink"), width = 120, height = 34 }) {
   const vals = points.map((p) => p ?? 0);
   if (vals.length < 2) return <svg width={width} height={height} aria-hidden="true" />;
   const max = Math.max(1, ...vals);
@@ -50,7 +51,7 @@ export function Sparkline({ points, color = "#ffc542", width = 120, height = 34 
     <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} aria-hidden="true" className="overflow-visible">
       <polygon points={`0,${height} ${pts.join(" ")} ${width},${height}`} fill={color} opacity="0.14" />
       <polyline points={pts.join(" ")} fill="none" stroke={color} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
-      <circle cx={last[0]} cy={last[1]} r="3" fill={color} stroke="#1a1636" strokeWidth="1.5" />
+      <circle cx={last[0]} cy={last[1]} r="3" fill={color} stroke={tc("panel")} strokeWidth="1.5" />
     </svg>
   );
 }
@@ -73,8 +74,8 @@ export function MomentumChart({ days, height = 280 }) {
         <AreaChart data={data} margin={{ top: 12, right: 44, bottom: 0, left: -6 }}>
           <defs>
             <linearGradient id="momFill" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0" stopColor="#ffc542" stopOpacity="0.45" />
-              <stop offset="1" stopColor="#ffc542" stopOpacity="0.02" />
+              <stop offset="0" stopColor={tc("gold-ink")} stopOpacity="0.45" />
+              <stop offset="1" stopColor={tc("gold-ink")} stopOpacity="0.02" />
             </linearGradient>
           </defs>
           <CartesianGrid stroke={GRID} vertical={false} />
@@ -84,13 +85,13 @@ export function MomentumChart({ days, height = 280 }) {
             <ReferenceLine
               key={l.lvl}
               y={l.min}
-              stroke="#463c8c"
+              stroke={tc("edge-hi")}
               strokeDasharray="3 5"
-              label={{ value: `Nv ${l.lvl}`, position: "right", fill: "#9a91c9", fontSize: 10, fontWeight: 800 }}
+              label={{ value: `Nv ${l.lvl}`, position: "right", fill: tc("dim"), fontSize: 10, fontWeight: 800 }}
             />
           ))}
           <Tooltip
-            cursor={{ stroke: "#9a91c9", strokeDasharray: "3 3" }}
+            cursor={{ stroke: tc("dim"), strokeDasharray: "3 3" }}
             content={
               <ChartTip
                 format={{ momentum: (v, p) => `${v} (nivel ${p.level})` }}
@@ -103,9 +104,9 @@ export function MomentumChart({ days, height = 280 }) {
               />
             }
           />
-          <Area type="monotone" dataKey="momentum" name="Momentum" stroke="#ffc542" strokeWidth={2.5} fill="url(#momFill)" activeDot={{ r: 5, stroke: "#1a1636", strokeWidth: 2 }} />
+          <Area type="monotone" dataKey="momentum" name="Momentum" stroke={tc("gold-ink")} strokeWidth={2.5} fill="url(#momFill)" activeDot={{ r: 5, stroke: tc("panel"), strokeWidth: 2 }} />
           {resets.map((r) => (
-            <ReferenceDot key={r.day} x={r.day} y={0} r={6} fill="#ff5f87" stroke="#1a1636" strokeWidth={2} label={{ value: "reset", position: "top", fill: "#ff5f87", fontSize: 10, fontWeight: 800 }} />
+            <ReferenceDot key={r.day} x={r.day} y={0} r={6} fill={tc("rose")} stroke={tc("panel")} strokeWidth={2} label={{ value: "reset", position: "top", fill: tc("rose-ink"), fontSize: 10, fontWeight: 800 }} />
           ))}
         </AreaChart>
       </ResponsiveContainer>
@@ -130,9 +131,9 @@ export function HabitLines({ habits, series, days, height = 260 }) {
           <CartesianGrid stroke={GRID} vertical={false} />
           <XAxis dataKey="day" tick={AXIS} tickFormatter={tickDay} minTickGap={28} axisLine={{ stroke: GRID }} tickLine={false} />
           <YAxis tick={AXIS} axisLine={false} tickLine={false} width={44} />
-          <Tooltip cursor={{ stroke: "#9a91c9", strokeDasharray: "3 3" }} content={<ChartTip />} />
+          <Tooltip cursor={{ stroke: tc("dim"), strokeDasharray: "3 3" }} content={<ChartTip />} />
           {habits.map((h) => (
-            <Line key={h.id} type="monotone" dataKey={h.id} name={h.name} stroke={h.color} strokeWidth={2} dot={false} connectNulls={false} activeDot={{ r: 4, stroke: "#1a1636", strokeWidth: 2 }} />
+            <Line key={h.id} type="monotone" dataKey={h.id} name={h.name} stroke={h.color} strokeWidth={2} dot={false} connectNulls={false} activeDot={{ r: 4, stroke: tc("panel"), strokeWidth: 2 }} />
           ))}
         </LineChart>
       </ResponsiveContainer>
@@ -155,7 +156,7 @@ export function HabitArea({ points, color, height = 200 }) {
           <CartesianGrid stroke={GRID} vertical={false} />
           <XAxis dataKey="day" tick={AXIS} tickFormatter={tickDay} minTickGap={28} axisLine={{ stroke: GRID }} tickLine={false} />
           <YAxis tick={AXIS} axisLine={false} tickLine={false} width={40} />
-          <Tooltip content={<ChartTip />} cursor={{ stroke: "#9a91c9", strokeDasharray: "3 3" }} />
+          <Tooltip content={<ChartTip />} cursor={{ stroke: tc("dim"), strokeDasharray: "3 3" }} />
           <Area type="monotone" dataKey="m" name="Momentum" stroke={color} strokeWidth={2.5} fill="url(#habFill)" />
         </AreaChart>
       </ResponsiveContainer>
@@ -174,12 +175,12 @@ export function ScoreBars({ days, height = 200 }) {
           <XAxis dataKey="day" tick={AXIS} tickFormatter={tickDay} minTickGap={28} axisLine={{ stroke: GRID }} tickLine={false} />
           <YAxis tick={AXIS} domain={[0, 100]} ticks={[0, 50, 100]} axisLine={false} tickLine={false} width={40} />
           <Tooltip
-            cursor={{ fill: "rgba(143,107,255,0.08)" }}
+            cursor={{ fill: tc("violet", 0.1) }}
             content={<ChartTip format={{ score: (v, p) => `${v}${p.ai !== null ? ` · AI: ${p.ai}` : p.reviewed ? " · fără AI" : " · închisă automat"}` }} />}
           />
           <RBar dataKey="score" name="Scor" radius={[4, 4, 0, 0]}>
             {data.map((d) => (
-              <Cell key={d.day} fill={d.ai !== null ? "#8f6bff" : "#5a5296"} />
+              <Cell key={d.day} fill={d.ai !== null ? tc("violet-ink") : tc("mark")} />
             ))}
           </RBar>
         </BarChart>
@@ -189,7 +190,7 @@ export function ScoreBars({ days, height = 200 }) {
 }
 
 // Sequential ramp (one hue, dark → bright) for the activity heatmap.
-export const HEAT = ["#211c45", "#4a3c22", "#7a5a14", "#b07f0e", "#ffc542"];
+export const HEAT = [tc("panel-lo"), mix(tc("gold-ink"), 22, tc("well")), mix(tc("gold-ink"), 45, tc("well")), mix(tc("gold-ink"), 72, tc("well")), tc("gold-ink")];
 export const heatLevel = (score) => (score <= 0 ? 0 : score < 25 ? 1 : score < 50 ? 2 : score < 75 ? 3 : 4);
 
 /** A calendar heatmap: one column per week (Monday first), newest week on the right. */

@@ -63,35 +63,35 @@ const WEEKDAYS = [1, 2, 3, 4, 5];
 
 // diff: 1 = ușor, 2 = mediu, 3 = greu
 export const CATALOG = [
-  { id: "gym", cat: "sport", name: "Antrenament la sală", icon: "dumbbell", diff: 3, days: [1, 3, 5], time: "18:00", target: "45 de minute", proof: "o poză de la sală" },
-  { id: "run", cat: "sport", name: "Alergare", icon: "footprints", diff: 2, days: [2, 4, 6], time: "07:30", target: "3 km", proof: "captura traseului" },
-  { id: "steps", cat: "sport", name: "10.000 de pași", icon: "activity", diff: 1, days: EVERY_DAY, time: null, target: "10.000 de pași", proof: "captura din aplicația de pași" },
-  { id: "stretch", cat: "sport", name: "Stretching", icon: "person", diff: 1, days: EVERY_DAY, time: "08:00", target: "10 minute", proof: "o notă scurtă" },
-  { id: "pushups", cat: "sport", name: "Flotări și abdomene", icon: "flame", diff: 2, days: EVERY_DAY, time: null, target: "3 serii", proof: "o notă vocală" },
+  { id: "gym", cat: "sport", name: "Antrenament la sală", icon: "dumbbell", diff: 3, days: [1, 3, 5], time: "18:00", target: "45 de minute" },
+  { id: "run", cat: "sport", name: "Alergare", icon: "footprints", diff: 2, days: [2, 4, 6], time: "07:30", target: "3 km" },
+  { id: "steps", cat: "sport", name: "10.000 de pași", icon: "activity", diff: 1, days: EVERY_DAY, time: null, target: "10.000 de pași" },
+  { id: "stretch", cat: "sport", name: "Stretching", icon: "person", diff: 1, days: EVERY_DAY, time: "08:00", target: "10 minute" },
+  { id: "pushups", cat: "sport", name: "Flotări și abdomene", icon: "flame", diff: 2, days: EVERY_DAY, time: null, target: "3 serii" },
 
-  { id: "study", cat: "studiu", name: "Sesiune de studiu", icon: "graduation", diff: 3, days: WEEKDAYS, time: "17:00", target: "50 de minute fără telefon", proof: "o poză cu notițele" },
-  { id: "read", cat: "studiu", name: "Citit", icon: "book", diff: 1, days: EVERY_DAY, time: "22:00", target: "20 de pagini", proof: "o poză cu pagina" },
-  { id: "math", cat: "studiu", name: "Probleme de matematică", icon: "sigma", diff: 2, days: EVERY_DAY, time: null, target: "3 probleme rezolvate", proof: "o poză cu rezolvările" },
-  { id: "lang", cat: "studiu", name: "Limbă străină", icon: "languages", diff: 1, days: EVERY_DAY, time: null, target: "15 minute", proof: "o notă vocală" },
-  { id: "cards", cat: "studiu", name: "Recapitulare cu fișe", icon: "layers", diff: 1, days: EVERY_DAY, time: null, target: "20 de fișe", proof: "o notă scurtă" },
+  { id: "study", cat: "studiu", name: "Sesiune de studiu", icon: "graduation", diff: 3, days: WEEKDAYS, time: "17:00", target: "50 de minute fără telefon" },
+  { id: "read", cat: "studiu", name: "Citit", icon: "book", diff: 1, days: EVERY_DAY, time: "22:00", target: "20 de pagini" },
+  { id: "math", cat: "studiu", name: "Probleme de matematică", icon: "sigma", diff: 2, days: EVERY_DAY, time: null, target: "3 probleme rezolvate" },
+  { id: "lang", cat: "studiu", name: "Limbă străină", icon: "languages", diff: 1, days: EVERY_DAY, time: null, target: "15 minute" },
+  { id: "cards", cat: "studiu", name: "Recapitulare cu fișe", icon: "layers", diff: 1, days: EVERY_DAY, time: null, target: "20 de fișe" },
 
-  { id: "expenses", cat: "bani", name: "Notează cheltuielile", icon: "receipt", diff: 1, days: EVERY_DAY, time: "21:30", target: "toate cheltuielile zilei", proof: "captura bugetului" },
-  { id: "save", cat: "bani", name: "Pune bani deoparte", icon: "piggy", diff: 2, days: [1], time: null, target: "10% din venit", proof: "captura transferului" },
-  { id: "invest", cat: "bani", name: "Învață despre investiții", icon: "trending", diff: 1, days: [2, 4], time: null, target: "un articol sau un capitol", proof: "o notă cu ideea principală" },
-  { id: "project", cat: "bani", name: "Proiectul propriu", icon: "rocket", diff: 3, days: WEEKDAYS, time: "19:00", target: "o oră de lucru concentrat", proof: "o poză cu progresul" },
-  { id: "nobuy", cat: "bani", name: "Fără cumpărături impulsive", icon: "bag", diff: 1, days: EVERY_DAY, time: null, target: "nimic neplanificat", proof: "o notă scurtă" },
+  { id: "expenses", cat: "bani", name: "Notează cheltuielile", icon: "receipt", diff: 1, days: EVERY_DAY, time: "21:30", target: "toate cheltuielile zilei" },
+  { id: "save", cat: "bani", name: "Pune bani deoparte", icon: "piggy", diff: 2, days: [1], time: null, target: "10% din venit" },
+  { id: "invest", cat: "bani", name: "Învață despre investiții", icon: "trending", diff: 1, days: [2, 4], time: null, target: "un articol sau un capitol" },
+  { id: "project", cat: "bani", name: "Proiectul propriu", icon: "rocket", diff: 3, days: WEEKDAYS, time: "19:00", target: "o oră de lucru concentrat" },
+  { id: "nobuy", cat: "bani", name: "Fără cumpărături impulsive", icon: "bag", diff: 1, days: EVERY_DAY, time: null, target: "nimic neplanificat" },
 
-  { id: "meditate", cat: "minte", name: "Meditație", icon: "wind", diff: 1, days: EVERY_DAY, time: "07:00", target: "10 minute", proof: "o notă despre cum te simți" },
-  { id: "sleep", cat: "minte", name: "Somn la timp", icon: "moon", diff: 2, days: EVERY_DAY, time: "23:00", target: "în pat până la 23:00", proof: "o notă de dimineață" },
-  { id: "journal", cat: "minte", name: "Jurnal", icon: "notebook", diff: 1, days: EVERY_DAY, time: "22:30", target: "trei rânduri", proof: "o poză cu pagina" },
-  { id: "water", cat: "minte", name: "Hidratare", icon: "droplets", diff: 1, days: EVERY_DAY, time: null, target: "2 litri de apă", proof: "o poză cu sticla" },
-  { id: "nophone", cat: "minte", name: "Dimineață fără telefon", icon: "phoneoff", diff: 2, days: EVERY_DAY, time: "07:00", target: "prima oră după trezire", proof: "o notă scurtă" },
+  { id: "meditate", cat: "minte", name: "Meditație", icon: "wind", diff: 1, days: EVERY_DAY, time: "07:00", target: "10 minute" },
+  { id: "sleep", cat: "minte", name: "Somn la timp", icon: "moon", diff: 2, days: EVERY_DAY, time: "23:00", target: "în pat până la 23:00" },
+  { id: "journal", cat: "minte", name: "Jurnal", icon: "notebook", diff: 1, days: EVERY_DAY, time: "22:30", target: "trei rânduri" },
+  { id: "water", cat: "minte", name: "Hidratare", icon: "droplets", diff: 1, days: EVERY_DAY, time: null, target: "2 litri de apă" },
+  { id: "nophone", cat: "minte", name: "Dimineață fără telefon", icon: "phoneoff", diff: 2, days: EVERY_DAY, time: "07:00", target: "prima oră după trezire" },
 
-  { id: "draw", cat: "creativ", name: "Desen", icon: "brush", diff: 2, days: EVERY_DAY, time: null, target: "30 de minute", proof: "o poză cu schița" },
-  { id: "music", cat: "creativ", name: "Exersează la instrument", icon: "music", diff: 2, days: EVERY_DAY, time: "20:00", target: "30 de minute", proof: "o notă vocală" },
-  { id: "write", cat: "creativ", name: "Scris creativ", icon: "feather", diff: 2, days: EVERY_DAY, time: null, target: "300 de cuvinte", proof: "o poză cu textul" },
-  { id: "photo", cat: "creativ", name: "Fotografie", icon: "camera", diff: 1, days: [0, 6], time: null, target: "o fotografie bună", proof: "fotografia" },
-  { id: "craft", cat: "creativ", name: "Proiect creativ", icon: "lightbulb", diff: 3, days: [6], time: "11:00", target: "două ore", proof: "o poză cu rezultatul" },
+  { id: "draw", cat: "creativ", name: "Desen", icon: "brush", diff: 2, days: EVERY_DAY, time: null, target: "30 de minute" },
+  { id: "music", cat: "creativ", name: "Exersează la instrument", icon: "music", diff: 2, days: EVERY_DAY, time: "20:00", target: "30 de minute" },
+  { id: "write", cat: "creativ", name: "Scris creativ", icon: "feather", diff: 2, days: EVERY_DAY, time: null, target: "300 de cuvinte" },
+  { id: "photo", cat: "creativ", name: "Fotografie", icon: "camera", diff: 1, days: [0, 6], time: null, target: "o fotografie bună" },
+  { id: "craft", cat: "creativ", name: "Proiect creativ", icon: "lightbulb", diff: 3, days: [6], time: "11:00", target: "două ore" },
 ];
 
 export const RECOMMENDED = {
@@ -132,7 +132,6 @@ export function habitFromCatalog(item, habits, today) {
     days: [...item.days],
     time: item.time,
     target: item.target,
-    proofHint: item.proof,
     color: nextColor(habits),
     createdAt: today,
   };

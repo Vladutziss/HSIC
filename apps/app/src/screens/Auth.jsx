@@ -27,7 +27,7 @@ function Captcha({ onToken, resetKey }) {
       if (dead || !box.current || !window.turnstile) return;
       id.current = window.turnstile.render(box.current, {
         sitekey: SITE_KEY,
-        theme: "dark",
+        theme: document.documentElement.dataset.mode === "light" ? "light" : "dark",
         callback: onToken,
         "expired-callback": () => onToken(""),
         "error-callback": () => onToken(""),
@@ -203,10 +203,10 @@ function SignIn({ client }) {
         </div>
 
         <div className="flex gap-4 text-xs font-bold text-faint">
-          <a className="focus-ring underline" href="privacy.html">
+          <a className="focus-ring underline" href="https://molted.eu/privacy.html">
             Confidențialitate
           </a>
-          <a className="focus-ring underline" href="terms.html">
+          <a className="focus-ring underline" href="https://molted.eu/terms.html">
             Termeni
           </a>
         </div>

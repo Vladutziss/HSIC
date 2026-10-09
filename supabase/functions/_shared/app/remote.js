@@ -3,7 +3,7 @@
 // into table rows and back:
 //
 //   toRows / fromRows           state          <-> profiles, habits, completions, todos, day_reviews, streak_revives
-//   monthToRows / rowsToMonth   month document <-> proofs, chapters, day_reviews (text part)
+//   monthToRows / rowsToMonth   month document <-> chapters, day_reviews (text part)
 //   diff / diffMonth            old doc + new doc -> the minimal list of writes
 //
 // Pure functions first (tested in tests/remote.test.mjs), then the thin part
@@ -21,11 +21,10 @@ const SPEC = {
   todos: { pk: ["id"], conflict: "id" },
   day_reviews: { pk: ["user_id", "day"], conflict: "user_id,day" },
   streak_revives: { pk: ["user_id", "missed_day"], conflict: "user_id,missed_day" },
-  proofs: { pk: ["id"], conflict: "id" },
   chapters: { pk: ["id"], conflict: "id" },
 };
-const UPSERT_ORDER = ["habits", "completions", "todos", "day_reviews", "streak_revives", "proofs", "chapters"];
-const DELETE_ORDER = ["completions", "day_reviews", "streak_revives", "todos", "proofs", "chapters", "habits"];
+const UPSERT_ORDER = ["habits", "completions", "todos", "day_reviews", "streak_revives", "chapters"];
+const DELETE_ORDER = ["completions", "day_reviews", "streak_revives", "todos", "chapters", "habits"];
 
 const keyOf = (table, row) => SPEC[table].pk.map((c) => row[c]).join("|");
 
@@ -74,7 +73,6 @@ export function toRows(state, uid) {
       cat: nul(h.cat),
       color: nul(h.color),
       catalog_id: nul(h.catalogId),
-      proof_hint: nul(h.proofHint),
       created_at: nul(h.createdAt),
       archived_at: nul(h.archivedAt),
       sort: i,
@@ -89,6 +87,8 @@ export function toRows(state, uid) {
       dur: t.dur ?? 30,
       done: !!t.done,
       done_on: nul(t.doneOn),
+      repeat: nul(t.repeat),
+      done_days: t.repeat ? t.doneDays || [] : [],
       created_at: nul(t.createdAt),
     })),
     // the numeric part of a day review; its text comes with the month document
@@ -134,7 +134,6 @@ export function fromRows(rows) {
         days: h.days || [],
         time: h.time,
         target: h.target,
-        proofHint: h.proof_hint,
         color: h.color,
         createdAt: h.created_at,
         archivedAt: h.archived_at,
@@ -149,6 +148,7 @@ export function fromRows(rows) {
       dur: t.dur,
       done: t.done,
       doneOn: t.done_on,
+      ...(t.repeat ? { repeat: t.repeat, doneDays: t.done_days || [] } : {}),
       createdAt: t.created_at,
     })),
     streak: { revived },
@@ -165,23 +165,6 @@ export function fromRows(rows) {
 export function monthToRows(doc, uid) {
   const d = doc || {};
   return {
-    proofs: (d.proofs || []).map((p) => ({
-      id: p.id,
-      user_id: uid,
-      habit_id: nul(p.habitId),
-      day: p.day,
-      type: p.type,
-      note: nul(p.note),
-      verdict: nul(p.verdict),
-      reason: nul(p.reason),
-      title: nul(p.title),
-      story: nul(p.story),
-      ai: !!p.ai,
-      at: nul(p.at),
-      asset_path: nul(p.assetId),
-      thumb: nul(p.thumb),
-      seconds: nul(p.seconds),
-    })),
     chapters: (d.chapters || []).map((c) => ({
       id: c.id,
       user_id: uid,
@@ -209,28 +192,10 @@ export function rowsToMonth(rows) {
     if (r.summary == null && r.highlight == null && r.tip == null) continue;
     reviews[r.day] = { summary: r.summary, highlight: r.highlight, tip: r.tip, ai: r.ai, score: r.ai_score };
   }
-  const proofs = (rows.proofs || [])
-    .map((p) => ({
-      id: p.id,
-      day: p.day,
-      habitId: p.habit_id,
-      type: p.type,
-      note: p.note,
-      verdict: p.verdict,
-      reason: p.reason,
-      title: p.title,
-      story: p.story,
-      ai: p.ai,
-      at: p.at,
-      assetId: p.asset_path,
-      thumb: p.thumb,
-      seconds: p.seconds,
-    }))
-    .sort((a, b) => (a.at < b.at ? -1 : a.at > b.at ? 1 : 0));
   const chapters = (rows.chapters || [])
     .map((c) => ({ id: c.id, type: "chapter", day: c.day, at: c.at, stage: c.stage, title: c.title, story: c.story, ai: c.ai }))
     .sort((a, b) => (a.at < b.at ? -1 : a.at > b.at ? 1 : 0));
-  return { proofs, chapters, reviews };
+  return { chapters, reviews };
 }
 
 /** [first day, first day of next month) for a "YYYY-MM" key. */
@@ -300,7 +265,7 @@ export function diff(prev, next, uid) {
 export function diffMonth(prev, next, uid) {
   const a = prev ? monthToRows(prev, uid) : {};
   const b = next ? monthToRows(next, uid) : {};
-  const { upserts, deletes } = diffTables(a, b, ["proofs", "chapters", "day_reviews"]);
+  const { upserts, deletes } = diffTables(a, b, ["chapters", "day_reviews"]);
   // a removed review text clears the text columns; the score row stays with the state
   const cleared = (deletes.day_reviews || []).map((r) => ({ user_id: r.user_id, day: r.day, summary: null, highlight: null, tip: null, ai: false }));
   delete deletes.day_reviews;
@@ -345,13 +310,12 @@ export async function loadState(client, uid) {
 export async function loadMonth(client, uid, ym) {
   const [from, to] = monthRange(ym);
   const inMonth = (t, cols) => client.from(t).select(cols).gte("day", from).lt("day", to).then(must);
-  const [proofs, chapters, day_reviews] = await Promise.all([
-    inMonth("proofs", "*"),
+  const [chapters, day_reviews] = await Promise.all([
     inMonth("chapters", "*"),
     inMonth("day_reviews", "day, ai_score, summary, highlight, tip, ai"),
   ]);
-  const doc = rowsToMonth({ proofs, chapters, day_reviews });
-  return doc.proofs.length || doc.chapters.length || Object.keys(doc.reviews).length ? doc : null;
+  const doc = rowsToMonth({ chapters, day_reviews });
+  return doc.chapters.length || Object.keys(doc.reviews).length ? doc : null;
 }
 
 export { TABLES };
