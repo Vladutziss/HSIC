@@ -47,7 +47,7 @@ Ca să folosească grupurile, prietenii trebuie să poată deschide și edita ap
 
 ```
 apps/app/src/lib/engine.js    regulile jocului (momentum, niveluri, reset, serii, revive-uri, evoluție, stări)
-apps/app/src/lib/sprites.js   pixel art procedural pentru personaj
+packages/ui/sprites.js        pixel art procedural pentru personaj (folosit de aplicație și de landing)
 apps/app/src/lib/ai.js        prompturi pentru poveste, raport și momente + variante scrise
 apps/app/src/lib/store.js     salvare în baza de date a aplicației sau local
 apps/app/src/lib/groups.js    grupuri, clasament, remindere, grup demonstrativ
