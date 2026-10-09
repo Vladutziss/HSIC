@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>Molted: obiceiuri care cresc un personaj</title>
-    <meta name="description" content="Molted transformă obiceiurile zilnice într-un joc: bifezi, trimiți dovezi, câștigi momentum, iar Molt, personajul tău, evoluează. Joacă și în grup, cu rapoarte AI." />
+    <meta name="description" content="Molted transformă obiceiurile zilnice într-un joc: bifezi, câștigi momentum, iar Molt, personajul tău, evoluează. Joacă și în grup, cu rapoarte AI." />
     <link rel="canonical" href="https://www.molted.eu/" />
     <meta name="theme-color" content="#0c0a1d" />
     <meta property="og:type" content="website" />
@@ -23,11 +23,11 @@
     <meta name="twitter:image" content="https://www.molted.eu/og.png" />
     <script type="application/ld+json">
       {"@context":"https://schema.org","@graph":[
-        {"@type":"WebApplication","name":"Molted","url":"https://app.molted.eu","description":"Aplicație de obiceiuri gamificată: momentum, dovezi verificate de AI, un personaj care evoluează, grupuri și clasament.","applicationCategory":"LifestyleApplication","operatingSystem":"Web","inLanguage":"ro"},
+        {"@type":"WebApplication","name":"Molted","url":"https://app.molted.eu","description":"Aplicație de obiceiuri gamificată: momentum, un personaj care evoluează, planificator, grupuri, clasament și rapoarte AI.","applicationCategory":"LifestyleApplication","operatingSystem":"Web","inLanguage":"ro"},
         {"@type":"FAQPage","mainEntity":[
           {"@type":"Question","name":"De unde primesc personajul?","acceptedAnswer":{"@type":"Answer","text":"La început primești un ou. Drumul pe care îl alegi (Sport, Studiu, Bani, Minte sau Creativitate) decide ce creatură iese din el: Atlet, Cărturar, Negustor, Înțelept sau Bard."}},
           {"@type":"Question","name":"Ce se întâmplă dacă ratez zile?","acceptedAnswer":{"@type":"Answer","text":"Personajul nu moare, doar doarme cât lipsești. O zi ratată scade puțin momentum-ul, iar după 3 zile la rând fără activitate (poți alege între 2 și 5) revine la zero. Seria poate fi salvată cu 2 revive-uri pe lună."}},
-          {"@type":"Question","name":"Ce dovezi pot trimite?","acceptedAnswer":{"@type":"Answer","text":"Poze, note vocale sau text. AI-ul dă fiecărei dovezi un verdict (verificată, plauzibilă sau respinsă) și scrie un fragment din povestea personajului."}},
+          {"@type":"Question","name":"Ce face AI-ul?","acceptedAnswer":{"@type":"Answer","text":"Seara scrie raportul zilei și îi dă un scor, iar la fiecare evoluție scrie un capitol nou din povestea lui Molt."}},
           {"@type":"Question","name":"Cum funcționează grupurile?","acceptedAnswer":{"@type":"Answer","text":"Creezi un grup sau un partener de progres și primești un cod de invitație de 6 caractere. Membrii apar într-un clasament săptămânal și își pot trimite remindere."}},
           {"@type":"Question","name":"Trebuie să instalez ceva?","acceptedAnswer":{"@type":"Answer","text":"Nu. Molted este o aplicație web: o deschizi în browser, la app.molted.eu."}}
         ]}
@@ -61,7 +61,7 @@
           <p class="font-pixel text-sm uppercase tracking-widest text-violet-hi">Obiceiuri · momentum · un personaj</p>
           <h1 id="titlu" class="font-pixel mt-4 text-4xl font-bold leading-tight text-ink sm:text-5xl">Obiceiuri care cresc un personaj</h1>
           <p class="mt-5 max-w-xl text-lg">
-            Îți bifezi obiceiurile, câștigi momentum și ții serii. Din oul tău iese Molt, care evoluează doar din dovezile pe care le trimiți, doarme când lipsești și se bucură când revii.
+            Îți bifezi obiceiurile, câștigi momentum și ții serii. Din oul tău iese Molt, care evoluează din fiecare bifă, doarme când lipsești și se bucură când revii.
           </p>
           <div class="mt-8 flex flex-wrap items-center gap-4">
             <a href="https://app.molted.eu" class="btn">Deschide aplicația</a>
@@ -87,7 +87,7 @@
             <p class="step">1</p>
             <h3 class="font-pixel text-2xl font-bold text-ink">Obiceiuri și momentum</h3>
             <p class="mt-3">
-              Alegi obiceiuri din catalog sau îți faci unele proprii, cu zile, oră și țintă. Le bifezi, iar pentru cele care contează trimiți o dovadă: o poză, o notă vocală sau câteva rânduri. Fiecare bifă aduce momentum, cu un bonus pentru zilele la rând.
+              Alegi obiceiuri din catalog sau îți faci unele proprii, cu zile, oră și țintă. Le bifezi, iar to-do-urile, inclusiv cele care se repetă, le pui în planificator. Fiecare bifă aduce momentum, cu un bonus pentru zilele la rând.
             </p>
             <ul class="mt-4 space-y-2 text-sm">
               <li class="tick">25 de obiceiuri gata făcute, pe 5 drumuri: Sport, Studiu, Bani, Minte, Creativitate.</li>
@@ -98,7 +98,7 @@
           <figure class="mock" aria-label="Exemplu ilustrativ: obiceiuri bifate">
             <figcaption class="mock-tag">exemplu</figcaption>
             <ul class="space-y-2">
-              <li class="row"><span class="check on" aria-hidden="true"></span><span class="grow">Alergare 20 de minute</span><span class="chip chip-mint">dovadă verificată</span></li>
+              <li class="row"><span class="check on" aria-hidden="true"></span><span class="grow">Alergare 20 de minute</span><span class="chip chip-mint">bifat</span></li>
               <li class="row"><span class="check on" aria-hidden="true"></span><span class="grow">Citit 15 pagini</span><span class="chip chip-violet">bifat</span></li>
               <li class="row"><span class="check" aria-hidden="true"></span><span class="grow text-dim">Meditație 10 minute</span><span class="chip chip-dim">în așteptare</span></li>
             </ul>
@@ -115,7 +115,7 @@
             <p class="step">2</p>
             <h3 class="font-pixel text-2xl font-bold text-ink">Un personaj care evoluează</h3>
             <p class="mt-3">
-              Primești un ou. Drumul ales decide cine iese din el: un Atlet, un Cărturar, un Negustor, un Înțelept sau un Bard. Molt evoluează doar din dovezile tale și primește echipament nou la fiecare stadiu.
+              Primești un ou. Drumul ales decide cine iese din el: un Atlet, un Cărturar, un Negustor, un Înțelept sau un Bard. Molt evoluează din bifele tale (obiceiurile grele contează mai mult) și primește echipament nou la fiecare stadiu.
             </p>
             <p class="mt-3">
               Nu moare niciodată. Dacă lipsești, doarme. În ziua în care revii, sare de bucurie.
@@ -171,18 +171,15 @@
             <p class="step">4</p>
             <h3 class="font-pixel text-2xl font-bold text-ink">Rapoarte AI</h3>
             <p class="mt-3">
-              AI-ul verifică dovezile și dă fiecăreia un verdict: verificată, plauzibilă sau respinsă. La ora pe care o alegi, scrie raportul zilei și îi dă un scor. Scorul combină bifele (60%) cu evaluarea AI (40%), iar o parte din el devine momentum. Fiecare dovadă adaugă și un fragment din povestea personajului tău.
+              La ora pe care o alegi, AI-ul scrie raportul zilei și îi dă un scor. Scorul combină bifele (60%) cu evaluarea AI (40%), iar o parte din el devine momentum. La fiecare evoluție, AI-ul scrie și un capitol nou din povestea personajului tău.
             </p>
           </div>
           <figure class="mock md:order-1" aria-label="Exemplu ilustrativ: raportul zilei">
             <figcaption class="mock-tag">exemplu</figcaption>
             <p class="text-xs font-bold uppercase tracking-wider text-dim">Raportul zilei</p>
-            <p class="mt-2 text-sm">Ai bifat obiceiurile planificate și ai trimis dovezi pentru cele importante. Seara e momentul să te oprești: mâine continui de unde ai rămas.</p>
-            <div class="mt-4 grid grid-cols-3 gap-2 text-center text-xs font-bold">
-              <span class="chip chip-mint justify-center">verificată</span>
-              <span class="chip chip-violet justify-center">plauzibilă</span>
-              <span class="chip chip-rose justify-center">respinsă</span>
-            </div>
+            <p class="mt-2 text-sm">Ai bifat aproape tot ce ți-ai planificat. Seara e momentul să te oprești: mâine continui de unde ai rămas.</p>
+            <div class="mt-4 flex items-baseline justify-between text-xs font-bold text-dim"><span>Scorul zilei</span><span class="font-pixel text-base text-gold">82</span></div>
+            <div class="bar" aria-hidden="true"><span style="width: 82%"></span></div>
           </figure>
         </div>
       </section>
@@ -200,8 +197,8 @@
             <p>Personajul nu moare, doar doarme cât lipsești. O zi ratată scade puțin momentum-ul, iar după 3 zile la rând fără activitate (poți alege între 2 și 5) revine la zero. Seria poate fi salvată cu 2 revive-uri pe lună.</p>
           </details>
           <details class="faq">
-            <summary>Ce dovezi pot trimite?</summary>
-            <p>Poze, note vocale sau text. AI-ul dă fiecărei dovezi un verdict (verificată, plauzibilă sau respinsă) și scrie un fragment din povestea personajului.</p>
+            <summary>Ce face AI-ul?</summary>
+            <p>Seara scrie raportul zilei și îi dă un scor, iar la fiecare evoluție scrie un capitol nou din povestea lui Molt.</p>
           </details>
           <details class="faq">
             <summary>Cum funcționează grupurile?</summary>
