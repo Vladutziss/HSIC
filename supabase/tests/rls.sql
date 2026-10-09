@@ -1,33 +1,28 @@
 -- Row level security checks. Plain SQL, runs in one transaction that is rolled back:
 --   * Supabase dashboard -> SQL editor: paste and run
 --   * local:  psql "$DATABASE_URL" -f supabase/tests/rls.sql
+-- (ids are Clerk-style text; the JWT `sub` claim is what requesting_user_id() reads)
 -- It raises an exception naming the first leak it finds; success ends with NOTICE 'RLS checks passed'.
 
 begin;
 
-insert into auth.users (id, instance_id, aud, role, email, raw_user_meta_data, created_at, updated_at) values
-  ('aaaaaaaa-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'rls-a@test.local', '{"name":"Ana"}', now(), now()),
-  ('bbbbbbbb-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'rls-b@test.local', '{"name":"Bob"}', now(), now()),
-  ('cccccccc-0000-0000-0000-000000000003', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'rls-c@test.local', '{"name":"Cris"}', now(), now());
+-- Clerk ids are text; profiles are created by ensure_profile() on first sign-in, here inserted directly
+insert into public.profiles (id, name) values ('user_aaa', 'Ana'), ('user_bbb', 'Bob'), ('user_ccc', 'Cris');
 
 do $$
 declare
-  a constant text := '{"sub":"aaaaaaaa-0000-0000-0000-000000000001","role":"authenticated"}';
-  b constant text := '{"sub":"bbbbbbbb-0000-0000-0000-000000000002","role":"authenticated"}';
-  c constant text := '{"sub":"cccccccc-0000-0000-0000-000000000003","role":"authenticated"}';
-  ida constant uuid := 'aaaaaaaa-0000-0000-0000-000000000001';
-  idb constant uuid := 'bbbbbbbb-0000-0000-0000-000000000002';
-  idc constant uuid := 'cccccccc-0000-0000-0000-000000000003';
+  a constant text := '{"sub":"user_aaa","role":"authenticated"}';
+  b constant text := '{"sub":"user_bbb","role":"authenticated"}';
+  c constant text := '{"sub":"user_ccc","role":"authenticated"}';
+  ida constant text := 'user_aaa';
+  idb constant text := 'user_bbb';
+  idc constant text := 'user_ccc';
   n int;
   gid text;
   gcode text;
   blocked boolean;
   ok boolean;
 begin
-  -- the signup trigger created a profile row for each user
-  select count(*) into n from public.profiles where id in (ida, idb, idc);
-  if n <> 3 then raise exception 'signup trigger: expected 3 profiles, got %', n; end if;
-
   -- ---- A writes her own data
   perform set_config('request.jwt.claims', a, true);
   set local role authenticated;
@@ -181,7 +176,7 @@ begin
   set local role authenticated;
   blocked := false;
   begin
-    insert into storage.objects (bucket_id, name, owner_id) values ('proofs', ida || '/p1.jpg', ida::text);
+    insert into storage.objects (bucket_id, name, owner_id) values ('proofs', ida || '/p1.jpg', ida);
   exception when insufficient_privilege then blocked := true;
   end;
   if not blocked then raise exception 'LEAK: A can still store files in the proofs bucket'; end if;

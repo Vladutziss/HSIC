@@ -22,8 +22,7 @@ async function serverClient() {
   if (inViewer()) return null;
   const client = await getClient();
   if (!client) return null;
-  const { data } = await client.auth.getSession();
-  return data.session ? client : null;
+  return window.Clerk?.session ? client : null;
 }
 
 async function askServer(client, kind, params, signal) {
