@@ -129,11 +129,10 @@ export function useAppStore() {
 
     // Supabase: the normal web build. Rows in Postgres, synced between devices.
     const useSupabase = async (client) => {
-      const { data } = await client.auth.getSession();
-      const authUser = data.session?.user;
+      const authUser = window.Clerk?.user;
       if (!authUser) return useLocal();
       const uid = authUser.id;
-      const meta = authUser.user_metadata || {};
+      const fullName = authUser.fullName || "";
       const e = {
         kind: "supabase",
         client,
@@ -143,7 +142,7 @@ export function useAppStore() {
         monthSaved: {}, // month documents as last read from / written to the database
         data: null,
         saved: null, // the state the database holds, for diffing
-        user: { id: async () => uid, name: async () => meta.full_name || meta.name || "" },
+        user: { id: async () => uid, name: async () => fullName },
       };
       e.stateWriter = makeWriter(async (doc) => {
         await remote.applyOps(client, remote.diff(e.saved, doc, uid));
@@ -152,6 +151,8 @@ export function useAppStore() {
 
       let first;
       try {
+        const { error: profileError } = await client.rpc("ensure_profile", { pname: fullName, pavatar: authUser.imageUrl || null });
+        if (profileError) throw profileError;
         first = await remote.loadState(client, uid);
       } catch {
         setSaveStatus("error");

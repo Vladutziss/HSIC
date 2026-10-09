@@ -1,12 +1,9 @@
-// Account actions for the Supabase build: sign out, export, delete.
-
-import { getClient } from "./supabase.js";
+// Account actions for the web build: sign out, export, delete. The session is Clerk's.
 
 const TABLES = ["profiles", "habits", "completions", "day_reviews", "todos", "chapters", "streak_revives"];
 
 export async function signOut() {
-  const client = await getClient();
-  await client?.auth.signOut();
+  await window.Clerk?.signOut();
 }
 
 /** Everything the database holds about the signed-in user, as one JSON-able object. */
@@ -21,10 +18,10 @@ export async function exportData(env) {
   return out;
 }
 
-/** Removes the account and (by cascade) every row. */
+/** Removes every row (by cascade from the profile), then the Clerk user. */
 export async function deleteAccount(env) {
   const e = env.current;
   const { error } = await e.client.rpc("delete_my_account");
   if (error) throw error;
-  await e.client.auth.signOut();
+  await window.Clerk?.user?.delete();
 }
