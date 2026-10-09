@@ -21,5 +21,5 @@ test("buildStats matches the engine and survives JSON", () => {
   assert.equal(s.bestMomentum, t.bestMomentum);
   assert.deepEqual(s.streak, streakInfo(state, TODAY));
   assert.equal(s.checkins, 3);
-  assert.equal(s.evidence.verified, 1);
+  assert.deepEqual(s.evolution, { ep: 6, checkins: 3 }); // three check-ins of a medium habit
 });

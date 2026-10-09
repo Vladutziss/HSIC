@@ -34,7 +34,7 @@ begin
   insert into public.habits (id, user_id, name) values ('h-a', ida, 'Alergare');
   insert into public.completions (user_id, habit_id, day, code) values (ida, 'h-a', '2026-10-05', 1);
   insert into public.todos (id, user_id, title) values ('t-a', ida, 'Cumpărături');
-  insert into public.proofs (id, user_id, habit_id, day, type) values ('p-a', ida, 'h-a', '2026-10-05', 'note');
+  insert into public.chapters (id, user_id, day, title, story) values ('c-a', ida, '2026-10-05', 'Capitol', 'Poveste');
   update public.profiles set onboarded = true, name = 'Ana' where id = ida;
   select count(*) into n from public.habits;
   if n <> 1 then raise exception 'A should see her own habit, saw %', n; end if;
@@ -43,7 +43,7 @@ begin
   -- ---- B sees nothing of A's, and cannot write into A's data
   perform set_config('request.jwt.claims', b, true);
   set local role authenticated;
-  foreach gid in array array['habits', 'completions', 'todos', 'proofs', 'day_reviews', 'chapters', 'streak_revives'] loop
+  foreach gid in array array['habits', 'completions', 'todos', 'day_reviews', 'chapters', 'streak_revives'] loop
     execute format('select count(*) from public.%I', gid) into n;
     if n <> 0 then raise exception 'LEAK: B reads % rows of A in %', n, gid; end if;
   end loop;
@@ -176,22 +176,15 @@ begin
   if not blocked and n <> 0 then raise exception 'LEAK: user reset their own AI counter'; end if;
   reset role;
 
-  -- ---- storage: files only inside the owner's folder
+  -- ---- storage: the proofs bucket is closed to signed-in users (0007 dropped its policies)
   perform set_config('request.jwt.claims', a, true);
   set local role authenticated;
-  insert into storage.objects (bucket_id, name, owner_id) values ('proofs', ida || '/p1.jpg', ida::text);
   blocked := false;
   begin
-    insert into storage.objects (bucket_id, name, owner_id) values ('proofs', idb || '/p2.jpg', ida::text);
+    insert into storage.objects (bucket_id, name, owner_id) values ('proofs', ida || '/p1.jpg', ida::text);
   exception when insufficient_privilege then blocked := true;
   end;
-  if not blocked then raise exception 'LEAK: A stored a file in B''s folder'; end if;
-  reset role;
-
-  perform set_config('request.jwt.claims', b, true);
-  set local role authenticated;
-  select count(*) into n from storage.objects where bucket_id = 'proofs';
-  if n <> 0 then raise exception 'LEAK: B sees A''s proof files'; end if;
+  if not blocked then raise exception 'LEAK: A can still store files in the proofs bucket'; end if;
   reset role;
 
   raise notice 'RLS checks passed';

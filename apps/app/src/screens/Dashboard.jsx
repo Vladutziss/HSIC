@@ -1,5 +1,5 @@
 import React from "react";
-import { AlertTriangle, CalendarCheck, Flame, FlaskConical, Gift, Plus, Swords, TrendingUp, Zap } from "lucide-react";
+import { AlertTriangle, CalendarCheck, Flame, FlaskConical, Gift, Plus, Swords, Timer, TrendingUp, Zap } from "lucide-react";
 import { Bar, Button, Chip, LevelBadge, Panel, SectionTitle } from "../components/ui.jsx";
 import { CompanionCard, GroupMini, QuestCard, ReviewCard, TodayTodos } from "../components/Cards.jsx";
 import { fmtDay, fmtLong } from "../lib/dates.js";
@@ -13,7 +13,7 @@ function greeting() {
   return "Bună seara";
 }
 
-function Hero({ state, d, today }) {
+function Hero({ state, d, today, onFocus }) {
   const { level, entry, week, streak } = d;
   const nick = state.profile?.nick || "aventurierule";
   const left = d.scheduled.length - d.doneScheduled;
@@ -22,7 +22,7 @@ function Hero({ state, d, today }) {
       ? "Azi nu ai misiuni programate. Poți face oricare obicei ca bonus."
       : left === 0
         ? "Toate misiunile de azi sunt gata. Cufărul zilei e deschis!"
-        : `Mai ai ${left} ${left === 1 ? "misiune" : "misiuni"} azi. ${d.companion.stage.id === "egg" ? "Prima dovadă îți încălzește oul." : "Fiecare dovadă îl ajută pe " + (d.companion.name || "personajul tău") + " să crească."}`;
+        : `Mai ai ${left} ${left === 1 ? "misiune" : "misiuni"} azi. ${d.companion.stage.id === "egg" ? "Prima bifă îți încălzește oul." : "Fiecare bifă îl ajută pe " + (d.companion.name || "personajul tău") + " să crească."}`;
   return (
     <Panel tone="gold" corners className="overflow-hidden p-5 sm:p-6">
       <div className="pointer-events-none absolute -right-16 -top-24 h-64 w-64 rounded-full bg-gold/10 blur-3xl" aria-hidden="true" />
@@ -33,6 +33,9 @@ function Hero({ state, d, today }) {
             {greeting()}, {nick}!
           </h1>
           <p className="mt-2 max-w-xl text-sm font-semibold leading-relaxed text-body">{sub}</p>
+          <Button variant="violet" size="sm" icon={Timer} className="mt-3" onClick={onFocus}>
+            Focus
+          </Button>
         </div>
         <div className="flex w-full items-center gap-4 sm:w-auto">
           <LevelBadge lvl={level.lvl} size={76} />
@@ -107,13 +110,13 @@ function ResetWarning({ d }) {
   );
 }
 
-export default function Dashboard({ state, d, today, go, ai, months, recentStories, groups, review, onCheck, onProof, onRevive, todo, onAddHabit }) {
+export default function Dashboard({ state, d, today, go, ai, months, recentStories, groups, review, onFocus, onCheck, onRevive, todo, onAddHabit }) {
   const chestOpen = d.scheduled.length > 0 && d.doneScheduled === d.scheduled.length;
   const lastStory = [...recentStories].reverse().find((s) => s.story);
   return (
     <div className="grid gap-5 lg:grid-cols-12">
       <div className="min-w-0 space-y-5 lg:col-span-8">
-        <Hero state={state} d={d} today={today} />
+        <Hero state={state} d={d} today={today} onFocus={onFocus} />
         <ReviveBanner d={d} onRevive={onRevive} />
         <ResetWarning d={d} />
 
@@ -124,7 +127,7 @@ export default function Dashboard({ state, d, today, go, ai, months, recentStori
             action={
               <div
                 className={`flex items-center gap-2 rounded-xl px-3 py-1.5 text-xs font-extrabold ring-1 ${
-                  chestOpen ? "bg-gold/15 text-gold-hi ring-gold/40" : "bg-[#120f29] text-dim ring-edge"
+                  chestOpen ? "bg-gold/15 text-gold-hi ring-gold/40" : "bg-well text-dim ring-edge"
                 }`}
                 title="Cufărul zilei: toate misiunile programate bifate"
               >
@@ -137,7 +140,7 @@ export default function Dashboard({ state, d, today, go, ai, months, recentStori
           </SectionTitle>
           <div className="space-y-2.5">
             {d.scheduled.map(({ h, code, scheduled }) => (
-              <QuestCard key={h.id} h={h} code={code} scheduled={scheduled} runMult={d.runMult} onCheck={onCheck} onProof={onProof} onOpen={() => go("habits", h.id)} />
+              <QuestCard key={h.id} h={h} code={code} scheduled={scheduled} runMult={d.runMult} onCheck={onCheck} onOpen={() => go("habits", h.id)} />
             ))}
             {d.scheduled.length === 0 && <p className="inset p-4 text-center text-sm font-semibold text-dim">Nicio misiune programată azi. Zi de odihnă sau de bonusuri!</p>}
           </div>
@@ -150,7 +153,7 @@ export default function Dashboard({ state, d, today, go, ai, months, recentStori
               </summary>
               <div className="mt-2.5 space-y-2.5">
                 {d.optional.map(({ h, code, scheduled }) => (
-                  <QuestCard key={h.id} h={h} code={code} scheduled={scheduled} runMult={d.runMult} onCheck={onCheck} onProof={onProof} onOpen={() => go("habits", h.id)} />
+                  <QuestCard key={h.id} h={h} code={code} scheduled={scheduled} runMult={d.runMult} onCheck={onCheck} onOpen={() => go("habits", h.id)} />
                 ))}
               </div>
             </details>
@@ -167,7 +170,7 @@ export default function Dashboard({ state, d, today, go, ai, months, recentStori
       </div>
 
       <div className="min-w-0 space-y-5 lg:col-span-4">
-        <CompanionCard c={d.companion} path={state.profile.path} lastStory={lastStory} onOpen={() => go("companion")} onProof={() => onProof(null)} />
+        <CompanionCard c={d.companion} path={state.profile.path} lastStory={lastStory} onOpen={() => go("companion")} />
         <ReviewCard d={d} state={state} months={months} review={review} ai={ai} today={today} />
         <GroupMini groups={groups} go={go} />
       </div>

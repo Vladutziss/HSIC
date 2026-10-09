@@ -132,7 +132,7 @@ function Leaderboard({ g, loading }) {
           return (
             <li
               key={m.id}
-              className={`flex items-center gap-3 rounded-2xl px-3 py-2.5 ${m.isMe ? "bg-gold/10 ring-1 ring-gold/40" : "bg-[#120f29] ring-1 ring-edge"}`}
+              className={`flex items-center gap-3 rounded-2xl px-3 py-2.5 ${m.isMe ? "bg-gold/10 ring-1 ring-gold/40" : "bg-well ring-1 ring-edge"}`}
             >
               <span className="grid w-7 place-items-center">
                 {rank === 1 ? (
@@ -216,7 +216,7 @@ function Composer({ g, groups, loading }) {
               type="button"
               aria-pressed={all}
               onClick={() => setTo(all ? [] : others.map((m) => m.id))}
-              className={`focus-ring rounded-full px-3 py-1.5 text-xs font-extrabold transition ${all ? "bg-gold text-[#2a1b00]" : "text-dim ring-1 ring-edge hover:text-ink"}`}
+              className={`focus-ring rounded-full px-3 py-1.5 text-xs font-extrabold transition ${all ? "bg-gold text-on-gold" : "text-dim ring-1 ring-edge hover:text-ink"}`}
             >
               Tot grupul
             </button>
@@ -227,7 +227,7 @@ function Composer({ g, groups, loading }) {
                 aria-pressed={to.includes(m.id)}
                 onClick={() => toggle(m.id)}
                 className={`focus-ring inline-flex items-center gap-1.5 rounded-full py-1 pl-1 pr-3 text-xs font-extrabold transition ${
-                  to.includes(m.id) ? "bg-mint text-[#04261a]" : "text-body ring-1 ring-edge hover:text-ink"
+                  to.includes(m.id) ? "bg-mint text-on-mint" : "text-body ring-1 ring-edge hover:text-ink"
                 }`}
               >
                 <Sprite path={m.path || "sport"} stage={m.stage || "egg"} mood="idle" size={32} still className="-my-1" />
@@ -284,7 +284,7 @@ function InboxPanel({ g, groups, loading }) {
             const who = tab === "in" ? names[n.from] : null;
             const toNames = tab === "out" ? (n.to || []).map((id) => names[id]?.name || "membru").join(", ") : "";
             return (
-              <li key={n.id} className={`flex items-start gap-3 rounded-xl p-3 ${tab === "in" && !n.read ? "bg-violet/10 ring-1 ring-violet/30" : "bg-[#120f29]"}`}>
+              <li key={n.id} className={`flex items-start gap-3 rounded-xl p-3 ${tab === "in" && !n.read ? "bg-violet/10 ring-1 ring-violet/30" : "bg-well"}`}>
                 {who ? (
                   <Sprite path={who.path || "sport"} stage={who.stage || "egg"} mood="idle" size={32} still />
                 ) : (
@@ -336,7 +336,7 @@ function GroupView({ g, groups, loading }) {
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <button type="button" onClick={copy} className="focus-ring inline-flex items-center gap-2 rounded-xl bg-[#120f29] px-3 py-2 ring-1 ring-edge hover:ring-gold/60" aria-label={`Copiază codul ${g.info.code}`}>
+          <button type="button" onClick={copy} className="focus-ring inline-flex items-center gap-2 rounded-xl bg-well px-3 py-2 ring-1 ring-edge hover:ring-gold/60" aria-label={`Copiază codul ${g.info.code}`}>
             <span className="font-pixel text-lg tracking-[0.25em] text-gold-hi">{g.info.code}</span>
             <Copy size={15} className="text-dim" aria-hidden="true" />
           </button>

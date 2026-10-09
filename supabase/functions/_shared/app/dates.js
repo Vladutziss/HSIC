@@ -92,6 +92,18 @@ export const parseHM = (hm) => {
   return h * 60 + (m || 0);
 };
 export const fmtHM = (min) => `${pad(Math.floor(min / 60) % 24)}:${pad(min % 60)}`;
+/** "HH:MM" -> "4:25 PM" (stored times stay 24-hour; this is only for showing them). */
+export function fmt12(hm) {
+  const min = typeof hm === "number" ? hm : parseHM(hm);
+  if (min == null) return "";
+  const h = Math.floor(min / 60) % 24;
+  return `${h % 12 || 12}:${pad(min % 60)} ${h < 12 ? "AM" : "PM"}`;
+}
+/** Minutes -> "4 PM", for the hour axis of the calendar. */
+export const fmtHour12 = (min) => {
+  const h = Math.floor(min / 60) % 24;
+  return `${h % 12 || 12} ${h < 12 ? "AM" : "PM"}`;
+};
 export const nowMinutes = () => {
   const d = new Date();
   return d.getHours() * 60 + d.getMinutes();

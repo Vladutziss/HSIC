@@ -30,7 +30,6 @@ export function legacyHabits(legacy, today) {
         days: [1, 2, 3, 4, 5],
         time: null,
         target: "90 de minute de lucru concentrat",
-        proofHint: "o poză cu ce ai lucrat",
         color: nextColor(out),
         createdAt: today,
       });
