@@ -2,10 +2,10 @@ import React, { useEffect, useRef, useState } from "react";
 import { Flame, Quote, RotateCcw, Sparkles, TrendingDown } from "lucide-react";
 import { Button, LevelBadge, Modal } from "./ui.jsx";
 import { Sprite } from "./Sprite.jsx";
-import { MOMENT_META, momentLine, momentSituation } from "../lib/moments.js";
+import { MOMENT_META, momentSituation } from "../lib/moments.js";
 import { quoteById } from "../lib/quotes.js";
 import { evolutionChapter, momentLineAI } from "../lib/ai.js";
-import { DEFAULT_NAMES, PATHS, uid } from "../lib/catalog.js";
+import { DEFAULT_NAMES, uid } from "../lib/catalog.js";
 import { STAGES } from "../lib/engine.js";
 import { c as tc } from "../lib/themes.js";
 
@@ -18,47 +18,41 @@ export function MomentModal({ moment, state, d, ai, recentStories, onName, onCha
   const [name, setName] = useState(state.companion?.name || DEFAULT_NAMES[path]?.[0] || "");
   const displayName = needsName ? name || "Molt-ul tău" : c.name || "Molt-ul tău";
   const ctx = { name: displayName, resetAfter: d.resetAfter };
-  const [line, setLine] = useState(momentLine(moment, ctx));
+  // What the AI writes: nothing is shown in its place when it fails, only that it did not answer.
+  const [line, setLine] = useState({ status: ai.available && quote ? "busy" : "off", text: "" });
   const [chapter, setChapter] = useState(null);
+  const [chapterState, setChapterState] = useState(
+    ["hatch", "evolve"].includes(moment.type) ? (ai.available ? "busy" : "off") : "none"
+  );
   const chapterDone = useRef(false);
 
   useEffect(() => {
     if (!ai.available || !quote) return undefined;
     const ctl = new AbortController();
     momentLineAI(momentSituation(moment, ctx), quote, ctl.signal)
-      .then((l) => l && setLine(l))
-      .catch(() => {});
+      .then((l) => setLine(l ? { status: "ok", text: l } : { status: "error", text: "" }))
+      .catch((e) => e?.code !== "cancelled" && setLine({ status: "error", text: "" }));
     return () => ctl.abort();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [moment.id]);
 
-  // hatching and evolving add a chapter to the companion's story
+  // hatching and evolving add a chapter to the companion's story, written by the AI or not at all
   useEffect(() => {
-    if (!["hatch", "evolve"].includes(moment.type) || chapterDone.current) return undefined;
+    if (!["hatch", "evolve"].includes(moment.type) || chapterDone.current || !ai.available) return undefined;
     chapterDone.current = true;
     const stageIdx = moment.stageIndex ?? c.stageIndex;
     const from = STAGES[Math.max(0, stageIdx - 1)].name;
     const to = STAGES[stageIdx].name;
-    const fallback = {
-      title: moment.type === "hatch" ? "Coaja se sparge" : `Devine ${to}`,
-      story:
-        moment.type === "hatch"
-          ? `Coaja trosnește, apoi se desface. Din ou iese un ${PATHS[path].cls.toLowerCase()} mic, care clipește la lumină și te recunoaște pe loc.`
-          : `Lumina îl învăluie pe ${displayName}, iar când se risipește, stă mai drept și mai sigur pe el. A devenit ${to} și e gata de drumuri mai lungi.`,
-    };
-    const save = (ch) => {
-      const chapter = { id: uid("c"), type: "chapter", day: d.today, at: new Date().toISOString(), stage: to, ...ch };
-      setChapter(chapter);
-      onChapter(chapter);
-    };
-    if (!ai.available) {
-      save(fallback);
-      return undefined;
-    }
     const ctl = new AbortController();
     evolutionChapter({ name: displayName, pathId: path, from, to, recent: recentStories.slice(-3).map((s) => s.story) }, ctl.signal)
-      .then((ch) => save(ch.story ? ch : fallback))
-      .catch(() => save(fallback));
+      .then((ch) => {
+        if (!ch.story) throw { code: "invalid_json" };
+        const saved = { id: uid("c"), type: "chapter", day: d.today, at: new Date().toISOString(), stage: to, ...ch };
+        setChapter(saved);
+        setChapterState("ok");
+        onChapter(saved);
+      })
+      .catch((e) => e?.code !== "cancelled" && setChapterState("error"));
     return () => ctl.abort();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [moment.id]);
@@ -119,7 +113,11 @@ export function MomentModal({ moment, state, d, ai, recentStories, onName, onCha
           {meta.title}
         </h2>
         {hero}
-        <p className="max-w-md text-[15px] font-semibold leading-relaxed text-body">{line}</p>
+        {line.status !== "off" && (
+          <p className="max-w-md text-[15px] font-semibold leading-relaxed text-body" aria-live="polite">
+            {line.status === "ok" ? line.text : line.status === "busy" ? "AI-ul scrie…" : "AI-ul nu a răspuns de data asta."}
+          </p>
+        )}
 
         {needsName && (
           <div className="w-full max-w-sm text-left">
@@ -137,6 +135,10 @@ export function MomentModal({ moment, state, d, ai, recentStories, onName, onCha
           </div>
         )}
 
+        {chapterState === "busy" && <p className="text-sm font-semibold text-dim">AI-ul scrie capitolul nou…</p>}
+        {(chapterState === "error" || chapterState === "off") && (
+          <p className="text-sm font-semibold text-dim">Capitolul nou nu a putut fi scris acum: AI-ul nu a răspuns.</p>
+        )}
         {chapter && (
           <div className="inset w-full p-4 text-left">
             <div className="mb-1 flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-wider text-violet-hi">
