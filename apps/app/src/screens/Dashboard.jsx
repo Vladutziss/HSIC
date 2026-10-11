@@ -159,7 +159,7 @@ export default function Dashboard({ state, d, today, go, ai, months, recentStori
             </details>
           )}
           <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
-            <p className="text-xs font-bold text-dim">Dovezile verificate de AI dau ×1,5 momentum și puncte de evoluție.</p>
+            <p className="text-xs font-bold text-dim">Fiecare bifă aduce momentum și puncte de evoluție pentru personaj.</p>
             <Button variant="ghost" size="sm" icon={Plus} onClick={onAddHabit}>
               Obicei nou
             </Button>
