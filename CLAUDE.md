@@ -15,3 +15,12 @@
 - Starea aplicației ↔ rânduri: `apps/app/src/lib/remote.js` (funcții pure, testate în `apps/app/tests/remote.test.mjs`); `store.js` are modul `supabase` lângă `cloud`/`local`/`memory`.
 - AI: Edge Function `supabase/functions/ai` (OpenRouter). Secretele (`OPENROUTER_API_KEY`, `AI_MODEL`) se setează doar cu `supabase secrets set`, niciodată în repo sau în chat.
 - Planul complet: `C:\Users\const\.claude\plans\ok-crezi-ca-poti-valiant-bengio.md`.
+
+### Coach AI
+
+- Edge Functions: `ai` (single-shot: review/moment/chapter/insights), `agent` (buclă de tool-uri: get_habit_stats, get_context, get_feedback, get_past_actions, get_experiments, analyze_patterns, search_knowledge, propose_action; sursele pot fi citate doar dacă au fost aduse de un tool; propunerile se validează în `supabase/functions/_shared/agent-core.js`) și `weekly` (pg_cron duminica 18:00 UTC, opt-in `settings.agentWeekly`, reguli deterministe în `supabase/functions/_shared/weekly-core.js`, loghează în `agent_actions`, măsoară efectele cu `lib/outcomes.js`).
+- Baza de cunoștințe: `knowledge/*.md` → `node scripts/build-knowledge.mjs` → `supabase/seed/knowledge.sql`; pgvector în migrarea 0013, embeddings gte-small completate lazy. Migrări 0013-0017.
+- `npm run sync:functions` copiază bibliotecile comune în `supabase/functions/_shared/app`.
+- Deploy: din dashboard-ul Supabase ca fișier unic bundle-uit (`esbuild --bundle --external:jsr:*`) sau cu CLI.
+- Secrete: `OPENROUTER_API_KEY`, `AI_MODEL`, `AGENT_MODEL`, `AGENT_CRON_SECRET` (niciodată în repo).
+- Regulă: textul AI e generat de AI sau deloc (fără fallback-uri scrise de mână).
