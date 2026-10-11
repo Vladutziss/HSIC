@@ -7,14 +7,14 @@ import { useSyncExternalStore } from "react";
 
 export const THEMES = [
   { id: "noapte", name: "Noapte", mode: "dark", blurb: "Violet închis, cu accente aurii. Tema originală." },
-  { id: "pergament", name: "Pergament", mode: "light", blurb: "Crem cald, salvie și miere, text maro închis." },
-  { id: "piersica", name: "Piersică", mode: "light", blurb: "Unt, piersică și roz pal, text roșu-brun." },
   { id: "padure", name: "Pădure", mode: "dark", blurb: "Verde-închis, cu accente de salvie. Calm și contrastat." },
   { id: "grafit", name: "Grafit", mode: "dark", blurb: "Gri închis neutru, fără stele. Simplu și sobru." },
-  { id: "ceata", name: "Ceață", mode: "light", blurb: "Gri deschis și alb, accente discrete." },
   { id: "cod", name: "Cod", mode: "dark", blurb: "Pentru programatori: gri cărbune, albastru și turcoaz." },
   { id: "nord", name: "Nord", mode: "dark", blurb: "Gri-albastru arctic, culori pastelate." },
+  { id: "ceata", name: "Ceață", mode: "light", blurb: "Gri deschis și alb, accente discrete." },
   { id: "lavanda", name: "Lavandă", mode: "light", blurb: "Pastel luminos, lavandă și liliac, text violet-închis." },
+  { id: "piersica", name: "Piersică", mode: "light", blurb: "Unt, piersică și roz pal, text roșu-brun." },
+  { id: "pergament", name: "Pergament", mode: "light", blurb: "Crem cald, salvie și miere, text maro închis." },
 ];
 
 export const DEFAULT_THEME = "noapte";
