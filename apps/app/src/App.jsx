@@ -6,7 +6,7 @@ import { CODE, focusXpByDay } from "./lib/engine.js";
 import { addDays, dayKey, monthKey, nowMinutes, parseHM, todayKey } from "./lib/dates.js";
 import { detectMoments } from "./lib/moments.js";
 import { pickQuote } from "./lib/quotes.js";
-import { aiErrorCopy, aiStatus, dailyReview, templateReview } from "./lib/ai.js";
+import { aiErrorCopy, aiStatus, dailyReview } from "./lib/ai.js";
 import { permissionState } from "./lib/platform.js";
 import { useGroups } from "./lib/groups.js";
 import { uid } from "./lib/catalog.js";
@@ -268,24 +268,21 @@ function Game() {
     toast({ title: "Serie salvată!", text: `Ai folosit ${offer.days.length === 1 ? "un revive" : "două revive-uri"}. Seria continuă.`, icon: FlaskConical, tone: "mint" });
   }
 
-  async function runReview(day = today, { allowTemplate = false } = {}) {
+  // The report is written by the AI or not at all: when it fails the card says so and the day stays open.
+  async function runReview(day = today) {
     if (review.status === "running") return;
-    setReview({ status: "running", error: null });
-    const payload = reviewPayload(state, d, day);
-    let result = null;
-    let error = null;
-    if (ai.available) {
-      try {
-        result = await dailyReview(payload);
-      } catch (e) {
-        error = e?.code || "upstream_error";
-      }
-    }
-    if (!result && error && !allowTemplate) {
-      setReview({ status: "error", error: aiErrorCopy(error) || "AI-ul nu a răspuns de data asta." });
+    if (!ai.available) {
+      setReview({ status: "error", error: aiErrorCopy("unavailable") });
       return;
     }
-    if (!result) result = { ...templateReview(payload, d.timeline.byDay[day]?.computed ?? 0), score: null, ai: false };
+    setReview({ status: "running", error: null });
+    let result;
+    try {
+      result = await dailyReview(reviewPayload(state, d, day));
+    } catch (e) {
+      setReview({ status: "error", error: aiErrorCopy(e?.code || "upstream_error") || "AI-ul nu a răspuns de data asta." });
+      return;
+    }
     const ym = monthKey(day);
     update((s) => ({
       ...s,

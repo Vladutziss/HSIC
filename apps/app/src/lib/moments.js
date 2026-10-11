@@ -74,29 +74,6 @@ export function detectMoments({ seen, timeline, companion, streak, today }) {
   return { moments: out.slice(0, 2), seen: next };
 }
 
-/** One sentence linking the moment to the player; the AI may replace it. */
-export function momentLine(m, { name, resetAfter = 3 }) {
-  const n = name || "Molt-ul tău";
-  switch (m.type) {
-    case "reset":
-      return `După ${resetAfter} zile fără activitate, momentum-ul a revenit la zero. ${n} te așteaptă: o singură misiune azi aprinde din nou focul.`;
-    case "drop":
-      return `Momentum-ul a coborât de la ${m.from} la ${m.to} în ultimele zile. Începe cu cea mai ușoară misiune de pe listă.`;
-    case "return":
-      return `Ai lipsit ${m.away} zile și ${n} a dormit tot timpul ăsta. Acum s-a trezit și sare de bucurie că te vede.`;
-    case "hatch":
-      return "Bifările tale au încălzit oul destul cât să se deschidă. De acum, personajul tău crește odată cu tine.";
-    case "evolve":
-      return `${n} a devenit ${m.stage}. Fiecare bifă a contat.`;
-    case "levelup":
-      return `Ai ajuns la nivelul ${m.lvl}, ${m.name}. Consecvența din ultimele zile se vede.`;
-    case "streak":
-      return `${m.n} zile la rând. Nu mai e noroc, e obicei.`;
-    default:
-      return "";
-  }
-}
-
 /** Plain-language situation for the AI prompt. */
 export function momentSituation(m, { name, resetAfter = 3 }) {
   switch (m.type) {

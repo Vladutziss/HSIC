@@ -175,7 +175,7 @@ export function ReviewCard({ d, state, months, review, ai, today }) {
   if (review.status === "running") {
     body = (
       <div className="space-y-2" aria-live="polite">
-        <p className="text-sm font-bold text-gold-hi">{ai.available ? "AI-ul scrie raportul zilei…" : "Închidem ziua…"}</p>
+        <p className="text-sm font-bold text-gold-hi">AI-ul scrie raportul zilei…</p>
         <Skeleton className="h-3 w-full" />
         <Skeleton className="h-3 w-11/12" />
         <Skeleton className="h-3 w-2/3" />
@@ -249,15 +249,13 @@ export function ReviewCard({ d, state, months, review, ai, today }) {
         {review.status === "error" && (
           <p className="rounded-xl bg-rose/10 p-3 text-sm font-semibold text-rose ring-1 ring-rose/30">{review.error}</p>
         )}
+        {!ai.available && review.status !== "error" && (
+          <p className="rounded-xl bg-rose/10 p-3 text-sm font-semibold text-rose ring-1 ring-rose/30">AI-ul nu e disponibil acum, deci raportul nu se poate genera.</p>
+        )}
         <div className="flex flex-col gap-2">
-          <Button id="review-run" variant={due ? "gold" : "ghost"} size="md" icon={Sparkles} className="w-full" onClick={() => review.run(today)}>
-            {ai.available ? (due ? "Generează raportul" : "Generează acum") : "Închide ziua"}
+          <Button id="review-run" variant={due ? "gold" : "ghost"} size="md" icon={Sparkles} className="w-full" disabled={!ai.available} onClick={() => review.run(today)}>
+            {review.status === "error" ? "Încearcă din nou" : due ? "Generează raportul" : "Generează acum"}
           </Button>
-          {review.status === "error" && (
-            <Button variant="ghost" size="md" className="w-full" onClick={() => review.run(today, { allowTemplate: true })}>
-              Închide fără AI
-            </Button>
-          )}
         </div>
       </div>
     );
