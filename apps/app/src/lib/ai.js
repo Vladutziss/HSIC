@@ -25,10 +25,10 @@ async function serverClient() {
   return window.Clerk?.session ? client : null;
 }
 
-async function askServer(client, kind, params, signal) {
+/** Calls an Edge Function; throws {code} (see aiErrorCopy) on any failure. */
+async function invoke(client, fn, body, signal) {
   if (signal?.aborted) throw { code: "cancelled" };
-  const body = { kind, params };
-  const { data, error } = await client.functions.invoke("ai", { body, signal });
+  const { data, error } = await client.functions.invoke(fn, { body, signal });
   if (signal?.aborted) throw { code: "cancelled" };
   if (error) {
     let code = "upstream_error";
@@ -39,12 +39,17 @@ async function askServer(client, kind, params, signal) {
     }
     throw { code };
   }
+  return data;
+}
+
+async function askServer(client, kind, params, signal) {
+  const data = await invoke(client, "ai", { kind, params }, signal);
   if (!data?.result) throw { code: "invalid_json" };
   return data.result;
 }
 
 export async function aiStatus() {
-  if (await serverClient()) return { available: true };
+  if (await serverClient()) return { available: true, server: true }; // `server`: the coach features need the Edge Function
   if (disabled) return { available: false };
   return { available: !!(await capability("sample")) };
 }
@@ -153,6 +158,50 @@ Reply with only JSON: {"title":"...","story":"..."}`;
     ? await askServer(server, "chapter", { name, cls: PATHS[pathId]?.cls, from, to, recent: recent.slice(-3) }, signal)
     : await askJson(prompt, { modelTier: "quick", cache: false, signal });
   return { title: clip(r?.title, 40) || to, story: clip(r?.story, 460), ai: true };
+}
+
+// ------------------------------------------------------------ coach (server build only, no artifact copy of the prompts)
+
+async function askCoach(kind, params, signal) {
+  const server = await serverClient();
+  if (!server) throw { code: "unavailable" };
+  return askServer(server, kind, params, signal);
+}
+
+/** [{title, text}] patterns found in the last 4 weeks (see coach.js for `data`). */
+export async function habitInsights(data, signal) {
+  const r = await askCoach("insights", data, signal);
+  const out = (Array.isArray(r?.insights) ? r.insights : [])
+    .slice(0, 3)
+    .map((i) => ({ title: clip(i?.title, 60), text: clip(i?.text, 260) }))
+    .filter((i) => i.title && i.text);
+  if (!out.length) throw { code: "invalid_json" };
+  return out;
+}
+
+/**
+ * The coach agent (supabase/functions/agent). It reads the player's rows itself, so only the day is sent.
+ * Returns {summary, proposals, steps}; proposals were validated on the server and each carries the
+ * sources the agent really retrieved (cite, doi, strength, limits).
+ */
+export async function coachAgent(today, signal) {
+  const server = await serverClient();
+  if (!server) throw { code: "unavailable" };
+  const r = await invoke(server, "agent", { today }, signal);
+  if (!r || !Array.isArray(r.proposals)) throw { code: "invalid_json" };
+  return {
+    summary: clip(r.summary, 700),
+    steps: Array.isArray(r.steps) ? r.steps : [],
+    proposals: r.proposals.map((p) => ({
+      action: p.action === "add" ? "add" : "change",
+      habitId: p.habitId,
+      name: clip(p.name, 40),
+      diff: Math.min(3, Math.max(1, Number(p.diff) || 2)),
+      days: (Array.isArray(p.days) ? p.days : []).filter((d) => Number.isInteger(d) && d >= 0 && d <= 6),
+      reason: clip(p.reason, 200),
+      sources: (Array.isArray(p.sources) ? p.sources : []).filter(Boolean),
+    })),
+  };
 }
 
 // ------------------------------------------------------------ written fallbacks
