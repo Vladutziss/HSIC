@@ -32,3 +32,14 @@ test("archived habits are left out and a new habit has no history", () => {
   assert.equal(data.habits[0].sched, 0);
   assert.ok(!hasHistory(data));
 });
+
+test("a habit with an old log but a recent createdAt still has its history", () => {
+  // rows claimed or migrated later keep a recent createdAt while the log goes back weeks
+  const habit = { id: "h1", name: "Alergat", diff: 2, days: [0, 1, 2, 3, 4, 5, 6], createdAt: "2026-10-10" };
+  const log = {};
+  for (let i = 1; i <= 20; i++) log[addDays(TODAY, -i)] = { h1: 1 };
+  const data = coachData({ habits: [habit], log }, TODAY);
+  assert.equal(data.habits[0].sched, 20);
+  assert.equal(data.habits[0].done, 20);
+  assert.ok(hasHistory(data));
+});
