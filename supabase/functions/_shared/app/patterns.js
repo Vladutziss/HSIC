@@ -19,6 +19,7 @@
 // Anything untestable goes to `insufficient` with a reason, never silently dropped.
 import { addDays, dayRange, weekday } from "./dates.js";
 import { isScheduled } from "./engine.js";
+import { withObservedStart } from "./history.js";
 
 const MAX_HABITS = 6;
 const MIN_SCHEDULED = 14;
@@ -105,7 +106,8 @@ const strengthOf = (pAdj, diff) => {
   return "weak";
 };
 
-export function analyzePatterns(state, today, opts = {}) {
+export function analyzePatterns(rawState, today, opts = {}) {
+  const state = withObservedStart(rawState);
   const days = opts.days || 56;
   const from = addDays(today, -days);
   const to = addDays(today, -1);

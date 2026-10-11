@@ -3,10 +3,12 @@
 
 import { addDays, dayRange, weekday } from "./dates.js";
 import { isScheduled } from "./engine.js";
+import { withObservedStart } from "./history.js";
 
 const WINDOW = 28; // days before today; today is still open
 
-export function coachData(state, today) {
+export function coachData(rawState, today) {
+  const state = withObservedStart(rawState);
   const days = dayRange(addDays(today, -WINDOW), addDays(today, -1));
   const habits = (state.habits || [])
     .filter((h) => !h.archivedAt)
