@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="ro">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Admin Molted</title>
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="theme-color" content="#0c0a1d" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Pixelify+Sans:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/src/styles.css" />
+    <script type="module" src="/src/admin.js"></script>
+  </head>
+  <body class="app-bg min-h-screen font-sans text-body">
+    <header class="mx-auto flex max-w-5xl items-center justify-between gap-4 px-5 py-5">
+      <a href="/" class="font-pixel text-xl font-bold tracking-wide text-gold" aria-label="Molted, prima pagină">MOLTED</a>
+      <div class="flex items-center gap-4 text-sm font-bold">
+        <button id="iesire" type="button" class="btn btn-ghost btn-xs" hidden>Ieși din cont</button>
+      </div>
+    </header>
+
+    <main class="mx-auto max-w-5xl px-5 pb-24">
+      <h1 class="font-pixel mt-4 text-3xl font-bold text-ink">Admin</h1>
+      <p id="stare" class="mt-2 text-dim" role="status" aria-live="polite">Se încarcă…</p>
+
+      <!-- sign-in (Clerk, same accounts as the app) -->
+      <div id="login" class="mt-8 flex justify-center" hidden></div>
+
+      <!-- signed in, not on the admin list -->
+      <div id="refuzat" class="panel mt-8" hidden>
+        <p class="font-bold text-ink">Contul tău nu e admin.</p>
+        <p class="mt-2 text-sm">Ești logat ca <b id="refuzat-email" class="text-ink"></b>. Cere unui admin să te adauge.</p>
+      </div>
+
+      <div id="editor" hidden>
+        <section class="mt-10" aria-labelledby="t-membri">
+          <div class="flex flex-wrap items-center justify-between gap-4">
+            <h2 id="t-membri" class="font-pixel text-2xl font-bold text-ink">Membri</h2>
+            <button type="button" class="btn btn-sm" data-action="add-member">+ Adaugă membru</button>
+          </div>
+          <ul id="lista-membri" class="mt-6 grid gap-5"></ul>
+        </section>
+
+        <section class="mt-14" aria-labelledby="t-galerie">
+          <div class="flex flex-wrap items-center justify-between gap-4">
+            <h2 id="t-galerie" class="font-pixel text-2xl font-bold text-ink">Galerie</h2>
+            <label class="btn btn-sm file-btn">+ Adaugă poze<input id="poze-noi" type="file" accept="image/jpeg,image/png,image/webp" multiple /></label>
+          </div>
+          <p class="mt-2 text-sm text-dim">JPG, PNG sau WebP, maxim 5 MB fiecare.</p>
+          <ul id="lista-poze" class="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3"></ul>
+        </section>
+      </div>
+    </main>
+  </body>
+</html>
