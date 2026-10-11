@@ -1,5 +1,5 @@
 import React, { createContext, useCallback, useContext, useEffect, useId, useRef, useState } from "react";
-import { Check, Gem, Loader2, X } from "lucide-react";
+import { Check, Gem, Loader2, Trash2, X } from "lucide-react";
 import { DIFF } from "../lib/engine.js";
 import { c, mix } from "../lib/themes.js";
 
@@ -303,6 +303,60 @@ export function CheckButton({ checked, onClick, label, size = "md", tone = "mint
       }`}
     >
       <Check size={size === "sm" ? 14 : 20} strokeWidth={3.5} aria-hidden="true" />
+    </button>
+  );
+}
+
+// Round red outline button: hold it to delete. The red fill grows while pressed and the action fires when it is full;
+// letting go early cancels. Space/Enter work the same way for keyboard users.
+export function HoldToDelete({ label, onConfirm, ms = 900 }) {
+  const [holding, setHolding] = useState(false);
+  const timer = useRef(null);
+  const stop = useCallback(() => {
+    clearTimeout(timer.current);
+    timer.current = null;
+    setHolding(false);
+  }, []);
+  const start = useCallback(() => {
+    if (timer.current) return;
+    setHolding(true);
+    timer.current = setTimeout(() => {
+      timer.current = null;
+      setHolding(false);
+      onConfirm();
+    }, ms);
+  }, [onConfirm, ms]);
+  useEffect(() => () => clearTimeout(timer.current), []);
+  return (
+    <button
+      type="button"
+      aria-label={`${label}. Ține apăsat ca să ștergi.`}
+      title="Ține apăsat ca să ștergi"
+      onPointerDown={(e) => {
+        if (e.button !== 0) return;
+        e.currentTarget.setPointerCapture?.(e.pointerId);
+        start();
+      }}
+      onPointerUp={stop}
+      onPointerCancel={stop}
+      onLostPointerCapture={stop}
+      onKeyDown={(e) => {
+        if ((e.key === " " || e.key === "Enter") && !e.repeat) {
+          e.preventDefault();
+          start();
+        }
+      }}
+      onKeyUp={stop}
+      onBlur={stop}
+      onContextMenu={(e) => e.preventDefault()}
+      className="focus-ring group relative grid h-9 w-9 shrink-0 touch-none select-none place-items-center overflow-hidden rounded-full border-2 border-rose bg-transparent text-rose transition-colors hover:bg-rose/15"
+    >
+      <span
+        aria-hidden="true"
+        className="absolute inset-0 origin-bottom bg-rose ease-linear"
+        style={{ transform: `scaleY(${holding ? 1 : 0})`, transitionProperty: "transform", transitionDuration: holding ? `${ms}ms` : "150ms" }}
+      />
+      <Trash2 size={16} className={`relative transition-colors ${holding ? "text-on-rose" : ""}`} style={{ transitionDelay: holding ? `${Math.round(ms * 0.45)}ms` : "0ms" }} aria-hidden="true" />
     </button>
   );
 }
