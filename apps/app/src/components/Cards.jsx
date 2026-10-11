@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { BookOpenText, ChevronDown, Clock, Crown, MessageCircle, Moon, ScrollText, Sparkles, Users } from "lucide-react";
 import { Bar, Button, Chip, CheckButton, Gems, Panel, Ring, SectionTitle, Skeleton } from "./ui.jsx";
 import { Sprite, eggCrack } from "./Sprite.jsx";
@@ -79,7 +79,7 @@ export function CompanionCard({ c, path, lastStory, onOpen }) {
   const cls = PATHS[path]?.cls;
   const [open, setOpen] = useState(false);
   return (
-    <Panel tone="violet" corners className="overflow-hidden">
+    <Panel tone="violet" corners="gold">
       <div className="pedestal flex justify-center rounded-t-[18px] pt-5">
         <Sprite path={path} stage={c.stage.id} mood={c.mood} size={160} crack={eggCrack(c.ep)} label={`${c.name || "Oul tău"}, ${c.stage.name}`} />
       </div>
@@ -150,7 +150,20 @@ export function CompanionCard({ c, path, lastStory, onOpen }) {
 // ------------------------------------------------------------ evening review
 
 export function ReviewCard({ d, state, months, review, ai, today }) {
+  const [open, setOpen] = useState(false);
   const saved = state.reviews?.[today];
+  // the card is closed whenever Acasă is opened, but the report opens by itself the moment it is written,
+  // and the "Raport gata" button in the header asks for it open
+  const wasSaved = useRef(!!saved);
+  useEffect(() => {
+    if (saved && !wasSaved.current) setOpen(true);
+    wasSaved.current = !!saved;
+  }, [saved]);
+  useEffect(() => {
+    const show = () => setOpen(true);
+    window.addEventListener("molted:open-review", show);
+    return () => window.removeEventListener("molted:open-review", show);
+  }, []);
   const text = months[monthKey(today)]?.reviews?.[today];
   const entry = d.entry;
   const time = state.settings?.reviewTime || "21:00";
@@ -170,7 +183,7 @@ export function ReviewCard({ d, state, months, review, ai, today }) {
     );
   } else if (saved) {
     body = (
-      <div className="space-y-3">
+      <div>
         <div className="flex items-center gap-4">
           <Ring value={(entry?.score || 0) / 100} size={70} stroke={7} color={tc("gold-ink")}>
             <span className="font-pixel text-xl text-ink">{entry?.score ?? 0}</span>
@@ -183,20 +196,39 @@ export function ReviewCard({ d, state, months, review, ai, today }) {
             </div>
           </div>
         </div>
-        {text?.summary && <p className="text-sm leading-relaxed text-body">{text.summary}</p>}
-        {text?.highlight && (
-          <p className="text-sm">
-            <span className="font-extrabold text-mint">Cel mai bun moment: </span>
-            <span className="text-body">{text.highlight}</span>
-          </p>
-        )}
-        {text?.tip && (
-          <p className="text-sm">
-            <span className="font-extrabold text-sky">Pentru mâine: </span>
-            <span className="text-body">{text.tip}</span>
-          </p>
-        )}
-        <p className="text-[11px] font-semibold text-faint">Scorul zilei = 60% din activitatea bifată + 40% evaluarea AI.</p>
+        <div className="flex justify-end">
+          <button
+            type="button"
+            onClick={() => setOpen((v) => !v)}
+            aria-expanded={open}
+            aria-controls="review-details"
+            aria-label={open ? "Ascunde raportul" : "Arată raportul"}
+            className="-mr-1 -mt-3 grid h-8 w-8 place-items-center rounded-lg text-dim transition hover:bg-well hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-hi"
+          >
+            <ChevronDown size={18} className={`transition-transform duration-300 ${open ? "rotate-180" : ""}`} aria-hidden="true" />
+          </button>
+        </div>
+        {/* the written part folds away; the card starts closed */}
+        <div id="review-details" className={`grid transition-[grid-template-rows] duration-300 ${open ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`} inert={open ? undefined : ""}>
+          <div className="min-h-0 overflow-hidden">
+            <div className="space-y-3 pt-3">
+              {text?.summary && <p className="text-sm leading-relaxed text-body">{text.summary}</p>}
+              {text?.highlight && (
+                <p className="text-sm">
+                  <span className="font-extrabold text-mint">Cel mai bun moment: </span>
+                  <span className="text-body">{text.highlight}</span>
+                </p>
+              )}
+              {text?.tip && (
+                <p className="text-sm">
+                  <span className="font-extrabold text-sky">Pentru mâine: </span>
+                  <span className="text-body">{text.tip}</span>
+                </p>
+              )}
+              <p className="text-[11px] font-semibold text-faint">Scorul zilei = 60% din activitatea bifată + 40% evaluarea AI.</p>
+            </div>
+          </div>
+        </div>
       </div>
     );
   } else {
@@ -260,7 +292,7 @@ export function GroupMini({ groups, go }) {
   const top = ranked.slice(0, 3);
   if (myRank >= 3) top.push(ranked[myRank]);
   return (
-    <Panel className="p-4 sm:p-5">
+    <Panel corners="gold" className="p-4 sm:p-5">
       <SectionTitle
         icon={Users}
         tone="sky"
