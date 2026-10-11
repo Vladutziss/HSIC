@@ -151,12 +151,12 @@ export default function Settings({ state, d, ai, mode, env, onChange, onWipe, on
             <span>
               {ai.available ? (
                 <>
-                  <span className="font-extrabold text-mint">AI disponibil.</span> Scrie rapoartele de seară și capitolele poveștii folosind Claude din contul tău de claude.ai.
+                  <span className="font-extrabold text-mint">AI disponibil.</span> Scrie rapoartele de seară, citatele personalizate și capitolele poveștii.
                 </>
               ) : (
                 <>
-                  <span className="font-extrabold text-ink">AI indisponibil aici.</span> Rapoartele și poveștile vin din șabloane.
-                  În aplicația publicată pe claude.ai, AI-ul funcționează după ce îi dai permisiunea.
+                  <span className="font-extrabold text-ink">AI indisponibil aici.</span> Rapoartele, citatele personalizate și capitolele nu se
+                  generează fără AI, iar aplicația nu le înlocuiește cu text scris.
                 </>
               )}
             </span>
