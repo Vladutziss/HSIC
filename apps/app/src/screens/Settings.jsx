@@ -123,7 +123,7 @@ export default function Settings({ state, d, ai, mode, env, onChange, onWipe, on
     <div className="space-y-4">
       <div>
         <h1 className="font-pixel text-3xl text-ink">Setări</h1>
-        <p className="text-sm font-semibold text-dim">Profilul, raportul de seară, aspectul și datele tale.</p>
+        <p className="text-sm font-semibold text-dim">Profilul, raportul de seară, aspectul, notificările și datele tale.</p>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2 [&>*]:min-w-0">
@@ -161,10 +161,10 @@ export default function Settings({ state, d, ai, mode, env, onChange, onWipe, on
           </p>
         </Panel>
 
-        {/* the evening report, and what reaches you while the app is closed */}
+        {/* the evening report */}
         <Panel className="space-y-3 p-4">
           <SectionTitle icon={Moon} tone="violet" className="!mb-1">
-            Raport și notificări
+            Raportul de seară
           </SectionTitle>
           <Field label="Ora raportului" htmlFor="set-time">
             <Select id="set-time" value={settings.reviewTime || "21:00"} onChange={(v) => set({ reviewTime: v })} options={TIMES.map((t) => ({ value: t, label: fmt12(t) }))} />
@@ -190,7 +190,6 @@ export default function Settings({ state, d, ai, mode, env, onChange, onWipe, on
               )}
             </span>
           </p>
-          <NotificationsPanel settings={settings} set={set} />
         </Panel>
 
         {/* how it looks */}
@@ -241,15 +240,16 @@ export default function Settings({ state, d, ai, mode, env, onChange, onWipe, on
           </Fold>
         </Panel>
 
-        {/* account and data, with the destructive actions folded away */}
+        {/* account, notifications and data, with the destructive actions folded away */}
         <Panel className="space-y-3 p-4">
           <SectionTitle icon={Database} tone="sky" className="!mb-1">
-            Cont și date
+            Cont, notificări și date
           </SectionTitle>
           <p className="text-sm text-body">
             {storage}
             {(mode === "cloud" || mode === "supabase") && " Grupurile văd doar nivelul, seria, momentum-ul și personajul."}
           </p>
+          <NotificationsPanel settings={settings} set={set} />
           {mode === "supabase" && (
             <div className="flex flex-wrap gap-2">
               <Button variant="ghost" size="sm" icon={Download} busy={exporting} onClick={download}>
