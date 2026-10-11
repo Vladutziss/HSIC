@@ -26,7 +26,7 @@ import { validateProposals } from "../_shared/agent-core.js";
 // deno-lint-ignore no-explicit-any
 declare const Supabase: any; // Edge runtime global (built-in embedding models)
 
-const MAX_STEPS = 9; // model calls per run (context, feedback, experiments, patterns, search, up to 3 proposals, answer)
+const MAX_STEPS = 6; // model calls per run (search, up to 3 proposals, answer); the data tools run up front
 const MAX_HABITS = 8; // HABIT_COLORS.length in src/lib/catalog.js
 const DAILY_MAX = Number(Deno.env.get("AGENT_DAILY_MAX") ?? 15);
 
@@ -322,9 +322,24 @@ Deno.serve(async (req) => {
   }
 
   const models = modelEnv.split(",").map((m) => m.trim()).filter(Boolean);
+  // Everything cheap and deterministic is gathered here, once, instead of one model round trip per tool:
+  // the free reasoning models take 10+ seconds per call, and a loop of 6-9 calls outlived the request.
+  const snapshot: Record<string, unknown> = {};
+  for (const n of ["get_habit_stats", "get_context", "get_feedback", "get_past_actions", "get_experiments", "analyze_patterns"]) {
+    try {
+      snapshot[n] = JSON.parse(await runTool(n, {}));
+    } catch {
+      snapshot[n] = null; // the tool answered "error: ..." (for example a table that is not there yet)
+    }
+  }
   const messages: unknown[] = [
     { role: "system", content: SYSTEM },
-    { role: "user", content: `Today is ${today}. Review my habits and propose next week's plan.` },
+    {
+      role: "user",
+      content:
+        `Today is ${today}. Everything you can know about the player is already gathered below, so do not call the get_* or analyze_patterns tools again. ` +
+        `Use search_knowledge only when a mechanism needs a cited source, then propose_action for each proposal, then answer.\n\n${JSON.stringify(snapshot)}`,
+    },
   ];
   let summary = "";
   let pool = models;
