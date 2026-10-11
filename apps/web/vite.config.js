@@ -4,5 +4,5 @@ import { defineConfig } from "vite";
 // envDir: the Supabase and Clerk keys come from the repo-root .env.local, like the app's.
 export default defineConfig({
   envDir: "../..",
-  build: { rollupOptions: { input: { main: "index.html", admin: "admin.html" } } },
+  build: { rollupOptions: { input: { main: "index.html", admin: "admin.html", team: "team.html" } } },
 });
