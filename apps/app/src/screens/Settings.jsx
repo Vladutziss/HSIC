@@ -7,6 +7,7 @@ import { LEVELS, RULES } from "../lib/engine.js";
 import { exportData, signOut } from "../lib/account.js";
 import { THEMES, setTheme, useTheme } from "../lib/themes.js";
 import { fmt12 } from "../lib/dates.js";
+import NotificationsPanel from "../components/NotificationsPanel.jsx";
 
 const TIMES = ["18:00", "18:30", "19:00", "19:30", "20:00", "20:30", "21:00", "21:30", "22:00", "22:30", "23:00", "23:30"];
 
@@ -161,6 +162,8 @@ export default function Settings({ state, d, ai, mode, env, onChange, onWipe, on
             </span>
           </div>
         </Panel>
+
+        <NotificationsPanel settings={settings} set={set} />
 
         <Panel className="space-y-4 p-4 sm:p-5">
           <SectionTitle icon={Shield} tone="ember">
