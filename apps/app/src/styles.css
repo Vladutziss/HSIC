@@ -754,6 +754,32 @@ select.field {
   border: 2px solid rgb(var(--c-night));
 }
 
+/* Focus: a digit "ticks" in when it changes; the colons breathe */
+@keyframes digit-tick {
+  0% {
+    transform: translateY(-9%);
+    opacity: 0.35;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+.digit-tick {
+  animation: digit-tick 0.28s cubic-bezier(0.3, 1.5, 0.5, 1) both;
+}
+@keyframes colon-blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.25;
+  }
+}
+.colon-blink {
+  animation: colon-blink 2s ease-in-out infinite;
+}
 .no-scrollbar {
   scrollbar-width: none;
 }
