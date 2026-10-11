@@ -31,6 +31,13 @@ npm run build:artifact   # o singură pagină HTML pentru claude.ai, în apps/ap
 
 În afara claude.ai aplicația merge complet, dar cu înlocuitori: datele stau în `localStorage`, rapoartele și poveștile vin din șabloane, iar grupul e doar cel demonstrativ.
 
+## Admin (molted.eu/admin.html)
+
+- Login cu Clerk (aceleași conturi ca în aplicație), apoi nume, rol, Instagram, descriere, poză și ordine pentru fiecare membru din echipă, plus o galerie de poze.
+- Datele stau în Supabase: tabelele `team_members`, `team_photos` și bucket-ul public `team`. Oricine le poate citi cu cheia anon, ca site-ul să le poată afișa.
+- Doar emailurile din `public.site_admins` pot scrie (RLS, `supabase/migrations/0012_team.sql`). Adaugi un admin din SQL editor: `insert into public.site_admins (email) values ('nume@exemplu.com');`
+- Proiectul Vercel al landing-ului are nevoie de `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY` și `VITE_CLERK_PUBLISHABLE_KEY` (aceleași valori ca la aplicație).
+
 ## Cum funcționează în claude.ai
 
 Versiunea publicată folosește capabilitățile paginilor Claude:

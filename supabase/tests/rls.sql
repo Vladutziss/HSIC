@@ -182,6 +182,55 @@ begin
   if not blocked then raise exception 'LEAK: A can still store files in the proofs bucket'; end if;
   reset role;
 
+  -- ---- team page: anyone reads it, only a site admin (by verified email) writes it
+  insert into public.site_admins (email) values ('admin@molted.test');
+  set local role anon;
+  select count(*) into n from public.team_members;
+  if n < 1 then raise exception 'anon should read the team, saw % rows', n; end if;
+  blocked := false;
+  begin
+    insert into public.team_members (name) values ('Intrus');
+  exception when insufficient_privilege then blocked := true;
+  end;
+  if not blocked then raise exception 'LEAK: anon added a team member'; end if;
+  reset role;
+
+  perform set_config('request.jwt.claims', '{"sub":"user_aaa","role":"authenticated","email":"ana@molted.test"}', true);
+  set local role authenticated;
+  blocked := false;
+  begin
+    insert into public.team_members (name) values ('Intrus');
+  exception when insufficient_privilege then blocked := true;
+  end;
+  if not blocked then raise exception 'LEAK: a non-admin added a team member'; end if;
+  update public.team_members set name = 'Intrus';
+  get diagnostics n = row_count;
+  if n <> 0 then raise exception 'LEAK: a non-admin renamed % team members', n; end if;
+  delete from public.team_photos;
+  if public.is_site_admin() then raise exception 'LEAK: a non-admin passes is_site_admin()'; end if;
+  blocked := false;
+  begin
+    select count(*) into n from public.site_admins;
+  exception when insufficient_privilege then blocked := true;
+  end;
+  if not blocked and n <> 0 then raise exception 'LEAK: a signed-in user reads the admin list'; end if;
+  blocked := false;
+  begin
+    insert into storage.objects (bucket_id, name, owner_id) values ('team', 'members/x.jpg', ida);
+  exception when insufficient_privilege then blocked := true;
+  end;
+  if not blocked then raise exception 'LEAK: a non-admin uploads to the team bucket'; end if;
+  reset role;
+
+  perform set_config('request.jwt.claims', '{"sub":"user_bbb","role":"authenticated","email":"Admin@Molted.test"}', true);
+  set local role authenticated;
+  if not public.is_site_admin() then raise exception 'the admin is not recognised by email'; end if;
+  insert into public.team_members (name, role) values ('Nou', 'Design');
+  update public.team_members set role = 'Cod' where name = 'Nou';
+  insert into public.team_photos (path) values ('gallery/a.jpg');
+  delete from public.team_members where name = 'Nou';
+  reset role;
+
   raise notice 'RLS checks passed';
 end $$;
 
