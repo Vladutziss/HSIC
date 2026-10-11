@@ -1,7 +1,6 @@
 import React from "react";
 import { AlertTriangle, CalendarCheck, Flame, FlaskConical, Gift, Plus, Swords, Timer, TrendingUp, Zap } from "lucide-react";
 import { Bar, Button, Chip, LevelBadge, Panel, SectionTitle } from "../components/ui.jsx";
-import { GoalsCard } from "../components/Goals.jsx";
 import { CompanionCard, GroupMini, QuestCard, ReviewCard, TodayTodos } from "../components/Cards.jsx";
 import { fmtDay, fmtLong } from "../lib/dates.js";
 import { RULES } from "../lib/engine.js";
@@ -111,7 +110,7 @@ function ResetWarning({ d }) {
   );
 }
 
-export default function Dashboard({ state, d, today, go, ai, months, recentStories, groups, review, onFocus, onCheck, onRevive, todo, goals, onAddHabit }) {
+export default function Dashboard({ state, d, today, go, ai, months, recentStories, groups, review, onFocus, onCheck, onRevive, todo, onAddHabit }) {
   const chestOpen = d.scheduled.length > 0 && d.doneScheduled === d.scheduled.length;
   const lastStory = [...recentStories].reverse().find((s) => s.story);
   return (
@@ -168,7 +167,6 @@ export default function Dashboard({ state, d, today, go, ai, months, recentStori
         </Panel>
 
         <TodayTodos state={state} today={today} todo={todo} go={go} />
-        <GoalsCard state={state} today={today} goals={goals} />
       </div>
 
       <div className="min-w-0 space-y-5 lg:col-span-4">

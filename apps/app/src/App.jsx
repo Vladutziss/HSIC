@@ -340,7 +340,6 @@ function Game() {
           onCheck={checkIn}
           onRevive={applyRevive}
           todo={todoActions}
-          goals={goalActions}
           onAddHabit={() => setHabitEd({ tab: "catalog" })}
         />
       )}
@@ -363,7 +362,7 @@ function Game() {
         />
       )}
       {view === "group" && <Group {...common} groups={groups} />}
-      {view === "plan" && <Planner {...common} todo={todoActions} />}
+      {view === "plan" && <Planner {...common} todo={todoActions} goals={goalActions} />}
       {view === "stats" && <Stats {...common} mode={store.mode} saveStatus={store.saveStatus} onFocus={() => setFocusSetup(true)} />}
       {view === "settings" && (
         <SettingsScreen
