@@ -7,3 +7,7 @@ supabase/.branches/
 
 .vercel
 .env.push
+
+.claude/worktrees/
+conversation-*.txt
+2026-*.txt
