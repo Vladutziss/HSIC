@@ -1,38 +1,48 @@
 // Sign-in gate for the web build: Clerk handles email, Google and the account UI.
 // Loaded lazily from Auth.jsx, so the artifact build (no backend) never bundles Clerk.
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { ClerkProvider, SignIn, SignUp, useAuth, useClerk, useUser } from "@clerk/clerk-react";
 import { Leaf, ShieldCheck } from "lucide-react";
 import Splash from "./Splash.jsx";
 import { Button } from "../components/ui.jsx";
+import { useTheme } from "../lib/themes.js";
 import { LEGAL_VERSION, LegalChecks, clearTicked, legalOk, rememberTicked, wasTicked } from "../components/LegalChecks.jsx";
 
-// the Noapte palette (packages/ui/base.css) as hex: Clerk's variables want real colours
-const appearance = {
-  variables: {
-    colorPrimary: "#ffc542",
-    colorTextOnPrimaryBackground: "#2a1b00",
-    colorBackground: "#1a1636",
-    colorInputBackground: "#120f29",
-    colorInputText: "#f3efff",
-    colorText: "#f3efff",
-    colorTextSecondary: "#9a91c9",
-    colorNeutral: "#cfc8f0",
-    colorDanger: "#ff5f87",
-    colorSuccess: "#3fe0a5",
-    fontFamily: "Nunito, ui-rounded, system-ui, sans-serif",
-    borderRadius: "0.75rem",
-  },
-  elements: {
-    card: { boxShadow: "none", border: "1px solid #2e2860" },
-    footerAction: { display: "none" }, // its link would leave the page; the toggle below keeps both forms here
-    socialButtonsBlockButton: { backgroundColor: "#221d45", border: "1px solid #2e2860" },
-    dividerLine: { backgroundColor: "#2e2860" },
-    headerTitle: { fontFamily: '"Pixelify Sans", Nunito, monospace' },
-    formButtonPrimary: { fontWeight: 800 },
-  },
+// Clerk wants real colours, not CSS variables, so the card is painted from the theme that is active right now
+// (read off the page) and rebuilt when the theme changes: a light theme gets a light card, a dark one a dark card.
+const token = (name) => {
+  const v = getComputedStyle(document.documentElement).getPropertyValue(`--c-${name}`).trim().split(/\s+/);
+  return v.length === 3 ? `rgb(${v[0]}, ${v[1]}, ${v[2]})` : undefined;
 };
+
+function appearanceFor() {
+  return {
+    variables: {
+      colorPrimary: token("gold"),
+      colorTextOnPrimaryBackground: token("on-gold"),
+      colorBackground: token("panel"),
+      colorInputBackground: token("well"),
+      colorInputText: token("ink"),
+      colorText: token("ink"),
+      colorTextSecondary: token("dim"),
+      colorNeutral: token("ink"),
+      colorDanger: token("rose"),
+      colorSuccess: token("mint"),
+      fontFamily: "Nunito, ui-rounded, system-ui, sans-serif",
+      borderRadius: "0.75rem",
+    },
+    elements: {
+      card: { boxShadow: "none", border: `1px solid ${token("edge")}` },
+      footerAction: { display: "none" }, // its link would leave the page; the toggle below keeps both forms here
+      socialButtonsBlockButton: { backgroundColor: token("well"), border: `1px solid ${token("edge")}` },
+      dividerLine: { backgroundColor: token("edge") },
+      headerTitle: { fontFamily: '"Pixelify Sans", Nunito, monospace' },
+      formButtonPrimary: { fontWeight: 800 },
+    },
+  };
+}
+
 
 const accepted = (user) => user?.unsafeMetadata?.legal?.version === LEGAL_VERSION;
 
@@ -164,6 +174,8 @@ function Gate({ children }) {
 }
 
 export default function ClerkGate({ children }) {
+  const theme = useTheme();
+  const appearance = useMemo(appearanceFor, [theme]);
   return (
     <ClerkProvider publishableKey={import.meta.env.VITE_CLERK_PUBLISHABLE_KEY} appearance={appearance}>
       <Gate>{children}</Gate>
