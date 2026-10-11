@@ -46,6 +46,23 @@
   .faq summary::after { content: "+"; font-family: "Pixelify Sans", monospace; color: #ffc542; }
   .faq[open] summary::after { content: "–"; }
   .faq p { padding: 0 1.25rem 1.25rem; }
+
+  /* admin */
+  .avatar { position: relative; width: 9rem; aspect-ratio: 1; border-radius: 1.25rem; overflow: hidden; background: radial-gradient(closest-side, rgba(255, 214, 120, 0.2), transparent 75%), #120f29; box-shadow: inset 0 0 0 2px #463c8c; }
+  .avatar .spr { position: absolute; inset: 12%; width: 76%; }
+  .avatar img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .panel { border-radius: 1.25rem; background: #1a1636; padding: 1.5rem; box-shadow: inset 0 0 0 2px #2e2860; }
+  .field { display: flex; flex-direction: column; gap: 0.35rem; font-size: 0.8rem; font-weight: 800; color: #9a91c9; }
+  .input { width: 100%; border-radius: 0.75rem; background: #120f29; color: #f3efff; font: inherit; font-size: 1rem; font-weight: 600; padding: 0.6rem 0.8rem; border: 2px solid #2e2860; }
+  .input:focus-visible { outline: none; border-color: #ffc542; }
+  textarea.input { min-height: 5rem; resize: vertical; }
+  .btn-xs { font-size: 0.85rem; padding: 0.4rem 0.9rem; border-radius: 0.7rem; box-shadow: 0 3px 0 #a8740a; }
+  .btn-danger { background: transparent; color: #ff8fb1; box-shadow: inset 0 0 0 2px #7a2944; }
+  .btn-danger:hover { background: rgba(255, 95, 135, 0.12); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  button:focus-visible, .file-btn:focus-within { outline: 2px solid #ffd978; outline-offset: 3px; }
+  .file-btn { position: relative; overflow: hidden; cursor: pointer; }
+  .file-btn input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
 }
 
 @keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3%); } }
