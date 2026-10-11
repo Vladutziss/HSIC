@@ -51,10 +51,20 @@ export async function enablePush(prefs) {
   const reg = await registration();
   if (!reg) throw new Error("no service worker");
   if ((await Notification.requestPermission()) !== "granted") return "denied";
-  const sub =
-    (await reg.pushManager.getSubscription()) ||
-    (await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64ToBytes(KEY) }));
-  await save(sub, prefs);
+  let sub;
+  try {
+    sub =
+      (await reg.pushManager.getSubscription()) ||
+      (await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64ToBytes(KEY) }));
+  } catch (e) {
+    throw Object.assign(new Error(e?.message || "subscribe"), { step: "subscribe" });
+  }
+  try {
+    await save(sub, prefs);
+  } catch (e) {
+    await sub.unsubscribe().catch(() => {});
+    throw Object.assign(new Error(e?.message || "save"), { step: "save" });
+  }
   return "on";
 }
 
