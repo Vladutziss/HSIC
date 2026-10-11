@@ -125,15 +125,9 @@ export default function Dashboard({ state, d, today, go, ai, months, recentStori
             icon={Swords}
             sub={`${d.doneScheduled} din ${d.scheduled.length} misiuni programate azi`}
             action={
-              <div
-                className={`flex items-center gap-2 rounded-xl px-3 py-1.5 text-xs font-extrabold ring-1 ${
-                  chestOpen ? "bg-gold/15 text-gold-hi ring-gold/40" : "bg-well text-dim ring-edge"
-                }`}
-                title="Cufărul zilei: toate misiunile programate bifate"
-              >
-                <Gift size={16} className={chestOpen ? "anim-flicker text-gold" : ""} aria-hidden="true" />
-                {chestOpen ? `Cufăr deschis · +${RULES.chestXp}` : `Cufărul zilei · +${RULES.chestXp}`}
-              </div>
+              <Button variant="ghost" size="sm" icon={Plus} onClick={onAddHabit}>
+                Obicei nou
+              </Button>
             }
           >
             Misiunile zilei
@@ -160,9 +154,15 @@ export default function Dashboard({ state, d, today, go, ai, months, recentStori
           )}
           <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
             <p className="text-xs font-bold text-dim">Fiecare bifă aduce momentum și puncte de evoluție pentru personaj.</p>
-            <Button variant="ghost" size="sm" icon={Plus} onClick={onAddHabit}>
-              Obicei nou
-            </Button>
+            <div
+              className={`flex items-center gap-2 rounded-xl px-3 py-1.5 text-xs font-extrabold ring-1 ${
+                chestOpen ? "bg-gold/15 text-gold-hi ring-gold/40" : "bg-well text-dim ring-edge"
+              }`}
+              title="Cufărul zilei: toate misiunile programate bifate"
+            >
+              <Gift size={16} className={chestOpen ? "anim-flicker text-gold" : ""} aria-hidden="true" />
+              {chestOpen ? `Cufăr deschis · +${RULES.chestXp}` : `Cufărul zilei · +${RULES.chestXp}`}
+            </div>
           </div>
         </Panel>
 
