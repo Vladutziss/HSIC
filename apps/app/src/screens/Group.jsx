@@ -198,80 +198,6 @@ function Leaderboard({ g, loading }) {
   );
 }
 
-function Composer({ g, groups, loading }) {
-  const toast = useToast();
-  const others = g.members.filter((m) => !m.isMe);
-  const [to, setTo] = useState([]);
-  const [text, setText] = useState("");
-  const [busy, setBusy] = useState(false);
-  const all = others.length > 0 && to.length === others.length;
-  const toggle = (id) => setTo((x) => (x.includes(id) ? x.filter((y) => y !== id) : [...x, id]));
-  async function send() {
-    setBusy(true);
-    try {
-      await groups.send(g.id, to, text);
-      toast({ title: "Reminder trimis", text: to.length === others.length ? "către tot grupul" : `către ${to.length} ${to.length === 1 ? "persoană" : "persoane"}`, icon: Send, tone: "mint" });
-      setText("");
-      setTo([]);
-    } catch {
-      toast({ title: "Nu am putut trimite reminderul", tone: "rose", icon: Bell });
-    }
-    setBusy(false);
-  }
-  return (
-    <Panel className="space-y-4 p-4 sm:p-5">
-      <SectionTitle icon={Send} tone="mint" sub="Unui prieten, mai multora sau întregului grup">
-        Trimite un reminder
-      </SectionTitle>
-      {loading ? (
-        <RowsSkeleton rows={2} />
-      ) : others.length === 0 ? (
-        <Empty icon={UserPlus} title="Nu mai e nimeni în grup">
-          Trimite codul de invitație prietenilor tăi, apoi le poți trimite remindere.
-        </Empty>
-      ) : (
-        <>
-          <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              aria-pressed={all}
-              onClick={() => setTo(all ? [] : others.map((m) => m.id))}
-              className={`focus-ring rounded-full px-3 py-1.5 text-xs font-extrabold transition ${all ? "bg-gold text-on-gold" : "text-dim ring-1 ring-edge hover:text-ink"}`}
-            >
-              Tot grupul
-            </button>
-            {others.map((m) => (
-              <button
-                key={m.id}
-                type="button"
-                aria-pressed={to.includes(m.id)}
-                onClick={() => toggle(m.id)}
-                className={`focus-ring inline-flex items-center gap-1.5 rounded-full py-1 pl-1 pr-3 text-xs font-extrabold transition ${
-                  to.includes(m.id) ? "bg-mint text-on-mint" : "text-body ring-1 ring-edge hover:text-ink"
-                }`}
-              >
-                <Sprite path={m.path || "sport"} stage={m.stage || "egg"} mood="idle" size={32} still className="-my-1" />
-                {m.name}
-              </button>
-            ))}
-          </div>
-          <textarea id="nudge-text" className="field min-h-[80px]" value={text} maxLength={200} placeholder="Scrie un mesaj scurt…" onChange={(e) => setText(e.target.value)} aria-label="Mesajul reminderului" />
-          <div className="flex flex-wrap gap-1.5">
-            {NUDGE_TEMPLATES.map((t) => (
-              <button key={t} type="button" onClick={() => setText(t)} className="rounded-full bg-violet/10 px-2.5 py-1 text-left text-xs font-bold text-violet-hi ring-1 ring-violet/25 hover:bg-violet/20">
-                {t}
-              </button>
-            ))}
-          </div>
-          <Button id="nudge-send" variant="mint" icon={Send} busy={busy} disabled={!to.length || !text.trim()} onClick={send}>
-            Trimite
-          </Button>
-        </>
-      )}
-    </Panel>
-  );
-}
-
 // "azi" / "ieri" / the date, as a divider between days in the chat
 const dayLabel = (key) => {
   const r = relDay(key, todayKey());
@@ -284,7 +210,29 @@ const clock = (iso) => {
 
 /** The reminders as a chat: what friends sent you on the left, what you sent on the right, oldest first. */
 function ChatPanel({ g, groups, loading }) {
+  const toast = useToast();
   const names = Object.fromEntries(g.members.map((m) => [m.id, m]));
+  const others = g.members.filter((m) => !m.isMe);
+  const othersKey = others.map((m) => m.id).join();
+  // the message goes to everyone unless you pick people
+  const [to, setTo] = useState(() => others.map((m) => m.id));
+  useEffect(() => setTo(others.map((m) => m.id)), [g.id, othersKey]); // eslint-disable-line react-hooks/exhaustive-deps
+  const [text, setText] = useState("");
+  const [busy, setBusy] = useState(false);
+  const all = others.length > 0 && to.length === others.length;
+  const toggle = (id) => setTo((x) => (all ? [id] : x.includes(id) ? x.filter((y) => y !== id) : [...x, id]));
+  const canSend = to.length > 0 && text.trim().length > 0 && !busy;
+  async function send() {
+    if (!canSend) return;
+    setBusy(true);
+    try {
+      await groups.send(g.id, to, text.trim());
+      setText("");
+    } catch {
+      toast({ title: "Nu am putut trimite mesajul", tone: "rose", icon: Bell });
+    }
+    setBusy(false);
+  }
   const unread = g.inbox.filter((n) => !n.read).length;
   const thread = useMemo(
     () =>
@@ -306,19 +254,19 @@ function ChatPanel({ g, groups, loading }) {
       <SectionTitle
         icon={Inbox}
         tone="violet"
-        sub="Impulsurile din grup, ca într-un chat"
+        sub="Încurajări între voi, ca într-un chat"
         action={unread ? <Chip tone="violet">{unread} necitite</Chip> : null}
       >
-        Remindere
+        Chat-ul grupului
       </SectionTitle>
       {loading ? (
         <RowsSkeleton rows={3} />
       ) : thread.length === 0 ? (
-        <Empty icon={Inbox} title="Niciun reminder încă">
-          Când un prieten îți trimite un reminder, apare aici. Cele trimise de tine apar tot aici.
+        <Empty icon={Inbox} title="Niciun mesaj încă">
+          {others.length ? "Scrie primul mesaj mai jos: o încurajare sau un „hai, azi!”." : "Trimite codul de invitație prietenilor tăi, apoi vă puteți scrie aici."}
         </Empty>
       ) : (
-        <div ref={scroller} className="max-h-[34rem] space-y-1.5 overflow-y-auto rounded-2xl bg-well/60 p-3 ring-1 ring-edge" role="log" aria-live="polite" aria-label="Conversația din grup">
+        <div ref={scroller} className="max-h-[28rem] space-y-1.5 overflow-y-auto rounded-2xl bg-well/60 p-3 ring-1 ring-edge" role="log" aria-live="polite" aria-label="Conversația din grup">
           {thread.map((n) => {
             const day = dayKey(new Date(n.at));
             const divider = day !== lastDay;
@@ -359,6 +307,76 @@ function ChatPanel({ g, groups, loading }) {
               </React.Fragment>
             );
           })}
+        </div>
+      )}
+
+      {!loading && others.length > 0 && (
+        <div className="mt-3 space-y-2">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="mr-0.5 text-xs font-extrabold text-dim">Către:</span>
+            <button
+              type="button"
+              aria-pressed={all}
+              onClick={() => setTo(others.map((m) => m.id))}
+              className={`focus-ring rounded-full px-3 py-1 text-xs font-extrabold transition ${all ? "bg-mint text-on-mint" : "text-dim ring-1 ring-edge hover:text-ink"}`}
+            >
+              Toți
+            </button>
+            {others.map((m) => {
+              const on = !all && to.includes(m.id);
+              return (
+                <button
+                  key={m.id}
+                  type="button"
+                  aria-pressed={on}
+                  onClick={() => toggle(m.id)}
+                  className={`focus-ring inline-flex items-center gap-1 rounded-full py-0.5 pl-0.5 pr-2.5 text-xs font-extrabold transition ${on ? "bg-mint text-on-mint" : "text-body ring-1 ring-edge hover:text-ink"}`}
+                >
+                  <Sprite path={m.path || "sport"} stage={m.stage || "egg"} mood="idle" size={24} still />
+                  {m.name}
+                </button>
+              );
+            })}
+          </div>
+          <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {NUDGE_TEMPLATES.map((t) => (
+              <button
+                key={t}
+                type="button"
+                onClick={() => setText(t)}
+                className="shrink-0 whitespace-nowrap rounded-full bg-violet/10 px-2.5 py-1 text-xs font-bold text-violet-hi ring-1 ring-violet/25 hover:bg-violet/20"
+              >
+                {t}
+              </button>
+            ))}
+          </div>
+          <form
+            className="flex items-end gap-2"
+            onSubmit={(e) => {
+              e.preventDefault();
+              send();
+            }}
+          >
+            <textarea
+              id="nudge-text"
+              rows={1}
+              className="field max-h-32 min-h-[46px] flex-1 resize-none"
+              value={text}
+              maxLength={200}
+              placeholder={all ? "Scrie grupului…" : `Scrie lui ${to.map((id) => names[id]?.name).filter(Boolean).join(", ") || "…"}`}
+              aria-label="Mesaj"
+              onChange={(e) => setText(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  send();
+                }
+              }}
+            />
+            <Button id="nudge-send" type="submit" variant="mint" icon={Send} busy={busy} disabled={!canSend} aria-label="Trimite">
+              <span className="hidden sm:inline">Trimite</span>
+            </Button>
+          </form>
         </div>
       )}
     </Panel>
@@ -405,7 +423,6 @@ function GroupView({ g, groups, loading }) {
           <ChatPanel g={g} groups={groups} loading={loading} />
         </div>
         <div className="min-w-0 space-y-5 lg:col-span-2">
-          <Composer g={g} groups={groups} loading={loading} />
           <Leaderboard g={g} loading={loading} />
         </div>
       </div>
