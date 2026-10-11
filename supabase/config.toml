@@ -17,3 +17,6 @@ enable_confirmations = true
 
 [functions.ai]
 verify_jwt = true
+
+[functions.agent]
+verify_jwt = true

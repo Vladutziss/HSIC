@@ -5,7 +5,7 @@
 
 // deno-lint-ignore-file no-explicit-any
 
-export const KINDS = ["review", "moment", "chapter"] as const;
+export const KINDS = ["review", "moment", "chapter", "insights"] as const;
 export type Kind = (typeof KINDS)[number];
 
 const clip = (s: unknown, n: number) => {
@@ -58,9 +58,39 @@ Write a short celebratory chapter: 3 sentences, at most 380 characters, in Roman
 Reply with only JSON: {"title":"...","story":"..."}`;
 }
 
+const WD = ["dum", "lun", "mar", "mie", "joi", "vin", "sâm"]; // index = Date.getDay()
+
+/** The last 4 weeks per habit, for `insights` (the planning is done by the `agent` function). */
+function habitsBlock(p: any): string {
+  const habits = Array.isArray(p.habits) ? p.habits.slice(0, 8) : [];
+  return (
+    habits
+      .map((h: any) => {
+        const wd = (Array.isArray(h.wd) ? h.wd : [])
+          .slice(0, 7)
+          .map((c: any, i: number) => `${WD[i]} ${Number(c?.[1]) || 0}/${Number(c?.[0]) || 0}`)
+          .join(", ");
+        return `- id=${clip(h.id, 40)} "${clip(h.name, 60)}" difficulty ${Number(h.diff) || 2}/3, scheduled on [${list(h.days, 7, 2).join(",")}] (0=Sunday): done ${Number(h.done) || 0} of ${Number(h.sched) || 0}. Per weekday done/scheduled: ${wd}`;
+      })
+      .join("\n") || "- no habits"
+  );
+}
+
+function insights(p: any): string {
+  return `You are the data coach in "Molted", a self-improvement RPG. Below is the last 4 weeks of a player's habits. Find 2 or 3 real patterns (a weekday that always fails, a habit that is much weaker than the others, a habit that is easy to keep) and give one concrete fix for each. Use only the numbers below; never invent data.
+
+Goal: "${clip(p.goal, 200) || "-"}".
+${habitsBlock(p)}
+
+Write in Romanian, addressing the player as "tu", warm and specific, no guilt. Each insight: title at most 6 words, text at most 200 characters with the numbers it is based on and the fix.
+Reply with only JSON: {"insights":[{"title":"...","text":"..."}]}`;
+}
+
 export function buildPrompt(kind: Kind, params: any): string {
   const p = params && typeof params === "object" ? params : {};
   switch (kind) {
+    case "insights":
+      return insights(p);
     case "review":
       return review(p);
     case "moment":
