@@ -1,10 +1,12 @@
 // Sign-in gate for the web build: Clerk handles email, Google and the account UI.
 // Loaded lazily from Auth.jsx, so the artifact build (no backend) never bundles Clerk.
 
-import React, { useState } from "react";
-import { ClerkProvider, SignIn, SignUp, useAuth } from "@clerk/clerk-react";
-import { Leaf } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { ClerkProvider, SignIn, SignUp, useAuth, useClerk, useUser } from "@clerk/clerk-react";
+import { Leaf, ShieldCheck } from "lucide-react";
 import Splash from "./Splash.jsx";
+import { Button } from "../components/ui.jsx";
+import { LEGAL_VERSION, LegalChecks, clearTicked, legalOk, rememberTicked, wasTicked } from "../components/LegalChecks.jsx";
 
 // the Noapte palette (packages/ui/base.css) as hex: Clerk's variables want real colours
 const appearance = {
@@ -32,8 +34,75 @@ const appearance = {
   },
 };
 
+const accepted = (user) => user?.unsafeMetadata?.legal?.version === LEGAL_VERSION;
+
+// Whoever is signed in has to have accepted the current terms: new accounts (email, Google, or an OAuth sign-in
+// that turned into a sign-up) and existing ones alike. The acceptance, its version and its time are kept on the
+// Clerk user. Players who ticked the boxes on the sign-up form are recorded without being asked again.
+function Consent({ children }) {
+  const { user, isLoaded } = useUser();
+  const { signOut } = useClerk();
+  const [checks, setChecks] = useState({ terms: false, age: false });
+  const [busy, setBusy] = useState(false);
+  const [failed, setFailed] = useState(false);
+
+  async function record() {
+    setBusy(true);
+    setFailed(false);
+    try {
+      await user.update({ unsafeMetadata: { ...user.unsafeMetadata, legal: { version: LEGAL_VERSION, at: new Date().toISOString(), age16: true } } });
+      clearTicked();
+    } catch {
+      setFailed(true);
+    }
+    setBusy(false);
+  }
+
+  const ticked = isLoaded && user && !accepted(user) && wasTicked();
+  useEffect(() => {
+    if (ticked) record();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ticked]);
+
+  if (!isLoaded || !user) return <Splash text="Se încarcă aventura…" />;
+  if (accepted(user)) return children;
+  if (ticked && !failed) return <Splash text="Se încarcă aventura…" />;
+
+  return (
+    <div className="app-bg grid min-h-screen place-items-center p-4">
+      <div className="panel w-full max-w-md space-y-4 p-5 sm:p-6">
+        <div className="flex items-center gap-3">
+          <span className="grid h-10 w-10 place-items-center rounded-xl bg-gold/10 text-gold ring-1 ring-gold/30">
+            <ShieldCheck size={20} aria-hidden="true" />
+          </span>
+          <div>
+            <h1 className="font-pixel text-xl leading-tight text-ink">Un ultim pas</h1>
+            <p className="text-xs font-semibold text-dim">Înainte să intri în Molted</p>
+          </div>
+        </div>
+        <p className="text-sm text-body">Ca să folosești aplicația, confirmă mai jos. Documentele se deschid într-o pagină nouă, ca să le poți citi pe îndelete.</p>
+        <LegalChecks value={checks} onChange={setChecks} />
+        {failed && (
+          <p role="alert" className="rounded-xl bg-rose/10 p-3 text-sm font-semibold text-rose ring-1 ring-rose/30">
+            Nu am putut salva confirmarea. Verifică conexiunea și încearcă din nou.
+          </p>
+        )}
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <button type="button" className="focus-ring rounded-lg px-1 text-xs font-bold text-dim underline hover:text-ink" onClick={() => signOut()}>
+            Ieși din cont
+          </button>
+          <Button id="legal-continue" busy={busy} disabled={!legalOk(checks)} onClick={record}>
+            Continuă
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function Gate({ children }) {
   const [mode, setMode] = useState("in"); // in | up
+  const [signupChecks, setSignupChecks] = useState({ terms: false, age: false });
   const { isLoaded, isSignedIn, userId } = useAuth();
   if (!isLoaded) return <Splash text="Se încarcă aventura…" />;
   if (!isSignedIn) {
@@ -47,8 +116,31 @@ function Gate({ children }) {
           <p className="text-center text-sm text-dim">
             Molted este o aplicație de self-improvement gamificată: îți urmărești obiceiurile zilnice, personajul tău evoluează odată cu progresul, poți intra în grupuri cu prietenii și primești rapoarte AI.
           </p>
-          {mode === "in" ? <SignIn key="in" routing="hash" /> : <SignUp key="up" routing="hash" />}
-          <button type="button" className="focus-ring text-xs font-bold text-dim underline" onClick={() => setMode(mode === "in" ? "up" : "in")}>
+          {mode === "in" ? (
+            <SignIn key="in" routing="hash" />
+          ) : (
+            <>
+              <div className="w-full">
+                <LegalChecks
+                  value={signupChecks}
+                  onChange={(v) => {
+                    setSignupChecks(v);
+                    if (legalOk(v)) rememberTicked();
+                    else clearTicked();
+                  }}
+                />
+              </div>
+              {legalOk(signupChecks) ? (
+                <SignUp key="up" routing="hash" />
+              ) : (
+                <p className="w-full rounded-xl border border-dashed border-edge-hi p-4 text-center text-sm font-semibold text-dim">Bifează căsuțele de mai sus ca să-ți poți crea contul.</p>
+              )}
+            </>
+          )}
+          <button type="button" className="focus-ring text-xs font-bold text-dim underline" onClick={() => {
+              if (mode === "up") clearTicked(); // going back to sign-in: the ticks of the sign-up form no longer count
+              setMode(mode === "in" ? "up" : "in");
+            }}>
             {mode === "in" ? "Nu ai cont? Creează unul" : "Ai deja cont? Intră în cont"}
           </button>
           <div className="flex gap-4 text-xs font-bold text-faint">
@@ -64,7 +156,11 @@ function Gate({ children }) {
     );
   }
   // a different account gets a fresh app (and a fresh store)
-  return <React.Fragment key={userId}>{children}</React.Fragment>;
+  return (
+    <React.Fragment key={userId}>
+      <Consent>{children}</Consent>
+    </React.Fragment>
+  );
 }
 
 export default function ClerkGate({ children }) {
