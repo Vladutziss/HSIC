@@ -4,7 +4,7 @@ import { Button, Chip, Empty, Gems, HoldToDelete, Panel, SectionTitle, Stat } fr
 import { HabitArea, Heatmap, Sparkline } from "../components/Charts.jsx";
 import { iconFor } from "../components/icons.js";
 import { scheduleLabel } from "../components/HabitEditor.jsx";
-import { PlanPanel } from "../components/AiCoach.jsx";
+import { ExperimentsPanel, NotesPanel, PlanPanel } from "../components/CoachAgent.jsx";
 import { MAX_HABITS, PATHS } from "../lib/catalog.js";
 import { DIFF, habitStats, isScheduled } from "../lib/engine.js";
 import { fmt12, fmtDay } from "../lib/dates.js";
@@ -163,6 +163,7 @@ function HabitDetail({ h, state, d, today, onBack, onEdit, onArchive }) {
 
 export default function Habits({ state, d, today, ai, focus, setFocus, onAdd, onAddHabit, onEdit, onArchive, onDelete }) {
   const [showArchived, setShowArchived] = useState(false);
+  const [expKey, setExpKey] = useState(0);
   const habits = state.habits || [];
   const active = habits.filter((h) => !h.archivedAt);
   const archived = habits.filter((h) => h.archivedAt);
@@ -218,7 +219,9 @@ export default function Habits({ state, d, today, ai, focus, setFocus, onAdd, on
           ))}
         </div>
       )}
-      <PlanPanel state={state} today={today} ai={ai} onAddHabit={onAddHabit} onEdit={onEdit} />
+      <PlanPanel state={state} today={today} ai={ai} onAddHabit={onAddHabit} onEdit={onEdit} onExperiment={() => setExpKey((k) => k + 1)} />
+      <ExperimentsPanel state={state} today={today} ai={ai} refreshKey={expKey} />
+      <NotesPanel ai={ai} today={today} />
       {archived.length > 0 && (
         <div>
           <button type="button" className="focus-ring inline-flex items-center gap-2 text-sm font-extrabold text-dim hover:text-ink" onClick={() => setShowArchived((x) => !x)}>

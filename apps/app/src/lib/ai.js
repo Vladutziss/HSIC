@@ -77,6 +77,14 @@ export function aiErrorCopy(code) {
       return "Sesiunea a expirat. Reîncarcă pagina și autentifică-te din nou.";
     case "unavailable":
       return "AI-ul nu e disponibil aici.";
+    case "experiment_running":
+      return "Ai deja un experiment în desfășurare. Termină-l sau anulează-l înainte să începi altul.";
+    case "context_limit":
+      return "Ai deja 50 de note active. Șterge una ca să adaugi alta.";
+    case "invalid_note":
+      return "Nota nu e validă: scrie între 1 și 300 de caractere.";
+    case "db_error":
+      return "Nu s-a putut salva acum. Încearcă din nou.";
     case "cancelled":
       return "";
     default:
@@ -193,13 +201,19 @@ export async function coachAgent(today, signal) {
     summary: clip(r.summary, 700),
     steps: Array.isArray(r.steps) ? r.steps : [],
     proposals: r.proposals.map((p) => ({
-      action: p.action === "add" ? "add" : "change",
+      id: p.id || null, // the row in agent_actions, when the log was written
+      action: p.action === "add" ? "add" : p.action === "experiment" ? "experiment" : "change",
       habitId: p.habitId,
       name: clip(p.name, 40),
+      factor: p.factor,
       diff: Math.min(3, Math.max(1, Number(p.diff) || 2)),
       days: (Array.isArray(p.days) ? p.days : []).filter((d) => Number.isInteger(d) && d >= 0 && d <= 6),
       reason: clip(p.reason, 200),
+      experiment: p.experiment && p.experiment.assignments ? p.experiment : null,
       sources: (Array.isArray(p.sources) ? p.sources : []).filter(Boolean),
     })),
   };
 }
+
+/** The player's supabase client when signed in on the web build (for the coach log, notes, experiments), else null. */
+export const agentClient = serverClient;

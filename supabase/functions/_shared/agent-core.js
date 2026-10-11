@@ -6,6 +6,9 @@ const clip = (s, n) => {
   return t.length > n ? t.slice(0, n - 1).trimEnd() + "…" : t;
 };
 
+/** Factors the agent may test on a player (the catalog with texts is lib/experiments.js FACTORS). */
+export const EXPERIMENT_FACTORS = ["if_then", "easier_version"];
+
 /** One file of knowledge/ -> {meta, chunks}. Frontmatter, then `## shows` and `## limits` sections. */
 export function parseKnowledge(text) {
   const m = /^---\n([\s\S]*?)\n---\n([\s\S]*)$/.exec(text.replace(/\r\n/g, "\n"));
@@ -33,7 +36,8 @@ export function parseKnowledge(text) {
  * The agent's proposals, checked against what is real: `habits` are the player's active habits,
  * `retrieved` the Set of source ids the agent actually read, `max` the habit limit.
  * A source the agent did not retrieve is dropped, so it can never be cited; a proposal with no
- * source left is kept but shown as "fără sursă". Returns at most 3.
+ * source left is kept but shown as "fără sursă". Returns at most 3, and at most one experiment
+ * (which only names a habit and a factor: the days are drawn by the server, never by the model).
  */
 export function validateProposals(raw, habits, retrieved, max) {
   const ids = new Set(habits.map((h) => h.id));
@@ -41,17 +45,20 @@ export function validateProposals(raw, habits, retrieved, max) {
   const out = [];
   for (const p of Array.isArray(raw) ? raw : []) {
     if (out.length >= 3) break;
-    const days = [...new Set((Array.isArray(p?.days) ? p.days : []).map(Number).filter((d) => Number.isInteger(d) && d >= 0 && d <= 6))];
     const reason = clip(p?.reason, 200);
-    if (!days.length || !reason) continue;
-    const base = {
-      diff: Math.min(3, Math.max(1, Math.round(Number(p?.diff)) || 2)),
-      days,
-      reason,
-      sources: [...new Set((Array.isArray(p?.sources) ? p.sources : []).map(String).filter((s) => retrieved.has(s)))].slice(0, 3),
-    };
-    if (p.action === "change" && ids.has(p.habitId)) out.push({ ...base, action: "change", habitId: p.habitId });
-    else if (p.action === "add" && clip(p.name, 40).length > 1 && count < max) {
+    if (!reason) continue;
+    const sources = [...new Set((Array.isArray(p?.sources) ? p.sources : []).map(String).filter((s) => retrieved.has(s)))].slice(0, 3);
+    if (p?.action === "experiment") {
+      if (ids.has(p.habitId) && EXPERIMENT_FACTORS.includes(p.factor) && !out.some((o) => o.action === "experiment")) {
+        out.push({ action: "experiment", habitId: p.habitId, factor: p.factor, reason, sources });
+      }
+      continue;
+    }
+    const days = [...new Set((Array.isArray(p?.days) ? p.days : []).map(Number).filter((d) => Number.isInteger(d) && d >= 0 && d <= 6))];
+    if (!days.length) continue;
+    const base = { diff: Math.min(3, Math.max(1, Math.round(Number(p?.diff)) || 2)), days, reason, sources };
+    if (p?.action === "change" && ids.has(p.habitId)) out.push({ ...base, action: "change", habitId: p.habitId });
+    else if (p?.action === "add" && clip(p.name, 40).length > 1 && count < max) {
       count++;
       out.push({ ...base, action: "add", name: clip(p.name, 40) });
     }
