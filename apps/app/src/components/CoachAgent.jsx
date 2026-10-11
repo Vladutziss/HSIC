@@ -113,13 +113,18 @@ export function PlanPanel({ state, today, ai, onAddHabit, onEdit, onExperiment }
               ))}
           </ol>
           {r.summary && <p className="text-sm font-semibold text-body">{r.summary}</p>}
+          {r.notEnoughData && (
+            <p className="text-sm font-semibold text-dim">
+              Încă prea puține zile ca să spun ceva despre progresul tău: cel mai lung obicei are {r.notEnoughData.longest} din {r.notEnoughData.needed} zile programate necesare.
+            </p>
+          )}
           {problem && (
             <p role="alert" className="rounded-xl bg-rose/10 p-3 text-sm font-semibold text-rose ring-1 ring-rose/30">
               {problem}
             </p>
           )}
           {r.proposals.length === 0 ? (
-            <p className="text-sm font-semibold text-dim">Nicio schimbare propusă acum.</p>
+            !r.notEnoughData && <p className="text-sm font-semibold text-dim">Nicio schimbare propusă acum.</p>
           ) : (
             <ul className="space-y-2">
               {r.proposals.map((sg, i) => (
