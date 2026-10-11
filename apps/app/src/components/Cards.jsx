@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { BookOpenText, Clock, Crown, MessageCircle, Moon, ScrollText, Sparkles, Users } from "lucide-react";
+import { BookOpenText, ChevronDown, Clock, Crown, MessageCircle, Moon, ScrollText, Sparkles, Users } from "lucide-react";
 import { Bar, Button, Chip, CheckButton, Gems, Panel, Ring, SectionTitle, Skeleton } from "./ui.jsx";
 import { Sprite, eggCrack } from "./Sprite.jsx";
 import { iconFor } from "./icons.js";
@@ -77,51 +77,70 @@ export function moodLine(c, name) {
 
 export function CompanionCard({ c, path, lastStory, onOpen }) {
   const cls = PATHS[path]?.cls;
+  const [open, setOpen] = useState(false);
   return (
     <Panel tone="violet" corners className="overflow-hidden">
       <div className="pedestal flex justify-center rounded-t-[18px] pt-5">
         <Sprite path={path} stage={c.stage.id} mood={c.mood} size={160} crack={eggCrack(c.ep)} label={`${c.name || "Oul tău"}, ${c.stage.name}`} />
       </div>
       <div className="scene-ground h-3" />
-      <div className="space-y-3 p-4">
-        <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0">
-            <div className="truncate font-pixel text-2xl text-ink">{c.name || "Oul tău"}</div>
-            <div className="text-xs font-extrabold uppercase tracking-wider text-violet-hi">
-              {c.stage.name} · {cls}
+      <div className="flex items-start justify-between gap-2 p-4 pb-3">
+        <div className="min-w-0">
+          <div className="truncate font-pixel text-2xl text-ink">{c.name || "Oul tău"}</div>
+          <div className="text-xs font-extrabold uppercase tracking-wider text-violet-hi">
+            {c.stage.name} · {cls}
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          {open && (
+            <Chip tone="violet" icon={Sparkles}>
+              {c.ep} PE
+            </Chip>
+          )}
+          <button
+            type="button"
+            onClick={() => setOpen((v) => !v)}
+            aria-expanded={open}
+            aria-controls="companion-details"
+            aria-label={open ? "Ascunde detaliile personajului" : "Arată detaliile personajului"}
+            className="grid h-8 w-8 place-items-center rounded-lg text-dim transition hover:bg-well hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-hi"
+          >
+            <ChevronDown size={18} className={`transition-transform duration-300 ${open ? "rotate-180" : ""}`} aria-hidden="true" />
+          </button>
+        </div>
+      </div>
+      <div id="companion-details" className={`grid transition-[grid-template-rows] duration-300 ${open ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`} inert={open ? undefined : ""}>
+        <div className="min-h-0 overflow-hidden">
+          <div className="space-y-3 px-4 pb-4">
+            <div className="relative rounded-xl bg-well p-3 text-sm font-semibold text-body ring-1 ring-edge">
+              <span className="absolute -top-1.5 left-8 h-3 w-3 rotate-45 bg-well ring-1 ring-edge [clip-path:polygon(0_0,100%_0,0_100%)]" aria-hidden="true" />
+              {moodLine(c, c.name)}
+            </div>
+            {c.next && (
+              <div>
+                <div className="mb-1 flex justify-between text-xs font-bold text-dim">
+                  <span>Spre {c.next.name}</span>
+                  <span className="tabular">
+                    {c.ep} / {c.next.min} PE
+                  </span>
+                </div>
+                <Bar value={c.progress} tone="violet" label="Progres spre evoluția următoare" />
+              </div>
+            )}
+            {lastStory && (
+              <figure className="inset p-3">
+                <figcaption className="mb-1 flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-wider text-gold">
+                  <ScrollText size={12} aria-hidden="true" /> {lastStory.title}
+                </figcaption>
+                <p className="line-clamp-3 text-sm italic leading-relaxed text-body">{lastStory.story}</p>
+              </figure>
+            )}
+            <div className="flex flex-wrap gap-2">
+              <Button variant="violet" size="sm" icon={BookOpenText} onClick={onOpen}>
+                Povestea
+              </Button>
             </div>
           </div>
-          <Chip tone="violet" icon={Sparkles}>
-            {c.ep} PE
-          </Chip>
-        </div>
-        <div className="relative rounded-xl bg-well p-3 text-sm font-semibold text-body ring-1 ring-edge">
-          <span className="absolute -top-1.5 left-8 h-3 w-3 rotate-45 bg-well ring-1 ring-edge [clip-path:polygon(0_0,100%_0,0_100%)]" aria-hidden="true" />
-          {moodLine(c, c.name)}
-        </div>
-        {c.next && (
-          <div>
-            <div className="mb-1 flex justify-between text-xs font-bold text-dim">
-              <span>Spre {c.next.name}</span>
-              <span className="tabular">
-                {c.ep} / {c.next.min} PE
-              </span>
-            </div>
-            <Bar value={c.progress} tone="violet" label="Progres spre evoluția următoare" />
-          </div>
-        )}
-        {lastStory && (
-          <figure className="inset p-3">
-            <figcaption className="mb-1 flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-wider text-gold">
-              <ScrollText size={12} aria-hidden="true" /> {lastStory.title}
-            </figcaption>
-            <p className="line-clamp-3 text-sm italic leading-relaxed text-body">{lastStory.story}</p>
-          </figure>
-        )}
-        <div className="flex flex-wrap gap-2">
-          <Button variant="violet" size="sm" icon={BookOpenText} onClick={onOpen}>
-            Povestea
-          </Button>
         </div>
       </div>
     </Panel>
