@@ -34,8 +34,8 @@ export default function NotificationsPanel({ settings, set }) {
       } else {
         setStatus(await enablePush(prefs));
       }
-    } catch {
-      setFailed(true);
+    } catch (e) {
+      setFailed(e?.step || true);
     } finally {
       setBusy(false);
     }
@@ -61,7 +61,13 @@ export default function NotificationsPanel({ settings, set }) {
           <Button variant={status === "on" ? "ghost" : "gold"} busy={busy} onClick={toggle}>
             {status === "on" ? "Oprește notificările" : "Activează notificările"}
           </Button>
-          {failed && <p className="text-xs font-semibold text-rose-ink">Nu s-a putut. Încearcă din nou.</p>}
+          {failed === "subscribe" && (
+            <p className="text-xs font-semibold text-rose-ink">
+              Browserul nu a putut crea abonarea la notificări. În Brave: Setări → Confidențialitate și securitate → activează „Use Google services for push messaging”, apoi repornește browserul.
+            </p>
+          )}
+          {failed === "save" && <p className="text-xs font-semibold text-rose-ink">Abonarea nu s-a putut salva pe server. Încearcă din nou.</p>}
+          {failed === true && <p className="text-xs font-semibold text-rose-ink">Nu s-a putut. Încearcă din nou.</p>}
         </>
       )}
       {status === "on" && (
