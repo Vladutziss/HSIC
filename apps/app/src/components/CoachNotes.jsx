@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { NotebookPen, Plus, Trash2 } from "lucide-react";
 import { Button, IconButton, Panel, SectionTitle, Skeleton } from "./ui.jsx";
+import { DateSelect, Select } from "./Select.jsx";
 
 const KINDS = [
   { id: "event", label: "Eveniment" },
@@ -14,7 +15,7 @@ const kindLabel = (id) => KINDS.find((k) => k.id === id)?.label || "Notă";
 export function CoachNotes({ notes, onAdd, onRemove, busy = false, error = "" }) {
   const [body, setBody] = useState("");
   const [kind, setKind] = useState("note");
-  const [endsOn, setEndsOn] = useState("");
+  const [endsOn, setEndsOn] = useState(null);
   const can = body.trim().length > 0 && !busy;
 
   const submit = async (e) => {
@@ -23,7 +24,7 @@ export function CoachNotes({ notes, onAdd, onRemove, busy = false, error = "" })
     const ok = await onAdd({ kind, body: body.trim(), endsOn: endsOn || null });
     if (ok !== false) {
       setBody("");
-      setEndsOn("");
+      setEndsOn(null);
     }
   };
 
@@ -48,23 +49,17 @@ export function CoachNotes({ notes, onAdd, onRemove, busy = false, error = "" })
           />
         </div>
         <div className="flex flex-wrap items-end gap-2 sm:col-span-2">
-          <div>
+          <div className="w-44">
             <label htmlFor="coach-note-kind" className="mb-1 block text-xs font-extrabold text-dim">
               Tip
             </label>
-            <select id="coach-note-kind" className="field" value={kind} onChange={(e) => setKind(e.target.value)}>
-              {KINDS.map((k) => (
-                <option key={k.id} value={k.id}>
-                  {k.label}
-                </option>
-              ))}
-            </select>
+            <Select id="coach-note-kind" value={kind} onChange={setKind} options={KINDS.map((k) => ({ value: k.id, label: k.label }))} />
           </div>
-          <div>
+          <div className="w-56">
             <label htmlFor="coach-note-ends" className="mb-1 block text-xs font-extrabold text-dim">
               Valabilă până la (opțional)
             </label>
-            <input id="coach-note-ends" type="date" className="field" value={endsOn} onChange={(e) => setEndsOn(e.target.value)} />
+            <DateSelect id="coach-note-ends" value={endsOn} onChange={setEndsOn} placeholder="Fără dată" />
           </div>
           <Button type="submit" variant="mint" icon={Plus} busy={busy} disabled={!can}>
             Adaugă
