@@ -1,9 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { CheckCircle2, FlaskConical, Leaf, Timer, Zap } from "lucide-react";
+import { CalendarX, CheckCircle2, FlaskConical, Leaf, Timer, Zap } from "lucide-react";
 import { useAppStore } from "./lib/store.js";
 import { checkInGain, derive, reviewPayload } from "./lib/derive.js";
 import { CODE, focusXpByDay } from "./lib/engine.js";
-import { addDays, dayKey, monthKey, nowMinutes, parseHM, todayKey } from "./lib/dates.js";
+import { addDays, dayKey, fmt12, monthKey, nowMinutes, parseHM, todayKey, weekday } from "./lib/dates.js";
 import { detectMoments } from "./lib/moments.js";
 import { pickQuote } from "./lib/quotes.js";
 import { agentClient, aiErrorCopy, aiStatus, dailyReview } from "./lib/ai.js";
@@ -19,7 +19,7 @@ import { Shell } from "./components/Shell.jsx";
 import { FocusMode, FocusSetup } from "./components/Focus.jsx";
 import { fmtSpan, loadSession, newSession, saveSession } from "./lib/focus.js";
 import { MomentModal } from "./components/MomentModal.jsx";
-import { HabitEditor } from "./components/HabitEditor.jsx";
+import { HabitEditor, scheduleLabel } from "./components/HabitEditor.jsx";
 import { TodoEditor } from "./components/TodoEditor.jsx";
 import Onboarding from "./screens/Onboarding.jsx";
 import Dashboard from "./screens/Dashboard.jsx";
@@ -288,6 +288,25 @@ function Game() {
     setHabitEd(null);
   }
 
+  // dragging a habit block in the calendar moves its weekly slot: the day it was dragged from is replaced by the
+  // day it was dropped on (and the hour changes when it is dropped at another time); a day that already has it refuses
+  function moveHabit(habitId, fromDay, toDay, time) {
+    const habit = state.habits.find((h) => h.id === habitId);
+    if (!habit) return;
+    const from = weekday(fromDay);
+    const to = weekday(toDay);
+    // a day that already has the habit would swallow the one dragged from: leave everything as it is instead
+    if (to !== from && habit.days.includes(to)) {
+      toast({ title: "Nu s-a mutat", text: `${habit.name} e deja programat în ziua aceea`, icon: CalendarX, tone: "rose", ms: 2600 });
+      return;
+    }
+    const days = [...new Set([...habit.days.filter((x) => x !== from), to])].sort();
+    const nextTime = time || habit.time;
+    if (from === to && nextTime === habit.time) return;
+    update((s) => ({ ...s, habits: s.habits.map((h) => (h.id === habitId ? { ...h, days, time: nextTime } : h)) }));
+    toast({ title: "Obicei mutat", text: `${habit.name}: ${scheduleLabel(days)}${nextTime ? ` · ${fmt12(nextTime)}` : ""} (se repetă în fiecare săptămână)`, icon: CheckCircle2, tone: "mint", ms: 3200 });
+  }
+
   // deleting drops the habit for good: its check-ins go with it and to-dos linked to it stay as plain to-dos
   function deleteHabit(habitId) {
     const name = state.habits.find((h) => h.id === habitId)?.name;
@@ -454,7 +473,7 @@ function Game() {
         />
       )}
       {view === "group" && <Group {...common} groups={groups} />}
-      {view === "plan" && <Planner {...common} todo={todoActions} goals={goalActions} />}
+      {view === "plan" && <Planner {...common} todo={todoActions} goals={goalActions} onMoveHabit={moveHabit} />}
       {view === "stats" && <Stats {...common} mode={store.mode} saveStatus={store.saveStatus} onFocus={() => setFocusSetup(true)} />}
       {view === "settings" && (
         <SettingsScreen
