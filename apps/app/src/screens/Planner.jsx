@@ -18,6 +18,7 @@ import {
   parseHM,
   relDay,
 } from "../lib/dates.js";
+import { GoalsCard } from "../components/Goals.jsx";
 import { c } from "../lib/themes.js";
 import { firstOccurrence, occursOn, repeatLabel, todosByDay, viewOn } from "../lib/todos.js";
 
@@ -444,7 +445,7 @@ function MonthView({ state, today, anchor, onPick }) {
   );
 }
 
-export default function Planner({ state, today, todo }) {
+export default function Planner({ state, today, todo, goals }) {
   const [anchor, setAnchor] = useState(today);
   const [mode, setMode] = useState("week");
   const [tab, setTab] = useState("calendar");
@@ -539,7 +540,10 @@ export default function Planner({ state, today, todo }) {
       </div>
       <div className="grid gap-5 lg:grid-cols-[minmax(300px,360px),1fr]">
         <div className={tab === "list" ? "min-w-0" : "hidden min-w-0 lg:block"}>
-          <TodoList state={state} today={today} todo={todo} />
+          <div className="space-y-5">
+            <TodoList state={state} today={today} todo={todo} />
+            <GoalsCard state={state} today={today} goals={goals} />
+          </div>
         </div>
         <div className={tab === "calendar" ? "min-w-0" : "hidden min-w-0 lg:block"}>{calendar}</div>
       </div>

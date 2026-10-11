@@ -5,10 +5,11 @@ import { HEAT, HabitLines, Heatmap, MomentumChart, ScoreBars, heatLevel } from "
 import { MOMENT_META } from "../lib/moments.js";
 import { quoteById } from "../lib/quotes.js";
 import { LEVELS } from "../lib/engine.js";
+import { FocusStats } from "../components/FocusStats.jsx";
 import { useStats } from "../lib/useStats.js";
 import { fmtDay, relDay } from "../lib/dates.js";
 
-export default function Stats({ state, d, today, mode, saveStatus }) {
+export default function Stats({ state, d, today, mode, saveStatus, onFocus }) {
   const { stats: s, loading } = useStats(state, today, mode, saveStatus);
   const [range, setRange] = useState(60);
   const [hidden, setHidden] = useState([]);
@@ -58,6 +59,7 @@ export default function Stats({ state, d, today, mode, saveStatus }) {
             Bifează primul obicei sau termină un to-do și graficele apar aici.
           </Empty>
         </Panel>
+        <FocusStats sessions={state.focusSessions || []} today={today} onFocus={onFocus} />
       </div>
     );
 
@@ -195,6 +197,8 @@ export default function Stats({ state, d, today, mode, saveStatus }) {
           </ol>
         </Panel>
       </div>
+
+      <FocusStats sessions={state.focusSessions || []} today={today} onFocus={onFocus} />
 
       <Panel className="p-4 sm:p-5">
         <SectionTitle icon={Quote} tone="violet" sub="Citatele apar când pierzi momentum sau faci un pas mare">

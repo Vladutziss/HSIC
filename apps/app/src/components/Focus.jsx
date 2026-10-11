@@ -1,47 +1,117 @@
-// Focus mode: the whole screen becomes one big clock that counts up from the moment it was opened.
-// Hour, minute and second hands show the time elapsed (not the time of day); the small hh:mm in the
-// corner is the same elapsed time in the classic form. Hands only ever turn forward, so the
-// hour/minute/second wraps do not spin them backwards.
+// Focus mode: the whole screen becomes a clock that counts FOCUSED time (pauses and breaks do not count).
+// Tap the clock to switch between the mechanical face and big digital hh:mm:ss. With a pomodoro setting the
+// session takes its own breaks (a calm countdown screen) and waits for you to continue afterwards.
+// The state machine is in src/lib/focus.js; this file is the screens.
 
-import React, { useEffect, useState } from "react";
-import { Timer, X } from "lucide-react";
-import { Button } from "./ui.jsx";
-
-const KEY = "molted.focusStart"; // survives a reload, so a refresh does not reset the session
-
-export function readFocusStart() {
-  try {
-    const v = Number(localStorage.getItem(KEY));
-    return Number.isFinite(v) && v > 0 && v <= Date.now() ? v : null;
-  } catch {
-    return null;
-  }
-}
-export function saveFocusStart(ms) {
-  try {
-    if (ms) localStorage.setItem(KEY, String(ms));
-    else localStorage.removeItem(KEY);
-  } catch {
-    /* the session then just does not survive a reload */
-  }
-}
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { Check, ChevronDown, Coffee, ListTodo, Pause, Pencil, Play, Plus, SkipForward, Timer, Trash2, X } from "lucide-react";
+import { Button, Modal, Bar } from "./ui.jsx";
+import { Select } from "./Select.jsx";
+import { todosForToday } from "../lib/todos.js";
+import { RULES } from "../lib/engine.js";
+import { BREAK_CHOICES, PRESETS, WORK_CHOICES, advance, continueWork, finish, fmtClock, fmtMinSec, fmtSpan, loadPrefs, newSession, pause, resume, savePrefs, view } from "../lib/focus.js";
 
 const pad = (n) => String(n).padStart(2, "0");
 const C = 200; // centre of the 400 x 400 face
 
-function useElapsedSeconds(start) {
-  const [secs, setSecs] = useState(() => Math.floor((Date.now() - start) / 1000));
-  useEffect(() => {
-    const tick = () => setSecs((s) => {
-      const next = Math.floor((Date.now() - start) / 1000);
-      return next === s ? s : next;
+// ------------------------------------------------------------ sound
+
+let audio = null;
+/** A soft two-note chime; browsers only allow it after the player has touched the page, which starting Focus did. */
+function chime(kind) {
+  try {
+    audio ||= new (window.AudioContext || window.webkitAudioContext)();
+    const notes = kind === "break" ? [660, 523] : [523, 659, 784]; // down into a break, up back to work
+    notes.forEach((hz, i) => {
+      const o = audio.createOscillator();
+      const g = audio.createGain();
+      const t = audio.currentTime + i * 0.22;
+      o.type = "sine";
+      o.frequency.value = hz;
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(0.16, t + 0.03);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.7);
+      o.connect(g).connect(audio.destination);
+      o.start(t);
+      o.stop(t + 0.75);
     });
-    tick();
-    const t = setInterval(tick, 200); // computed from the clock each time, so it never drifts
-    return () => clearInterval(t);
-  }, [start]);
-  return secs;
+  } catch {
+    /* no sound is fine */
+  }
 }
+
+// ------------------------------------------------------------ setup
+
+export function FocusSetup({ open, onStart, onClose }) {
+  const saved = useMemo(() => loadPrefs().setup || {}, []);
+  const [preset, setPreset] = useState(saved.preset || "p25");
+  const [work, setWork] = useState(saved.work || 25);
+  const [brk, setBrk] = useState(saved.brk || 5);
+  const options = [...PRESETS, { id: "custom", label: "Personalizat", sub: "Alegi tu cât lucrezi și cât te odihnești" }];
+  const pomodoro = preset === "custom" ? { work, brk } : PRESETS.find((p) => p.id === preset)?.pomodoro ?? null;
+  const go = () => {
+    savePrefs({ setup: { preset, work, brk } });
+    onStart(pomodoro);
+  };
+  return (
+    <Modal
+      open={open}
+      onClose={onClose}
+      title="Începe Focus"
+      icon={Timer}
+      tone="violet"
+      footer={
+        <>
+          <Button variant="ghost" onClick={onClose}>
+            Renunță
+          </Button>
+          <Button icon={Play} onClick={go} data-autofocus>
+            Începe
+          </Button>
+        </>
+      }
+    >
+      <p className="mb-3 text-sm text-body">Cronometrul numără doar timpul în care te concentrezi. Alege dacă vrei pauze automate.</p>
+      <p className="mb-3 rounded-xl bg-gold/10 p-2.5 text-xs font-bold text-gold-hi ring-1 ring-gold/30">Termină sesiunea (minim {RULES.focusMinMinutes} minute) și primești momentum: 1 la fiecare 2 minute, +{RULES.focusCycleBonus} pentru fiecare pomodoro terminat, maximum {RULES.focusDayCap} pe zi.</p>
+      <div role="radiogroup" aria-label="Tipul sesiunii" className="space-y-2">
+        {options.map((o) => {
+          const on = preset === o.id;
+          return (
+            <button
+              key={o.id}
+              type="button"
+              role="radio"
+              aria-checked={on}
+              onClick={() => setPreset(o.id)}
+              className={`focus-ring flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left ring-1 transition ${on ? "bg-gold/15 ring-gold" : "bg-well ring-edge hover:ring-edge-hi"}`}
+            >
+              <span className={`grid h-5 w-5 shrink-0 place-items-center rounded-full border-2 ${on ? "border-gold bg-gold text-on-gold" : "border-edge-hi"}`}>{on && <Check size={12} strokeWidth={4} aria-hidden="true" />}</span>
+              <span className="min-w-0">
+                <span className="block font-extrabold text-ink">{o.label}</span>
+                <span className="block text-xs font-semibold text-dim">{o.sub}</span>
+              </span>
+            </button>
+          );
+        })}
+      </div>
+      {preset === "custom" && (
+        <div className="mt-3 grid grid-cols-2 gap-3">
+          <label className="block">
+            <span className="mb-1.5 block text-xs font-extrabold uppercase tracking-wider text-dim">Lucru</span>
+            <Select id="focus-work" value={work} onChange={setWork} options={WORK_CHOICES.map((m) => ({ value: m, label: `${m} min` }))} />
+          </label>
+          <label className="block">
+            <span className="mb-1.5 block text-xs font-extrabold uppercase tracking-wider text-dim">Pauză</span>
+            <Select id="focus-break" value={brk} onChange={setBrk} options={BREAK_CHOICES.map((m) => ({ value: m, label: `${m} min` }))} />
+          </label>
+        </div>
+      )}
+      {pomodoro && <p className="mt-3 text-xs font-semibold text-faint">După fiecare a 4-a pauză, următoarea e de 3 ori mai lungă. După pauză, Focus așteaptă să-i dai tu Continuă.</p>}
+    </Modal>
+  );
+}
+
+// ------------------------------------------------------------ clocks
 
 function Hand({ deg, length, tail = 0, width, color, ease, glow }) {
   return (
@@ -76,65 +146,385 @@ function Face() {
   );
 }
 
-export function FocusMode({ start, onExit }) {
-  const total = useElapsedSeconds(start);
+function AnalogClock({ ms }) {
+  const total = Math.floor(ms / 1000);
   const min = Math.floor(total / 60);
-  const h = Math.floor(min / 60);
+  // angles come from cumulative counts, so they only grow; the CSS transition turns each step into a tick
+  return (
+    <svg viewBox="0 0 400 400" className="w-[min(70vmin,560px)]" aria-hidden="true">
+      <Face />
+      <Hand deg={min * 0.5} length={92} tail={14} width={9} color="rgb(var(--c-ink))" ease="transform 0.8s ease-out" />
+      <Hand deg={min * 6} length={140} tail={16} width={6} color="rgb(var(--c-body))" ease="transform 0.45s cubic-bezier(0.34, 1.7, 0.5, 1)" />
+      <Hand deg={total * 6} length={156} tail={34} width={2.5} color="rgb(var(--c-gold))" ease="transform 0.28s cubic-bezier(0.34, 1.9, 0.5, 1)" glow />
+      <circle cx={C} cy={C} r="9" fill="rgb(var(--c-gold))" />
+      <circle cx={C} cy={C} r="3.5" fill="rgb(var(--c-panel))" />
+    </svg>
+  );
+}
+
+function Digits({ value, tone }) {
+  return (
+    <span className="inline-flex">
+      {value.split("").map((d, i) => (
+        <span key={`${i}-${d}`} className={`digit-tick inline-block w-[0.62em] text-center ${tone}`}>
+          {d}
+        </span>
+      ))}
+    </span>
+  );
+}
+
+function DigitalClock({ ms, dim }) {
+  const t = Math.floor(ms / 1000);
+  const parts = [
+    { v: pad(Math.floor(t / 3600)), label: "ore", tone: "text-ink" },
+    { v: pad(Math.floor((t % 3600) / 60)), label: "min", tone: "text-ink" },
+    { v: pad(t % 60), label: "sec", tone: "text-gold" },
+  ];
+  return (
+    <div className={`flex items-start gap-[1.2vmin] transition-opacity ${dim ? "opacity-60" : ""}`} aria-hidden="true">
+      {parts.map((p, i) => (
+        <React.Fragment key={p.label}>
+          {i > 0 && <span className={`font-pixel pt-[1.2vmin] text-[clamp(40px,11vmin,120px)] leading-none text-dim ${dim ? "" : "colon-blink"}`}>:</span>}
+          <div className="flex flex-col items-center gap-2">
+            <div className="panel rounded-[2.2vmin] px-[2.4vmin] py-[1.6vmin]" style={{ boxShadow: "inset 0 -10px 24px rgb(0 0 0 / 0.08), 0 14px 34px -16px rgb(var(--c-shadow) / var(--shadow-a))" }}>
+              <span className="font-pixel tabular text-[clamp(56px,17vmin,190px)] leading-none">
+                <Digits value={p.v} tone={p.tone} />
+              </span>
+            </div>
+            <span className="text-[11px] font-extrabold uppercase tracking-[0.25em] text-faint">{p.label}</span>
+          </div>
+        </React.Fragment>
+      ))}
+    </div>
+  );
+}
+
+// ------------------------------------------------------------ breaks
+
+const TIPS = ["Bea un pahar cu apă.", "Privește pe fereastră, departe, 20 de secunde.", "Întinde-ți spatele și umerii.", "Ridică-te și fă câțiva pași.", "Respiră adânc de cinci ori.", "Lasă ochii să se odihnească de ecran."];
+
+function BreakScreen({ v, onSkip, onEnd }) {
+  const waiting = v.phase === "wait";
+  const ratio = waiting ? 1 : v.limitMs ? 1 - v.remaining / v.limitMs : 0; // fills up as the break passes
+  const R = 170;
+  const circ = 2 * Math.PI * R;
+  return (
+    <div className="flex flex-col items-center gap-6 px-4 text-center">
+      <div className="relative w-[min(66vmin,520px)]">
+        <svg viewBox="0 0 400 400" className="-rotate-90" aria-hidden="true">
+          <circle cx={C} cy={C} r={R} fill="rgb(var(--c-panel) / 0.6)" stroke="rgb(var(--c-edge))" strokeWidth="14" />
+          <circle
+            cx={C}
+            cy={C}
+            r={R}
+            fill="none"
+            stroke="rgb(var(--c-mint))"
+            strokeWidth="14"
+            strokeLinecap="round"
+            strokeDasharray={`${ratio * circ} ${circ}`}
+            style={{ transition: "stroke-dasharray 0.3s linear", filter: "drop-shadow(0 0 10px rgb(var(--c-mint) / 0.5))" }}
+          />
+        </svg>
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
+          {waiting ? (
+            <>
+              <span className="grid h-16 w-16 place-items-center rounded-full bg-mint text-on-mint">
+                <Check size={34} strokeWidth={3.5} aria-hidden="true" />
+              </span>
+              <span className="font-pixel text-3xl text-ink">Pauza s-a terminat</span>
+              <span className="text-sm font-semibold text-dim">Când ești gata, continui de unde ai rămas.</span>
+            </>
+          ) : (
+            <>
+              <span className="inline-flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-[0.25em] text-mint-ink">
+                <Coffee size={14} aria-hidden="true" /> {v.longBreak ? "Pauză lungă" : "Pauză"}
+              </span>
+              <span className="font-pixel tabular text-[clamp(56px,16vmin,140px)] leading-none text-ink">{fmtMinSec(v.remaining)}</span>
+              <span className="max-w-[16rem] text-sm font-semibold text-dim">{TIPS[(v.cycle - 1) % TIPS.length]}</span>
+            </>
+          )}
+        </div>
+      </div>
+      <div className="flex flex-col items-center gap-2">
+        {waiting ? (
+          <Button size="lg" icon={Play} onClick={onSkip} data-autofocus>
+            Continuă Focus
+          </Button>
+        ) : (
+          <Button variant="ghost" size="md" icon={SkipForward} onClick={onSkip}>
+            Sari peste pauză
+          </Button>
+        )}
+        <button type="button" onClick={onEnd} className="focus-ring rounded-lg px-3 py-1.5 text-xs font-extrabold text-dim hover:text-ink">
+          Termină sesiunea
+        </button>
+        <span className="text-[11px] font-semibold text-faint">Ciclul {v.cycle} încheiat · {fmtSpan(v.work / 1000)} de concentrare până acum</span>
+      </div>
+    </div>
+  );
+}
+
+// ------------------------------------------------------------ to-dos inside Focus
+
+/** A small to-do box in the corner: tick, add, rename and delete without leaving Focus. Folds into a pill. */
+function FocusTodos({ todos, today, actions }) {
+  const [open, setOpen] = useState(() => !!loadPrefs().todosOpen);
+  const [text, setText] = useState("");
+  const [editing, setEditing] = useState(null); // { id, title }
+  const list = useMemo(() => todosForToday(todos, today).sort((a, b) => Number(a.done) - Number(b.done) || (a.time || "99").localeCompare(b.time || "99")), [todos, today]);
+  const left = list.filter((t) => !t.done).length;
+  const toggle = () => {
+    setOpen((o) => {
+      savePrefs({ todosOpen: !o });
+      return !o;
+    });
+  };
+  const save = () => {
+    const title = editing?.title.trim().slice(0, 80);
+    if (title) actions.rename(editing.id, title);
+    setEditing(null);
+  };
+
+  if (!open) {
+    return (
+      <button
+        type="button"
+        onClick={toggle}
+        className="focus-ring fixed left-4 top-4 z-10 inline-flex items-center gap-2 rounded-xl bg-panel-hi px-3 py-2 text-sm font-extrabold text-body ring-1 ring-edge transition hover:text-ink sm:left-6 sm:top-5"
+        aria-expanded="false"
+        aria-label={`Deschide to-do-urile${left ? `, ${left} rămase` : ""}`}
+      >
+        <ListTodo size={16} aria-hidden="true" /> To-do
+        {left > 0 && <span className="rounded-full bg-gold px-1.5 text-[11px] font-black text-on-gold">{left}</span>}
+      </button>
+    );
+  }
+  return (
+    <div style={{ position: "fixed" }} className="panel left-4 top-4 z-10 flex max-h-[min(70vh,28rem)] w-[min(22rem,calc(100vw-5.5rem))] flex-col p-3 sm:left-6 sm:top-5" role="region" aria-label="To-do-uri">
+      <div className="mb-2 flex items-center gap-2">
+        <span className="inline-flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-wider text-dim">
+          <ListTodo size={14} aria-hidden="true" /> To-do azi {list.length > 0 && `· ${list.length - left}/${list.length}`}
+        </span>
+        <button type="button" onClick={toggle} className="focus-ring ml-auto grid h-7 w-7 place-items-center rounded-lg text-dim hover:bg-panel-hi hover:text-ink" aria-label="Închide to-do-urile" aria-expanded="true">
+          <ChevronDown size={16} className="rotate-180" aria-hidden="true" />
+        </button>
+      </div>
+      <form
+        className="mb-2 flex gap-1.5"
+        onSubmit={(e) => {
+          e.preventDefault();
+          const title = text.trim().slice(0, 80);
+          if (!title) return;
+          actions.add({ title, date: today });
+          setText("");
+        }}
+      >
+        <input className="field !py-1.5 text-sm" value={text} maxLength={80} placeholder="Adaugă un to-do…" onChange={(e) => setText(e.target.value)} aria-label="To-do nou" />
+        <Button type="submit" variant="mint" size="sm" icon={Plus} disabled={!text.trim()} aria-label="Adaugă" />
+      </form>
+      <ul className="min-h-0 flex-1 space-y-1 overflow-y-auto pr-0.5">
+        {list.length === 0 && <li className="py-2 text-center text-xs font-semibold text-dim">Nimic pe lista de azi.</li>}
+        {list.map((t) => (
+          <li key={t.id} className="group flex items-center gap-2 rounded-lg bg-well px-2 py-1.5 ring-1 ring-edge">
+            <button
+              type="button"
+              aria-pressed={t.done}
+              aria-label={t.done ? `Debifează ${t.title}` : `Bifează ${t.title}`}
+              onClick={() => actions.toggle(t.id, t.viewDay || today)}
+              className={`focus-ring grid h-5 w-5 shrink-0 place-items-center rounded-md border-2 transition ${t.done ? "border-mint bg-mint text-on-mint" : "border-edge-hi text-transparent hover:border-mint/70"}`}
+            >
+              <Check size={12} strokeWidth={4} aria-hidden="true" />
+            </button>
+            {editing?.id === t.id ? (
+              <input
+                className="field !py-0.5 text-sm"
+                value={editing.title}
+                maxLength={80}
+                autoFocus
+                onChange={(e) => setEditing({ id: t.id, title: e.target.value })}
+                onBlur={save}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") save();
+                  if (e.key === "Escape") setEditing(null);
+                }}
+                aria-label="Redenumește to-do-ul"
+              />
+            ) : (
+              <>
+                <button type="button" onClick={() => setEditing({ id: t.id, title: t.title })} className={`min-w-0 flex-1 truncate text-left text-sm font-bold ${t.done ? "text-faint line-through" : "text-ink"}`} title="Apasă ca să-l modifici">
+                  {t.title}
+                </button>
+                <button type="button" onClick={() => setEditing({ id: t.id, title: t.title })} className="focus-ring grid h-6 w-6 shrink-0 place-items-center rounded-md text-faint hover:text-ink sm:opacity-0 sm:group-hover:opacity-100 sm:focus:opacity-100" aria-label={`Modifică ${t.title}`}>
+                  <Pencil size={12} aria-hidden="true" />
+                </button>
+                <button type="button" onClick={() => actions.remove(t.id)} className="focus-ring grid h-6 w-6 shrink-0 place-items-center rounded-md text-faint hover:text-rose" aria-label={`Șterge ${t.title}`}>
+                  <Trash2 size={12} aria-hidden="true" />
+                </button>
+              </>
+            )}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+// ------------------------------------------------------------ the screen
+
+export function FocusMode({ session, onChange, onFinish, todos = [], today, todoActions }) {
+  const [now, setNow] = useState(() => Date.now());
+  const [mode, setMode] = useState(() => (loadPrefs().clock === "digital" ? "digital" : "analog"));
+  const [confirming, setConfirming] = useState(false);
+  const ref = useRef(session);
+  ref.current = session;
+
+  // one timer; time always comes from the clock, so a slow tab never drifts
+  useEffect(() => {
+    const tick = () => {
+      const t = Date.now();
+      const r = advance(ref.current, t);
+      if (r.session !== ref.current) onChange(r.session);
+      r.events.forEach((e) => chime(e));
+      setNow(t);
+    };
+    tick();
+    const id = setInterval(tick, 200);
+    document.addEventListener("visibilitychange", tick);
+    return () => {
+      clearInterval(id);
+      document.removeEventListener("visibilitychange", tick);
+    };
+  }, [onChange]);
+
+  const v = view(session, now);
+  const inBreak = v.phase !== "work";
+
+  const primary = () => {
+    const t = Date.now();
+    if (ref.current.phase !== "work") onChange(continueWork(ref.current, t));
+    else onChange(ref.current.paused ? resume(ref.current, t) : pause(ref.current, t));
+  };
+  const end = () => {
+    const rec = finish(ref.current, Date.now());
+    onFinish(rec);
+  };
 
   useEffect(() => {
     const onKey = (e) => {
-      if (e.key === "Escape") onExit();
+      if (e.key === "Escape") {
+        if (/^(INPUT|TEXTAREA)$/.test(e.target.tagName)) return; // Escape inside a field only cancels the edit
+        if (!confirming) setConfirming(true); // while the dialog is open it closes itself on Escape
+      }
+      else if ((e.key === " " || e.code === "Space") && !confirming && !/^(BUTTON|INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) {
+        e.preventDefault();
+        primary();
+      }
     };
     window.addEventListener("keydown", onKey);
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    // keep the screen on while focusing, where the browser allows it
-    let lock = null;
+    let lock = null; // keep the screen on while focusing, where the browser allows it
     navigator.wakeLock?.request("screen").then((l) => (lock = l)).catch(() => {});
     return () => {
       window.removeEventListener("keydown", onKey);
       document.body.style.overflow = prev;
       lock?.release?.().catch(() => {});
     };
-  }, [onExit]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [confirming]);
 
-  // angles from cumulative counts, so they only grow; the CSS transition turns each step into a tick
-  const secDeg = total * 6;
-  const minDeg = min * 6;
-  const hourDeg = min * 0.5;
-  const tickEase = "transform 0.28s cubic-bezier(0.34, 1.9, 0.5, 1)"; // a small overshoot, like a mechanical tick
-  const minEase = "transform 0.45s cubic-bezier(0.34, 1.7, 0.5, 1)";
-  const hourEase = "transform 0.8s ease-out";
+  const toggleMode = () => {
+    const next = mode === "analog" ? "digital" : "analog";
+    setMode(next);
+    savePrefs({ clock: next });
+  };
+
+  const sessionMin = Math.floor(v.work / 60000);
 
   return (
-    <div className="app-bg fixed inset-0 z-[60] flex flex-col items-center justify-center" role="dialog" aria-modal="true" aria-label="Mod Focus">
-      <div className="absolute right-4 top-4 flex items-center gap-3 sm:right-6 sm:top-5">
-        <span className="font-pixel tabular text-xl text-dim" title="Timp trecut (ore:minute)" aria-label={`Timp trecut: ${h} ore și ${min % 60} minute`}>
-          {pad(h)}:{pad(min % 60)}
-        </span>
-        <button type="button" onClick={onExit} className="focus-ring grid h-9 w-9 place-items-center rounded-xl text-dim hover:bg-panel-hi hover:text-ink" aria-label="Ieși din Focus">
+    <div className="app-bg fixed inset-0 z-[60] flex flex-col items-center justify-center overflow-y-auto" role="dialog" aria-modal="true" aria-label="Mod Focus">
+      {todoActions && <FocusTodos todos={todos} today={today} actions={todoActions} />}
+      <div className="fixed right-4 top-4 z-10 flex items-center gap-3 sm:right-6 sm:top-5">
+        {(mode === "analog" || inBreak) && (
+          <span className="font-pixel tabular text-xl text-dim" title="Timp de concentrare (ore:minute)" aria-label={`Timp de concentrare: ${Math.floor(sessionMin / 60)} ore și ${sessionMin % 60} minute`}>
+            {pad(Math.floor(sessionMin / 60))}:{pad(sessionMin % 60)}
+          </span>
+        )}
+        <button type="button" onClick={() => setConfirming(true)} className="focus-ring grid h-9 w-9 place-items-center rounded-xl text-dim hover:bg-panel-hi hover:text-ink" aria-label="Încheie sesiunea de Focus">
           <X size={18} aria-hidden="true" />
         </button>
       </div>
 
-      <svg viewBox="0 0 400 400" className="w-[min(78vmin,620px)]" role="img" aria-label="Ceas care numără timpul de când ai început Focus">
-        <Face />
-        <Hand deg={hourDeg} length={92} tail={14} width={9} color="rgb(var(--c-ink))" ease={hourEase} />
-        <Hand deg={minDeg} length={140} tail={16} width={6} color="rgb(var(--c-body))" ease={minEase} />
-        <Hand deg={secDeg} length={156} tail={34} width={2.5} color="rgb(var(--c-gold))" ease={tickEase} glow />
-        <circle cx={C} cy={C} r="9" fill="rgb(var(--c-gold))" />
-        <circle cx={C} cy={C} r="3.5" fill="rgb(var(--c-panel))" />
-      </svg>
+      {inBreak ? (
+        <BreakScreen v={v} onSkip={primary} onEnd={() => setConfirming(true)} />
+      ) : (
+        <>
+          <button
+            type="button"
+            onClick={toggleMode}
+            className={`focus-ring rounded-[2rem] p-2 transition ${v.paused ? "opacity-60" : ""}`}
+            aria-label={`Ceas de Focus: ${fmtClock(v.work)}. Apasă ca să schimbi între ceasul mecanic și cel digital.`}
+            title="Apasă ca să schimbi ceasul"
+          >
+            {/* a new key replays the pop-in each time the clock is switched */}
+            <div key={mode} className="anim-pop">
+              {mode === "analog" ? <AnalogClock ms={v.work} /> : <DigitalClock ms={v.work} dim={v.paused} />}
+            </div>
+          </button>
 
-      <div className="mt-8 flex flex-col items-center gap-2">
-        <span className="inline-flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-[0.25em] text-dim">
-          <Timer size={14} aria-hidden="true" /> Focus
-        </span>
-        <Button variant="ghost" size="sm" onClick={onExit}>
-          Termină sesiunea
-        </Button>
-        <span className="text-[11px] font-semibold text-faint">sau apasă Esc</span>
-      </div>
+          <div className="mt-6 flex w-full max-w-sm flex-col items-center gap-3 px-4">
+            <span className="inline-flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-[0.25em] text-dim">
+              {v.paused ? <Pause size={14} aria-hidden="true" /> : <Timer size={14} aria-hidden="true" />} {v.paused ? "În pauză" : "Focus"}
+              {session.pomodoro && ` · ciclul ${v.cycle}`}
+            </span>
+            {session.pomodoro && (
+              <div className="w-full">
+                <div className="mb-1 flex justify-between text-xs font-bold text-dim">
+                  <span>Pauză în</span>
+                  <span className="tabular">{fmtMinSec(v.remaining)}</span>
+                </div>
+                <Bar value={v.limitMs ? v.inPhase / v.limitMs : 0} tone="mint" segmented={false} height={8} label="Timp până la pauza următoare" />
+              </div>
+            )}
+            <div className="flex gap-2">
+              <Button size="lg" variant={v.paused ? "gold" : "ghost"} icon={v.paused ? Play : Pause} onClick={primary}>
+                {v.paused ? "Continuă" : "Pauză"}
+              </Button>
+              <Button size="lg" variant="ghost" onClick={() => setConfirming(true)}>
+                Termină
+              </Button>
+            </div>
+            <span className="text-[11px] font-semibold text-faint">Spațiu = pauză · Esc = termină · atinge ceasul ca să-l schimbi</span>
+          </div>
+        </>
+      )}
+
+      <Modal
+        open={confirming}
+        onClose={() => setConfirming(false)}
+        title="Încheii sesiunea?"
+        icon={Timer}
+        tone="violet"
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setConfirming(false)}>
+              Continuă Focus
+            </Button>
+            <Button icon={Check} onClick={end} data-autofocus>
+              {v.work >= 60000 ? "Termină și salvează" : "Termină"}
+            </Button>
+          </>
+        }
+      >
+        <p className="text-sm text-body">
+          {v.work >= 60000
+            ? `${fmtSpan(v.work / 1000)} de concentrare se salvează în statistici.`
+            : "Sesiunea are sub un minut, așa că nu se salvează în statistici."}
+        </p>
+      </Modal>
     </div>
   );
 }
+
+export { newSession };

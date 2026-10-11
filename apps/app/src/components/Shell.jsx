@@ -1,8 +1,10 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Bell,
   CalendarDays,
   ChartLine,
+  ChevronsLeft,
+  ChevronsRight,
   Clock,
   Cloud,
   CloudOff,
@@ -100,9 +102,9 @@ function Hud({ d, state, setView, onReview, unread, mode, saveStatus, now }) {
   return (
     <header className="sticky top-0 z-30 border-b border-edge bg-night/85 backdrop-blur" style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}>
       <div className="mx-auto flex h-16 max-w-[1240px] items-center gap-2 px-3 sm:gap-3 sm:px-4 lg:px-8">
-        <div className="hidden sm:block lg:hidden">
+        <button type="button" onClick={() => setView("home")} className="focus-ring hidden rounded-lg sm:block lg:hidden" aria-label="Acasă">
           <Logo compact />
-        </div>
+        </button>
         <button type="button" onClick={() => setView("stats")} className="focus-ring flex min-w-0 items-center gap-2.5 rounded-xl px-1 py-1 text-left" aria-label={`Momentum nivel ${level.lvl}, ${level.name}`}>
           <LevelBadge lvl={level.lvl} size={40} />
           <div className="hidden w-48 sm:block">
@@ -169,54 +171,102 @@ function Hud({ d, state, setView, onReview, unread, mode, saveStatus, now }) {
   );
 }
 
+const SIDE_KEY = "molted.sidebar"; // "closed" when the desktop side menu is folded to icons
+
 export function Shell({ view, setView, onReview, onFocus, d, state, unread, mode, saveStatus, now, children }) {
   const c = d.companion;
   const path = state.profile?.path || "sport";
+  const [folded, setFolded] = useState(() => {
+    try {
+      return localStorage.getItem(SIDE_KEY) === "closed";
+    } catch {
+      return false;
+    }
+  });
+  const toggleSide = () =>
+    setFolded((f) => {
+      try {
+        localStorage.setItem(SIDE_KEY, f ? "open" : "closed");
+      } catch {
+        /* the choice then lasts until the page closes */
+      }
+      return !f;
+    });
   return (
     <div className="app-bg min-h-screen text-body">
-      <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r border-edge bg-deep/95 px-4 pb-4 pt-5 lg:flex">
-        <Logo />
+      <aside className={`fixed inset-y-0 left-0 z-40 hidden flex-col border-r border-edge bg-deep/95 pb-4 pt-5 transition-[width] duration-200 lg:flex ${folded ? "w-[76px] px-3" : "w-64 px-4"}`}>
+        <button
+          type="button"
+          onClick={toggleSide}
+          className="focus-ring absolute -right-3.5 top-7 z-10 grid h-7 w-7 place-items-center rounded-full border border-edge-hi bg-panel-hi text-dim shadow transition hover:text-ink"
+          aria-label={folded ? "Deschide meniul" : "Închide meniul"}
+          aria-expanded={!folded}
+          title={folded ? "Deschide meniul" : "Închide meniul"}
+        >
+          {folded ? <ChevronsRight size={14} aria-hidden="true" /> : <ChevronsLeft size={14} aria-hidden="true" />}
+        </button>
+        <div className={folded ? "flex justify-center" : ""}>
+          <button type="button" onClick={() => setView("home")} className="focus-ring rounded-lg text-left" aria-label="Acasă" title={folded ? "Acasă" : undefined}>
+            <Logo compact={folded} />
+          </button>
+        </div>
         <nav className="mt-8 flex flex-col gap-1" aria-label="Navigare">
           {NAV.map((n) => {
             const Icon = n.icon;
             return (
-              <button key={n.id} type="button" onClick={() => setView(n.id)} aria-current={view === n.id ? "page" : undefined} className="nav-item focus-ring">
+              <button
+                key={n.id}
+                type="button"
+                onClick={() => setView(n.id)}
+                aria-current={view === n.id ? "page" : undefined}
+                aria-label={folded ? n.label : undefined}
+                title={folded ? n.label : undefined}
+                className={`nav-item focus-ring relative ${folded ? "justify-center px-0" : ""}`}
+              >
                 <Icon size={19} strokeWidth={2.25} aria-hidden="true" />
-                <span>{n.label}</span>
-                {n.id === "group" && unread > 0 && <span className="ml-auto rounded-full bg-rose px-1.5 text-[11px] font-black text-on-rose">{unread}</span>}
+                {!folded && <span>{n.label}</span>}
+                {n.id === "group" && unread > 0 && (folded ? <span className="absolute right-2 top-1.5 h-2.5 w-2.5 rounded-full bg-rose" /> : <span className="ml-auto rounded-full bg-rose px-1.5 text-[11px] font-black text-on-rose">{unread}</span>)}
               </button>
             );
           })}
         </nav>
-        <button type="button" onClick={onFocus} className="nav-item focus-ring mt-4 ring-1 ring-edge">
+        <button
+          type="button"
+          onClick={onFocus}
+          aria-label={folded ? "Focus" : undefined}
+          title={folded ? "Focus" : undefined}
+          className={`nav-item focus-ring mt-4 ring-1 ring-edge ${folded ? "justify-center px-0" : ""}`}
+        >
           <Timer size={19} strokeWidth={2.25} aria-hidden="true" />
-          <span>Focus</span>
+          {!folded && <span>Focus</span>}
         </button>
         <button
           type="button"
           onClick={() => setView("companion")}
-          className="panel panel-violet focus-ring mt-auto flex items-center gap-3 p-3 text-left transition hover:brightness-110"
+          aria-label={folded ? c.name || "Oul tău" : undefined}
+          title={folded ? c.name || "Oul tău" : undefined}
+          className={`panel panel-violet focus-ring mt-auto flex items-center text-left transition hover:brightness-110 ${folded ? "justify-center p-1.5" : "gap-3 p-3"}`}
         >
-          <span className="pedestal grid h-16 w-16 shrink-0 place-items-center rounded-xl">
-            <Sprite path={path} stage={c.stage.id} mood={c.mood} size={64} crack={eggCrack(c.ep)} />
+          <span className={`pedestal grid shrink-0 place-items-center rounded-xl ${folded ? "h-12 w-12" : "h-16 w-16"}`}>
+            <Sprite path={path} stage={c.stage.id} mood={c.mood} size={folded ? 48 : 64} crack={eggCrack(c.ep)} />
           </span>
-          <span className="min-w-0">
+          <span className={`min-w-0 ${folded ? "hidden" : ""}`}>
             <span className="block truncate font-pixel text-base text-ink">{c.name || "Oul tău"}</span>
             <span className="block text-[11px] font-extrabold uppercase tracking-wider text-violet-hi">
               {c.stage.name} · {PATHS[path]?.cls}
             </span>
-            <span className="block text-xs font-semibold text-dim">{c.stage.id === "egg" ? "așteaptă dovezi" : MOOD_LABEL[c.mood]}</span>
+            <span className="block text-xs font-semibold text-dim">{c.stage.id === "egg" ? "așteaptă bifări" : MOOD_LABEL[c.mood]}</span>
           </span>
         </button>
       </aside>
 
-      <div className="lg:pl-64">
+      <div className={`transition-[padding] duration-200 ${folded ? "lg:pl-[76px]" : "lg:pl-64"}`}>
         <Hud d={d} state={state} setView={setView} onReview={onReview} unread={unread} mode={mode} saveStatus={saveStatus} now={now} />
         <main className="mx-auto max-w-[1240px] px-3 pb-28 pt-5 sm:px-4 lg:px-8 lg:pb-12 lg:pt-7">{children}</main>
       </div>
 
       <nav
-        className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-6 border-t border-edge bg-deep/95 backdrop-blur lg:hidden"
+        className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-7 border-t border-edge bg-deep/95 backdrop-blur lg:hidden"
         style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
         aria-label="Navigare"
       >
@@ -228,7 +278,7 @@ export function Shell({ view, setView, onReview, onFocus, d, state, unread, mode
               type="button"
               onClick={() => setView(n.id)}
               aria-current={view === n.id ? "page" : undefined}
-              className="tabbar-item focus-ring relative flex flex-col items-center gap-0.5 py-2 text-[10px] font-extrabold text-dim"
+              className="tabbar-item focus-ring relative flex min-w-0 flex-col items-center gap-0.5 py-2 text-[10px] font-extrabold text-dim"
             >
               <Icon size={20} strokeWidth={2.25} aria-hidden="true" />
               {n.label}
@@ -236,6 +286,10 @@ export function Shell({ view, setView, onReview, onFocus, d, state, unread, mode
             </button>
           );
         })}
+        <button type="button" onClick={onFocus} className="focus-ring flex flex-col items-center gap-0.5 py-2 text-[10px] font-extrabold text-violet-hi">
+          <Timer size={20} strokeWidth={2.25} aria-hidden="true" />
+          Focus
+        </button>
       </nav>
     </div>
   );

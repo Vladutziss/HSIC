@@ -182,6 +182,7 @@ export default function Settings({ state, d, ai, mode, env, onChange, onWipe, on
             <li>· Zile active la rând: până la +40% la tot ce câștigi.</li>
             <li>· Toate misiunile programate bifate: cufărul zilei, +{RULES.chestXp}.</li>
             <li>· Raportul de seară: jumătate din scorul zilei devine momentum.</li>
+            <li>· Focus: o sesiune încheiată de cel puțin {RULES.focusMinMinutes} minute aduce 1 momentum la 2 minute (+{RULES.focusCycleBonus} pentru fiecare pomodoro terminat), maximum {RULES.focusDayCap} pe zi.</li>
             <li>· O zi fără nimic păstrează 85% din momentum; una incompletă, cel puțin 92%.</li>
             <li className="flex items-center gap-1.5">
               <FlaskConical size={14} className="text-mint" aria-hidden="true" /> Seria: {RULES.revivesPerMonth} revive-uri pe lună (ai folosit {d.revive.used} luna aceasta).
@@ -219,6 +220,14 @@ export default function Settings({ state, d, ai, mode, env, onChange, onWipe, on
               </Button>
             </div>
           )}
+          <p className="flex flex-wrap gap-x-4 gap-y-1 text-xs font-bold text-dim">
+            <a className="focus-ring underline hover:text-ink" href="https://molted.eu/terms.html" target="_blank" rel="noopener">
+              Termeni și condiții
+            </a>
+            <a className="focus-ring underline hover:text-ink" href="https://molted.eu/privacy.html" target="_blank" rel="noopener">
+              Politica de confidențialitate
+            </a>
+          </p>
           <div className="rounded-xl bg-rose/10 p-3 ring-1 ring-rose/30">
             <div className="mb-2 text-sm font-extrabold text-rose">Zona periculoasă</div>
             <div className="flex flex-wrap gap-2">

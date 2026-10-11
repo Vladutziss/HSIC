@@ -22,6 +22,7 @@ declare
   gcode text;
   blocked boolean;
   ok boolean;
+  msg text;
 begin
   -- ---- A writes her own data
   perform set_config('request.jwt.claims', a, true);
@@ -169,6 +170,53 @@ begin
   end;
   get diagnostics n = row_count;
   if not blocked and n <> 0 then raise exception 'LEAK: user reset their own AI counter'; end if;
+  reset role;
+
+  -- ---- limits: 3 groups and 3 partners per person, a partnership is two people
+  perform set_config('request.jwt.claims', c, true);
+  set local role authenticated;
+  for i in 1..3 loop
+    perform public.create_group('G' || i, 'group');
+    perform public.create_group('P' || i, 'partner');
+  end loop;
+  msg := null;
+  begin
+    perform public.create_group('G4', 'group');
+  exception when others then msg := sqlerrm;
+  end;
+  if msg is distinct from 'group_limit' then raise exception 'a 4th group should hit group_limit, got %', msg; end if;
+  msg := null;
+  begin
+    perform public.create_group('P4', 'partner');
+  exception when others then msg := sqlerrm;
+  end;
+  if msg is distinct from 'group_limit' then raise exception 'a 4th partner should hit group_limit, got %', msg; end if;
+  msg := null;
+  begin
+    perform public.create_group('X', 'whatever');
+  exception when others then msg := sqlerrm;
+  end;
+  if msg is distinct from 'bad_kind' then raise exception 'an unknown kind should be refused, got %', msg; end if;
+  reset role;
+
+  -- joining someone's group counts too, and a partnership takes only one other person
+  perform set_config('request.jwt.claims', b, true);
+  set local role authenticated;
+  select g.id, g.code into gid, gcode from public.create_group('Noi doi', 'partner') g;
+  reset role;
+  perform set_config('request.jwt.claims', a, true);
+  set local role authenticated;
+  if public.join_group(gcode) is distinct from gid then raise exception 'A should join the partnership'; end if;
+  if public.join_group(gcode) is distinct from gid then raise exception 'joining a group you are already in should just return it'; end if;
+  reset role;
+  perform set_config('request.jwt.claims', c, true);
+  set local role authenticated;
+  msg := null;
+  begin
+    perform public.join_group(gcode);
+  exception when others then msg := sqlerrm;
+  end;
+  if msg is distinct from 'partner_full' then raise exception 'a third person in a partnership should hit partner_full, got %', msg; end if;
   reset role;
 
   -- ---- storage: the proofs bucket is closed to signed-in users (0007 dropped its policies)
