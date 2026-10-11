@@ -219,6 +219,14 @@ export default function Settings({ state, d, ai, mode, env, onChange, onWipe, on
               </Button>
             </div>
           )}
+          <p className="flex flex-wrap gap-x-4 gap-y-1 text-xs font-bold text-dim">
+            <a className="focus-ring underline hover:text-ink" href="https://molted.eu/terms.html" target="_blank" rel="noopener">
+              Termeni și condiții
+            </a>
+            <a className="focus-ring underline hover:text-ink" href="https://molted.eu/privacy.html" target="_blank" rel="noopener">
+              Politica de confidențialitate
+            </a>
+          </p>
           <div className="rounded-xl bg-rose/10 p-3 ring-1 ring-rose/30">
             <div className="mb-2 text-sm font-extrabold text-rose">Zona periculoasă</div>
             <div className="flex flex-wrap gap-2">
