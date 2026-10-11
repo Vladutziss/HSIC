@@ -22,6 +22,8 @@ const stepText = (x) => {
       return `A citit ce i-ai spus (${x.notes} ${x.notes === 1 ? "notă activă" : "note active"})`;
     case "feedback":
       return "A verificat cum ai reacționat la propunerile anterioare";
+    case "history":
+      return `A verificat ce a făcut înainte și ce efect a avut (${x.count})`;
     case "experiments":
       return `A verificat experimentele tale (${x.count})`;
     case "patterns":
@@ -44,7 +46,22 @@ export function PlanPanel({ state, today, ai, onAddHabit, onEdit, onExperiment }
   const [decided, setDecided] = useState({}); // index -> "accepted" | "rejected"
   const [rejecting, setRejecting] = useState(null);
   const [problem, setProblem] = useState("");
-  if (!ai?.server || !hasHistory(data)) return null;
+  if (!ai?.server) return null;
+  if (!hasHistory(data)) {
+    // not hidden: say what is missing, so a new player knows the coach is there and why it waits
+    const best = Math.max(0, ...data.habits.map((h) => h.sched));
+    return (
+      <Panel tone="violet" className="p-4 sm:p-5">
+        <SectionTitle icon={CalendarCheck} tone="violet" sub="Lucrează cu istoricul tău real, nu cu presupuneri">
+          Coach-ul tău
+        </SectionTitle>
+        <p className="text-sm font-semibold text-body">
+          Mai are nevoie de câteva zile de bifări: caută tipare abia când un obicei are cel puțin 7 zile programate în ultimele 4 săptămâni (acum cel mai lung are {best}).
+          Până atunci poți nota ce se întâmplă în „Notele coach-ului”.
+        </p>
+      </Panel>
+    );
+  }
 
   const record = async (sg, i, decision, reason) => {
     setProblem("");

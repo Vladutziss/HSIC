@@ -6,7 +6,8 @@ import { CODE, focusXpByDay } from "./lib/engine.js";
 import { addDays, dayKey, monthKey, nowMinutes, parseHM, todayKey } from "./lib/dates.js";
 import { detectMoments } from "./lib/moments.js";
 import { pickQuote } from "./lib/quotes.js";
-import { aiErrorCopy, aiStatus, dailyReview } from "./lib/ai.js";
+import { agentClient, aiErrorCopy, aiStatus, dailyReview } from "./lib/ai.js";
+import { loadActions, markApplied, markRejected, markUndone, pendingAuto, planApply, planUndo } from "./lib/agentActions.js";
 import { permissionState } from "./lib/platform.js";
 import { useGroups } from "./lib/groups.js";
 import { uid } from "./lib/catalog.js";
@@ -126,6 +127,78 @@ function Game() {
   const [queue, setQueue] = useState([]);
   const [review, setReview] = useState({ status: "idle", error: null });
   const autoTried = useRef(null);
+
+  // The coach agent's log: what it did, what waits for a tap, and what came of it. Every effect is
+  // applied here, by the player's own session, so the app keeps a single writer for its state.
+  const [agentLog, setAgentLog] = useState(null);
+  const [agentBusy, setAgentBusy] = useState(false);
+  const [agentError, setAgentError] = useState("");
+  const appliedAuto = useRef(new Set());
+  const reloadAgentLog = useCallback(async () => {
+    try {
+      const c = await agentClient();
+      setAgentLog(c ? await loadActions(c) : []);
+    } catch {
+      setAgentLog([]);
+    }
+  }, []);
+  useEffect(() => {
+    if (ai.server) reloadAgentLog();
+  }, [ai.server, reloadAgentLog]);
+
+  // Reversible, low-risk actions the weekly run logged as automatic (a to-do) are applied once, with an undo.
+  useEffect(() => {
+    if (!agentLog || !state || !ai.server) return;
+    for (const a of pendingAuto(agentLog)) {
+      if (appliedAuto.current.has(a.id)) continue;
+      appliedAuto.current.add(a.id);
+      const r = planApply(a, state, today);
+      if (r.error) continue;
+      update(r.patch);
+      agentClient()
+        .then((c) => markApplied(c, a.id, r.before, { outcomeDue: addDays(today, 14), action: a }))
+        .then(reloadAgentLog)
+        .catch(() => {});
+      toast({ title: "Coach-ul ți-a pregătit ceva", text: a.reason, icon: CheckCircle2, tone: "mint", ms: 4500 });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [agentLog, !!state, ai.server]);
+
+  const decideAction = async (fn) => {
+    setAgentBusy(true);
+    setAgentError("");
+    try {
+      await fn();
+      await reloadAgentLog();
+    } catch (e) {
+      setAgentError(aiErrorCopy(e?.code));
+    } finally {
+      setAgentBusy(false);
+    }
+  };
+  const agentActions = {
+    log: agentLog,
+    busy: agentBusy,
+    error: agentError,
+    onConfirm: (a) =>
+      decideAction(async () => {
+        const r = planApply(a, state, today);
+        if (r.error) throw { code: "db_error" };
+        update(r.patch);
+        await markApplied(await agentClient(), a.id, r.before, { outcomeDue: addDays(today, 14), action: a });
+      }),
+    onUndo: (a) =>
+      decideAction(async () => {
+        const r = planUndo(a, state, today);
+        if (r.error) throw { code: "db_error" };
+        update(r.patch);
+        await markUndone(await agentClient(), a.id, a);
+      }),
+    onReject: (a, reason) =>
+      decideAction(async () => {
+        await markRejected(await agentClient(), a.id, reason, a);
+      }),
+  };
 
   const go = useCallback((v, habitId = null) => {
     setView(v);
@@ -367,6 +440,7 @@ function Game() {
           onCheck={checkIn}
           onAdd={() => setHabitEd({ tab: "catalog" })}
           onAddHabit={(habit) => saveHabit(habit, { keepOpen: true })}
+          agent={agentActions}
           onEdit={(habit) => setHabitEd({ habit, tab: "custom" })}
           onArchive={archiveHabit}
           onDelete={deleteHabit}
