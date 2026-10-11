@@ -357,7 +357,10 @@ export function FocusMode({ session, onChange, onFinish }) {
             aria-label={`Ceas de Focus: ${fmtClock(v.work)}. Apasă ca să schimbi între ceasul mecanic și cel digital.`}
             title="Apasă ca să schimbi ceasul"
           >
-            {mode === "analog" ? <AnalogClock ms={v.work} /> : <DigitalClock ms={v.work} dim={v.paused} />}
+            {/* a new key replays the pop-in each time the clock is switched */}
+            <div key={mode} className="anim-pop">
+              {mode === "analog" ? <AnalogClock ms={v.work} /> : <DigitalClock ms={v.work} dim={v.paused} />}
+            </div>
           </button>
 
           <div className="mt-6 flex w-full max-w-sm flex-col items-center gap-3 px-4">
