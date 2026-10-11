@@ -1,9 +1,9 @@
-// Settings panel for push notifications: daily report at the chosen time, and group reminders.
+// Settings section for push notifications (sits inside the report card): daily report at the chosen time, and group reminders.
 // The permission prompt only ever follows a tap on the button.
 
 import React, { useEffect, useState } from "react";
 import { Bell } from "lucide-react";
-import { Button, Panel, SectionTitle, Toggle } from "./ui.jsx";
+import { Button, Toggle } from "./ui.jsx";
 import { disablePush, enablePush, pushStatus, syncPush } from "../lib/push.js";
 
 export default function NotificationsPanel({ settings, set }) {
@@ -42,10 +42,17 @@ export default function NotificationsPanel({ settings, set }) {
   }
 
   return (
-    <Panel className="space-y-4 p-4 sm:p-5">
-      <SectionTitle icon={Bell} tone="gold">
-        Notificări
-      </SectionTitle>
+    <div className="space-y-3 border-t border-edge pt-3">
+      <div className="flex items-center justify-between gap-3">
+        <span className="inline-flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider text-dim">
+          <Bell size={14} aria-hidden="true" /> Notificări
+        </span>
+        {(status === "off" || status === "on") && (
+          <Button size="sm" variant={status === "on" ? "ghost" : "gold"} busy={busy} onClick={toggle}>
+            {status === "on" ? "Oprește" : "Activează"}
+          </Button>
+        )}
+      </div>
       {status === "install" && (
         <p className="text-sm font-semibold text-body">
           Pe iPhone, notificările merg doar după ce pui Molted pe ecranul principal: Partajare → Adaugă pe ecranul principal, apoi deschide aplicația de acolo.
@@ -58,9 +65,7 @@ export default function NotificationsPanel({ settings, set }) {
       )}
       {(status === "off" || status === "on") && (
         <>
-          <Button variant={status === "on" ? "ghost" : "gold"} busy={busy} onClick={toggle}>
-            {status === "on" ? "Oprește notificările" : "Activează notificările"}
-          </Button>
+          {status === "off" && !failed && <p className="text-xs font-semibold text-dim">Primește raportul zilei și impulsurile din grup și când aplicația e închisă.</p>}
           {failed === "subscribe" && (
             <p className="text-xs font-semibold text-rose-ink">
               Browserul nu a putut crea abonarea la notificări. În Brave: Setări → Confidențialitate și securitate → activează „Use Google services for push messaging”, apoi repornește browserul.
@@ -88,6 +93,6 @@ export default function NotificationsPanel({ settings, set }) {
           </label>
         </>
       )}
-    </Panel>
+    </div>
   );
 }

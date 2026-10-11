@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Bot, Check, Database, Download, FlaskConical, LogOut, Moon, Palette, Shield, Trash2, User, UserX } from "lucide-react";
+import { Bot, Check, ChevronDown, Database, Download, FlaskConical, LogOut, Moon, Palette, Shield, Sun, Trash2, User, UserX } from "lucide-react";
 import { Button, Chip, Field, LevelBadge, Panel, SectionTitle, Toggle } from "../components/ui.jsx";
 import { Select } from "../components/Select.jsx";
 import { PATHS } from "../lib/catalog.js";
@@ -16,50 +16,75 @@ const TIMES = ["18:00", "18:30", "19:00", "19:30", "20:00", "20:30", "21:00", "2
 function ThemePicker() {
   const active = useTheme();
   return (
-    <div role="radiogroup" aria-label="Temă de culori" className="grid gap-3 sm:grid-cols-3">
+    <div role="radiogroup" aria-label="Temă de culori" className="grid grid-cols-3 gap-2 sm:grid-cols-5 lg:grid-cols-9">
       {THEMES.map((t) => {
         const on = t.id === active;
+        const ModeIcon = t.mode === "dark" ? Moon : Sun;
         return (
           <button
             key={t.id}
             type="button"
             role="radio"
             aria-checked={on}
+            aria-label={`${t.name}, ${t.mode === "dark" ? "întunecat" : "luminos"}. ${t.blurb}`}
+            title={t.blurb}
             onClick={() => setTheme(t.id)}
             data-theme={t.id}
             data-mode={t.mode}
-            className={`focus-ring flex flex-col rounded-2xl bg-night p-3 text-left ring-2 transition ${on ? "ring-gold-deep" : "ring-edge hover:ring-edge-hi"}`}
+            className={`focus-ring flex flex-col rounded-xl bg-night p-1.5 text-left ring-2 transition ${on ? "ring-gold-deep" : "ring-edge hover:ring-edge-hi"}`}
           >
-            <div className="flex h-16 overflow-hidden rounded-xl ring-1 ring-edge">
-              <div className="flex w-1/3 flex-col gap-1 bg-deep p-1.5">
-                <span className="h-1.5 w-full rounded-full bg-gold" />
-                <span className="h-1.5 w-2/3 rounded-full bg-edge" />
-                <span className="h-1.5 w-3/4 rounded-full bg-edge" />
+            <div className="flex h-9 overflow-hidden rounded-lg ring-1 ring-edge">
+              <div className="flex w-1/3 flex-col gap-0.5 bg-deep p-1">
+                <span className="h-1 w-full rounded-full bg-gold" />
+                <span className="h-1 w-2/3 rounded-full bg-edge" />
               </div>
-              <div className="flex flex-1 flex-col justify-between bg-night p-1.5">
-                <div className="rounded-md bg-panel p-1 ring-1 ring-edge">
-                  <span className="block h-1.5 w-1/2 rounded-full bg-ink" />
-                  <span className="mt-1 block h-1 w-3/4 rounded-full bg-dim" />
-                </div>
-                <div className="flex gap-1">
-                  <span className="h-3 w-8 rounded-md bg-violet" />
-                  <span className="h-3 w-6 rounded-md bg-gold" />
-                  <span className="h-3 w-4 rounded-md bg-mint" />
+              <div className="flex flex-1 flex-col justify-between bg-night p-1">
+                <span className="block h-1 w-3/4 rounded-full bg-ink" />
+                <div className="flex gap-0.5">
+                  <span className="h-2 w-4 rounded-sm bg-violet" />
+                  <span className="h-2 w-3 rounded-sm bg-gold" />
+                  <span className="h-2 w-2 rounded-sm bg-mint" />
                 </div>
               </div>
             </div>
-            <div className="mt-2 flex items-center justify-between gap-2">
-              <span className="font-pixel text-lg text-ink">{t.name}</span>
-              <span className="inline-flex items-center gap-1 text-[11px] font-extrabold text-dim">
-                {on && <Check size={13} strokeWidth={3} aria-hidden="true" />}
-                {t.mode === "dark" ? "Întunecat" : "Luminos"}
-              </span>
-            </div>
-            <p className="mt-0.5 text-xs font-semibold text-dim">{t.blurb}</p>
+            <span className="mt-1 flex items-center justify-between gap-1 px-0.5">
+              <span className="truncate text-xs font-extrabold text-ink">{t.name}</span>
+              {on ? (
+                <Check size={12} strokeWidth={3} className="shrink-0 text-ink" aria-hidden="true" />
+              ) : (
+                <ModeIcon size={11} className="shrink-0 text-dim" aria-hidden="true" />
+              )}
+            </span>
           </button>
         );
       })}
     </div>
+  );
+}
+
+// a switch row: title and a short explanation on the left, the toggle on the right
+function SwitchRow({ id, title, hint, checked, onChange }) {
+  return (
+    <label className="flex items-center justify-between gap-4" htmlFor={id}>
+      <span>
+        <span className="block text-sm font-extrabold text-ink">{title}</span>
+        <span className="block text-xs font-semibold text-dim">{hint}</span>
+      </span>
+      <Toggle id={id} checked={checked} onChange={onChange} label={title} />
+    </label>
+  );
+}
+
+// a folded block inside a card, opened from its summary line
+function Fold({ title, tone = "text-dim", children }) {
+  return (
+    <details className="group rounded-xl bg-well ring-1 ring-edge">
+      <summary className={`focus-ring flex cursor-pointer list-none items-center justify-between gap-2 rounded-xl px-3 py-2 text-xs font-extrabold uppercase tracking-wider hover:text-ink ${tone}`}>
+        {title}
+        <ChevronDown size={15} className="transition-transform group-open:rotate-180" aria-hidden="true" />
+      </summary>
+      <div className="px-3 pb-3">{children}</div>
+    </details>
   );
 }
 
@@ -85,23 +110,26 @@ export default function Settings({ state, d, ai, mode, env, onChange, onWipe, on
     }
   }
 
+  const storage =
+    mode === "cloud"
+      ? "Datele se salvează în contul tău de claude.ai, într-o zonă privată a aplicației pe care nu o vede nimeni altcineva."
+      : mode === "supabase"
+        ? "Datele se salvează în contul tău și se sincronizează pe toate dispozitivele."
+        : mode === "local"
+          ? "Datele se salvează în browserul acestui dispozitiv."
+          : "Stocarea nu e disponibilă: datele se pierd când închizi pagina.";
+
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       <div>
         <h1 className="font-pixel text-3xl text-ink">Setări</h1>
-        <p className="text-sm font-semibold text-dim">Profil, ritualul de seară, regulile jocului și datele tale.</p>
+        <p className="text-sm font-semibold text-dim">Profilul, raportul de seară, aspectul, notificările și datele tale.</p>
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-2 [&>*]:min-w-0">
-        <Panel className="space-y-4 p-4 sm:p-5 lg:col-span-2">
-          <SectionTitle icon={Palette} tone="violet">
-            Aspect
-          </SectionTitle>
-          <ThemePicker />
-          <p className="text-xs font-semibold text-dim">Se păstrează pe acest dispozitiv.</p>
-        </Panel>
-        <Panel className="space-y-4 p-4 sm:p-5">
-          <SectionTitle icon={User} tone="gold">
+      <div className="grid gap-4 lg:grid-cols-2 [&>*]:min-w-0">
+        {/* who you are */}
+        <Panel className="space-y-3 p-4">
+          <SectionTitle icon={User} tone="gold" className="!mb-1">
             Profil
           </SectionTitle>
           <Field label="Nume" htmlFor="set-nick" hint="Apare în grup, lângă personajul tău.">
@@ -117,37 +145,39 @@ export default function Settings({ state, d, ai, mode, env, onChange, onWipe, on
           <Field label="Obiectiv" htmlFor="set-goal" hint="AI-ul îl folosește în rapoarte și în poveste.">
             <textarea
               id="set-goal"
-              className="field min-h-[80px]"
+              className="field min-h-[64px]"
+              rows={2}
               value={goal}
               maxLength={160}
               onChange={(e) => setGoal(e.target.value)}
               onBlur={() => goal.trim() && onChange((s) => ({ ...s, profile: { ...s.profile, goal: goal.trim() } }))}
             />
           </Field>
-          <div className="inset flex items-center gap-3 p-3 text-sm">
+          <p className="flex flex-wrap items-center gap-2 text-xs font-semibold text-dim">
             <Chip tone="gold">{path.label}</Chip>
-            <span className="text-body">
-              Drumul tău: personajul este <span className="font-extrabold text-ink">{path.cls}</span>. Drumul se alege o singură dată, la ou.
+            <span>
+              Personajul tău e <span className="font-extrabold text-ink">{path.cls}</span>. Drumul se alege o singură dată, la ou.
             </span>
-          </div>
+          </p>
         </Panel>
 
-        <Panel className="space-y-4 p-4 sm:p-5">
-          <SectionTitle icon={Moon} tone="violet">
-            Ritualul de seară
+        {/* the evening report */}
+        <Panel className="space-y-3 p-4">
+          <SectionTitle icon={Moon} tone="violet" className="!mb-1">
+            Raportul de seară
           </SectionTitle>
           <Field label="Ora raportului" htmlFor="set-time">
             <Select id="set-time" value={settings.reviewTime || "21:00"} onChange={(v) => set({ reviewTime: v })} options={TIMES.map((t) => ({ value: t, label: fmt12(t) }))} />
           </Field>
-          <label className="flex items-center justify-between gap-4" htmlFor="set-auto">
-            <span>
-              <span className="block font-extrabold text-ink">Generează automat</span>
-              <span className="block text-xs font-semibold text-dim">Dacă AI-ul are deja permisiune și aplicația e deschisă la ora raportului.</span>
-            </span>
-            <Toggle id="set-auto" checked={settings.autoReview !== false} onChange={(v) => set({ autoReview: v })} label="Raport automat" />
-          </label>
-          <div className="inset flex items-start gap-3 p-3 text-sm text-body">
-            <Bot size={18} className={`mt-0.5 shrink-0 ${ai.available ? "text-mint" : "text-faint"}`} aria-hidden="true" />
+          <SwitchRow
+            id="set-auto"
+            title="Generează automat"
+            hint="Dacă AI-ul are deja permisiune și aplicația e deschisă la ora raportului."
+            checked={settings.autoReview !== false}
+            onChange={(v) => set({ autoReview: v })}
+          />
+          <p className="flex items-start gap-2 text-xs font-semibold text-dim">
+            <Bot size={15} className={`shrink-0 ${ai.available ? "text-mint" : "text-faint"}`} aria-hidden="true" />
             <span>
               {ai.available ? (
                 <>
@@ -160,13 +190,20 @@ export default function Settings({ state, d, ai, mode, env, onChange, onWipe, on
                 </>
               )}
             </span>
-          </div>
+          </p>
         </Panel>
 
-        <NotificationsPanel settings={settings} set={set} />
+        {/* how it looks */}
+        <Panel className="space-y-3 p-4 lg:col-span-2">
+          <SectionTitle icon={Palette} tone="violet" sub="Se păstrează pe acest dispozitiv." className="!mb-1">
+            Aspect
+          </SectionTitle>
+          <ThemePicker />
+        </Panel>
 
-        <Panel className="space-y-4 p-4 sm:p-5">
-          <SectionTitle icon={Shield} tone="ember">
+        {/* the rules: the one setting up front, the explanations folded */}
+        <Panel className="space-y-3 p-4">
+          <SectionTitle icon={Shield} tone="ember" className="!mb-1">
             Regulile jocului
           </SectionTitle>
           <Field label="Momentum-ul se resetează după" htmlFor="set-reset">
@@ -177,39 +214,43 @@ export default function Settings({ state, d, ai, mode, env, onChange, onWipe, on
               options={[2, 3, 4, 5].map((n) => ({ value: n, label: `${n} zile la rând fără activitate` }))}
             />
           </Field>
-          <ul className="space-y-1.5 text-sm text-body">
-            <li>· Bifă: +10 / +20 / +30 momentum după dificultate, plus 1 / 2 / 3 puncte de evoluție pentru personaj.</li>
-            <li>· Zile active la rând: până la +40% la tot ce câștigi.</li>
-            <li>· Toate misiunile programate bifate: cufărul zilei, +{RULES.chestXp}.</li>
-            <li>· Raportul de seară: jumătate din scorul zilei devine momentum.</li>
-            <li>· Focus: o sesiune încheiată de cel puțin {RULES.focusMinMinutes} minute aduce 1 momentum la 2 minute (+{RULES.focusCycleBonus} pentru fiecare pomodoro terminat), maximum {RULES.focusDayCap} pe zi.</li>
-            <li>· O zi fără nimic păstrează 85% din momentum; una incompletă, cel puțin 92%.</li>
-            <li className="flex items-center gap-1.5">
-              <FlaskConical size={14} className="text-mint" aria-hidden="true" /> Seria: {RULES.revivesPerMonth} revive-uri pe lună (ai folosit {d.revive.used} luna aceasta).
-            </li>
-          </ul>
-          <div className="flex flex-wrap gap-1.5">
-            {LEVELS.map((l) => (
-              <span key={l.lvl} className="inline-flex items-center gap-1 rounded-full bg-well py-0.5 pl-0.5 pr-2 text-[11px] font-bold text-dim ring-1 ring-edge">
-                <LevelBadge lvl={l.lvl} size={20} tone={l.lvl <= d.level.lvl ? "gold" : "dim"} /> {l.name} · {l.min}
-              </span>
-            ))}
-          </div>
+          <p className="flex items-center gap-1.5 text-xs font-semibold text-dim">
+            <FlaskConical size={14} className="text-mint" aria-hidden="true" /> Seria: {RULES.revivesPerMonth} revive-uri pe lună (ai folosit {d.revive.used} luna aceasta).
+          </p>
+          <Fold title="Cum câștigi momentum">
+            <ul className="space-y-1 text-xs font-semibold leading-relaxed text-body">
+              <li>· Bifă: +10 / +20 / +30 momentum după dificultate, plus 1 / 2 / 3 puncte de evoluție pentru personaj.</li>
+              <li>· Zile active la rând: până la +40% la tot ce câștigi.</li>
+              <li>· Toate misiunile programate bifate: cufărul zilei, +{RULES.chestXp}.</li>
+              <li>· Raportul de seară: jumătate din scorul zilei devine momentum.</li>
+              <li>
+                · Focus: o sesiune încheiată de cel puțin {RULES.focusMinMinutes} minute aduce 1 momentum la 2 minute (+{RULES.focusCycleBonus} pentru fiecare pomodoro
+                terminat), maximum {RULES.focusDayCap} pe zi.
+              </li>
+              <li>· O zi fără nimic păstrează 85% din momentum; una incompletă, cel puțin 92%.</li>
+            </ul>
+          </Fold>
+          <Fold title="Nivelurile">
+            <div className="flex flex-wrap gap-1.5">
+              {LEVELS.map((l) => (
+                <span key={l.lvl} className="inline-flex items-center gap-1 rounded-full bg-panel py-0.5 pl-0.5 pr-2 text-[11px] font-bold text-dim ring-1 ring-edge">
+                  <LevelBadge lvl={l.lvl} size={20} tone={l.lvl <= d.level.lvl ? "gold" : "dim"} /> {l.name} · {l.min}
+                </span>
+              ))}
+            </div>
+          </Fold>
         </Panel>
 
-        <Panel className="space-y-4 p-4 sm:p-5">
-          <SectionTitle icon={Database} tone="sky">
-            Datele tale
+        {/* account, notifications and data, with the destructive actions folded away */}
+        <Panel className="space-y-3 p-4">
+          <SectionTitle icon={Database} tone="sky" className="!mb-1">
+            Cont, notificări și date
           </SectionTitle>
           <p className="text-sm text-body">
-            {mode === "cloud"
-              ? "Datele se salvează în contul tău de claude.ai, într-o zonă privată a aplicației pe care nu o vede nimeni altcineva. Grupurile văd doar statisticile publice: nivelul, seria, momentum-ul și personajul."
-              : mode === "supabase"
-                ? "Datele se salvează în contul tău și se sincronizează pe toate dispozitivele. Grupurile văd doar statisticile publice: nivelul, seria, momentum-ul și personajul."
-                : mode === "local"
-                ? "Datele se salvează în browserul acestui dispozitiv."
-                : "Stocarea nu e disponibilă: datele se pierd când închizi pagina."}
+            {storage}
+            {(mode === "cloud" || mode === "supabase") && " Grupurile văd doar nivelul, seria, momentum-ul și personajul."}
           </p>
+          <NotificationsPanel settings={settings} set={set} />
           {mode === "supabase" && (
             <div className="flex flex-wrap gap-2">
               <Button variant="ghost" size="sm" icon={Download} busy={exporting} onClick={download}>
@@ -228,8 +269,8 @@ export default function Settings({ state, d, ai, mode, env, onChange, onWipe, on
               Politica de confidențialitate
             </a>
           </p>
-          <div className="rounded-xl bg-rose/10 p-3 ring-1 ring-rose/30">
-            <div className="mb-2 text-sm font-extrabold text-rose">Zona periculoasă</div>
+          <Fold title="Zona periculoasă" tone="text-rose">
+            <p className="mb-2 text-xs font-semibold text-dim">Ștergerea nu se poate anula.</p>
             <div className="flex flex-wrap gap-2">
               <Button id="wipe-all" variant="rose" size="sm" icon={Trash2} onClick={onWipe}>
                 Șterge toate datele
@@ -240,7 +281,7 @@ export default function Settings({ state, d, ai, mode, env, onChange, onWipe, on
                 </Button>
               )}
             </div>
-          </div>
+          </Fold>
         </Panel>
       </div>
     </div>

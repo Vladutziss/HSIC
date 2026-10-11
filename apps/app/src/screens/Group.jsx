@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { Bell, Check, Copy, Crown, Flame, Handshake, Inbox, LogOut, Medal, Send, UserPlus, Users } from "lucide-react";
+import { Bell, Check, Copy, Crown, Flame, Handshake, Inbox, LogOut, Medal, Send, UserPlus, Users, X } from "lucide-react";
 import { Button, Chip, Empty, Field, LevelBadge, Panel, SectionTitle, Skeleton, Tabs, useToast } from "../components/ui.jsx";
 import { Sprite } from "../components/Sprite.jsx";
 import { MAX_GROUPS, MAX_PARTNERS, NUDGE_TEMPLATES } from "../lib/groups.js";
@@ -392,8 +392,8 @@ export default function Group({ groups }) {
           <p className="text-sm font-semibold text-dim">Progres împreună: clasament săptămânal și remindere între prieteni.</p>
         </div>
         {groups.cloud && list.length > 0 && (
-          <Button variant="ghost" size="sm" icon={UserPlus} onClick={() => setAdding((x) => !x)}>
-            {adding ? "Închide" : "Grup nou sau cod"}
+          <Button variant="ghost" size="sm" icon={adding ? X : UserPlus} onClick={() => setAdding((x) => !x)}>
+            {adding ? "Anulează" : "Grup nou sau cod"}
           </Button>
         )}
       </div>
