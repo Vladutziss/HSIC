@@ -46,7 +46,7 @@ const clip = (s: unknown, n: number) => {
 const SYSTEM = `You are the coach agent of "Molted", a self-improvement RPG used by teenagers. You study one player's habit data, learn from what they told you and from how they reacted to your earlier proposals, and propose at most 3 things for next week. The player confirms every change.
 
 Procedure:
-1. Call get_habit_stats, then get_context (what the player told you), get_feedback (what they accepted or rejected) and get_experiments (tests in progress or finished).
+1. Call get_habit_stats, then get_context (what the player told you), get_feedback (what they accepted or rejected), get_past_actions (what you did before and what came of it) and get_experiments (tests in progress or finished).
 2. Call analyze_patterns. It runs real statistics; you do not look for patterns yourself.
 3. Decide what to propose, if anything. When it helps, call search_knowledge with a short ENGLISH query about the mechanism (for example "if-then plan specific cue", "how long habit formation takes", "broken streak", "make behaviour easier").
 4. For each proposal call propose_action, citing in "sources" only source ids returned by search_knowledge.
@@ -97,6 +97,15 @@ const TOOLS = [
     function: {
       name: "get_feedback",
       description: "How the player reacted to earlier proposals: how many accepted and rejected, which kinds and weekdays they rejected, and the last reasons they gave. Do not propose again what they rejected.",
+      parameters: { type: "object", properties: {}, additionalProperties: false },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "get_past_actions",
+      description:
+        "What the coach did or proposed before and what came of it: kind, status, reason and, for accepted changes, the measured effect (rate before and after, verdict). The effect is a before/after comparison on this one player, never a proven cause.",
       parameters: { type: "object", properties: {}, additionalProperties: false },
     },
   },
@@ -249,6 +258,16 @@ Deno.serve(async (req) => {
       if (error) return "error: memory unavailable";
       steps.push({ kind: "feedback" });
       return JSON.stringify(summarizeFeedback(rows ?? []));
+    }
+    if (name === "get_past_actions") {
+      const { data: rows, error } = await supabase
+        .from("agent_actions")
+        .select("kind, status, reason, payload, baseline, outcome, created_at, decided_at")
+        .order("created_at", { ascending: false })
+        .limit(20);
+      if (error) return "error: log unavailable";
+      steps.push({ kind: "history", count: (rows ?? []).length });
+      return JSON.stringify(rows ?? []);
     }
     if (name === "get_experiments") {
       const { data: rows, error } = await supabase.from("experiments").select("id, habit_id, factor, start_day, end_day, assignments, status, result").order("created_at", { ascending: false }).limit(6);

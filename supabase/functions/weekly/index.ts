@@ -1,0 +1,115 @@
+// The coach's weekly run (Sunday evening), for players who opted in (profiles.settings.agentWeekly).
+// Deployed without gateway JWT verification and called by pg_cron with a shared secret:
+//
+//   npm run sync:functions && supabase functions deploy weekly --no-verify-jwt
+//   supabase secrets set AGENT_CRON_SECRET=...        (the same value is in the cron job, see 0017)
+//
+// What it does for each opted-in player, with no language model involved:
+//   1. measures the effect of changes accepted two weeks ago (outcomes.js) and stores it;
+//   2. runs the statistics (patterns.js) and plans next week (weekly-core.js);
+//   3. logs the plan in agent_actions: reversible low-risk actions as `auto` (the app applies them on the
+//      next open, with an undo), anything that changes the plan as `confirm`;
+//   4. sends one push notification if something was logged.
+// It never edits the player's state itself: the app is the only writer of habits and to-dos.
+
+import { createClient } from "jsr:@supabase/supabase-js@2";
+import { loadState } from "../_shared/app/remote.js";
+import { analyzePatterns } from "../_shared/app/patterns.js";
+import { activeContext, summarizeFeedback } from "../_shared/app/memory.js";
+import { isOutcomeDue, measureOutcome } from "../_shared/app/outcomes.js";
+import { planWeek } from "../_shared/weekly-core.js";
+
+const TZ = "Europe/Bucharest"; // the app's audience; per-player time zones would come from push_subscriptions
+const MAX_USERS = 500;
+
+const reply = (status: number, body: unknown) => new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
+const dayIn = (tz: string) => new Intl.DateTimeFormat("en-CA", { timeZone: tz }).format(new Date());
+
+Deno.serve(async (req) => {
+  if (req.method !== "POST") return reply(405, { code: "bad_request" });
+  const secret = Deno.env.get("AGENT_CRON_SECRET");
+  if (!secret || req.headers.get("x-cron-secret") !== secret) return reply(401, { code: "session_expired" });
+
+  const url = Deno.env.get("SUPABASE_URL")!;
+  const admin = createClient(url, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+  const today = dayIn(TZ);
+  const runId = `weekly-${today}`;
+
+  const { data: users, error } = await admin.from("profiles").select("id").eq("settings->>agentWeekly", "true").limit(MAX_USERS);
+  if (error) {
+    console.error("weekly users", error);
+    return reply(500, { code: "upstream_error" });
+  }
+
+  const summary = { players: users?.length ?? 0, planned: 0, logged: 0, skipped: 0, failed: 0, measured: 0 };
+  for (const { id } of users ?? []) {
+    try {
+      // one run per player per day
+      const { data: done } = await admin.from("agent_actions").select("id").eq("user_id", id).eq("run_id", runId).limit(1);
+      if (done?.length) {
+        summary.skipped++;
+        continue;
+      }
+      const state = await loadState(admin, id);
+      if (!state) {
+        summary.skipped++;
+        continue;
+      }
+
+      const [{ data: actions }, { data: notes }, { data: feedback }] = await Promise.all([
+        admin.from("agent_actions").select("*").eq("user_id", id).order("created_at", { ascending: false }).limit(60),
+        admin.from("user_context").select("kind, body, starts_on, ends_on, created_at").eq("user_id", id).limit(100),
+        admin.from("proposal_feedback").select("proposal, decision, reason, created_at").eq("user_id", id).order("created_at", { ascending: false }).limit(50),
+      ]);
+
+      // close the loop: what happened after the changes the player accepted two weeks ago
+      for (const a of actions ?? []) {
+        if (!isOutcomeDue(a, today)) continue;
+        const outcome = measureOutcome(a, state, today);
+        const { error: upErr } = await admin.from("agent_actions").update({ outcome }).eq("id", a.id);
+        if (!upErr) {
+          a.outcome = outcome;
+          summary.measured++;
+        }
+      }
+
+      const plan = planWeek({
+        state,
+        today,
+        patterns: analyzePatterns(state, today),
+        context: activeContext(notes ?? [], today),
+        feedback: summarizeFeedback(feedback ?? []),
+        pastActions: actions ?? [],
+      });
+      summary.planned++;
+      if (!plan.actions.length) continue;
+
+      const rows = plan.actions.map((a: { kind: string; autonomy: string; habitId?: string; payload: unknown; reason: string; sources: string[]; baseline: unknown }) => ({
+        user_id: id,
+        run_id: runId,
+        kind: a.kind,
+        autonomy: a.autonomy,
+        status: "pending",
+        habit_id: a.habitId ?? null,
+        payload: a.payload,
+        reason: a.reason,
+        sources: a.sources,
+        baseline: a.baseline,
+      }));
+      const { error: insErr } = await admin.from("agent_actions").insert(rows);
+      if (insErr) throw insErr;
+      summary.logged += rows.length;
+
+      // one notification per player; failures here must not undo the log
+      await fetch(`${url}/functions/v1/push`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-cron-secret": secret },
+        body: JSON.stringify({ action: "agent", userId: id, count: rows.length }),
+      }).catch((e) => console.error("weekly push", e));
+    } catch (e) {
+      summary.failed++;
+      console.error("weekly player", id, e);
+    }
+  }
+  return reply(200, summary);
+});

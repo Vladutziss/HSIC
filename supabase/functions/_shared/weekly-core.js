@@ -1,0 +1,119 @@
+// Deterministic decision core of the coach's weekly run (Sunday evening). No LLM, no I/O, no Deno APIs:
+// given the player's state and the statistics already computed (analyzePatterns), decide which actions
+// to log for next week (Monday..Sunday after `today`), split into 'auto' (reversible, low risk: a to-do)
+// and 'confirm' (changes the plan: needs the player's tap). Every action is explainable from numbers.
+//
+// Rules:
+//   1 weak_weekday_prompt   auto/create_todo: weekday finding, direction 'lower', strength moderate|strong, habit
+//                           scheduled that weekday next week -> one 10-min to-do the day before, asking for an if-then plan.
+//                           Max `maxTodos`; never a duplicate of an open to-do (same title+date), never a past date.
+//   2 repeat_miss_downshift confirm/change_habit: miss_dynamics finding with P(miss | previous missed) >= 0.6
+//                           (and higher than after a done day) on a habit with diff > 1 -> propose diff - 1, same days.
+//   3 memory                skip a kind the player rejected >= 2 times (feedback.rejectedByAction[kind]);
+//                           skip any action on a habit whose name appears (case-insensitive) in an active
+//                           'constraint' note. Recorded in `skipped`.
+//   4 data + cap            no action on a habit with < 14 scheduled days in the last 56 (recorded);
+//                           at most `maxActions` in total, 'auto' first, then 'confirm'.
+import { addDays, dayRange, RO_DAYS, weekday } from "./app/dates.js";
+import { isScheduled } from "./app/engine.js";
+import { withObservedStart } from "./app/history.js";
+
+export const THRESHOLDS = { minScheduled: 14, repeatMiss: 0.6, rejectedLimit: 2, baselineDays: 28, historyDays: 56, promptDur: 10 };
+
+const pct = (x) => `${Math.round(x * 100)}%`;
+const round = (x) => Math.round(x * 10000) / 10000;
+
+/** Completion over the 28 days before `today` (habit start moved back to its first logged day). */
+function baselineOf(h, state, today) {
+  const sched = dayRange(addDays(today, -THRESHOLDS.baselineDays), addDays(today, -1)).filter((d) => isScheduled(h, d));
+  const done = sched.filter((d) => state.log?.[d]?.[h.id]).length;
+  return { rate28: sched.length ? round(done / sched.length) : null, asOf: today };
+}
+
+export function planWeek({ state: raw, today, patterns, context, feedback, pastActions = [], maxActions = 3, maxTodos = 2 } = {}) {
+  const state = withObservedStart(raw || {});
+  const habits = new Map((state.habits || []).map((h) => [h.id, h]));
+  const findings = patterns?.findings || [];
+  const skipped = [];
+  const skip = (rule, reason) => skipped.push({ rule, reason });
+  const rejected = feedback?.rejectedByAction || {};
+  const constraints = (context || []).filter((n) => n?.kind === "constraint").map((n) => String(n.body || "").toLowerCase());
+  const nextWeek = dayRange(addDays(today, 1), addDays(today, 7));
+  const taken = new Set((state.todos || []).filter((t) => !t.done).map((t) => `${t.date}|${t.title}`));
+  // ponytail: pastActions is accepted for the caller's API; dedupe goes against state.todos only, use it when a rule needs run history.
+  void pastActions;
+
+  const histOk = (h) =>
+    dayRange(addDays(today, -THRESHOLDS.historyDays), addDays(today, -1)).filter((d) => isScheduled(h, d)).length >= THRESHOLDS.minScheduled;
+
+  // Shared gates (rules 3 and 4). Returns the habit when the action may go ahead, else records why not.
+  function gate(rule, kind, habitId) {
+    const h = habits.get(habitId);
+    if (!h) return null;
+    if ((rejected[kind] || 0) >= THRESHOLDS.rejectedLimit) {
+      skip(rule, `Jucătorul a respins de ${rejected[kind]} ori acțiuni de tip ${kind}; nu mai propun.`);
+      return null;
+    }
+    const name = String(h.name || "").toLowerCase();
+    if (name && constraints.some((c) => c.includes(name))) {
+      skip(rule, `Există o constrângere activă care menționează „${h.name}"; nu ating obiceiul.`);
+      return null;
+    }
+    if (!histOk(h)) {
+      skip(rule, `„${h.name}" are sub ${THRESHOLDS.minScheduled} zile programate în ultimele ${THRESHOLDS.historyDays}; prea puține date.`);
+      return null;
+    }
+    return h;
+  }
+
+  const todos = [];
+  const confirms = [];
+  for (const f of findings) {
+    if (f.kind === "weekday" && f.params?.direction === "lower" && (f.strength === "moderate" || f.strength === "strong")) {
+      const h = habits.get(f.habitId);
+      const target = h && nextWeek.find((d) => weekday(d) === f.params.weekday && isScheduled(h, d));
+      if (!target) continue; // not scheduled that weekday next week: nothing to prepare
+      const date = addDays(target, -1);
+      if (date < today) {
+        skip("weak_weekday_prompt", `Data ${date} e în trecut.`);
+        continue;
+      }
+      if (!gate("weak_weekday_prompt", "create_todo", f.habitId)) continue;
+      const title = `Mâine: ${h.name} (ziua ta mai grea). Alege acum când o faci.`;
+      const key = `${date}|${title}`;
+      if (taken.has(key)) {
+        skip("weak_weekday_prompt", `Există deja un to-do deschis „${title}" pe ${date}.`);
+        continue;
+      }
+      taken.add(key);
+      todos.push({
+        kind: "create_todo",
+        autonomy: "auto",
+        habitId: h.id,
+        payload: { title, date, dur: THRESHOLDS.promptDur },
+        reason: `${h.name} merge mai greu ${RO_DAYS[f.params.weekday]}: ${pct(f.rateA)} bifat (n=${f.n.a}) față de ${pct(f.rateB)} în rest (n=${f.n.b}); e o asociație, nu o cauză, așa că îți las un memento cu o zi înainte.`,
+        sources: ["gollwitzer-1999", "sheeran-2025"],
+        baseline: baselineOf(h, state, today),
+      });
+    } else if (f.kind === "miss_dynamics" && f.rateA >= THRESHOLDS.repeatMiss && f.diff > 0) {
+      const h = habits.get(f.habitId);
+      if (!h || !(h.diff > 1)) continue;
+      if (!gate("repeat_miss_downshift", "change_habit", f.habitId)) continue;
+      confirms.push({
+        kind: "change_habit",
+        autonomy: "confirm",
+        habitId: h.id,
+        payload: { habitId: h.id, diff: h.diff - 1, days: [...(h.days || [])] },
+        reason: `După o zi ratată, ${h.name} se ratează din nou în ${pct(f.rateA)} din cazuri (n=${f.n.a}) față de ${pct(f.rateB)} după o zi bifată (n=${f.n.b}); e o asociație, propun o dificultate mai mică (${h.diff} -> ${h.diff - 1}) cu aceleași zile.`,
+        sources: ["fogg-2009", "lally-2010"],
+        baseline: baselineOf(h, state, today),
+      });
+    }
+  }
+
+  for (const t of todos.slice(maxTodos)) skip("weak_weekday_prompt", `Peste limita de ${maxTodos} to-do-uri pe săptămână: „${t.payload.title}".`);
+  const ordered = [...todos.slice(0, maxTodos), ...confirms];
+  for (const a of ordered.slice(maxActions)) skip(a.kind === "create_todo" ? "weak_weekday_prompt" : "repeat_miss_downshift", `Peste limita de ${maxActions} acțiuni pe săptămână.`);
+
+  return { runDay: today, actions: ordered.slice(0, maxActions), skipped };
+}

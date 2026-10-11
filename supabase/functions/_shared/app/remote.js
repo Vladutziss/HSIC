@@ -301,11 +301,13 @@ const must = ({ data, error }) => {
 export async function loadState(client, uid) {
   const [profile, habits, completions, todos, day_reviews, streak_revives, groups] = await Promise.all([
     client.from("profiles").select("*").eq("id", uid).maybeSingle().then(must),
-    client.from("habits").select("*").then(must),
-    client.from("completions").select("habit_id, day, code").then(must),
-    client.from("todos").select("*").then(must),
-    client.from("day_reviews").select("day, ai_score, at").then(must),
-    client.from("streak_revives").select("missed_day, revived_on").then(must),
+    // RLS already scopes these to the caller; the explicit filter keeps the weekly job, which reads
+    // other players' rows with the service role (bypassing RLS), from mixing their data
+    client.from("habits").select("*").eq("user_id", uid).then(must),
+    client.from("completions").select("habit_id, day, code").eq("user_id", uid).then(must),
+    client.from("todos").select("*").eq("user_id", uid).then(must),
+    client.from("day_reviews").select("day, ai_score, at").eq("user_id", uid).then(must),
+    client.from("streak_revives").select("missed_day, revived_on").eq("user_id", uid).then(must),
     client.from("group_members").select("group_id").eq("user_id", uid).then(must),
   ]);
   return fromRows({ profile, habits, completions, todos, day_reviews, streak_revives, groups: (groups || []).map((g) => g.group_id) });

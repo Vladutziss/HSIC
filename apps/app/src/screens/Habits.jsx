@@ -5,6 +5,7 @@ import { HabitArea, Heatmap, Sparkline } from "../components/Charts.jsx";
 import { iconFor } from "../components/icons.js";
 import { scheduleLabel } from "../components/HabitEditor.jsx";
 import { ExperimentsPanel, NotesPanel, PlanPanel } from "../components/CoachAgent.jsx";
+import { AgentLog } from "../components/AgentLog.jsx";
 import { MAX_HABITS, PATHS } from "../lib/catalog.js";
 import { DIFF, habitStats, isScheduled } from "../lib/engine.js";
 import { fmt12, fmtDay } from "../lib/dates.js";
@@ -161,7 +162,7 @@ function HabitDetail({ h, state, d, today, onBack, onEdit, onArchive }) {
   );
 }
 
-export default function Habits({ state, d, today, ai, focus, setFocus, onAdd, onAddHabit, onEdit, onArchive, onDelete }) {
+export default function Habits({ state, d, today, ai, agent, focus, setFocus, onAdd, onAddHabit, onEdit, onArchive, onDelete }) {
   const [showArchived, setShowArchived] = useState(false);
   const [expKey, setExpKey] = useState(0);
   const habits = state.habits || [];
@@ -218,6 +219,9 @@ export default function Habits({ state, d, today, ai, focus, setFocus, onAdd, on
             />
           ))}
         </div>
+      )}
+      {ai?.server && agent && (
+        <AgentLog actions={agent.log} state={state} busy={agent.busy} error={agent.error} onConfirm={agent.onConfirm} onReject={agent.onReject} onUndo={agent.onUndo} />
       )}
       <PlanPanel state={state} today={today} ai={ai} onAddHabit={onAddHabit} onEdit={onEdit} onExperiment={() => setExpKey((k) => k + 1)} />
       <ExperimentsPanel state={state} today={today} ai={ai} refreshKey={expKey} />
