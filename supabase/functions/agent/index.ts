@@ -162,7 +162,7 @@ async function embed(text: string): Promise<string> {
 /** The seed leaves embeddings empty (and clears them when a chunk's text changes); fill them here. */
 // deno-lint-ignore no-explicit-any
 async function embedMissing(admin: any) {
-  const { data } = await admin.from("knowledge_chunks").select("id, body").is("embedding", null);
+  const { data } = await admin.from("knowledge_chunks").select("id, body").is("embedding", null).limit(3); // a few per request: embedding all chunks at once exceeds the CPU limit
   for (const r of data ?? []) await admin.from("knowledge_chunks").update({ embedding: await embed(r.body) }).eq("id", r.id);
 }
 
