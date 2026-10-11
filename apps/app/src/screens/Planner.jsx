@@ -196,7 +196,7 @@ function TodoList({ state, today, todo }) {
   );
 }
 
-function WeekView({ state, today, anchor, todo }) {
+function WeekView({ state, today, anchor, todo, onMoveHabit }) {
   const days = dayRange(mondayOf(anchor), addDays(mondayOf(anchor), 6));
   const habits = (state.habits || []).filter((h) => !h.archivedAt);
   const scroller = useRef(null);
@@ -212,6 +212,15 @@ function WeekView({ state, today, anchor, todo }) {
     const rect = e.currentTarget.getBoundingClientRect();
     const y = e.clientY - rect.top;
     return Math.max(START, Math.min(END - 30, START + Math.floor(y / (ROW / 2)) * 30));
+  };
+
+  // what is dragged is either a to-do ("t…") or a habit block ("habit:<id>:<day it was dragged from>")
+  const drop = (raw, day, time) => {
+    if (!raw) return;
+    if (raw.startsWith("habit:")) {
+      const [, id, from] = raw.split(":");
+      onMoveHabit?.(id, from, day, time);
+    } else todo.move(raw, day, time);
   };
 
   const byDay = useMemo(() => todosByDay(state.todos, days[0], days[6]), [state.todos, days[0]]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -255,8 +264,7 @@ function WeekView({ state, today, anchor, todo }) {
               onDrop={(e) => {
                 e.preventDefault();
                 setOver(null);
-                const id = e.dataTransfer.getData("text/plain");
-                if (id) todo.move(id, day, null);
+                drop(e.dataTransfer.getData("text/plain"), day, null);
               }}
               className={`min-h-[42px] min-w-0 space-y-1 border-l border-edge p-1 ${over === `${day}-allday` ? "bg-gold/10" : ""}`}
             >
@@ -314,8 +322,7 @@ function WeekView({ state, today, anchor, todo }) {
                   onDrop={(e) => {
                     e.preventDefault();
                     setOver(null);
-                    const id = e.dataTransfer.getData("text/plain");
-                    if (id) todo.move(id, day, fmtHM(minuteAt(e)));
+                    drop(e.dataTransfer.getData("text/plain"), day, fmtHM(minuteAt(e)));
                   }}
                   onClick={(e) => {
                     if (e.target === e.currentTarget) todo.create({ date: day, time: fmtHM(minuteAt(e)) });
@@ -335,8 +342,13 @@ function WeekView({ state, today, anchor, todo }) {
                       return (
                         <div
                           key={it.id}
-                          title={`${it.h.name} · ${fmt12(it.h.time)}`}
-                          className="pointer-events-none absolute overflow-hidden rounded-lg px-1.5 py-1 text-[11px] font-extrabold"
+                          title={`${it.h.name} · ${fmt12(it.h.time)} · trage-l ca să-l muți`}
+                          draggable
+                          onDragStart={(e) => {
+                            e.dataTransfer.setData("text/plain", `habit:${it.h.id}:${day}`);
+                            e.dataTransfer.effectAllowed = "move";
+                          }}
+                          className="absolute cursor-grab overflow-hidden rounded-lg px-1.5 py-1 text-[11px] font-extrabold active:cursor-grabbing"
                           style={{
                             top,
                             height,
@@ -445,7 +457,7 @@ function MonthView({ state, today, anchor, onPick }) {
   );
 }
 
-export default function Planner({ state, today, todo, goals }) {
+export default function Planner({ state, today, todo, goals, onMoveHabit }) {
   const [anchor, setAnchor] = useState(today);
   const [mode, setMode] = useState("week");
   const [tab, setTab] = useState("calendar");
@@ -496,7 +508,7 @@ export default function Planner({ state, today, todo, goals }) {
       </div>
       <div className="mb-3 font-pixel text-lg text-ink">{label}</div>
       {mode === "week" ? (
-        <WeekView state={state} today={today} anchor={anchor} todo={todo} />
+        <WeekView state={state} today={today} anchor={anchor} todo={todo} onMoveHabit={onMoveHabit} />
       ) : (
         <MonthView
           state={state}
