@@ -151,7 +151,7 @@ function AnalogClock({ ms }) {
   const min = Math.floor(total / 60);
   // angles come from cumulative counts, so they only grow; the CSS transition turns each step into a tick
   return (
-    <svg viewBox="0 0 400 400" className="w-[min(70vmin,560px)]" aria-hidden="true">
+    <svg viewBox="0 0 400 400" className="max-h-[calc(100dvh-17rem)] w-[min(70vmin,560px)]" aria-hidden="true">
       <Face />
       <Hand deg={min * 0.5} length={92} tail={14} width={9} color="rgb(var(--c-ink))" ease="transform 0.8s ease-out" />
       <Hand deg={min * 6} length={140} tail={16} width={6} color="rgb(var(--c-body))" ease="transform 0.45s cubic-bezier(0.34, 1.7, 0.5, 1)" />
@@ -376,6 +376,7 @@ export function FocusMode({ session, onChange, onFinish, todos = [], today, todo
   const [now, setNow] = useState(() => Date.now());
   const [mode, setMode] = useState(() => (loadPrefs().clock === "digital" ? "digital" : "analog"));
   const [confirming, setConfirming] = useState(false);
+  const [detailsOpen, setDetailsOpen] = useState(true);
   const ref = useRef(session);
   ref.current = session;
 
@@ -442,8 +443,41 @@ export function FocusMode({ session, onChange, onFinish, todos = [], today, todo
 
   const sessionMin = Math.floor(v.work / 60000);
 
+  const details = (
+    <>
+      <span className="inline-flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-[0.25em] text-dim">
+        {v.paused ? <Pause size={14} aria-hidden="true" /> : <Timer size={14} aria-hidden="true" />} {v.paused ? "În pauză" : "Focus"}
+        {session.pomodoro && ` · ciclul ${v.cycle}`}
+      </span>
+      {session.pomodoro && (
+        <div className="w-full">
+          <div className="mb-1 flex justify-between text-xs font-bold text-dim">
+            <span>Pauză în</span>
+            <span className="tabular">{fmtMinSec(v.remaining)}</span>
+          </div>
+          <Bar value={v.limitMs ? v.inPhase / v.limitMs : 0} tone="mint" segmented={false} height={8} label="Timp până la pauza următoare" />
+        </div>
+      )}
+      <div className="flex gap-2">
+        <Button size="lg" variant={v.paused ? "gold" : "ghost"} icon={v.paused ? Play : Pause} onClick={primary}>
+          {v.paused ? "Continuă" : "Pauză"}
+        </Button>
+        <Button size="lg" variant="ghost" onClick={() => setConfirming(true)}>
+          Termină
+        </Button>
+      </div>
+      <span className="text-[11px] font-semibold text-faint">Spațiu = pauză · Esc = termină · atinge ceasul ca să-l schimbi</span>
+    </>
+  );
+
   return (
-    <div className="app-bg fixed inset-0 z-[60] flex flex-col items-center justify-center overflow-y-auto" role="dialog" aria-modal="true" aria-label="Mod Focus">
+    <div
+      // the clock centres in the space above the details at the bottom
+      className={`app-bg fixed inset-0 z-[60] flex flex-col items-center justify-center overflow-y-auto transition-[padding] duration-300 ${inBreak ? "" : detailsOpen ? "pb-52" : "pb-12"}`}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Mod Focus"
+    >
       {todoActions && <FocusTodos todos={todos} today={today} actions={todoActions} />}
       <div className="fixed right-4 top-4 z-10 flex items-center gap-3 sm:right-6 sm:top-5">
         {(mode === "analog" || inBreak) && (
@@ -473,29 +507,25 @@ export function FocusMode({ session, onChange, onFinish, todos = [], today, todo
             </div>
           </button>
 
-          <div className="mt-6 flex w-full max-w-sm flex-col items-center gap-3 px-4">
-            <span className="inline-flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-[0.25em] text-dim">
-              {v.paused ? <Pause size={14} aria-hidden="true" /> : <Timer size={14} aria-hidden="true" />} {v.paused ? "În pauză" : "Focus"}
-              {session.pomodoro && ` · ciclul ${v.cycle}`}
-            </span>
-            {session.pomodoro && (
-              <div className="w-full">
-                <div className="mb-1 flex justify-between text-xs font-bold text-dim">
-                  <span>Pauză în</span>
-                  <span className="tabular">{fmtMinSec(v.remaining)}</span>
-                </div>
-                <Bar value={v.limitMs ? v.inPhase / v.limitMs : 0} tone="mint" segmented={false} height={8} label="Timp până la pauza următoare" />
+          {/* the details sit at the very bottom for both clocks, so switching the clock never moves them;
+              the arrow folds them away and they stay folded when the clock is switched */}
+          <div className="fixed inset-x-0 bottom-0 z-10 flex flex-col items-center pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+            <button
+              type="button"
+              onClick={() => setDetailsOpen((v) => !v)}
+              aria-expanded={detailsOpen}
+              aria-controls="focus-details"
+              aria-label={detailsOpen ? "Ascunde detaliile" : "Arată detaliile"}
+              title={detailsOpen ? "Ascunde detaliile" : "Arată detaliile"}
+              className="focus-ring grid h-9 w-12 place-items-center rounded-xl text-dim transition hover:bg-panel-hi hover:text-ink"
+            >
+              <ChevronDown size={20} className={`transition-transform duration-300 ${detailsOpen ? "" : "rotate-180"}`} aria-hidden="true" />
+            </button>
+            <div id="focus-details" className={`grid w-full transition-[grid-template-rows] duration-300 ${detailsOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`} inert={detailsOpen ? undefined : ""}>
+              <div className="min-h-0 overflow-hidden">
+                <div className="mx-auto flex w-full max-w-sm flex-col items-center gap-3 px-4 pb-2 pt-1">{details}</div>
               </div>
-            )}
-            <div className="flex gap-2">
-              <Button size="lg" variant={v.paused ? "gold" : "ghost"} icon={v.paused ? Play : Pause} onClick={primary}>
-                {v.paused ? "Continuă" : "Pauză"}
-              </Button>
-              <Button size="lg" variant="ghost" onClick={() => setConfirming(true)}>
-                Termină
-              </Button>
             </div>
-            <span className="text-[11px] font-semibold text-faint">Spațiu = pauză · Esc = termină · atinge ceasul ca să-l schimbi</span>
           </div>
         </>
       )}
