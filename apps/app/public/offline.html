@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="ro">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#0c0a1d" />
+    <title>Molted · fără conexiune</title>
+    <style>
+      html, body { margin: 0; height: 100%; background: #0c0a1d; color: #cfc8f0; font-family: Nunito, ui-rounded, system-ui, sans-serif; }
+      main { min-height: 100%; display: grid; place-content: center; justify-items: center; gap: 12px; padding: 24px; text-align: center; box-sizing: border-box; }
+      img { width: 96px; height: 96px; image-rendering: pixelated; }
+      h1 { margin: 0; font-size: 22px; color: #f3efff; }
+      p { margin: 0; max-width: 28ch; line-height: 1.5; }
+      button { margin-top: 8px; padding: 12px 22px; border: 0; border-radius: 12px; background: #ffc542; color: #2a1b00; font: 800 16px inherit; font-family: inherit; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <img src="/icons/icon-192.png" alt="" />
+      <h1>Ești offline</h1>
+      <p>Molted are nevoie de internet ca să-ți încarce obiceiurile. Verifică conexiunea și încearcă din nou.</p>
+      <button onclick="location.reload()">Reîncearcă</button>
+    </main>
+  </body>
+</html>

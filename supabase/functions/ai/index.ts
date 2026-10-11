@@ -42,8 +42,9 @@ Deno.serve(async (req) => {
   if (!auth) return fail(401, "session_expired");
   const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? req.headers.get("apikey") ?? "";
   const supabase = createClient(Deno.env.get("SUPABASE_URL")!, anonKey, { global: { headers: { Authorization: auth } } });
-  const { data: who, error: authError } = await supabase.auth.getUser();
-  if (authError || !who.user) return fail(401, "session_expired");
+  // Clerk token: PostgREST verifies it, and requesting_user_id() hands back its `sub`
+  const { data: userId, error: authError } = await supabase.rpc("requesting_user_id");
+  if (authError || !userId) return fail(401, "session_expired");
 
   if (Number(req.headers.get("content-length") ?? 0) > MAX_BODY) return fail(413, "bad_request");
   // deno-lint-ignore no-explicit-any
