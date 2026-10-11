@@ -77,7 +77,7 @@ Deno.serve(async (req) => {
           model: m,
           messages: [{ role: "user", content }],
           response_format: { type: "json_object" },
-          max_tokens: 600,
+          max_tokens: 2500, // the free models reason first; 600 left no room for the answer
           temperature: 0.7,
         }),
         signal: AbortSignal.timeout(30_000),
