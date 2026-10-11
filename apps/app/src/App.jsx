@@ -396,6 +396,7 @@ function Game() {
               title: "Ștergi contul?",
               text: "Se șterg contul și toate datele tale, definitiv. Nu se poate anula.",
               label: "Șterge contul",
+              phrase: "Elimin contul definitiv",
               run: () => deleteAccount(store.env),
             })
           }
@@ -404,6 +405,7 @@ function Game() {
               title: "Ștergi toate datele?",
               text: "Se șterg obiceiurile, istoricul, to-do-urile și personajul. Nu se poate anula.",
               label: "Șterge tot",
+              phrase: "Resetez toate datele",
               run: wipeAll,
             })
           }
@@ -442,6 +444,7 @@ function Game() {
         open={!!confirm}
         title={confirm?.title}
         confirmLabel={confirm?.label}
+        phrase={confirm?.phrase}
         onClose={() => setConfirm(null)}
         onConfirm={() => {
           confirm?.run();

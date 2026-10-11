@@ -10,6 +10,7 @@ import { RO_DAYS_MIN } from "../lib/dates.js";
 const WEEK_ORDER = [1, 2, 3, 4, 5, 6, 0];
 
 export function scheduleLabel(days) {
+  if (!days.length) return "Opțional"; // no scheduled days: an optional habit, always offered as a bonus
   const set = [...days].sort();
   if (set.length === 7) return "Zilnic";
   if (set.join() === "1,2,3,4,5") return "Zile lucrătoare";
@@ -136,8 +137,18 @@ function CatalogTab({ state, today, onAdd }) {
   );
 }
 
+const ALL_DAYS = [0, 1, 2, 3, 4, 5, 6];
+
 export function HabitForm({ draft, setDraft }) {
   const set = (k) => (v) => setDraft((x) => ({ ...x, [k]: v }));
+  // an optional habit has no scheduled days; the days are kept here so unticking the box brings them back
+  const optional = draft.days.length === 0;
+  const [lastDays, setLastDays] = useState(draft.days.length ? draft.days : ALL_DAYS);
+  const pickDays = (v) => {
+    if (!v.length) return; // at least one day, otherwise the habit would turn optional by accident
+    setLastDays(v);
+    set("days")(v);
+  };
   return (
     <div className="space-y-4">
       <Field label="Nume" htmlFor="habit-name">
@@ -178,7 +189,24 @@ export function HabitForm({ draft, setDraft }) {
       </div>
       <div>
         <span className="mb-1.5 block text-xs font-extrabold uppercase tracking-wider text-dim">Zile</span>
-        <DayPicker value={draft.days} onChange={set("days")} />
+        {optional ? (
+          <p className="text-sm font-semibold text-dim">Fără zile fixe: apare zilnic la „Opționale” și îl bifezi când vrei.</p>
+        ) : (
+          <DayPicker value={draft.days} onChange={pickDays} />
+        )}
+        <label className="mt-3 flex cursor-pointer items-start gap-2.5" htmlFor="habit-optional">
+          <input
+            id="habit-optional"
+            type="checkbox"
+            className="focus-ring mt-0.5 h-4 w-4 shrink-0 cursor-pointer accent-[rgb(var(--c-gold))]"
+            checked={optional}
+            onChange={(e) => set("days")(e.target.checked ? [] : lastDays)}
+          />
+          <span>
+            <span className="block text-sm font-extrabold text-ink">Opțional</span>
+            <span className="block text-xs font-semibold text-dim">Bonus fără zile programate: nu e obligatoriu, deci nu strică seria dacă îl sari. Bifat, aduce momentum ca oricare altul.</span>
+          </span>
+        </label>
       </div>
       <Field label="Țintă" htmlFor="habit-target">
         <input id="habit-target" className="field" value={draft.target} maxLength={60} placeholder="ex.: 30 de minute" onChange={(e) => set("target")(e.target.value)} />
@@ -209,7 +237,7 @@ export function HabitEditor({ open, initial, tab: initialTab = "catalog", state,
   const [draft, setDraft] = useState(initial ? { ...initial } : blank);
   const active = (state.habits || []).filter((h) => !h.archivedAt);
   const full = !editing && active.length >= MAX_HABITS;
-  const valid = draft.name.trim().length > 1 && draft.days.length > 0 && !full;
+  const valid = draft.name.trim().length > 1 && !full;
 
   const save = () => valid && onSave({ ...draft, name: draft.name.trim(), target: draft.target.trim() || "o dată pe zi" });
 
@@ -245,7 +273,7 @@ export function HabitEditor({ open, initial, tab: initialTab = "catalog", state,
           value={tab}
           onChange={setTab}
           items={[
-            { value: "catalog", label: "Din catalog", icon: ScrollText, id: "tab-catalog" },
+            { value: "catalog", label: "Recomandate", icon: ScrollText, id: "tab-catalog" },
             { value: "custom", label: "Personalizat", icon: Wand2, id: "tab-custom" },
           ]}
         />
