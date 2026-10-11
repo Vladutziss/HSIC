@@ -96,6 +96,7 @@ function Hud({ d, state, setView, onReview, unread, mode, saveStatus, now }) {
       const card = document.getElementById("review-card");
       card?.scrollIntoView({ block: "center" });
       document.getElementById("review-run")?.focus({ preventScroll: true });
+      if (reviewed) window.dispatchEvent(new Event("molted:open-review"));
     }, 60);
   };
   const reviewText = reviewed ? "Raport gata" : left > 0 ? `Raport ${fmt12(state.settings?.reviewTime)}` : "E ora raportului";

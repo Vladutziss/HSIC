@@ -1,5 +1,5 @@
 import React from "react";
-import { AlertTriangle, CalendarCheck, Flame, FlaskConical, Gift, Plus, Swords, Timer, TrendingUp, Zap } from "lucide-react";
+import { AlertTriangle, CalendarCheck, ChevronDown, Flame, FlaskConical, Gift, Plus, Swords, Timer, TrendingUp, Zap } from "lucide-react";
 import { Bar, Button, Chip, LevelBadge, Panel, SectionTitle } from "../components/ui.jsx";
 import { CompanionCard, GroupMini, QuestCard, ReviewCard } from "../components/Cards.jsx";
 import { fmtDay, fmtLong } from "../lib/dates.js";
@@ -139,13 +139,25 @@ export default function Dashboard({ state, d, today, go, ai, months, recentStori
             {d.scheduled.length === 0 && <p className="inset p-4 text-center text-sm font-semibold text-dim">Nicio misiune programată azi. Zi de odihnă sau de bonusuri!</p>}
           </div>
           {d.optional.length > 0 && (
-            <details className="mt-4 group">
-              <summary className="cursor-pointer list-none text-xs font-extrabold uppercase tracking-wider text-dim hover:text-ink">
-                <span className="inline-flex items-center gap-2">
-                  <CalendarCheck size={14} aria-hidden="true" /> Opționale azi ({d.optional.length}) · bifează-le ca bonus
+            // the optional habits live inside this grey box and unfold with it
+            <details className="group mt-4 rounded-xl border border-dashed border-edge-hi bg-well/60 transition-colors open:border-solid hover:border-gold/60">
+              <summary className="focus-ring flex cursor-pointer list-none items-center justify-between gap-3 rounded-xl px-3 py-2.5 transition hover:bg-well">
+                <span className="flex min-w-0 items-center gap-2.5">
+                  <CalendarCheck size={16} className="shrink-0 text-gold-hi" aria-hidden="true" />
+                  <span className="min-w-0">
+                    <span className="block text-sm font-extrabold text-ink">
+                      Opționale azi <span className="text-dim">({d.optional.length})</span>
+                    </span>
+                    <span className="block text-xs font-semibold text-dim">Bonusuri fără obligație: bifate, aduc momentum în plus</span>
+                  </span>
+                </span>
+                <span className="inline-flex shrink-0 items-center gap-1 text-xs font-extrabold text-dim group-hover:text-ink">
+                  <span className="group-open:hidden">Arată</span>
+                  <span className="hidden group-open:inline">Ascunde</span>
+                  <ChevronDown size={16} className="transition-transform group-open:rotate-180" aria-hidden="true" />
                 </span>
               </summary>
-              <div className="mt-2.5 space-y-2.5">
+              <div className="space-y-2.5 px-2.5 pb-2.5 pt-1">
                 {d.optional.map(({ h, code, scheduled }) => (
                   <QuestCard key={h.id} h={h} code={code} scheduled={scheduled} runMult={d.runMult} onCheck={onCheck} onOpen={() => go("habits", h.id)} />
                 ))}

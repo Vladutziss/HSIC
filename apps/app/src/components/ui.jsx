@@ -36,7 +36,7 @@ export function Corners({ tone }) {
 export function Panel({ as: Tag = "section", tone, corners = false, className = "", children, ...rest }) {
   return (
     <Tag className={`panel ${tone ? `panel-${tone}` : ""} ${className}`} {...rest}>
-      {corners && <Corners tone={tone} />}
+      {corners && <Corners tone={typeof corners === "string" ? corners : tone} />}
       {children}
     </Tag>
   );
@@ -376,7 +376,7 @@ export function Modal({ open, onClose, title, icon: Icon, tone = "violet", wide 
     };
     window.addEventListener("keydown", onKey);
     const prev = document.activeElement;
-    requestAnimationFrame(() => box.current?.querySelector("[data-autofocus], input, textarea, select, button")?.focus());
+    requestAnimationFrame(() => (box.current?.querySelector("[data-autofocus]") || box.current?.querySelector("input, textarea, select, button"))?.focus());
     return () => {
       window.removeEventListener("keydown", onKey);
       if (prev && prev.focus) prev.focus();
@@ -423,7 +423,16 @@ export function Modal({ open, onClose, title, icon: Icon, tone = "violet", wide 
   );
 }
 
-export function Confirm({ open, title, children, confirmLabel = "Confirmă", tone = "rose", onConfirm, onClose }) {
+// the typed phrase counts when it matches ignoring case, diacritics and extra spaces
+const plain = (t) => t.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase().replace(/\s+/g, " ").trim();
+
+// `phrase`: the player has to type this sentence before the button works (for things that cannot be undone)
+export function Confirm({ open, title, children, confirmLabel = "Confirmă", tone = "rose", phrase, onConfirm, onClose }) {
+  const [typed, setTyped] = useState("");
+  useEffect(() => {
+    if (open) setTyped("");
+  }, [open]);
+  const ready = !phrase || plain(typed) === plain(phrase);
   return (
     <Modal
       open={open}
@@ -435,13 +444,33 @@ export function Confirm({ open, title, children, confirmLabel = "Confirmă", ton
           <Button variant="ghost" onClick={onClose}>
             Renunță
           </Button>
-          <Button variant={tone} onClick={onConfirm} data-autofocus>
+          <Button variant={tone} onClick={onConfirm} disabled={!ready} data-autofocus={phrase ? undefined : true}>
             {confirmLabel}
           </Button>
         </>
       }
     >
       <div className="text-sm leading-relaxed text-body">{children}</div>
+      {phrase && (
+        <div className="mt-4">
+          <label htmlFor="confirm-phrase" className="mb-1.5 block text-sm font-semibold text-body">
+            Ca să continui, scrie: <span className="font-extrabold text-ink">{phrase}</span>
+          </label>
+          <input
+            id="confirm-phrase"
+            className="field"
+            value={typed}
+            autoComplete="off"
+            spellCheck={false}
+            data-autofocus
+            placeholder={phrase}
+            onChange={(e) => setTyped(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && ready) onConfirm();
+            }}
+          />
+        </div>
+      )}
     </Modal>
   );
 }
