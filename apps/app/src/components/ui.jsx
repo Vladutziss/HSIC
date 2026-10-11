@@ -334,7 +334,11 @@ export function HoldToDelete({ label, onConfirm, ms = 900 }) {
       title="Ține apăsat ca să ștergi"
       onPointerDown={(e) => {
         if (e.button !== 0) return;
-        e.currentTarget.setPointerCapture?.(e.pointerId);
+        try {
+          e.currentTarget.setPointerCapture(e.pointerId); // keeps the hold when the finger drifts off the button
+        } catch {
+          // no active pointer (synthetic events): the hold still works without capture
+        }
         start();
       }}
       onPointerUp={stop}
