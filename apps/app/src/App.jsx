@@ -215,6 +215,14 @@ function Game() {
     });
     setTodoEd(null);
   }
+  const goalActions = {
+    add: ({ period, key, text }) =>
+      update((s) => ({ ...s, goals: [...(s.goals || []), { id: uid("o"), period, key, text, done: false, doneOn: null, createdAt: today }].slice(-200) })),
+    toggle: (id) => update((s) => ({ ...s, goals: (s.goals || []).map((g) => (g.id === id ? { ...g, done: !g.done, doneOn: g.done ? null : today } : g)) })),
+    remove: (id) => update((s) => ({ ...s, goals: (s.goals || []).filter((g) => g.id !== id) })),
+    carry: (period, key, list) =>
+      update((s) => ({ ...s, goals: [...(s.goals || []), ...list.map((g) => ({ id: uid("o"), period, key, text: g.text, done: false, doneOn: null, createdAt: today }))].slice(-200) })),
+  };
   const todoActions = {
     add: (t) => saveTodo({ id: uid("t"), title: "", date: today, time: null, dur: 30, done: false, doneOn: null, createdAt: today, ...t }),
     // `day` is the occurrence of a repeating to-do (calendar and lists pass it); defaults to today
@@ -323,6 +331,7 @@ function Game() {
           onCheck={checkIn}
           onRevive={applyRevive}
           todo={todoActions}
+          goals={goalActions}
           onAddHabit={() => setHabitEd({ tab: "catalog" })}
         />
       )}

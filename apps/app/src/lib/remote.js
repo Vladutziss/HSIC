@@ -49,6 +49,7 @@ export function toRows(state, uid) {
       seen: nul(state.seen),
       moments: state.moments || [],
       focusSessions: state.focusSessions || [],
+      goals: state.goals || [],
     },
     onboarded: true,
   };
@@ -159,6 +160,7 @@ export function fromRows(rows) {
     seen: extra.seen ?? null,
     moments: extra.moments || [],
     ...(extra.focusSessions?.length ? { focusSessions: extra.focusSessions } : {}),
+    ...(extra.goals?.length ? { goals: extra.goals } : {}),
   };
 }
 
