@@ -215,6 +215,25 @@ function Game() {
     setHabitEd(null);
   }
 
+  // deleting drops the habit for good: its check-ins go with it and to-dos linked to it stay as plain to-dos
+  function deleteHabit(habitId) {
+    const name = state.habits.find((h) => h.id === habitId)?.name;
+    update((s) => {
+      const log = {};
+      for (const [day, entries] of Object.entries(s.log || {})) {
+        const { [habitId]: _gone, ...rest } = entries || {};
+        if (Object.keys(rest).length) log[day] = rest;
+      }
+      return {
+        ...s,
+        habits: s.habits.filter((h) => h.id !== habitId),
+        log,
+        todos: (s.todos || []).map((t) => (t.habitId === habitId ? { ...t, habitId: null } : t)),
+      };
+    });
+    toast({ title: "Obicei șters", text: name, icon: CheckCircle2, tone: "mint", ms: 2200 });
+  }
+
   function saveTodo(todo) {
     update((s) => {
       const todos = s.todos || [];
@@ -352,6 +371,7 @@ function Game() {
           onAdd={() => setHabitEd({ tab: "catalog" })}
           onEdit={(habit) => setHabitEd({ habit, tab: "custom" })}
           onArchive={archiveHabit}
+          onDelete={deleteHabit}
         />
       )}
       {view === "companion" && (

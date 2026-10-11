@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Archive, ArrowLeft, CalendarDays, Clock, Flame, Pencil, Plus, RotateCcw, ScrollText, Sparkles, Target, Trophy } from "lucide-react";
-import { Button, Chip, Empty, Gems, Panel, SectionTitle, Stat } from "../components/ui.jsx";
+import { Button, Chip, Empty, Gems, HoldToDelete, Panel, SectionTitle, Stat } from "../components/ui.jsx";
 import { HabitArea, Heatmap, Sparkline } from "../components/Charts.jsx";
 import { iconFor } from "../components/icons.js";
 import { scheduleLabel } from "../components/HabitEditor.jsx";
@@ -9,7 +9,7 @@ import { DIFF, habitStats, isScheduled } from "../lib/engine.js";
 import { fmt12, fmtDay } from "../lib/dates.js";
 import { c } from "../lib/themes.js";
 
-function HabitCard({ h, stats, series, onOpen, onEdit, code, today }) {
+function HabitCard({ h, stats, series, onOpen, onEdit, onDelete, code, today }) {
   const Icon = iconFor(h.icon);
   const spark = series.slice(-30).map((p) => p.m);
   return (
@@ -51,13 +51,16 @@ function HabitCard({ h, stats, series, onOpen, onEdit, code, today }) {
           <div className="text-[10px] font-extrabold uppercase tracking-wider text-dim">bifări</div>
         </div>
       </div>
-      <div className="mt-auto flex flex-wrap gap-2">
-        <Button size="sm" variant="ghost" icon={ScrollText} onClick={onOpen}>
-          Detalii
-        </Button>
-        <Button size="sm" variant="ghost" icon={Pencil} onClick={onEdit}>
-          Editează
-        </Button>
+      <div className="mt-auto flex items-center justify-between gap-2">
+        <div className="flex flex-wrap gap-2">
+          <Button size="sm" variant="ghost" icon={ScrollText} onClick={onOpen}>
+            Detalii
+          </Button>
+          <Button size="sm" variant="ghost" icon={Pencil} onClick={onEdit}>
+            Editează
+          </Button>
+        </div>
+        <HoldToDelete label={`Șterge obiceiul ${h.name}`} onConfirm={onDelete} />
       </div>
     </Panel>
   );
@@ -157,7 +160,7 @@ function HabitDetail({ h, state, d, today, onBack, onEdit, onArchive }) {
   );
 }
 
-export default function Habits({ state, d, today, focus, setFocus, onAdd, onEdit, onArchive }) {
+export default function Habits({ state, d, today, focus, setFocus, onAdd, onEdit, onArchive, onDelete }) {
   const [showArchived, setShowArchived] = useState(false);
   const habits = state.habits || [];
   const active = habits.filter((h) => !h.archivedAt);
@@ -209,6 +212,7 @@ export default function Habits({ state, d, today, focus, setFocus, onAdd, onEdit
               series={d.timeline.habitSeries[h.id] || []}
               onOpen={() => setFocus(h.id)}
               onEdit={() => onEdit(h)}
+              onDelete={() => onDelete(h.id)}
             />
           ))}
         </div>
