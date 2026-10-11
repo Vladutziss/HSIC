@@ -10,11 +10,14 @@ body{margin:0;min-height:100vh;color:#cfc8f0;font:16px/1.65 Nunito,ui-rounded,sy
 background-color:#0c0a1d;background-attachment:fixed;
 background-image:radial-gradient(1px 1px at 22px 34px,rgba(255,255,255,.4) 50%,transparent 52%),radial-gradient(1px 1px at 128px 86px,rgba(255,255,255,.25) 50%,transparent 52%),radial-gradient(1.5px 1.5px at 206px 158px,rgba(255,214,120,.45) 50%,transparent 52%),radial-gradient(1px 1px at 268px 44px,rgba(177,155,255,.5) 50%,transparent 52%),radial-gradient(1100px 600px at 85% -15%,rgba(143,107,255,.18),transparent 60%),radial-gradient(900px 520px at -10% 115%,rgba(255,197,66,.08),transparent 60%);
 background-size:360px 260px,360px 260px,360px 260px,360px 260px,auto,auto}
-main{max-width:680px;margin:0 auto;padding:32px 16px 48px;display:grid;gap:16px}
+main{max-width:720px;margin:0 auto;padding:32px 16px 48px;display:grid;gap:16px}
 .brand{font-family:"Pixelify Sans",Nunito,monospace;font-weight:700;font-size:22px;color:#ffc542;text-decoration:none;letter-spacing:.01em}
 .panel{background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,0) 38%),#1a1636;border:1px solid #2e2860;border-radius:18px;padding:24px;box-shadow:inset 0 1px 0 rgba(255,255,255,.05),0 14px 34px -16px rgba(0,0,0,.7)}
-h1{margin:0 0 12px;font-family:"Pixelify Sans",Nunito,monospace;font-weight:700;font-size:28px;line-height:1.2;color:#f3efff;text-wrap:balance}
-p{margin:0 0 14px} p:last-child{margin-bottom:0}
+h1{margin:0 0 6px;font-family:"Pixelify Sans",Nunito,monospace;font-weight:700;font-size:28px;line-height:1.2;color:#f3efff;text-wrap:balance}
+h2{margin:26px 0 8px;font-family:"Pixelify Sans",Nunito,monospace;font-weight:700;font-size:19px;line-height:1.3;color:#ffd978}
+.updated{margin:0 0 6px;font-size:14px;color:#9a91c9}
+p{margin:0 0 12px} p:last-child{margin-bottom:0}
+ul{margin:0 0 12px;padding-left:22px} li{margin-bottom:6px}
 b{color:#f3efff;font-weight:800}
 a{color:#b19bff} a:hover{color:#ffd978} a:focus-visible{outline:2px solid #ffd978;outline-offset:3px;border-radius:4px}
 .back{justify-self:start;font-weight:800;font-size:14px;color:#9a91c9;text-decoration:none}
@@ -23,10 +26,52 @@ a{color:#b19bff} a:hover{color:#ffd978} a:focus-visible{outline:2px solid #ffd97
 <a class="brand" href="./">Molted</a>
 <section class="panel">
 <h1>Politica de confidențialitate</h1>
-<p><b>Ce date păstrăm:</b> adresa de email și numele afișat (inclusiv din contul Google, dacă te conectezi cu el), obiceiurile, progresul și grupurile tale din Molted.</p>
-<p><b>Cum le folosim:</b> doar ca să funcționeze aplicația (sincronizare, clasamente de grup, rapoarte AI). Nu vindem datele și nu afișăm reclame.</p>
-<p><b>Cine le procesează:</b> Supabase (stocare și autentificare), Cloudflare Turnstile (protecție anti-bot), OpenRouter (rapoarte AI, pe baza progresului tău) și Google (autentificare, dacă o alegi).</p>
-<p><b>Drepturile tale:</b> poți cere oricând accesul la date sau ștergerea contului scriindu-ne la <a href="mailto:duku.constantin@joben.eu">duku.constantin@joben.eu</a>.</p>
+<p class="updated">Ultima actualizare: 11 octombrie 2026</p>
+
+<h2>1. Cine suntem</h2>
+<p>Molted este o aplicație de self-improvement gamificată. Pentru datele tale personale răspunde echipa Molted; ne poți scrie la <a href="mailto:duku.constantin@joben.eu">duku.constantin@joben.eu</a>.</p>
+
+<h2>2. Ce date păstrăm</h2>
+<ul>
+<li><b>Cont:</b> adresa de email, numele afișat și poza de profil (inclusiv din contul Google, dacă te conectezi cu el).</li>
+<li><b>Ce introduci în aplicație:</b> obiectivul, obiceiurile și bifele lor, to-do-urile și planificatorul, scorurile și textele rapoartelor de seară, povestea și numele personajului, setările (ora raportului, tema), sesiunile de Focus și grupurile din care faci parte.</li>
+<li><b>Date publice în grupuri:</b> numele afișat, personajul, nivelul, seria, momentum-ul și progresul zilei sunt vizibile celorlalți membri ai grupurilor tale; mesajele („remindere”) trimise în grup sunt vizibile destinatarilor.</li>
+<li><b>Notificări push (doar dacă le activezi):</b> adresa tehnică a browserului sau a dispozitivului tău atribuită de serviciul de notificări și cheile de criptare asociate, fusul orar și ora raportului tău, plus alegerile tale (raport zilnic, remindere de grup). Nu le folosim pentru altceva.</li>
+<li><b>Date tehnice:</b> contorul zilnic al cererilor către AI, necesar pentru limita de utilizare. Pe dispozitiv se păstrează local (în browser) preferințe precum tema și o sesiune Focus în curs.</li>
+</ul>
+
+<h2>3. De ce le folosim</h2>
+<p>Doar ca să funcționeze aplicația: autentificare, salvare și sincronizare între dispozitive, statistici, grupuri și clasamente, rapoarte și povești scrise cu AI, notificări pe care le-ai cerut. Baza legală este executarea serviciului pe care îl ceri (acești termeni) și, pentru notificări push, consimțământul tău. <b>Nu vindem datele și nu afișăm reclame.</b></p>
+
+<h2>4. Cine le procesează</h2>
+<p>Folosim furnizori care prelucrează date în numele nostru:</p>
+<ul>
+<li><b>Clerk</b> – autentificare și gestionarea contului (email, parolă sau conectare cu Google, sesiuni, protecție anti-abuz la înregistrare). Parola ta nu ajunge la noi.</li>
+<li><b>Supabase</b> – baza de date în care se salvează datele aplicației, cu acces restricționat pe utilizator, și funcțiile care rulează pe server.</li>
+<li><b>OpenRouter</b> și modelele AI folosite prin el – generează rapoartele de seară, capitolele din poveste și replicile. Primesc doar textul necesar (de exemplu obiectivul, numele obiceiurilor, ce ai bifat azi, nivelul și seria), nu emailul sau alte date de cont.</li>
+<li><b>Serviciile de notificări ale browserului</b> (de exemplu cele ale Google, Apple sau Mozilla) – transportă notificările push către dispozitivul tău, dacă le activezi.</li>
+<li><b>Google</b> – autentificare, dacă alegi conectarea cu contul Google.</li>
+<li><b>Furnizorii de găzduire</b> ai aplicației și ai paginii de prezentare.</li>
+</ul>
+<p>Unii dintre acești furnizori pot prelucra date și în afara Spațiului Economic European; în acest caz ne bazăm pe garanțiile prevăzute de lege (de exemplu clauze contractuale standard).</p>
+
+<h2>5. Cât păstrăm datele</h2>
+<p>Cât timp ai cont. Dacă ștergi contul, ștergem datele asociate lui, inclusiv abonamentele la notificări. Copiile de siguranță ale furnizorilor pot persista o scurtă perioadă înainte să dispară. Dacă dezactivezi notificările sau browserul le invalidează, ștergem abonamentul.</p>
+
+<h2>6. Notificările push</h2>
+<p>Sunt <b>opționale</b>: apar doar dacă le pornești din aplicație și accepți cererea browserului. Poți alege ce primești (raportul zilnic la ora ta, remindere de la membrii grupului) și le poți opri oricând din aplicație sau din setările browserului sau ale dispozitivului. Mesajele conțin doar un text scurt de tipul „E ora raportului” sau textul reminderului trimis de un membru al grupului tău.</p>
+
+<h2>7. Drepturile tale</h2>
+<p>Ai dreptul la acces, rectificare, ștergere, restricționare, portabilitate și opoziție, precum și dreptul de a-ți retrage consimțământul oricând (de exemplu pentru notificări). Din aplicație poți <b>descărca datele tale</b>, <b>șterge toate datele</b> sau <b>șterge contul</b> (Setări → Datele tale). Pentru orice altă cerere ne poți scrie la adresa de mai sus; răspundem în cel mult 30 de zile. Ai dreptul să depui o plângere la Autoritatea Națională de Supraveghere a Prelucrării Datelor cu Caracter Personal (ANSPDCP), <a href="https://www.dataprotection.ro" rel="noopener">dataprotection.ro</a>.</p>
+
+<h2>8. Securitate</h2>
+<p>Accesul la date este restricționat per utilizator, comunicarea se face criptat (HTTPS) și cheile secrete rămân pe server. Nicio metodă nu e perfectă; dacă observi o problemă de securitate, anunță-ne.</p>
+
+<h2>9. Copii</h2>
+<p>Aplicația este destinată persoanelor de cel puțin 16 ani. Dacă ai sub 16 ani, ai nevoie de acordul părintelui sau al tutorelui tău. Dacă aflăm că am primit date de la un copil fără acest acord, le ștergem.</p>
+
+<h2>10. Modificări</h2>
+<p>Putem actualiza această politică; data ultimei actualizări e scrisă sus, iar schimbările importante ți le comunicăm în aplicație sau prin email. Folosirea aplicației este guvernată și de <a href="/terms.html">Termenii și condițiile</a>.</p>
 </section>
 <a class="back" href="./">← Înapoi la Molted</a>
 </main></body></html>
