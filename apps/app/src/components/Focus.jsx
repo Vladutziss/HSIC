@@ -8,6 +8,7 @@ import { Check, ChevronDown, Coffee, ListTodo, Pause, Pencil, Play, Plus, SkipFo
 import { Button, Modal, Bar } from "./ui.jsx";
 import { Select } from "./Select.jsx";
 import { todosForToday } from "../lib/todos.js";
+import { RULES } from "../lib/engine.js";
 import { BREAK_CHOICES, PRESETS, WORK_CHOICES, advance, continueWork, finish, fmtClock, fmtMinSec, fmtSpan, loadPrefs, newSession, pause, resume, savePrefs, view } from "../lib/focus.js";
 
 const pad = (n) => String(n).padStart(2, "0");
@@ -71,6 +72,7 @@ export function FocusSetup({ open, onStart, onClose }) {
       }
     >
       <p className="mb-3 text-sm text-body">Cronometrul numără doar timpul în care te concentrezi. Alege dacă vrei pauze automate.</p>
+      <p className="mb-3 rounded-xl bg-gold/10 p-2.5 text-xs font-bold text-gold-hi ring-1 ring-gold/30">Termină sesiunea (minim {RULES.focusMinMinutes} minute) și primești momentum: 1 la fiecare 2 minute, +{RULES.focusCycleBonus} pentru fiecare pomodoro terminat, maximum {RULES.focusDayCap} pe zi.</p>
       <div role="radiogroup" aria-label="Tipul sesiunii" className="space-y-2">
         {options.map((o) => {
           const on = preset === o.id;

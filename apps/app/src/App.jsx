@@ -2,8 +2,8 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { CheckCircle2, FlaskConical, Leaf, Timer, Zap } from "lucide-react";
 import { useAppStore } from "./lib/store.js";
 import { checkInGain, derive, reviewPayload } from "./lib/derive.js";
-import { CODE } from "./lib/engine.js";
-import { addDays, monthKey, nowMinutes, parseHM, todayKey } from "./lib/dates.js";
+import { CODE, focusXpByDay } from "./lib/engine.js";
+import { addDays, dayKey, monthKey, nowMinutes, parseHM, todayKey } from "./lib/dates.js";
 import { detectMoments } from "./lib/moments.js";
 import { pickQuote } from "./lib/quotes.js";
 import { aiErrorCopy, aiStatus, dailyReview, templateReview } from "./lib/ai.js";
@@ -112,8 +112,16 @@ function Game() {
     saveSession(null);
     setFocusSession(null);
     if (!record) return;
+    const before = focusXpByDay(state.focusSessions)[dayKey(new Date(record.start))] || 0;
+    const after = focusXpByDay([...(state.focusSessions || []), record])[dayKey(new Date(record.start))] || 0;
     update((s) => ({ ...s, focusSessions: [...(s.focusSessions || []), record].slice(-300) }));
-    toast({ title: "Sesiune de Focus salvată", text: `${fmtSpan(record.work)} de concentrare`, icon: Timer, tone: "mint" });
+    const xp = after - before;
+    toast({
+      title: "Sesiune de Focus salvată",
+      text: `${fmtSpan(record.work)} de concentrare${xp > 0 ? ` · +${xp} momentum` : record.work < 300 ? " · sub 5 minute, fără momentum" : " · limita zilnică de momentum din Focus e atinsă"}`,
+      icon: Timer,
+      tone: "mint",
+    });
   };
   const [queue, setQueue] = useState([]);
   const [review, setReview] = useState({ status: "idle", error: null });

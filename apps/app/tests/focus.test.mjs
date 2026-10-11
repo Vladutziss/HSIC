@@ -102,3 +102,21 @@ test("focus history survives the database round trip", async () => {
   const none = fromRows({ profile: { ...toRows({ ...state, focusSessions: [] }, "u1").profile, onboarded: true } });
   assert.equal(none.focusSessions, undefined);
 });
+
+test("Focus earns momentum: needs 5 minutes, then time plus a bonus per pomodoro, capped per day", async () => {
+  const { RULES, computeTimeline, focusSessionXp, focusXpByDay } = await import("../src/lib/engine.js");
+  const s = (minutes, cycles = 0, start = new Date(2026, 9, 8, 10).getTime()) => ({ id: `x${minutes}${start}`, start, end: start + minutes * MIN, work: minutes * 60, breaks: 0, cycles });
+  assert.equal(focusSessionXp(s(4)), 0, "under 5 minutes earns nothing");
+  assert.equal(focusSessionXp(s(5)), 2);
+  assert.equal(focusSessionXp(s(60)), 30);
+  assert.equal(focusSessionXp(s(50, 2)), 25 + 6, "cycle bonus on top");
+  const day = focusXpByDay([s(120), s(120, 0, new Date(2026, 9, 8, 15).getTime())]);
+  assert.equal(day["2026-10-08"], RULES.focusDayCap, "capped per day");
+
+  const state = { meta: { start: "2026-10-08" }, habits: [], log: {}, reviews: {}, todos: [], focusSessions: [s(60)] };
+  const e = computeTimeline(state, "2026-10-08").byDay["2026-10-08"];
+  assert.equal(e.focusXp, 30);
+  assert.equal(e.gain, 30);
+  assert.equal(e.active, true);
+  assert.equal(e.computed, 0, "a day of only Focus does not get the free 70 score");
+});
