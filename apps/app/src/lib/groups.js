@@ -8,6 +8,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { mondayOf } from "./dates.js";
+import { notifyNudge } from "./push.js";
 
 const CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 const newCode = () => Array.from({ length: 6 }, () => CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)]).join("");
@@ -267,6 +268,7 @@ export function useGroups({ store, state, update, myStats }) {
       if (sb) {
         const { error } = await env.client.from("nudges").insert({ id: nid, group_id: gid, from_user: env.uid, to_users: to, text: body });
         if (error) throw error;
+        notifyNudge(env.client, nid);
         return;
       }
       await env.db.doc(`groups/${gid}/nudges/${nid}`).set({ from: env.uid, to, text: body, at: new Date().toISOString(), read: {} });
