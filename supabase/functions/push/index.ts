@@ -47,7 +47,7 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   if (req.method !== "POST") return reply(405, { code: "bad_request" });
 
-  let input: { action?: string; id?: string };
+  let input: { action?: string; id?: string; userId?: string; count?: number };
   try {
     input = await req.json();
   } catch {
@@ -67,6 +67,21 @@ Deno.serve(async (req) => {
             tag: "daily-report",
           })
         : 0;
+      return reply(200, { sent });
+    }
+
+    // the weekly coach run (supabase/functions/weekly) tells one player that something is waiting
+    if (input.action === "agent" && typeof input.userId === "string") {
+      const secret = Deno.env.get("AGENT_CRON_SECRET");
+      if (!secret || req.headers.get("x-cron-secret") !== secret) return reply(401, { code: "session_expired" });
+      const { data: subs } = await admin.from("push_subscriptions").select("endpoint,p256dh,auth").eq("user_id", input.userId);
+      const n = Number(input.count) || 1;
+      const sent = await send(admin, subs ?? [], {
+        title: "Coach-ul ți-a pregătit săptămâna",
+        body: n === 1 ? "Ai o propunere nouă. Deschide Obiceiuri." : `Ai ${n} propuneri noi. Deschide Obiceiuri.`,
+        url: "/",
+        tag: "coach-weekly",
+      });
       return reply(200, { sent });
     }
 
