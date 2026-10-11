@@ -199,6 +199,7 @@ export async function coachAgent(today, signal) {
   if (!r || !Array.isArray(r.proposals)) throw { code: "invalid_json" };
   return {
     summary: clip(r.summary, 700),
+    notEnoughData: r.notEnoughData && Number.isFinite(r.notEnoughData.longest) ? r.notEnoughData : null,
     steps: Array.isArray(r.steps) ? r.steps : [],
     proposals: r.proposals.map((p) => ({
       id: p.id || null, // the row in agent_actions, when the log was written
