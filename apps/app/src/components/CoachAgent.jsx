@@ -22,6 +22,8 @@ const stepText = (x) => {
       return `A citit ce i-ai spus (${x.notes} ${x.notes === 1 ? "notă activă" : "note active"})`;
     case "feedback":
       return "A verificat cum ai reacționat la propunerile anterioare";
+    case "history":
+      return `A verificat ce a făcut înainte și ce efect a avut (${x.count})`;
     case "experiments":
       return `A verificat experimentele tale (${x.count})`;
     case "patterns":

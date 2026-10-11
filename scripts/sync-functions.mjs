@@ -3,4 +3,4 @@
 import { cpSync, mkdirSync } from "node:fs";
 
 mkdirSync("supabase/functions/_shared/app", { recursive: true });
-for (const f of ["dates", "engine", "remote", "stats", "coach", "patterns", "memory", "experiments", "history"]) cpSync(`apps/app/src/lib/${f}.js`, `supabase/functions/_shared/app/${f}.js`);
+for (const f of ["dates", "engine", "remote", "stats", "coach", "patterns", "memory", "experiments", "history", "outcomes"]) cpSync(`apps/app/src/lib/${f}.js`, `supabase/functions/_shared/app/${f}.js`);

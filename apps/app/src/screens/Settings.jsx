@@ -176,6 +176,15 @@ export default function Settings({ state, d, ai, mode, env, onChange, onWipe, on
             checked={settings.autoReview !== false}
             onChange={(v) => set({ autoReview: v })}
           />
+          {ai.server && (
+            <SwitchRow
+              id="set-weekly"
+              title="Coach săptămânal"
+              hint="Duminică seara coach-ul îți pregătește săptămâna: adaugă singur memento-uri (le poți anula) și îți propune schimbări, pe care le confirmi tu."
+              checked={!!settings.agentWeekly}
+              onChange={(v) => set({ agentWeekly: v })}
+            />
+          )}
           <p className="flex items-start gap-2 text-xs font-semibold text-dim">
             <Bot size={15} className={`shrink-0 ${ai.available ? "text-mint" : "text-faint"}`} aria-hidden="true" />
             <span>
