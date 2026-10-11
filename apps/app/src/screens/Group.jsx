@@ -1,6 +1,7 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Bell, Check, Copy, Crown, Flame, Handshake, Inbox, LogOut, Medal, Send, UserPlus, Users, X } from "lucide-react";
 import { Button, Chip, Empty, Field, LevelBadge, Panel, SectionTitle, Skeleton, Tabs, useToast } from "../components/ui.jsx";
+import { dayKey, fmt12, fmtDay, relDay, todayKey } from "../lib/dates.js";
 import { Sprite } from "../components/Sprite.jsx";
 import { MAX_GROUPS, MAX_PARTNERS, NUDGE_TEMPLATES } from "../lib/groups.js";
 import { PATHS } from "../lib/catalog.js";
@@ -271,59 +272,94 @@ function Composer({ g, groups, loading }) {
   );
 }
 
-function InboxPanel({ g, groups, loading }) {
-  const [tab, setTab] = useState("in");
+// "azi" / "ieri" / the date, as a divider between days in the chat
+const dayLabel = (key) => {
+  const r = relDay(key, todayKey());
+  return r === "azi" ? "Azi" : r === "ieri" ? "Ieri" : fmtDay(key);
+};
+const clock = (iso) => {
+  const d = new Date(iso);
+  return fmt12(d.getHours() * 60 + d.getMinutes());
+};
+
+/** The reminders as a chat: what friends sent you on the left, what you sent on the right, oldest first. */
+function ChatPanel({ g, groups, loading }) {
   const names = Object.fromEntries(g.members.map((m) => [m.id, m]));
-  const list = tab === "in" ? g.inbox : g.sent;
   const unread = g.inbox.filter((n) => !n.read).length;
+  const thread = useMemo(
+    () =>
+      [...g.inbox.map((n) => ({ ...n, mine: false })), ...g.sent.map((n) => ({ ...n, mine: true }))]
+        .sort((a, b) => new Date(a.at) - new Date(b.at))
+        .slice(-40),
+    [g.inbox, g.sent]
+  );
+  const scroller = useRef(null);
+  // the newest message sits at the bottom, like in any chat
+  useEffect(() => {
+    const el = scroller.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [thread.length, loading]);
+
+  let lastDay = null;
   return (
     <Panel className="p-4 sm:p-5">
-      <SectionTitle icon={Inbox} tone="violet">
+      <SectionTitle
+        icon={Inbox}
+        tone="violet"
+        sub="Impulsurile din grup, ca într-un chat"
+        action={unread ? <Chip tone="violet">{unread} necitite</Chip> : null}
+      >
         Remindere
       </SectionTitle>
-      <Tabs
-        className="mb-3"
-        size="sm"
-        value={tab}
-        onChange={setTab}
-        items={[
-          { value: "in", label: "Primite", count: unread },
-          { value: "out", label: "Trimise" },
-        ]}
-      />
       {loading ? (
-        <RowsSkeleton rows={2} />
-      ) : list.length === 0 ? (
-        <Empty icon={Inbox} title={tab === "in" ? "Niciun reminder primit" : "Niciun reminder trimis"}>
-          {tab === "in" ? "Când un prieten îți trimite un reminder, apare aici." : "Remindere trimise de tine apar aici."}
+        <RowsSkeleton rows={3} />
+      ) : thread.length === 0 ? (
+        <Empty icon={Inbox} title="Niciun reminder încă">
+          Când un prieten îți trimite un reminder, apare aici. Cele trimise de tine apar tot aici.
         </Empty>
       ) : (
-        <ul className="space-y-2">
-          {list.slice(0, 20).map((n) => {
-            const who = tab === "in" ? names[n.from] : null;
-            const toNames = tab === "out" ? (n.to || []).map((id) => names[id]?.name || "membru").join(", ") : "";
+        <div ref={scroller} className="max-h-[34rem] space-y-1.5 overflow-y-auto rounded-2xl bg-well/60 p-3 ring-1 ring-edge" role="log" aria-live="polite" aria-label="Conversația din grup">
+          {thread.map((n) => {
+            const day = dayKey(new Date(n.at));
+            const divider = day !== lastDay;
+            lastDay = day;
+            const who = n.mine ? null : names[n.from];
+            const toNames = n.mine ? (n.to || []).map((id) => names[id]?.name || "membru").join(", ") : "";
             return (
-              <li key={n.id} className={`flex items-start gap-3 rounded-xl p-3 ${tab === "in" && !n.read ? "bg-violet/10 ring-1 ring-violet/30" : "bg-well"}`}>
-                {who ? (
-                  <Sprite path={who.path || "sport"} stage={who.stage || "egg"} mood="idle" size={32} still />
-                ) : (
-                  <Send size={18} className="mt-1 text-mint" aria-hidden="true" />
-                )}
-                <div className="min-w-0 flex-1">
-                  <div className="text-xs font-bold text-dim">
-                    {tab === "in" ? <span className="font-extrabold text-ink">{who?.name || "Un membru"}</span> : <>către {toNames}</>} · {timeAgo(n.at)}
+              <React.Fragment key={`${n.mine ? "o" : "i"}-${n.id}`}>
+                {divider && (
+                  <div className="flex justify-center py-1.5">
+                    <span className="rounded-full bg-panel px-3 py-0.5 text-[11px] font-extrabold uppercase tracking-wider text-dim ring-1 ring-edge">{dayLabel(day)}</span>
                   </div>
-                  <p className="text-sm text-body">{n.text}</p>
-                </div>
-                {tab === "in" && !n.read && (
-                  <button type="button" onClick={() => groups.markRead(g.id, n.id)} className="focus-ring shrink-0 rounded-lg px-2 py-1 text-xs font-extrabold text-violet-hi hover:bg-violet/15">
-                    Citit
-                  </button>
                 )}
-              </li>
+                <div className={`flex items-end gap-2 ${n.mine ? "justify-end" : "justify-start"}`}>
+                  {!n.mine && <Sprite path={who?.path || "sport"} stage={who?.stage || "egg"} mood="idle" size={36} still className="-mb-1 shrink-0" />}
+                  <div className={`flex min-w-0 max-w-[82%] flex-col ${n.mine ? "items-end" : "items-start"}`}>
+                    {!n.mine && <span className="mb-0.5 px-1 text-xs font-extrabold text-ink">{who?.name || "Un membru"}</span>}
+                    <p
+                      className={`break-words px-3.5 py-2 text-sm leading-snug ${
+                        n.mine
+                          ? "rounded-2xl rounded-br-md bg-mint/20 text-ink ring-1 ring-mint/40"
+                          : `rounded-2xl rounded-bl-md bg-panel text-body ring-1 ${n.read ? "ring-edge" : "ring-violet/50"}`
+                      }`}
+                    >
+                      {n.text}
+                    </p>
+                    <span className="mt-0.5 flex items-center gap-2 px-1 text-[11px] font-semibold text-faint">
+                      {n.mine && toNames && <span className="truncate">către {toNames} ·</span>}
+                      {clock(n.at)}
+                      {!n.mine && !n.read && (
+                        <button type="button" onClick={() => groups.markRead(g.id, n.id)} className="focus-ring rounded px-1 font-extrabold text-violet-hi hover:underline">
+                          Marchează citit
+                        </button>
+                      )}
+                    </span>
+                  </div>
+                </div>
+              </React.Fragment>
             );
           })}
-        </ul>
+        </div>
       )}
     </Panel>
   );
@@ -366,11 +402,11 @@ function GroupView({ g, groups, loading }) {
       </Panel>
       <div className="grid gap-5 lg:grid-cols-5">
         <div className="min-w-0 lg:col-span-3">
-          <Leaderboard g={g} loading={loading} />
+          <ChatPanel g={g} groups={groups} loading={loading} />
         </div>
         <div className="min-w-0 space-y-5 lg:col-span-2">
           <Composer g={g} groups={groups} loading={loading} />
-          <InboxPanel g={g} groups={groups} loading={loading} />
+          <Leaderboard g={g} loading={loading} />
         </div>
       </div>
     </div>
