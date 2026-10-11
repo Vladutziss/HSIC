@@ -216,7 +216,7 @@ export function Shell({ view, setView, onReview, onFocus, d, state, unread, mode
       </div>
 
       <nav
-        className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-6 border-t border-edge bg-deep/95 backdrop-blur lg:hidden"
+        className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-7 border-t border-edge bg-deep/95 backdrop-blur lg:hidden"
         style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
         aria-label="Navigare"
       >
@@ -228,7 +228,7 @@ export function Shell({ view, setView, onReview, onFocus, d, state, unread, mode
               type="button"
               onClick={() => setView(n.id)}
               aria-current={view === n.id ? "page" : undefined}
-              className="tabbar-item focus-ring relative flex flex-col items-center gap-0.5 py-2 text-[10px] font-extrabold text-dim"
+              className="tabbar-item focus-ring relative flex min-w-0 flex-col items-center gap-0.5 py-2 text-[10px] font-extrabold text-dim"
             >
               <Icon size={20} strokeWidth={2.25} aria-hidden="true" />
               {n.label}
@@ -236,6 +236,10 @@ export function Shell({ view, setView, onReview, onFocus, d, state, unread, mode
             </button>
           );
         })}
+        <button type="button" onClick={onFocus} className="focus-ring flex flex-col items-center gap-0.5 py-2 text-[10px] font-extrabold text-violet-hi">
+          <Timer size={20} strokeWidth={2.25} aria-hidden="true" />
+          Focus
+        </button>
       </nav>
     </div>
   );
