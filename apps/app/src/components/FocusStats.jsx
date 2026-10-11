@@ -5,6 +5,7 @@ import { Coffee, Play, Timer } from "lucide-react";
 import { Button, Chip, Empty, Panel, SectionTitle, Stat } from "./ui.jsx";
 import { addDays, dayKey, fmt12, mondayOf, relDay } from "../lib/dates.js";
 import { fmtSpan } from "../lib/focus.js";
+import { focusSessionXp, focusXpByDay } from "../lib/engine.js";
 import { c } from "../lib/themes.js";
 
 const dayOf = (ms) => dayKey(new Date(ms));
@@ -22,6 +23,7 @@ export function FocusStats({ sessions = [], today, onFocus }) {
     return {
       total: sessions.reduce((a, s) => a + s.work, 0),
       count: sessions.length,
+      xp: Object.values(focusXpByDay(sessions)).reduce((a, b) => a + b, 0),
       longest: sessions.reduce((a, s) => Math.max(a, s.work), 0),
       week: sessions.filter((s) => dayOf(s.start) >= week).reduce((a, s) => a + s.work, 0),
     };
@@ -59,7 +61,7 @@ export function FocusStats({ sessions = [], today, onFocus }) {
             <Stat icon={Timer} tone="violet" label="Total concentrat" value={fmtSpan(stats.total)} sub={`${stats.count} ${stats.count === 1 ? "sesiune" : "sesiuni"}`} />
             <Stat icon={Timer} tone="gold" label="Săptămâna asta" value={fmtSpan(stats.week)} />
             <Stat icon={Timer} tone="mint" label="Cea mai lungă" value={fmtSpan(stats.longest)} />
-            <Stat icon={Timer} tone="sky" label="Medie / sesiune" value={fmtSpan(stats.total / Math.max(1, stats.count))} />
+            <Stat icon={Timer} tone="sky" label="Momentum din Focus" value={`+${stats.xp}`} sub="în total" />
           </div>
 
           <div>
@@ -96,6 +98,7 @@ export function FocusStats({ sessions = [], today, onFocus }) {
                   ) : (
                     <Chip>fără pauze</Chip>
                   )}
+                  {focusSessionXp(s) > 0 && <Chip tone="gold">+{focusSessionXp(s)} momentum</Chip>}
                   {s.breaks >= 60 && (
                     <Chip tone="mint" icon={Coffee}>
                       pauze {fmtSpan(s.breaks)}
