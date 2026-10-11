@@ -1,29 +1,17 @@
 {
-  "name": "momentum-rpg",
+  "name": "molted",
   "private": true,
   "version": "2.0.0",
   "type": "module",
-  "description": "Molted: aplicație de self-improvement gamificată, cu personaj care evoluează, grupuri și rapoarte AI.",
+  "description": "Molted monorepo: apps/app (aplicația), apps/web (landing molted.eu), packages/ui (design tokens comune).",
+  "workspaces": ["apps/*", "packages/*"],
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
-    "build:artifact": "node scripts/build-artifact.mjs",
-    "test": "node --test tests/*.test.mjs",
+    "dev": "npm run dev -w @molted/app",
+    "dev:web": "npm run dev -w @molted/web",
+    "build": "npm run build -w @molted/app",
+    "build:web": "npm run build -w @molted/web",
+    "build:artifact": "npm run build:artifact -w @molted/app",
+    "test": "npm test -w @molted/app",
     "sync:functions": "node scripts/sync-functions.mjs"
-  },
-  "dependencies": {
-    "@supabase/supabase-js": "^2.117.2",
-    "lucide-react": "^1.52.0",
-    "react": "18.3.1",
-    "react-dom": "18.3.1",
-    "recharts": "2.15.4"
-  },
-  "devDependencies": {
-    "@vitejs/plugin-react": "^6.1.2",
-    "autoprefixer": "^10.6.1",
-    "esbuild": "^0.28.2",
-    "postcss": "^8.5.29",
-    "tailwindcss": "^3.4.19",
-    "vite": "^8.3.2"
   }
 }

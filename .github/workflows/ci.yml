@@ -17,6 +17,7 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run build
+      - run: npm run build:web
       - run: npm run build:artifact
 
   # row level security checks against a local Supabase stack; only when the database changes
