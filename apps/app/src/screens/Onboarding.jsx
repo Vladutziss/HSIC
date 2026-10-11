@@ -403,6 +403,19 @@ export default function Onboarding({ onDone, store, today, legacy }) {
               {step === 0 ? "Începe aventura" : step === STEPS.length - 1 ? "Intră în joc" : "Continuă"}
             </Button>
           </div>
+          {step === STEPS.length - 1 && (
+            <p className="mt-3 text-right text-xs font-semibold text-faint">
+              Continuând, ești de acord cu{" "}
+              <a className="focus-ring underline hover:text-ink" href="https://molted.eu/terms.html" target="_blank" rel="noopener">
+                Termenii și condițiile
+              </a>{" "}
+              și cu{" "}
+              <a className="focus-ring underline hover:text-ink" href="https://molted.eu/privacy.html" target="_blank" rel="noopener">
+                Politica de confidențialitate
+              </a>
+              .
+            </p>
+          )}
         </div>
       </div>
     </div>
