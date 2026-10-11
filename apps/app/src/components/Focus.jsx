@@ -4,9 +4,10 @@
 // The state machine is in src/lib/focus.js; this file is the screens.
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Check, Coffee, Pause, Play, SkipForward, Timer, X } from "lucide-react";
+import { Check, ChevronDown, Coffee, ListTodo, Pause, Pencil, Play, Plus, SkipForward, Timer, Trash2, X } from "lucide-react";
 import { Button, Modal, Bar } from "./ui.jsx";
 import { Select } from "./Select.jsx";
+import { todosForToday } from "../lib/todos.js";
 import { BREAK_CHOICES, PRESETS, WORK_CHOICES, advance, continueWork, finish, fmtClock, fmtMinSec, fmtSpan, loadPrefs, newSession, pause, resume, savePrefs, view } from "../lib/focus.js";
 
 const pad = (n) => String(n).padStart(2, "0");
@@ -262,9 +263,114 @@ function BreakScreen({ v, onSkip, onEnd }) {
   );
 }
 
+// ------------------------------------------------------------ to-dos inside Focus
+
+/** A small to-do box in the corner: tick, add, rename and delete without leaving Focus. Folds into a pill. */
+function FocusTodos({ todos, today, actions }) {
+  const [open, setOpen] = useState(() => !!loadPrefs().todosOpen);
+  const [text, setText] = useState("");
+  const [editing, setEditing] = useState(null); // { id, title }
+  const list = useMemo(() => todosForToday(todos, today).sort((a, b) => Number(a.done) - Number(b.done) || (a.time || "99").localeCompare(b.time || "99")), [todos, today]);
+  const left = list.filter((t) => !t.done).length;
+  const toggle = () => {
+    setOpen((o) => {
+      savePrefs({ todosOpen: !o });
+      return !o;
+    });
+  };
+  const save = () => {
+    const title = editing?.title.trim().slice(0, 80);
+    if (title) actions.rename(editing.id, title);
+    setEditing(null);
+  };
+
+  if (!open) {
+    return (
+      <button
+        type="button"
+        onClick={toggle}
+        className="focus-ring fixed left-4 top-4 z-10 inline-flex items-center gap-2 rounded-xl bg-panel-hi px-3 py-2 text-sm font-extrabold text-body ring-1 ring-edge transition hover:text-ink sm:left-6 sm:top-5"
+        aria-expanded="false"
+        aria-label={`Deschide to-do-urile${left ? `, ${left} rămase` : ""}`}
+      >
+        <ListTodo size={16} aria-hidden="true" /> To-do
+        {left > 0 && <span className="rounded-full bg-gold px-1.5 text-[11px] font-black text-on-gold">{left}</span>}
+      </button>
+    );
+  }
+  return (
+    <div style={{ position: "fixed" }} className="panel left-4 top-4 z-10 flex max-h-[min(70vh,28rem)] w-[min(22rem,calc(100vw-5.5rem))] flex-col p-3 sm:left-6 sm:top-5" role="region" aria-label="To-do-uri">
+      <div className="mb-2 flex items-center gap-2">
+        <span className="inline-flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-wider text-dim">
+          <ListTodo size={14} aria-hidden="true" /> To-do azi {list.length > 0 && `· ${list.length - left}/${list.length}`}
+        </span>
+        <button type="button" onClick={toggle} className="focus-ring ml-auto grid h-7 w-7 place-items-center rounded-lg text-dim hover:bg-panel-hi hover:text-ink" aria-label="Închide to-do-urile" aria-expanded="true">
+          <ChevronDown size={16} className="rotate-180" aria-hidden="true" />
+        </button>
+      </div>
+      <form
+        className="mb-2 flex gap-1.5"
+        onSubmit={(e) => {
+          e.preventDefault();
+          const title = text.trim().slice(0, 80);
+          if (!title) return;
+          actions.add({ title, date: today });
+          setText("");
+        }}
+      >
+        <input className="field !py-1.5 text-sm" value={text} maxLength={80} placeholder="Adaugă un to-do…" onChange={(e) => setText(e.target.value)} aria-label="To-do nou" />
+        <Button type="submit" variant="mint" size="sm" icon={Plus} disabled={!text.trim()} aria-label="Adaugă" />
+      </form>
+      <ul className="min-h-0 flex-1 space-y-1 overflow-y-auto pr-0.5">
+        {list.length === 0 && <li className="py-2 text-center text-xs font-semibold text-dim">Nimic pe lista de azi.</li>}
+        {list.map((t) => (
+          <li key={t.id} className="group flex items-center gap-2 rounded-lg bg-well px-2 py-1.5 ring-1 ring-edge">
+            <button
+              type="button"
+              aria-pressed={t.done}
+              aria-label={t.done ? `Debifează ${t.title}` : `Bifează ${t.title}`}
+              onClick={() => actions.toggle(t.id, t.viewDay || today)}
+              className={`focus-ring grid h-5 w-5 shrink-0 place-items-center rounded-md border-2 transition ${t.done ? "border-mint bg-mint text-on-mint" : "border-edge-hi text-transparent hover:border-mint/70"}`}
+            >
+              <Check size={12} strokeWidth={4} aria-hidden="true" />
+            </button>
+            {editing?.id === t.id ? (
+              <input
+                className="field !py-0.5 text-sm"
+                value={editing.title}
+                maxLength={80}
+                autoFocus
+                onChange={(e) => setEditing({ id: t.id, title: e.target.value })}
+                onBlur={save}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") save();
+                  if (e.key === "Escape") setEditing(null);
+                }}
+                aria-label="Redenumește to-do-ul"
+              />
+            ) : (
+              <>
+                <button type="button" onClick={() => setEditing({ id: t.id, title: t.title })} className={`min-w-0 flex-1 truncate text-left text-sm font-bold ${t.done ? "text-faint line-through" : "text-ink"}`} title="Apasă ca să-l modifici">
+                  {t.title}
+                </button>
+                <button type="button" onClick={() => setEditing({ id: t.id, title: t.title })} className="focus-ring grid h-6 w-6 shrink-0 place-items-center rounded-md text-faint hover:text-ink sm:opacity-0 sm:group-hover:opacity-100 sm:focus:opacity-100" aria-label={`Modifică ${t.title}`}>
+                  <Pencil size={12} aria-hidden="true" />
+                </button>
+                <button type="button" onClick={() => actions.remove(t.id)} className="focus-ring grid h-6 w-6 shrink-0 place-items-center rounded-md text-faint hover:text-rose" aria-label={`Șterge ${t.title}`}>
+                  <Trash2 size={12} aria-hidden="true" />
+                </button>
+              </>
+            )}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 // ------------------------------------------------------------ the screen
 
-export function FocusMode({ session, onChange, onFinish }) {
+export function FocusMode({ session, onChange, onFinish, todos = [], today, todoActions }) {
   const [now, setNow] = useState(() => Date.now());
   const [mode, setMode] = useState(() => (loadPrefs().clock === "digital" ? "digital" : "analog"));
   const [confirming, setConfirming] = useState(false);
@@ -305,6 +411,7 @@ export function FocusMode({ session, onChange, onFinish }) {
   useEffect(() => {
     const onKey = (e) => {
       if (e.key === "Escape") {
+        if (/^(INPUT|TEXTAREA)$/.test(e.target.tagName)) return; // Escape inside a field only cancels the edit
         if (!confirming) setConfirming(true); // while the dialog is open it closes itself on Escape
       }
       else if ((e.key === " " || e.code === "Space") && !confirming && !/^(BUTTON|INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName)) {
@@ -335,7 +442,8 @@ export function FocusMode({ session, onChange, onFinish }) {
 
   return (
     <div className="app-bg fixed inset-0 z-[60] flex flex-col items-center justify-center overflow-y-auto" role="dialog" aria-modal="true" aria-label="Mod Focus">
-      <div className="absolute right-4 top-4 flex items-center gap-3 sm:right-6 sm:top-5">
+      {todoActions && <FocusTodos todos={todos} today={today} actions={todoActions} />}
+      <div className="fixed right-4 top-4 z-10 flex items-center gap-3 sm:right-6 sm:top-5">
         {(mode === "analog" || inBreak) && (
           <span className="font-pixel tabular text-xl text-dim" title="Timp de concentrare (ore:minute)" aria-label={`Timp de concentrare: ${Math.floor(sessionMin / 60)} ore și ${sessionMin % 60} minute`}>
             {pad(Math.floor(sessionMin / 60))}:{pad(sessionMin % 60)}

@@ -229,6 +229,7 @@ function Game() {
     toggle: (id, day = today) => update((s) => ({ ...s, todos: s.todos.map((t) => (t.id === id ? toggleDone(t, day) : t)) })),
     move: (id, date, time) => update((s) => ({ ...s, todos: s.todos.map((t) => (t.id === id ? { ...t, date, time: time === undefined ? t.time : time } : t)) })),
     remove: (id) => update((s) => ({ ...s, todos: s.todos.filter((t) => t.id !== id) })),
+    rename: (id, title) => update((s) => ({ ...s, todos: s.todos.map((t) => (t.id === id ? { ...t, title } : t)) })),
     edit: (todo) => setTodoEd(state.todos.find((t) => t.id === todo.id) || todo), // a series is edited as a whole, not as the day it was clicked on
     create: (draft) => setTodoEd({ id: uid("t"), title: "", date: today, time: null, dur: 30, done: false, doneOn: null, createdAt: today, ...draft, isNew: true }),
   };
@@ -382,7 +383,7 @@ function Game() {
       )}
 
       <FocusSetup key={String(focusSetup)} open={focusSetup} onStart={beginFocus} onClose={() => setFocusSetup(false)} />
-      {focusSession && <FocusMode session={focusSession} onChange={changeFocus} onFinish={finishFocus} />}
+      {focusSession && <FocusMode session={focusSession} onChange={changeFocus} onFinish={finishFocus} todos={state.todos} today={today} todoActions={todoActions} />}
       {queue[0] && (
         <MomentModal
           key={queue[0].id}
