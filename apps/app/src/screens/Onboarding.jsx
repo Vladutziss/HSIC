@@ -348,7 +348,7 @@ export default function Onboarding({ onDone, store, today, legacy }) {
         </div>
         <div className="inset space-y-2 p-4 text-sm text-body">
           <p>
-            <span className="font-extrabold text-ink">Cum crește momentum-ul:</span> fiecare misiune bifată aduce puncte, dovezile verificate aduc ×1,5, iar zilele la
+            <span className="font-extrabold text-ink">Cum crește momentum-ul:</span> fiecare misiune bifată aduce puncte, iar zilele la
             rând adaugă până la +40%.
           </p>
           <p>
@@ -369,7 +369,7 @@ export default function Onboarding({ onDone, store, today, legacy }) {
         </div>
         <h1 className="font-pixel text-3xl text-ink">Acesta e oul tău</h1>
         <p className="max-w-md text-[15px] leading-relaxed text-body">
-          {PATHS[path].egg} Se deschide după primele dovezi, iar apoi evoluează: Pui, Ucenic, Adept, Maestru și, într-o zi, Legendă.
+          {PATHS[path].egg} Se deschide după primele bifări, iar apoi evoluează: Pui, Ucenic, Adept, Maestru și, într-o zi, Legendă.
         </p>
         <div className="flex flex-wrap justify-center gap-2">
           <Chip tone="gold" icon={Sparkles}>
@@ -403,6 +403,19 @@ export default function Onboarding({ onDone, store, today, legacy }) {
               {step === 0 ? "Începe aventura" : step === STEPS.length - 1 ? "Intră în joc" : "Continuă"}
             </Button>
           </div>
+          {step === STEPS.length - 1 && (
+            <p className="mt-3 text-right text-xs font-semibold text-faint">
+              Continuând, ești de acord cu{" "}
+              <a className="focus-ring underline hover:text-ink" href="https://molted.eu/terms.html" target="_blank" rel="noopener">
+                Termenii și condițiile
+              </a>{" "}
+              și cu{" "}
+              <a className="focus-ring underline hover:text-ink" href="https://molted.eu/privacy.html" target="_blank" rel="noopener">
+                Politica de confidențialitate
+              </a>
+              .
+            </p>
+          )}
         </div>
       </div>
     </div>

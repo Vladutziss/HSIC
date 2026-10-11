@@ -2,7 +2,7 @@ import React, { useMemo, useState } from "react";
 import { Bell, Check, Copy, Crown, Flame, Handshake, Inbox, LogOut, Medal, Send, UserPlus, Users } from "lucide-react";
 import { Button, Chip, Empty, Field, LevelBadge, Panel, SectionTitle, Skeleton, Tabs, useToast } from "../components/ui.jsx";
 import { Sprite } from "../components/Sprite.jsx";
-import { NUDGE_TEMPLATES } from "../lib/groups.js";
+import { MAX_GROUPS, MAX_PARTNERS, NUDGE_TEMPLATES } from "../lib/groups.js";
 import { PATHS } from "../lib/catalog.js";
 
 const timeAgo = (iso) => {
@@ -14,6 +14,11 @@ const timeAgo = (iso) => {
   const d = Math.round(h / 24);
   return d === 1 ? "ieri" : `acum ${d} zile`;
 };
+
+const limitText = (kind) =>
+  kind === "partner"
+    ? `Ai deja ${MAX_PARTNERS} parteneri de progres. Părăsește un parteneriat ca să creezi altul.`
+    : `Ai deja ${MAX_GROUPS} grupuri. Părăsește un grup ca să creezi altul.`;
 
 function RowsSkeleton({ rows = 3 }) {
   return (
@@ -40,8 +45,12 @@ function CreateJoin({ groups }) {
       const r = await groups.create(name || (kind === "partner" ? "Parteneri de progres" : "Grupul meu"), kind);
       toast({ title: kind === "partner" ? "Parteneriat creat" : "Grup creat", text: `Codul de invitație: ${r.code}`, icon: Users, tone: "mint", ms: 5000 });
       setName("");
-    } catch {
-      setError("Nu am putut crea grupul. Verifică dacă ai drept de editare în această pagină.");
+    } catch (e) {
+      setError(
+        e?.message === "group_limit"
+          ? limitText(kind)
+          : "Nu am putut crea grupul. Verifică dacă ai drept de editare în această pagină."
+      );
     }
     setBusy(null);
   }
@@ -55,8 +64,14 @@ function CreateJoin({ groups }) {
         toast({ title: r.already ? "Ești deja în grup" : "Ai intrat în grup", icon: Users, tone: "mint" });
         setCode("");
       }
-    } catch {
-      setError("Nu am putut intra în grup. Încearcă din nou.");
+    } catch (e) {
+      setError(
+        e?.message === "group_limit"
+          ? "Ai atins limita pentru acest tip: părăsește un grup sau un partener ca să intri în altul."
+          : e?.message === "partner_full"
+            ? "Acest parteneriat are deja două persoane."
+            : "Nu am putut intra în grup. Încearcă din nou."
+      );
     }
     setBusy(null);
   }
@@ -75,12 +90,16 @@ function CreateJoin({ groups }) {
             { value: "partner", label: "Partener de progres", icon: Handshake },
           ]}
         />
+        <p className="text-xs font-bold text-dim" aria-live="polite">
+          Grupuri: {groups.limits.group.used}/{groups.limits.group.max} · Parteneri de progres: {groups.limits.partner.used}/{groups.limits.partner.max}
+        </p>
         <Field label="Nume" htmlFor="group-name">
           <input id="group-name" className="field" value={name} maxLength={40} placeholder={kind === "partner" ? "ex.: Eu și Andrei" : "ex.: Clubul de dimineață"} onChange={(e) => setName(e.target.value)} />
         </Field>
-        <Button id="group-create" icon={UserPlus} busy={busy === "create"} onClick={create}>
+        <Button id="group-create" icon={UserPlus} busy={busy === "create"} disabled={groups.limits[kind].used >= groups.limits[kind].max} onClick={create}>
           Creează și primește codul
         </Button>
+        {groups.limits[kind].used >= groups.limits[kind].max && <p className="text-xs font-semibold text-ember">{limitText(kind)}</p>}
       </Panel>
       <Panel className="space-y-4 p-4 sm:p-5">
         <SectionTitle icon={UserPlus} tone="sky">

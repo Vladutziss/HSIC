@@ -2,7 +2,7 @@
 // companion's stage and mood) is derived from the stored log by these pure
 // functions, so the rules live in one place and are unit-tested.
 
-import { addDays, diffDays, mondayOf, weekday } from "./dates.js";
+import { addDays, dayKey, diffDays, mondayOf, weekday } from "./dates.js";
 
 // xp: momentum for a check-in; ep: evolution points the companion earns from it
 export const DIFF = {
@@ -21,6 +21,10 @@ export const RULES = {
   todoXp: 5,
   todoCap: 6,
   chestXp: 25, // every scheduled habit done
+  focusMinMinutes: 5, // a Focus session under this earns nothing
+  focusXpPerMinute: 0.5, // momentum per focused minute
+  focusCycleBonus: 3, // per pomodoro work phase completed
+  focusDayCap: 60, // momentum from Focus in one day (before the run bonus)
   reviewWeight: 0.4, // share of the AI score in the day score
   reviewXpRate: 0.5, // momentum earned per point of day score
   partialDecay: 0.08, // an active day with nothing scheduled done loses up to 8%
@@ -59,6 +63,26 @@ export function levelInfo(points) {
   };
 }
 
+/** Momentum a finished Focus session is worth: needs the minimum time, then time plus a bonus per pomodoro cycle. */
+export function focusSessionXp(s) {
+  const minutes = (s.work || 0) / 60;
+  if (minutes < RULES.focusMinMinutes) return 0;
+  return Math.floor(minutes * RULES.focusXpPerMinute) + (s.cycles || 0) * RULES.focusCycleBonus;
+}
+
+/** day -> Focus momentum (capped per day), from the saved sessions. */
+export function focusXpByDay(sessions) {
+  const out = {};
+  for (const s of sessions || []) {
+    const xp = focusSessionXp(s);
+    if (xp) {
+      const day = dayKey(new Date(s.start));
+      out[day] = Math.min(RULES.focusDayCap, (out[day] || 0) + xp);
+    }
+  }
+  return out;
+}
+
 export const habitExists = (h, day) => !(h.createdAt && day < h.createdAt) && !(h.archivedAt && day >= h.archivedAt);
 export const isScheduled = (h, day) => habitExists(h, day) && (h.days || []).includes(weekday(day));
 
@@ -80,6 +104,7 @@ export function computeTimeline(state, today) {
   const reviews = state.reviews || {};
   const resetAfter = state.settings?.resetAfter || RULES.resetAfter;
 
+  const focusByDay = focusXpByDay(state.focusSessions);
   const todosByDay = {};
   const tick = (day) => (todosByDay[day] = (todosByDay[day] || 0) + 1);
   for (const t of state.todos || []) {
@@ -133,11 +158,12 @@ export function computeTimeline(state, today) {
       }
     }
     const todos = todosByDay[d] || 0;
-    const active = doneCount > 0 || todos > 0;
+    const focusXp = focusByDay[d] || 0;
+    const active = doneCount > 0 || todos > 0 || focusXp > 0;
     const completion = schedBase ? doneSchedBase / schedBase : active ? 1 : null;
     const computed = Math.min(
       100,
-      Math.round((schedBase ? (100 * doneSchedBase) / schedBase : active ? 70 : 0) + 2 * Math.min(todos, 5))
+      Math.round((schedBase ? (100 * doneSchedBase) / schedBase : doneCount > 0 || todos > 0 ? 70 : 0) + 2 * Math.min(todos, 5))
     );
     const ai = review && typeof review.ai === "number" ? review.ai : null;
     const score = ai === null ? computed : Math.round((1 - RULES.reviewWeight) * computed + RULES.reviewWeight * ai);
@@ -145,7 +171,7 @@ export function computeTimeline(state, today) {
     const todoXp = RULES.todoXp * Math.min(todos, RULES.todoCap);
     const reviewXp = closed ? Math.round(score * RULES.reviewXpRate) : 0;
     const runMult = 1 + RULES.runBonus * Math.min(activeRun, RULES.runCap);
-    const gain = Math.round((habitXp + todoXp + reviewXp + (chest ? RULES.chestXp : 0)) * runMult);
+    const gain = Math.round((habitXp + todoXp + focusXp + reviewXp + (chest ? RULES.chestXp : 0)) * runMult);
 
     let reset = false;
     if (closed) {
@@ -199,6 +225,7 @@ export function computeTimeline(state, today) {
       todos,
       habitXp: Math.round(habitXp),
       todoXp,
+      focusXp,
       reviewXp,
       chest,
       computed,

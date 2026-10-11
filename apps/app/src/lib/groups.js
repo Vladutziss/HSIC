@@ -14,6 +14,13 @@ const CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 const newCode = () => Array.from({ length: 6 }, () => CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)]).join("");
 const newId = (p) => `${p}${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
 
+// Per person: up to 3 groups and 3 progress partners; a partnership is two people.
+// The database enforces the same numbers (supabase/migrations/0012_group_limits.sql).
+export const MAX_GROUPS = 3;
+export const MAX_PARTNERS = 3;
+export const PARTNER_SIZE = 2;
+const LIMIT = { group: MAX_GROUPS, partner: MAX_PARTNERS };
+
 export const NUDGE_TEMPLATES = [
   "Hai că poți! Fă azi măcar misiunea cea mai ușoară.",
   "Ne vedem diseară la raport. Nu-ți lăsa personajul să adoarmă!",
@@ -196,6 +203,14 @@ export function useGroups({ store, state, update, myStats }) {
     [gids, infos, members, inbox, sent, profiles, myId, myStats]
   );
 
+  // how many of each kind I am in (a group whose details have not loaded yet counts as nothing)
+  const used = { group: 0, partner: 0 };
+  for (const g of groups) if (g.info.kind) used[g.info.kind === "partner" ? "partner" : "group"]++;
+  const limits = {
+    group: { used: used.group, max: MAX_GROUPS },
+    partner: { used: used.partner, max: MAX_PARTNERS },
+  };
+
   const status = !cloud ? "offline" : failed ? "error" : gids.every((gid) => loaded[gid]) ? "ready" : "loading";
   const unread = useMemo(() => groups.reduce((a, g) => a + g.inbox.filter((n) => !n.read).length, 0), [groups]);
 
@@ -204,6 +219,7 @@ export function useGroups({ store, state, update, myStats }) {
   const create = useCallback(
     async (name, kind) => {
       if (!cloud) throw new Error("offline");
+      if (used[kind] >= LIMIT[kind]) throw new Error("group_limit");
       if (sb) {
         const { data, error } = await env.client.rpc("create_group", { gname: name.trim().slice(0, 40), gkind: kind, stats: myStats || {} });
         if (error || !data?.[0]) throw error || new Error("create_failed");
@@ -220,7 +236,7 @@ export function useGroups({ store, state, update, myStats }) {
       return { gid, code };
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [cloud, statsJson]
+    [cloud, statsJson, used.group, used.partner]
   );
 
   const join = useCallback(
@@ -240,13 +256,19 @@ export function useGroups({ store, state, update, myStats }) {
       if (qs.empty) return { ok: false, reason: "not_found" };
       const gid = qs.docs[0].id;
       if (gids.includes(gid)) return { ok: true, gid, already: true };
+      const kind = qs.docs[0].data().kind === "partner" ? "partner" : "group";
+      if (used[kind] >= LIMIT[kind]) throw new Error("group_limit");
+      if (kind === "partner") {
+        const people = await env.db.collection(`groups/${gid}/members`).get();
+        if (people.size >= PARTNER_SIZE) throw new Error("partner_full");
+      }
       await env.db.doc(`groups/${gid}/members/${env.uid}`).set({ ...myStats, joinedAt: new Date().toISOString() });
       published.current[gid] = JSON.stringify(myStats || {});
       update((d) => ({ ...d, groups: [...(d.groups || []), gid] }));
       return { ok: true, gid };
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [cloud, key, statsJson]
+    [cloud, key, statsJson, used.group, used.partner]
   );
 
   const leave = useCallback(
@@ -294,7 +316,7 @@ export function useGroups({ store, state, update, myStats }) {
     [cloud]
   );
 
-  return { cloud: !!cloud, status, myId, groups, unread, create, join, leave, send, markRead };
+  return { cloud: !!cloud, status, myId, groups, limits, unread, create, join, leave, send, markRead };
 }
 
 /** Points earned since Monday; the leaderboard ranks by this. */
