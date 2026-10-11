@@ -4,7 +4,7 @@
 import { CODE, DIFF, isScheduled } from "../../src/lib/engine.js";
 import { addDays, monthKey, weekday } from "../../src/lib/dates.js";
 import { uid } from "../../src/lib/catalog.js";
-import { templateReview } from "../../src/lib/ai.js";
+import { templateReview } from "./template-review.mjs";
 
 function mulberry32(a) {
   return () => {

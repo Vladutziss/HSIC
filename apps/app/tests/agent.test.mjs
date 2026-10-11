@@ -57,3 +57,19 @@ test("difficulty is clamped, weekdays deduplicated, empty reasons and empty days
   assert.equal(out[0].diff, 3);
   assert.deepEqual(out[0].days, [1, 5]);
 });
+
+test("an experiment names only an existing habit and a known factor, one per run", () => {
+  const out = validateProposals(
+    [
+      { action: "experiment", habitId: "nope", factor: "if_then", reason: "x" },
+      { action: "experiment", habitId: "h1", factor: "made_up", reason: "x" },
+      { action: "experiment", habitId: "h1", factor: "if_then", reason: "0 din 4 miercurea", sources: ["sheeran-2025", "invented"] },
+      { action: "experiment", habitId: "h2", factor: "easier_version", reason: "al doilea" },
+    ],
+    habits,
+    read,
+    8
+  );
+  assert.equal(out.length, 1);
+  assert.deepEqual(out[0], { action: "experiment", habitId: "h1", factor: "if_then", reason: "0 din 4 miercurea", sources: ["sheeran-2025"] });
+});

@@ -181,11 +181,12 @@ export default function Settings({ state, d, ai, mode, env, onChange, onWipe, on
             <span>
               {ai.available ? (
                 <>
-                  <span className="font-extrabold text-mint">AI disponibil:</span> scrie rapoartele de seară și capitolele poveștii.
+                  <span className="font-extrabold text-mint">AI disponibil.</span> Scrie rapoartele de seară, citatele personalizate și capitolele poveștii.
                 </>
               ) : (
                 <>
-                  <span className="font-extrabold text-ink">AI indisponibil aici:</span> rapoartele și poveștile vin din șabloane.
+                  <span className="font-extrabold text-ink">AI indisponibil aici.</span> Rapoartele, citatele personalizate și capitolele nu se
+                  generează fără AI, iar aplicația nu le înlocuiește cu text scris.
                 </>
               )}
             </span>
