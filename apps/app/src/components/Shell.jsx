@@ -102,9 +102,9 @@ function Hud({ d, state, setView, onReview, unread, mode, saveStatus, now }) {
   return (
     <header className="sticky top-0 z-30 border-b border-edge bg-night/85 backdrop-blur" style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}>
       <div className="mx-auto flex h-16 max-w-[1240px] items-center gap-2 px-3 sm:gap-3 sm:px-4 lg:px-8">
-        <div className="hidden sm:block lg:hidden">
+        <button type="button" onClick={() => setView("home")} className="focus-ring hidden rounded-lg sm:block lg:hidden" aria-label="Acasă">
           <Logo compact />
-        </div>
+        </button>
         <button type="button" onClick={() => setView("stats")} className="focus-ring flex min-w-0 items-center gap-2.5 rounded-xl px-1 py-1 text-left" aria-label={`Momentum nivel ${level.lvl}, ${level.name}`}>
           <LevelBadge lvl={level.lvl} size={40} />
           <div className="hidden w-48 sm:block">
@@ -206,7 +206,9 @@ export function Shell({ view, setView, onReview, onFocus, d, state, unread, mode
           {folded ? <ChevronsRight size={14} aria-hidden="true" /> : <ChevronsLeft size={14} aria-hidden="true" />}
         </button>
         <div className={folded ? "flex justify-center" : ""}>
-          <Logo compact={folded} />
+          <button type="button" onClick={() => setView("home")} className="focus-ring rounded-lg text-left" aria-label="Acasă" title={folded ? "Acasă" : undefined}>
+            <Logo compact={folded} />
+          </button>
         </div>
         <nav className="mt-8 flex flex-col gap-1" aria-label="Navigare">
           {NAV.map((n) => {
