@@ -10,7 +10,7 @@ Aplicație de obiceiuri gamificată: îți crești **momentum-ul** bifând obice
 | Momentum + niveluri, reset după inactivitate | Puncte de momentum din bife, to-do-uri și raportul de seară, cu bonus pentru zile la rând (până la +40%). 10 niveluri (Scânteie → Supernovă). O zi ratată scade puțin; după 3 zile la rând fără activitate (configurabil 2–5), momentum-ul revine la zero. |
 | Streak-uri cu 2 revive-uri/lună | Seria numără zilele cu cel puțin o bifă. A doua zi după o zi ratată poți folosi un revive (2 pe lună). |
 | Personaj care evoluează | La onboarding primești un ou; drumul ales decide clasa: Atlet, Cărturar, Negustor, Înțelept sau Bard. Evoluează din bifări (1, 2 sau 3 puncte de evoluție, după dificultatea obiceiului): Ou → Pui → Ucenic → Adept → Maestru → Legendă, cu echipament nou la fiecare stadiu (pixel art generat procedural). |
-| Povestea personajului | La eclozare și la fiecare evoluție apare un capitol nou, scris de AI sau dintr-un șablon. |
+| Povestea personajului | La eclozare și la fiecare evoluție apare un capitol nou, scris de AI; dacă AI-ul nu răspunde, capitolul nu se generează. |
 | Nu moare: doarme și se bucură | Doarme cât lipsești (fără activitate azi și ieri) și sare de bucurie în ziua în care revii. |
 | Grupuri / partener de progres | Grupuri cu cod de invitație, clasament săptămânal (și după momentum sau serie), remindere către o persoană, mai multe sau tot grupul. Un grup demonstrativ apare până îți faci unul. |
 | Raport zilnic la ora aleasă | La ora ritualului de seară, AI-ul rezumă ziua și dă un scor; scorul zilei = 60% activitate bifată + 40% evaluarea AI, iar jumătate din el devine momentum. |
@@ -29,7 +29,7 @@ npm run build:web        # build static al landing-ului în apps/web/dist/
 npm run build:artifact   # o singură pagină HTML pentru claude.ai, în apps/app/dist/momentum.html
 ```
 
-În afara claude.ai aplicația merge complet, dar cu înlocuitori: datele stau în `localStorage`, rapoartele și poveștile vin din șabloane, iar grupul e doar cel demonstrativ.
+În afara claude.ai aplicația merge complet, dar cu înlocuitori: datele stau în `localStorage`, rapoartele și poveștile nu se generează fără AI (nu există texte-șablon), iar grupul e doar cel demonstrativ.
 
 ## Admin (molted.eu/admin.html)
 
@@ -55,7 +55,7 @@ Ca să folosească grupurile, prietenii trebuie să poată deschide și edita ap
 ```
 apps/app/src/lib/engine.js    regulile jocului (momentum, niveluri, reset, serii, revive-uri, evoluție, stări)
 packages/ui/sprites.js        pixel art procedural pentru personaj (folosit de aplicație și de landing)
-apps/app/src/lib/ai.js        prompturi pentru poveste, raport și momente + variante scrise
+apps/app/src/lib/ai.js        prompturi pentru poveste, raport și momente (fără variante scrise)
 apps/app/src/lib/store.js     salvare în baza de date a aplicației sau local
 apps/app/src/lib/groups.js    grupuri, clasament, remindere, grup demonstrativ
 apps/app/src/lib/quotes.js    citate pentru momentele-cheie

@@ -1,8 +1,8 @@
 // AI features. In the claude.ai artifact they run on Claude through the
 // `sample` capability, on the viewer's own account. In the Supabase build they
 // go through the `ai` Edge Function (supabase/functions/ai), which holds the
-// OpenRouter key, the prompts and the daily limit. Every feature has a written
-// fallback for when the AI is unavailable (consent declined, rate limit, an error).
+// OpenRouter key, the prompts and the daily limit. There are no written fallbacks:
+// when the AI is unavailable or fails, the feature says so (see aiErrorCopy) and shows nothing generated.
 
 import { PATHS } from "./catalog.js";
 import { fmtLong } from "./dates.js";
@@ -77,6 +77,14 @@ export function aiErrorCopy(code) {
       return "Sesiunea a expirat. Reîncarcă pagina și autentifică-te din nou.";
     case "unavailable":
       return "AI-ul nu e disponibil aici.";
+    case "experiment_running":
+      return "Ai deja un experiment în desfășurare. Termină-l sau anulează-l înainte să începi altul.";
+    case "context_limit":
+      return "Ai deja 50 de note active. Șterge una ca să adaugi alta.";
+    case "invalid_note":
+      return "Nota nu e validă: scrie între 1 și 300 de caractere.";
+    case "db_error":
+      return "Nu s-a putut salva acum. Încearcă din nou.";
     case "cancelled":
       return "";
     default:
@@ -193,49 +201,19 @@ export async function coachAgent(today, signal) {
     summary: clip(r.summary, 700),
     steps: Array.isArray(r.steps) ? r.steps : [],
     proposals: r.proposals.map((p) => ({
-      action: p.action === "add" ? "add" : "change",
+      id: p.id || null, // the row in agent_actions, when the log was written
+      action: p.action === "add" ? "add" : p.action === "experiment" ? "experiment" : "change",
       habitId: p.habitId,
       name: clip(p.name, 40),
+      factor: p.factor,
       diff: Math.min(3, Math.max(1, Number(p.diff) || 2)),
       days: (Array.isArray(p.days) ? p.days : []).filter((d) => Number.isInteger(d) && d >= 0 && d <= 6),
       reason: clip(p.reason, 200),
+      experiment: p.experiment && p.experiment.assignments ? p.experiment : null,
       sources: (Array.isArray(p.sources) ? p.sources : []).filter(Boolean),
     })),
   };
 }
 
-// ------------------------------------------------------------ written fallbacks
-
-export function templateReview(p, score) {
-  const done = p.habits.filter((h) => h.done);
-  const missed = p.habits.filter((h) => h.scheduled && !h.done);
-  const names = (list) => list.map((h) => h.name.toLowerCase());
-  const join = (arr) => (arr.length <= 1 ? arr.join("") : `${arr.slice(0, -1).join(", ")} și ${arr[arr.length - 1]}`);
-  if (score >= 85) {
-    return {
-      summary: `Ai bifat aproape tot ce ți-ai propus azi. Ziua asta adaugă serios la momentum.`,
-      highlight: "Toate misiunile duse la capăt",
-      tip: `Păstrează aceeași oră pentru ${(done[0]?.name || "misiunile tale").toLowerCase()} și mâine.`,
-    };
-  }
-  if (score >= 55) {
-    return {
-      summary: `Ai făcut cea mai mare parte din plan: ${join(names(done.slice(0, 3)))}. ${missed.length ? `${missed[0].name} rămâne pe mâine, fără grabă.` : "Restul a fost opțional."}`,
-      highlight: `${done[0]?.name || "Ziua"} bifat`,
-      tip: missed.length ? `Mâine, începe ziua cu ${missed[0].name.toLowerCase()}, cât ai energie.` : "Mâine, încearcă să bifezi o misiune în plus.",
-    };
-  }
-  if (score >= 25) {
-    return {
-      summary: `Ai pornit motorul azi cu ${join(names(done.slice(0, 2))) || "câteva lucruri mici"}. Și pașii mici țin focul aprins.`,
-      highlight: "Ai pornit, și asta contează",
-      tip: "Alege o singură misiune ușoară pentru mâine dimineață și fă-o prima.",
-    };
-  }
-  const easiest = [...p.habits].sort((a, b) => a.diff - b.diff)[0];
-  return {
-    summary: "Azi a fost o zi liniștită. Mâine e o pagină nouă, iar personajul tău te așteaptă.",
-    highlight: "O zi de odihnă",
-    tip: `Începe mâine cu cea mai ușoară misiune${easiest ? `: ${easiest.name.toLowerCase()}` : ""}.`,
-  };
-}
+/** The player's supabase client when signed in on the web build (for the coach log, notes, experiments), else null. */
+export const agentClient = serverClient;
