@@ -26,6 +26,7 @@ import { validateProposals } from "../_shared/agent-core.js";
 // deno-lint-ignore no-explicit-any
 declare const Supabase: any; // Edge runtime global (built-in embedding models)
 
+const MIN_HISTORY = 7; // scheduled days the longest habit needs before the agent says anything about progress (same as hasHistory in lib/coach.js)
 const MAX_STEPS = 6; // model calls per run (search, up to 3 proposals, answer); the data tools run up front
 const MAX_HABITS = 8; // HABIT_COLORS.length in src/lib/catalog.js
 const DAILY_MAX = Number(Deno.env.get("AGENT_DAILY_MAX") ?? 15);
@@ -161,7 +162,7 @@ async function embed(text: string): Promise<string> {
 /** The seed leaves embeddings empty (and clears them when a chunk's text changes); fill them here. */
 // deno-lint-ignore no-explicit-any
 async function embedMissing(admin: any) {
-  const { data } = await admin.from("knowledge_chunks").select("id, body").is("embedding", null);
+  const { data } = await admin.from("knowledge_chunks").select("id, body").is("embedding", null).limit(3); // a few per request: embedding all chunks at once exceeds the CPU limit
   for (const r of data ?? []) await admin.from("knowledge_chunks").update({ embedding: await embed(r.body) }).eq("id", r.id);
 }
 
@@ -332,13 +333,23 @@ Deno.serve(async (req) => {
       snapshot[n] = null; // the tool answered "error: ..." (for example a table that is not there yet)
     }
   }
+  // Too little history is a fact, not something for a model to judge: no call, no praise, a plain flag.
+  // deno-lint-ignore no-explicit-any
+  const longest = Math.max(0, ...(((snapshot.get_habit_stats as any)?.habits ?? []) as { sched: number }[]).map((h) => h.sched));
+  if (longest < MIN_HISTORY) return reply(200, { summary: "", proposals: [], steps, notEnoughData: { longest, needed: MIN_HISTORY } });
+  // deno-lint-ignore no-explicit-any
+  const nothingFound = !(snapshot.analyze_patterns as any)?.findings?.length;
   const messages: unknown[] = [
     { role: "system", content: SYSTEM },
     {
       role: "user",
       content:
         `Today is ${today}. Everything you can know about the player is already gathered below, so do not call the get_* or analyze_patterns tools again. ` +
-        `Use search_knowledge only when a mechanism needs a cited source, then propose_action for each proposal, then answer.\n\n${JSON.stringify(snapshot)}`,
+        `Use search_knowledge only when a mechanism needs a cited source, then propose_action for each proposal, then answer.` +
+        (nothingFound
+          ? ` No pattern passed the statistical tests, so say plainly, in Romanian, that there is not yet enough data to see a pattern, and do not praise or judge the player's progress.`
+          : "") +
+        `\n\n${JSON.stringify(snapshot)}`,
     },
   ];
   let summary = "";
