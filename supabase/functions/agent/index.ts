@@ -119,7 +119,7 @@ async function chat(models: string[], apiKey: string, messages: unknown[]) {
       const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
         method: "POST",
         headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json", "X-Title": "Molted" },
-        body: JSON.stringify({ model, messages, tools: TOOLS, tool_choice: "auto", max_tokens: 700, temperature: 0.3 }),
+        body: JSON.stringify({ model, messages, tools: TOOLS, tool_choice: "auto", max_tokens: 2500, temperature: 0.3 }),
         signal: AbortSignal.timeout(40_000),
       });
       if (!res.ok) {
