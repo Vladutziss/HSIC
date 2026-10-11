@@ -369,6 +369,7 @@ function Game() {
           setFocus={setFocusHabit}
           onCheck={checkIn}
           onAdd={() => setHabitEd({ tab: "catalog" })}
+          onAddHabit={(habit) => saveHabit(habit, { keepOpen: true })}
           onEdit={(habit) => setHabitEd({ habit, tab: "custom" })}
           onArchive={archiveHabit}
           onDelete={deleteHabit}
