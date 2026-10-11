@@ -4,11 +4,12 @@
 // The state machine is in src/lib/focus.js; this file is the screens.
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Check, ChevronDown, Coffee, ListTodo, Pause, Pencil, Play, Plus, SkipForward, Timer, Trash2, X } from "lucide-react";
+import { Check, ChevronDown, Coffee, ListTodo, Pause, Pencil, Play, Plus, SkipForward, Sparkles, Timer, Trash2, X } from "lucide-react";
 import { Button, Modal, Bar } from "./ui.jsx";
 import { Select } from "./Select.jsx";
 import { todosForToday } from "../lib/todos.js";
 import { RULES } from "../lib/engine.js";
+import { pickQuote } from "../lib/quotes.js";
 import { BREAK_CHOICES, PRESETS, WORK_CHOICES, advance, continueWork, finish, fmtClock, fmtMinSec, fmtSpan, loadPrefs, newSession, pause, resume, savePrefs, view } from "../lib/focus.js";
 
 const pad = (n) => String(n).padStart(2, "0");
@@ -185,10 +186,10 @@ function DigitalClock({ ms, dim }) {
     <div className={`flex items-start gap-[1.2vmin] transition-opacity ${dim ? "opacity-60" : ""}`} aria-hidden="true">
       {parts.map((p, i) => (
         <React.Fragment key={p.label}>
-          {i > 0 && <span className={`font-pixel pt-[1.2vmin] text-[clamp(40px,11vmin,120px)] leading-none text-dim ${dim ? "" : "colon-blink"}`}>:</span>}
+          {i > 0 && <span className={`pt-[1.2vmin] text-[clamp(40px,11vmin,120px)] font-black leading-none text-dim ${dim ? "" : "colon-blink"}`}>:</span>}
           <div className="flex flex-col items-center gap-2">
             <div className="panel rounded-[2.2vmin] px-[2.4vmin] py-[1.6vmin]" style={{ boxShadow: "inset 0 -10px 24px rgb(0 0 0 / 0.08), 0 14px 34px -16px rgb(var(--c-shadow) / var(--shadow-a))" }}>
-              <span className="font-pixel tabular text-[clamp(56px,17vmin,190px)] leading-none">
+              <span className="tabular text-[clamp(56px,17vmin,190px)] font-black leading-none">
                 <Digits value={p.v} tone={p.tone} />
               </span>
             </div>
@@ -204,14 +205,15 @@ function DigitalClock({ ms, dim }) {
 
 const TIPS = ["Bea un pahar cu apă.", "Privește pe fereastră, departe, 20 de secunde.", "Întinde-ți spatele și umerii.", "Ridică-te și fă câțiva pași.", "Respiră adânc de cinci ori.", "Lasă ochii să se odihnească de ecran."];
 
-function BreakScreen({ v, onSkip, onEnd }) {
+function BreakScreen({ v, quoteSeed, onSkip, onEnd }) {
   const waiting = v.phase === "wait";
+  const quote = pickQuote("break", null, [], quoteSeed); // one quote per break, whatever the phase
   const ratio = waiting ? 1 : v.limitMs ? 1 - v.remaining / v.limitMs : 0; // fills up as the break passes
   const R = 170;
   const circ = 2 * Math.PI * R;
   return (
-    <div className="flex flex-col items-center gap-6 px-4 text-center">
-      <div className="relative w-[min(66vmin,520px)]">
+    <div className="my-auto flex flex-col items-center gap-6 px-4 py-6 text-center">
+      <div className="relative w-[min(48vmin,420px)]">
         <svg viewBox="0 0 400 400" className="-rotate-90" aria-hidden="true">
           <circle cx={C} cy={C} r={R} fill="rgb(var(--c-panel) / 0.6)" stroke="rgb(var(--c-edge))" strokeWidth="14" />
           <circle
@@ -232,7 +234,7 @@ function BreakScreen({ v, onSkip, onEnd }) {
               <span className="grid h-16 w-16 place-items-center rounded-full bg-mint text-on-mint">
                 <Check size={34} strokeWidth={3.5} aria-hidden="true" />
               </span>
-              <span className="font-pixel text-3xl text-ink">Pauza s-a terminat</span>
+              <span className="text-3xl font-black text-ink">Pauza s-a terminat</span>
               <span className="text-sm font-semibold text-dim">Când ești gata, continui de unde ai rămas.</span>
             </>
           ) : (
@@ -240,12 +242,30 @@ function BreakScreen({ v, onSkip, onEnd }) {
               <span className="inline-flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-[0.25em] text-mint-ink">
                 <Coffee size={14} aria-hidden="true" /> {v.longBreak ? "Pauză lungă" : "Pauză"}
               </span>
-              <span className="font-pixel tabular text-[clamp(56px,16vmin,140px)] leading-none text-ink">{fmtMinSec(v.remaining)}</span>
+              <span className="tabular text-[clamp(44px,11vmin,104px)] font-black leading-none text-ink">{fmtMinSec(v.remaining)}</span>
               <span className="max-w-[16rem] text-sm font-semibold text-dim">{TIPS[(v.cycle - 1) % TIPS.length]}</span>
             </>
           )}
         </div>
       </div>
+      <figure className="anim-pop relative w-full max-w-xl rounded-3xl border border-gold/30 bg-gradient-to-b from-gold/10 to-transparent px-6 pb-5 pt-6 shadow-[0_18px_44px_-24px_rgb(var(--c-gold)/0.55)]">
+        <span className="absolute -top-3 left-1/2 inline-flex -translate-x-1/2 items-center gap-1.5 whitespace-nowrap rounded-full bg-night px-3 py-0.5 text-[11px] font-extrabold uppercase tracking-[0.2em] text-gold-ink ring-1 ring-gold/40">
+          <Sparkles size={12} aria-hidden="true" /> Ai ajuns până aici
+        </span>
+        <blockquote className="text-[clamp(1.2rem,3vmin,1.65rem)] font-bold italic leading-snug text-ink">
+          <span className="text-gold" aria-hidden="true">„</span>
+          {quote.text}
+          <span className="text-gold" aria-hidden="true">”</span>
+        </blockquote>
+        <figcaption className="mt-3 flex flex-col items-center gap-0.5">
+          <span className="h-px w-10 bg-gold/50" aria-hidden="true" />
+          <span className="text-sm font-extrabold text-gold-ink">{quote.author}</span>
+          <span className="text-xs font-semibold text-dim">{quote.source}</span>
+        </figcaption>
+        <p className="mt-3 text-xs font-bold text-dim">
+          Ciclul {v.cycle} încheiat · {fmtSpan(v.work / 1000)} de concentrare. Ai tot dreptul să fii mândru de tine.
+        </p>
+      </figure>
       <div className="flex flex-col items-center gap-2">
         {waiting ? (
           <Button size="lg" icon={Play} onClick={onSkip} data-autofocus>
@@ -259,7 +279,6 @@ function BreakScreen({ v, onSkip, onEnd }) {
         <button type="button" onClick={onEnd} className="focus-ring rounded-lg px-3 py-1.5 text-xs font-extrabold text-dim hover:text-ink">
           Termină sesiunea
         </button>
-        <span className="text-[11px] font-semibold text-faint">Ciclul {v.cycle} încheiat · {fmtSpan(v.work / 1000)} de concentrare până acum</span>
       </div>
     </div>
   );
@@ -481,7 +500,7 @@ export function FocusMode({ session, onChange, onFinish, todos = [], today, todo
       {todoActions && <FocusTodos todos={todos} today={today} actions={todoActions} />}
       <div className="fixed right-4 top-4 z-10 flex items-center gap-3 sm:right-6 sm:top-5">
         {(mode === "analog" || inBreak) && (
-          <span className="font-pixel tabular text-xl text-dim" title="Timp de concentrare (ore:minute)" aria-label={`Timp de concentrare: ${Math.floor(sessionMin / 60)} ore și ${sessionMin % 60} minute`}>
+          <span className="tabular text-xl font-extrabold text-dim" title="Timp de concentrare (ore:minute)" aria-label={`Timp de concentrare: ${Math.floor(sessionMin / 60)} ore și ${sessionMin % 60} minute`}>
             {pad(Math.floor(sessionMin / 60))}:{pad(sessionMin % 60)}
           </span>
         )}
@@ -491,7 +510,7 @@ export function FocusMode({ session, onChange, onFinish, todos = [], today, todo
       </div>
 
       {inBreak ? (
-        <BreakScreen v={v} onSkip={primary} onEnd={() => setConfirming(true)} />
+        <BreakScreen v={v} quoteSeed={`${session.id}-${v.cycle}`} onSkip={primary} onEnd={() => setConfirming(true)} />
       ) : (
         <>
           <button

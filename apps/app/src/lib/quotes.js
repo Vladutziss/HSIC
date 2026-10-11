@@ -37,6 +37,10 @@ export const QUOTES = [
   { id: "ovid-drop", text: "Picătura scobește piatra.", author: "Ovidiu", source: "Scrisori din Pont, IV.10", tags: ["streak", "levelup"] },
   { id: "confucius-mound", text: "E ca la înălțarea unei movile: dacă mă opresc când mai lipsește un singur coș de pământ, oprirea e a mea.", author: "Confucius", source: "Analecte, IX", tags: ["drop", "streak"] },
   { id: "hippocrates-art", text: "Arta e lungă, viața e scurtă.", author: "Hipocrate", source: "Aforisme, I.1", tags: ["levelup", "drop"], paths: ["creativ", "studiu"] },
+  { id: "ovid-rest", text: "Ce nu are o odihnă alternantă nu poate dura.", author: "Ovidiu", source: "Arta de a iubi, II.351", tags: ["break"] },
+  { id: "seneca-relax", text: "Mintea trebuie lăsată să se destindă: odihnită, se va ridica mai bună și mai ageră.", author: "Seneca", source: "Despre liniștea sufletească, XVII.5", tags: ["break"] },
+  { id: "aurelius-retreat", text: "Nicăieri nu se retrage omul mai liniștit și mai ferit de griji decât în propriul suflet.", author: "Marcus Aurelius", source: "Meditații, IV.3", tags: ["break"] },
+  { id: "aristotle-rest", text: "Ne odihnim ca să putem lucra.", author: "Aristotel", source: "Etica nicomahică, X.6", tags: ["break"] },
 ];
 
 const hash = (s) => {
