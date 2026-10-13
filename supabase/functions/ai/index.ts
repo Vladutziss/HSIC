@@ -3,7 +3,7 @@
 //   supabase secrets set OPENROUTER_API_KEY=... AI_MODEL=<a model id from openrouter.ai/models>
 //   supabase functions deploy ai
 //
-// Body: {kind: "review"|"moment"|"chapter", params: {...}}
+// Body: {kind: "review"|"moment"|"chapter"|"insights"|"daily_plan"|"homework_parse"|"goal_decompose"|"reflection", params: {...}}
 // Reply: {result: {...}} or {code: "..."} with a non-2xx status. Codes match aiErrorCopy() in src/lib/ai.js.
 
 import { createClient } from "jsr:@supabase/supabase-js@2";

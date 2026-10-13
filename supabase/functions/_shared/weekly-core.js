@@ -12,13 +12,16 @@
 //   3 memory                skip a kind the player rejected >= 2 times (feedback.rejectedByAction[kind]);
 //                           skip any action on a habit whose name appears (case-insensitive) in an active
 //                           'constraint' note. Recorded in `skipped`.
+//   5 exam_recap           confirm/create_todo: an exam in 1..7 days whose subject has 0 study minutes in the last 7 days
+//                           -> one 25-min "Recapitulare <subject>" tomorrow (one per subject, dedupe by title+date).
 //   4 data + cap            no action on a habit with < 14 scheduled days in the last 56 (recorded);
 //                           at most `maxActions` in total, 'auto' first, then 'confirm'.
 import { addDays, dayRange, RO_DAYS, weekday } from "./app/dates.js";
 import { isScheduled } from "./app/engine.js";
 import { withObservedStart } from "./app/history.js";
+import { nextExams, schoolPlanner } from "./app/schoolPlanner.js";
 
-export const THRESHOLDS = { minScheduled: 14, repeatMiss: 0.6, rejectedLimit: 2, baselineDays: 28, historyDays: 56, promptDur: 10 };
+export const THRESHOLDS = { minScheduled: 14, repeatMiss: 0.6, rejectedLimit: 2, baselineDays: 28, historyDays: 56, promptDur: 10, examWithin: 7, recapDur: 25 };
 
 const pct = (x) => `${Math.round(x * 100)}%`;
 const round = (x) => Math.round(x * 10000) / 10000;
@@ -111,9 +114,46 @@ export function planWeek({ state: raw, today, patterns, context, feedback, pastA
     }
   }
 
+  // Rule 5: an exam within a week and no study logged for its subject in the last 7 days.
+  const recaps = [];
+  const sessions = schoolPlanner(raw).sessions;
+  const studyFrom = addDays(today, -6);
+  const seen = new Set();
+  for (const e of nextExams(raw, today)) {
+    if (e.daysLeft < 1 || e.daysLeft > THRESHOLDS.examWithin) continue;
+    const subject = String(e.subject || "").trim();
+    const key = subject.toLowerCase();
+    if (!subject || seen.has(key)) continue;
+    seen.add(key);
+    if (sessions.some((s) => s.day >= studyFrom && s.day <= today && String(s.subject || "").trim().toLowerCase() === key && Number(s.minutes) > 0)) continue;
+    if ((rejected.create_todo || 0) >= THRESHOLDS.rejectedLimit) {
+      skip("exam_recap", `Jucătorul a respins de ${rejected.create_todo} ori acțiuni de tip create_todo; nu mai propun.`);
+      continue;
+    }
+    if (constraints.some((c) => c.includes(key))) {
+      skip("exam_recap", `Există o constrângere activă care menționează „${subject}"; nu propun.`);
+      continue;
+    }
+    const title = `Recapitulare ${subject}`;
+    const date = addDays(today, 1);
+    if (taken.has(`${date}|${title}`)) {
+      skip("exam_recap", `Există deja un to-do deschis „${title}" pe ${date}.`);
+      continue;
+    }
+    taken.add(`${date}|${title}`);
+    recaps.push({
+      kind: "create_todo",
+      autonomy: "confirm",
+      payload: { title, date, dur: THRESHOLDS.recapDur },
+      reason: `Examen la ${subject} peste ${e.daysLeft} ${e.daysLeft === 1 ? "zi" : "zile"} (${e.date}) și 0 minute de studiu notate la ${subject} în ultimele 7 zile; îți propun o recapitulare scurtă.`,
+      sources: [],
+      baseline: null,
+    });
+  }
+
   for (const t of todos.slice(maxTodos)) skip("weak_weekday_prompt", `Peste limita de ${maxTodos} to-do-uri pe săptămână: „${t.payload.title}".`);
-  const ordered = [...todos.slice(0, maxTodos), ...confirms];
-  for (const a of ordered.slice(maxActions)) skip(a.kind === "create_todo" ? "weak_weekday_prompt" : "repeat_miss_downshift", `Peste limita de ${maxActions} acțiuni pe săptămână.`);
+  const ordered = [...todos.slice(0, maxTodos), ...confirms, ...recaps];
+  for (const a of ordered.slice(maxActions)) skip(recaps.includes(a) ? "exam_recap" : a.kind === "create_todo" ? "weak_weekday_prompt" : "repeat_miss_downshift", `Peste limita de ${maxActions} acțiuni pe săptămână.`);
 
   return { runDay: today, actions: ordered.slice(0, maxActions), skipped };
 }
