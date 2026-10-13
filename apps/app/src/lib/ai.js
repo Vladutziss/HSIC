@@ -187,6 +187,58 @@ export async function habitInsights(data, signal) {
   return out;
 }
 
+/** A small, explainable plan for today. It proposes steps but does not mutate state. */
+export async function dailyPlan({ today, minutes = 60, energy = "medium", habits = [], todos = [], goals = [], assignments = [] }, signal) {
+  const r = await askCoach("daily_plan", { today, minutes, energy, habits, todos, goals, assignments }, signal);
+  const steps = (Array.isArray(r?.steps) ? r.steps : [])
+    .slice(0, 3)
+    .map((step) => ({
+      title: clip(step?.title, 120),
+      minutes: Math.max(5, Math.min(Number(minutes) || 60, Math.round(Number(step?.minutes) || 15))),
+      reason: clip(step?.reason, 220),
+      focus: step?.focus === true,
+      dataUsed: Array.isArray(step?.dataUsed) ? step.dataUsed.map((x) => clip(x, 100)).filter(Boolean).slice(0, 4) : [],
+      confidence: ["low", "medium", "high"].includes(step?.confidence) ? step.confidence : "unknown",
+    }))
+    .filter((step) => step.title && step.reason);
+  if (!steps.length) throw { code: "invalid_json" };
+  return steps;
+}
+
+export async function parseHomework(text, today, signal) {
+  const r = await askCoach("homework_parse", { text: clip(text, 1200), today }, signal);
+  // `type` is optional in the reply: anything but "exam" stays an assignment
+  const assignments = (Array.isArray(r?.assignments) ? r.assignments.slice(0, 8) : []).map((a) => ({ ...a, type: a?.type === "exam" ? "exam" : "assignment" }));
+  if (!assignments.length) throw { code: "invalid_json" };
+  return assignments;
+}
+
+export async function decomposeGoal(goal, signal) {
+  const r = await askCoach("goal_decompose", { goal: clip(goal, 300) }, signal);
+  const goals = (Array.isArray(r?.goals) ? r.goals : [])
+    .slice(0, 3)
+    .map((g) => ({
+      text: clip(g?.text, 120),
+      period: g?.period === "month" ? "month" : "week",
+      ...(/^\d{4}-\d{2}-\d{2}$/.test(g?.due || "") ? { due: g.due } : {}),
+      ...(g?.criteria ? { criteria: clip(g.criteria, 160) } : {}),
+    }))
+    .filter((g) => g.text);
+  if (!goals.length) throw { code: "invalid_json" };
+  return goals;
+}
+
+export async function weeklyReflection(data, answer, signal) {
+  const r = await askCoach("reflection", { data, answer: clip(answer, 800) }, signal);
+  if (!r?.observation || !r?.nextStep) throw { code: "invalid_json" };
+  return {
+    observation: clip(r.observation, 300),
+    nextStep: clip(r.nextStep, 240),
+    dataUsed: Array.isArray(r.dataUsed) ? r.dataUsed.map((x) => clip(x, 100)).filter(Boolean).slice(0, 4) : [],
+    confidence: ["low", "medium", "high"].includes(r.confidence) ? r.confidence : "unknown",
+  };
+}
+
 /**
  * The coach agent (supabase/functions/agent). It reads the player's rows itself, so only the day is sent.
  * Returns {summary, proposals, steps}; proposals were validated on the server and each carries the
@@ -203,7 +255,8 @@ export async function coachAgent(today, signal) {
     steps: Array.isArray(r.steps) ? r.steps : [],
     proposals: r.proposals.map((p) => ({
       id: p.id || null, // the row in agent_actions, when the log was written
-      action: p.action === "add" ? "add" : p.action === "experiment" ? "experiment" : "change",
+      action: p.action === "add" ? "add" : p.action === "experiment" ? "experiment" : p.action === "todo" ? "todo" : "change",
+      ...(p.action === "todo" ? { title: clip(p.title, 120), date: p.date, dur: Number(p.dur) || 20 } : {}),
       habitId: p.habitId,
       name: clip(p.name, 40),
       factor: p.factor,
@@ -212,6 +265,7 @@ export async function coachAgent(today, signal) {
       reason: clip(p.reason, 200),
       experiment: p.experiment && p.experiment.assignments ? p.experiment : null,
       sources: (Array.isArray(p.sources) ? p.sources : []).filter(Boolean),
+      explanation: p.explanation || null,
     })),
   };
 }

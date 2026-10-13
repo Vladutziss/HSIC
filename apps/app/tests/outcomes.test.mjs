@@ -73,7 +73,7 @@ test("recent createdAt but older log still measured", () => {
 
 test("not applicable kinds and missing habit", () => {
   const st = build({ before: rate(0.3), after: rate(0.9) });
-  assert.deepEqual(measureOutcome(act({ kind: "create_todo", habit_id: null }), st, TODAY), { verdict: "not_applicable" });
+  assert.deepEqual(measureOutcome(act({ kind: "create_experiment_x", habit_id: null }), st, TODAY), { verdict: "not_applicable" });
   assert.deepEqual(measureOutcome(act({ kind: "set_reminder" }), st, TODAY), { verdict: "not_applicable" });
   assert.equal(measureOutcome(act({ habit_id: "nope" }), st, TODAY).verdict, "insufficient");
 });
@@ -111,4 +111,21 @@ test("deterministic and JSON-safe", () => {
   const b = measureOutcome(act(), st, TODAY);
   assert.deepEqual(a, b);
   assert.deepEqual(JSON.parse(JSON.stringify(a)), a);
+});
+
+test("create_todo / plan_focus: done or open, plus activity around the day", () => {
+  const day = "2026-09-10";
+  const log = {};
+  for (let i = 1; i <= 28; i++) log[addDays(day, -i)] = { h1: "done" }; // 1 check-in a day before
+  for (let i = 0; i <= 3; i++) log[addDays(day, i)] = { h1: "done", h2: "done" }; // 2 a day after
+  const todo = { id: "tag-a9", done: true, doneOn: day };
+  const action = (kind) => ({ id: "a9", kind, status: "applied", payload: { date: day }, before: { todoId: "tag-a9" }, decided_at: `${day}T08:00:00Z` });
+  const done = measureOutcome(action("plan_focus"), { todos: [todo], log, habits: [] }, TODAY);
+  assert.equal(done.verdict, "todo_done");
+  assert.equal(done.completedOn, day);
+  assert.equal(done.activity.baseline, 1);
+  assert.equal(done.activity.rate, 2.25); // 2 check-ins + the to-do done on day 0, 4 days
+  assert.equal(done.caveat, "before_after");
+  assert.equal(measureOutcome(action("create_todo"), { todos: [{ ...todo, done: false, doneOn: null }], log, habits: [] }, TODAY).verdict, "todo_open");
+  assert.equal(measureOutcome(action("create_todo"), { todos: [], log, habits: [] }, TODAY).verdict, "insufficient");
 });

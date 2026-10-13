@@ -103,7 +103,11 @@ Deno.serve(async (req) => {
       // one notification per player; failures here must not undo the log
       await fetch(`${url}/functions/v1/push`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", "x-cron-secret": secret },
+        headers: {
+          "Content-Type": "application/json",
+          "x-cron-secret": secret,
+          Authorization: `Bearer ${Deno.env.get("SUPABASE_ANON_KEY") ?? ""}`, // satisfies a gateway that still verifies JWTs
+        },
         body: JSON.stringify({ action: "agent", userId: id, count: rows.length }),
       }).catch((e) => console.error("weekly push", e));
     } catch (e) {

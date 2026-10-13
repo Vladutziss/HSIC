@@ -26,6 +26,8 @@ const stepText = (x) => {
       return `A verificat ce a făcut înainte și ce efect a avut (${x.count})`;
     case "experiments":
       return `A verificat experimentele tale (${x.count})`;
+    case "school":
+      return `A citit planul tău de școală (${x.exams} examene, ${x.assignments} teme)`;
     case "patterns":
       return `A rulat testele statistice: ${x.findings} ${x.findings === 1 ? "tipar a trecut" : "tipare au trecut"} din ${x.tested} verificări`;
     case "search":
@@ -131,7 +133,14 @@ export function PlanPanel({ state, today, ai, onAddHabit, onEdit, onExperiment }
                 <li key={i} className="inset space-y-2 p-3">
                   <div className="flex flex-wrap items-start gap-3">
                     <div className="min-w-0 flex-1">
-                      {sg.action === "experiment" ? (
+                      {sg.action === "todo" ? (
+                        <>
+                          <p className="text-sm font-extrabold text-ink">To-do: {sg.title}</p>
+                          <p className="text-xs font-bold text-dim">
+                            {fmtDay(sg.date)} · {sg.dur} min · îl găsești în jurnalul coach-ului, de unde îl aplici
+                          </p>
+                        </>
+                      ) : sg.action === "experiment" ? (
                         <>
                           <p className="text-sm font-extrabold text-ink">
                             <FlaskConical size={14} className="mr-1 inline text-violet-hi" aria-hidden="true" />
@@ -162,7 +171,7 @@ export function PlanPanel({ state, today, ai, onAddHabit, onEdit, onExperiment }
                       )}
                       <Sources sources={sg.sources} />
                     </div>
-                    {!decided[i] && (
+                    {!decided[i] && sg.action !== "todo" && (
                       <div className="flex gap-2">
                         <Button size="sm" variant="mint" icon={Plus} onClick={() => accept(sg, i)}>
                           {sg.action === "experiment" ? "Începe" : sg.action === "add" ? "Adaugă" : "Aplică"}
