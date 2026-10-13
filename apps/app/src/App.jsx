@@ -28,6 +28,8 @@ import Companion from "./screens/Companion.jsx";
 import Group from "./screens/Group.jsx";
 import Planner from "./screens/Planner.jsx";
 import Stats from "./screens/Stats.jsx";
+import Objectives, { Celebration, ObjectiveEditor, ObjectivesMini, blankObjective, objectiveFromTemplate } from "./screens/Objectives.jsx";
+import { dueReminders, moveStep, newMarks, toggleStep, toggleSub } from "./lib/objectives.js";
 import SettingsScreen from "./screens/Settings.jsx";
 
 const STATE_VERSION = 2;
@@ -99,6 +101,8 @@ function Game() {
   const [confirm, setConfirm] = useState(null);
   const [focusSession, setFocusSession] = useState(loadSession); // the running Focus session, else null
   const [focusSetup, setFocusSetup] = useState(false);
+  const [goalEd, setGoalEd] = useState(null); // a draft goal for the editor
+  const [celebrate, setCelebrate] = useState(null); // { o, mark }
   const beginFocus = (pomodoro) => {
     const s = newSession(Date.now(), pomodoro);
     saveSession(s);
@@ -342,10 +346,109 @@ function Game() {
     carry: (period, key, list) =>
       update((s) => ({ ...s, goals: [...(s.goals || []), ...list.map((g) => ({ id: uid("o"), period, key, text: g.text, done: false, doneOn: null, createdAt: today }))].slice(-200) })),
   };
+  // ------------------------------------------------------------ goals (Obiective)
+  const editGoal = (id, fn) => update((s) => ({ ...s, objectives: (s.objectives || []).map((o) => (o.id === id ? fn(o) : o)) }));
+  const logEntry = (kind, text) => ({ id: uid("l"), day: today, kind, text });
+  // a goal step put in the plan is a to-do too; ticking either ticks both
+  const syncTodo = (s, o) => {
+    const step = o.steps.find((x) => x.todoId && !(s.todos || []).find((t) => t.id === x.todoId && !!t.done === !!x.done));
+    if (!step) return s;
+    return { ...s, todos: (s.todos || []).map((t) => (t.id === step.todoId ? { ...t, done: !!step.done, doneOn: step.done ? step.doneOn || today : null } : t)) };
+  };
+  const tickGoal = (id, fn) =>
+    update((s) => {
+      let next = s;
+      const objectives = (s.objectives || []).map((o) => {
+        if (o.id !== id) return o;
+        const n = fn(o);
+        next = syncTodo({ ...s }, n);
+        return n;
+      });
+      return { ...next, objectives };
+    });
+  const objectiveActions = {
+    toggleStep: (oid, sid) => tickGoal(oid, (o) => toggleStep(o, sid, today)),
+    toggleSub: (oid, sid, xid) => tickGoal(oid, (o) => toggleSub(o, sid, xid, today)),
+    addStep: (oid, title) => editGoal(oid, (o) => ({ ...o, steps: [...(o.steps || []), { id: uid("s"), title, done: false, doneOn: null, date: null, todoId: null, subs: [] }] })),
+    removeStep: (oid, sid) => editGoal(oid, (o) => ({ ...o, steps: o.steps.filter((x) => x.id !== sid) })),
+    moveStep: (oid, sid, dir) => editGoal(oid, (o) => moveStep(o, sid, dir)),
+    addSub: (oid, sid, title) =>
+      editGoal(oid, (o) => ({
+        ...o,
+        steps: o.steps.map((x) => (x.id === sid ? { ...x, done: false, doneOn: null, subs: [...(x.subs || []), { id: uid("x"), title, done: false, doneOn: null }] } : x)),
+      })),
+    removeSub: (oid, sid, xid) => editGoal(oid, (o) => ({ ...o, steps: o.steps.map((x) => (x.id === sid ? { ...x, subs: (x.subs || []).filter((y) => y.id !== xid) } : x)) })),
+    schedule: (oid, sid, date) =>
+      update((s) => {
+        const o = (s.objectives || []).find((x) => x.id === oid);
+        const step = o?.steps.find((x) => x.id === sid);
+        if (!step) return s;
+        let todos = s.todos || [];
+        let todoId = step.todoId && todos.some((t) => t.id === step.todoId) ? step.todoId : null;
+        if (!date) {
+          todos = todos.filter((t) => t.id !== todoId);
+          todoId = null;
+        } else if (todoId) todos = todos.map((t) => (t.id === todoId ? { ...t, date } : t));
+        else {
+          todoId = uid("t");
+          todos = [...todos, { id: todoId, title: `${o.title}: ${step.title}`.slice(0, 120), date, time: null, dur: 30, done: !!step.done, doneOn: step.doneOn || null, createdAt: today, goalRef: { oid, sid } }];
+        }
+        return { ...s, todos, objectives: s.objectives.map((x) => (x.id === oid ? { ...x, steps: x.steps.map((y) => (y.id === sid ? { ...y, date: date || null, todoId } : y)) } : x)) };
+      }),
+    setMetric: (oid, value) => editGoal(oid, (o) => ({ ...o, metric: { ...o.metric, value }, log: [...(o.log || []), logEntry("metric", `${value} ${o.metric.unit || ""}`.trim())].slice(-200) })),
+    addNote: (oid, text) => editGoal(oid, (o) => ({ ...o, log: [...(o.log || []), logEntry("note", text)].slice(-200) })),
+    finish: (oid) => editGoal(oid, (o) => ({ ...o, doneOn: today, log: [...(o.log || []), logEntry("done", "Obiectiv atins!")].slice(-200) })),
+    reopen: (oid) => editGoal(oid, (o) => ({ ...o, doneOn: null, seenMarks: (o.seenMarks || []).filter((m) => m < 100) })),
+    archive: (oid, archived) => editGoal(oid, (o) => ({ ...o, archived })),
+    remove: (oid) => {
+      update((s) => ({
+        ...s,
+        objectives: (s.objectives || []).filter((o) => o.id !== oid),
+        todos: (s.todos || []).map((t) => (t.goalRef?.oid === oid ? { ...t, goalRef: null } : t)),
+      }));
+      setFocusHabit(null);
+    },
+  };
+  function saveObjective(o, isNew) {
+    update((s) => {
+      const list = s.objectives || [];
+      // marks already passed when the goal is created are not celebrated
+      const seed = isNew ? { ...o, seenMarks: newMarks(o) } : o;
+      return { ...s, objectives: isNew ? [...list, seed] : list.map((x) => (x.id === o.id ? o : x)) };
+    });
+    setGoalEd(null);
+    if (isNew) go("goals", o.id);
+  }
+  // celebrate 25/50/75/100% once per goal
+  useEffect(() => {
+    if (!state?.objectives || celebrate) return;
+    for (const o of state.objectives) {
+      if (o.archived) continue;
+      const marks = newMarks(o);
+      if (!marks.length) continue;
+      const mark = marks[marks.length - 1];
+      editGoal(o.id, (x) => ({ ...x, seenMarks: [...new Set([...(x.seenMarks || []), ...marks])] }));
+      setCelebrate({ o, mark });
+      break;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state?.objectives]);
+  const goalReminders = useMemo(() => dueReminders(state?.objectives, today, now), [state?.objectives, today, now]);
+
   const todoActions = {
     add: (t) => saveTodo({ id: uid("t"), title: "", date: today, time: null, dur: 30, done: false, doneOn: null, createdAt: today, ...t }),
     // `day` is the occurrence of a repeating to-do (calendar and lists pass it); defaults to today
-    toggle: (id, day = today) => update((s) => ({ ...s, todos: s.todos.map((t) => (t.id === id ? toggleDone(t, day) : t)) })),
+    toggle: (id, day = today) =>
+      update((s) => {
+        const todos = s.todos.map((t) => (t.id === id ? toggleDone(t, day) : t));
+        const t = todos.find((x) => x.id === id);
+        if (!t?.goalRef || t.repeat) return { ...s, todos };
+        const { oid, sid } = t.goalRef;
+        const objectives = (s.objectives || []).map((o) =>
+          o.id !== oid ? o : { ...o, steps: o.steps.map((x) => (x.id === sid && !!x.done !== !!t.done ? toggleStep(o, sid, t.doneOn || today).steps.find((y) => y.id === sid) : x)) }
+        );
+        return { ...s, todos, objectives };
+      }),
     move: (id, date, time) => update((s) => ({ ...s, todos: s.todos.map((t) => (t.id === id ? { ...t, date, time: time === undefined ? t.time : time } : t)) })),
     remove: (id) => update((s) => ({ ...s, todos: s.todos.filter((t) => t.id !== id) })),
     rename: (id, title) => update((s) => ({ ...s, todos: s.todos.map((t) => (t.id === id ? { ...t, title } : t)) })),
@@ -438,7 +541,7 @@ function Game() {
   const reviewInfo = { ...review, run: runReview, reviewMin, now };
 
   return (
-    <Shell view={view} setView={go} onFocus={() => setFocusSetup(true)} onReview={() => !state.reviews?.[today] && runReview(today)} d={d} state={state} unread={groups.unread} mode={store.mode} saveStatus={store.saveStatus} now={now}>
+    <Shell view={view} setView={go} onFocus={() => setFocusSetup(true)} onReview={() => !state.reviews?.[today] && runReview(today)} d={d} state={state} unread={groups.unread} goalsDue={goalReminders.length} mode={store.mode} saveStatus={store.saveStatus} now={now}>
       {view === "home" && (
         <Dashboard
           {...common}
@@ -449,6 +552,8 @@ function Game() {
           onRevive={applyRevive}
           todo={todoActions}
           onAddHabit={() => setHabitEd({ tab: "catalog" })}
+          goalReminders={goalReminders}
+          goalActions={objectiveActions}
         />
       )}
       {view === "habits" && (
@@ -473,6 +578,16 @@ function Game() {
         />
       )}
       {view === "group" && <Group {...common} groups={groups} />}
+      {view === "goals" && (
+        <Objectives
+          {...common}
+          focus={focusHabit}
+          setFocus={setFocusHabit}
+          act={objectiveActions}
+          onCreate={(t) => setGoalEd(t ? objectiveFromTemplate(t, today, state) : blankObjective(today, state))}
+          onEdit={(o) => setGoalEd(o)}
+        />
+      )}
       {view === "plan" && <Planner {...common} todo={todoActions} goals={goalActions} onMoveHabit={moveHabit} />}
       {view === "stats" && <Stats {...common} mode={store.mode} saveStatus={store.saveStatus} onFocus={() => setFocusSetup(true)} />}
       {view === "settings" && (
@@ -529,6 +644,8 @@ function Game() {
           onClose={() => setHabitEd(null)}
         />
       )}
+      {goalEd && <ObjectiveEditor key={goalEd.id} initial={goalEd} state={state} onSave={saveObjective} onClose={() => setGoalEd(null)} />}
+      {celebrate && !queue[0] && <Celebration data={celebrate} state={state} onClose={() => setCelebrate(null)} />}
       {todoEd && <TodoEditor todo={todoEd} state={state} today={today} onSave={saveTodo} onDelete={(id) => (todoActions.remove(id), setTodoEd(null))} onClose={() => setTodoEd(null)} />}
       <Confirm
         open={!!confirm}
