@@ -6,7 +6,7 @@ import { MOMENT_META } from "../lib/moments.js";
 import { quoteById } from "../lib/quotes.js";
 import { LEVELS } from "../lib/engine.js";
 import { FocusStats } from "../components/FocusStats.jsx";
-import { InsightsPanel } from "../components/AiCoach.jsx";
+import { InsightsPanel, ReflectionPanel } from "../components/AiCoach.jsx";
 import { useStats } from "../lib/useStats.js";
 import { fmtDay, relDay } from "../lib/dates.js";
 
@@ -199,6 +199,7 @@ export default function Stats({ state, d, today, mode, saveStatus, ai, onFocus }
         </Panel>
       </div>
 
+      <ReflectionPanel state={state} today={today} ai={ai} />
       <InsightsPanel state={state} today={today} ai={ai} />
 
       <FocusStats sessions={state.focusSessions || []} today={today} onFocus={onFocus} />

@@ -110,7 +110,22 @@ function ResetWarning({ d }) {
   );
 }
 
-export default function Dashboard({ state, d, today, go, ai, months, recentStories, groups, review, onFocus, onCheck, onRevive, onAddHabit }) {
+function RescueCard({ rescue, onRescue }) {
+  if (!rescue) return null;
+  return (
+    <Panel tone="mint" className="flex flex-wrap items-center gap-3 p-4">
+      <span className="min-w-0 flex-1">
+        <span className="block text-sm font-extrabold text-ink">Un pas mic pentru revenire</span>
+        <span className="block text-sm font-semibold text-body">{rescue.reason}</span>
+      </span>
+      <Button variant="mint" size="sm" icon={CalendarCheck} onClick={() => onRescue?.(rescue)}>
+        Adaugă pasul
+      </Button>
+    </Panel>
+  );
+}
+
+export default function Dashboard({ state, d, today, go, ai, months, recentStories, groups, review, onFocus, onCheck, onRevive, onAddHabit, rescue, onRescue }) {
   const chestOpen = d.scheduled.length > 0 && d.doneScheduled === d.scheduled.length;
   const lastStory = [...recentStories].reverse().find((s) => s.story);
   return (
@@ -119,6 +134,7 @@ export default function Dashboard({ state, d, today, go, ai, months, recentStori
         <Hero state={state} d={d} today={today} onFocus={onFocus} />
         <ReviveBanner d={d} onRevive={onRevive} />
         <ResetWarning d={d} />
+        <RescueCard rescue={rescue} onRescue={onRescue} />
 
         <Panel className="p-4 sm:p-5">
           <SectionTitle
