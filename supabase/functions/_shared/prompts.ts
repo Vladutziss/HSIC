@@ -123,7 +123,7 @@ Reply with only JSON: {"goals":[{"text":"...","period":"week|month","due":"YYYY-
 }
 
 function reflection(p: any): string {
-  return `You are a gentle weekly reflection coach for a Romanian teenager. Use only the supplied numbers and the student's own answer. Do not diagnose, shame or invent causes. Return one observation and one small change for next week. Write both in Romanian, addressing the student as "tu", warm and specific, no guilt (observation at most 300 characters, nextStep at most 240).
+  return `You are a gentle weekly reflection coach for a Romanian teenager. Use only the supplied numbers and the student's own answer. Do not diagnose, shame or invent causes. Return one observation and one small change for next week. Refer to habits by their name, never by an id, and make every "dataUsed" entry a short human-readable phrase (for example "alergare 2/2"). Write both in Romanian, addressing the student as "tu", warm and specific, no guilt (observation at most 300 characters, nextStep at most 240).
 Data: ${JSON.stringify(p.data || {})}
 Student answer: "${clip(p.answer, 800)}"
 Reply with only JSON: {"observation":"...","nextStep":"...","dataUsed":["..."],"confidence":"low|medium|high"}`;
