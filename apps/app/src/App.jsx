@@ -28,6 +28,7 @@ import Onboarding from "./screens/Onboarding.jsx";
 import Dashboard from "./screens/Dashboard.jsx";
 import Habits from "./screens/Habits.jsx";
 import Companion from "./screens/Companion.jsx";
+import Chat from "./screens/Chat.jsx";
 import Group from "./screens/Group.jsx";
 import Planner from "./screens/Planner.jsx";
 import Stats from "./screens/Stats.jsx";
@@ -520,6 +521,15 @@ function Game() {
           {...common}
           loadMonth={store.loadMonth}
           onRename={(name) => update((s) => ({ ...s, companion: { ...s.companion, name } }))}
+        />
+      )}
+      {view === "chat" && (
+        <Chat
+          {...common}
+          goals={goalActions}
+          todo={todoActions}
+          agent={agentActions}
+          onAddHabit={saveHabit}
         />
       )}
       {view === "group" && <Group {...common} groups={groups} />}

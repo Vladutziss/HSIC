@@ -170,7 +170,7 @@ Reply with only JSON: {"title":"...","story":"..."}`;
 
 // ------------------------------------------------------------ coach (server build only, no artifact copy of the prompts)
 
-async function askCoach(kind, params, signal) {
+export async function askCoach(kind, params, signal) {
   const server = await serverClient();
   if (!server) throw { code: "unavailable" };
   return askServer(server, kind, params, signal);

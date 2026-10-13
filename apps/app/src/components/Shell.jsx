@@ -9,6 +9,7 @@ import {
   Cloud,
   CloudOff,
   Egg,
+  MessageSquare,
   FlaskConical,
   Flame,
   HardDrive,
@@ -30,6 +31,7 @@ export const NAV = [
   { id: "home", label: "Acasă", icon: House },
   { id: "habits", label: "Obiceiuri", icon: ScrollText },
   { id: "companion", label: "Molt", icon: Egg },
+  { id: "chat", label: "Chat", icon: MessageSquare },
   { id: "plan", label: "Plan", icon: CalendarDays },
   { id: "group", label: "Grup", icon: Users },
   { id: "stats", label: "Statistici", icon: ChartLine },
@@ -267,7 +269,7 @@ export function Shell({ view, setView, onReview, onFocus, d, state, unread, mode
       </div>
 
       <nav
-        className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-7 border-t border-edge bg-deep/95 backdrop-blur lg:hidden"
+        className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-8 border-t border-edge bg-deep/95 backdrop-blur lg:hidden"
         style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
         aria-label="Navigare"
       >

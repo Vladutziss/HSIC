@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { BookOpenText, Check, Lock, Pencil, ScrollText, Sparkles, Zap } from "lucide-react";
+import { BookOpenText, Check, Lock, Pencil, ScrollText, Sparkles, Zap, MessageSquare } from "lucide-react";
 import { Bar, Button, Chip, Empty, Panel, SectionTitle, Stat } from "../components/ui.jsx";
 import { Sprite, eggCrack } from "../components/Sprite.jsx";
 import { moodLine } from "../components/Cards.jsx";
@@ -16,7 +16,7 @@ const STAGE_TEXT = {
   legend: "Contur de aur și aură. Rar întâlnit.",
 };
 
-export default function Companion({ state, d, today, months, loadMonth, onRename }) {
+export default function Companion({ state, d, today, months, loadMonth, onRename, go }) {
   const c = d.companion;
   const path = state.profile?.path || "sport";
   const p = PATHS[path];
@@ -78,6 +78,11 @@ export default function Companion({ state, d, today, months, loadMonth, onRename
                 </div>
               )}
               <p className="mt-2 text-[15px] font-semibold text-body">{moodLine(c, c.name)}</p>
+              <div className="mt-3">
+                <Button variant="violet" size="sm" icon={MessageSquare} onClick={() => go?.("chat")}>
+                  Vorbește cu {c.name || "Moltul"} (Chat AI)
+                </Button>
+              </div>
             </div>
             {c.next ? (
               <div>

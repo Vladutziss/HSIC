@@ -144,18 +144,31 @@ export async function loadActions(client, { limit = 30 } = {}) {
   return (data || []).map(mapRow);
 }
 
+
 /**
- * Logs a to-do the app itself proposes (daily plan step, rescue) as a pending `create_todo` (or `plan_focus`, a Focus session) row, so it gets
- * the same apply / undo / outcome path as the agent's. Returns the mapped action.
+ * Logs an action the app itself proposes (daily plan step, rescue, chat plan) as a pending row, so it gets the same
+ * apply / undo / outcome path as the agent's. `kind` is one of SUPPORTED; `payload` is what planApply reads
+ * (`explanation` is merged into it). Returns the mapped action.
  * `explanation` = {dataUsed, confidence, expectedEffect}, shown by AgentLog.
  */
-export async function recordTodo(client, { title, date, dur, reason, explanation = null, focus = false }) {
-  const payload = { title, date, dur, ...(explanation ? { explanation } : {}) };
-  const row = { run_id: `ui-${Date.now()}`, kind: focus ? "plan_focus" : "create_todo", autonomy: "confirm", status: "pending", payload, reason: String(reason || title).slice(0, 400) };
+export async function recordAction(client, { kind, payload = {}, reason, explanation = null, habitId = null }) {
+  const row = {
+    run_id: `ui-${Date.now()}`,
+    kind,
+    autonomy: "confirm",
+    status: "pending",
+    payload: { ...payload, ...(explanation ? { explanation } : {}) },
+    reason: String(reason || payload.title || payload.name || kind).slice(0, 400),
+    ...(habitId ? { habit_id: habitId } : {}),
+  };
   const { data, error } = await need(client).from("agent_actions").insert(row).select().single();
   if (error || !data) throw { code: "db_error" };
   return mapRow(data);
 }
+
+/** A to-do (or, with `focus`, a Focus session) the app proposes: recordAction for create_todo / plan_focus. */
+export const recordTodo = (client, { title, date, dur, reason, explanation = null, focus = false }) =>
+  recordAction(client, { kind: focus ? "plan_focus" : "create_todo", payload: { title, date, dur }, reason: reason || title, explanation });
 
 /** Is there already an open to-do with this title that day? Keeps repeated taps from piling up copies. */
 export const hasOpenTodo = (state, title, date) => (state?.todos || []).some((t) => !t.done && t.date === date && t.title === title);
