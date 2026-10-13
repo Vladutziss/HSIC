@@ -102,7 +102,7 @@ function CatalogTab({ state, today, onAdd }) {
           </button>
         ))}
       </div>
-      {full && <p className="rounded-xl bg-ember/10 p-3 text-sm font-semibold text-ember ring-1 ring-ember/30">Ai deja {MAX_HABITS} obiceiuri active. Arhivează unul ca să adaugi altul.</p>}
+      {full && <p className="rounded-xl bg-ember/10 p-3 text-sm font-semibold text-ember ring-1 ring-ember/30">Ai deja {MAX_HABITS} obiceiuri active. Arhivează sau șterge unul ca să adaugi altul.</p>}
       <div className="grid gap-2 sm:grid-cols-2">
         {list.map((c) => {
           const Icon = iconFor(c.icon);
@@ -282,7 +282,7 @@ export function HabitEditor({ open, initial, tab: initialTab = "catalog", state,
         <CatalogTab state={state} today={today} onAdd={(h) => onSave(h, { keepOpen: true })} />
       ) : (
         <>
-          {full && <p className="mb-4 rounded-xl bg-ember/10 p-3 text-sm font-semibold text-ember ring-1 ring-ember/30">Ai deja {MAX_HABITS} obiceiuri active.</p>}
+          {full && <p className="mb-4 rounded-xl bg-ember/10 p-3 text-sm font-semibold text-ember ring-1 ring-ember/30">Ai deja {MAX_HABITS} obiceiuri active. Arhivează sau șterge unul ca să adaugi altul.</p>}
           <HabitForm draft={draft} setDraft={setDraft} />
           <div className="mt-4 flex items-center gap-2 text-xs font-semibold text-dim">
             <Chip tone="gold">+{DIFF[draft.diff].xp} momentum pe bifă</Chip>
