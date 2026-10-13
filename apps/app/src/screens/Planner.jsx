@@ -22,6 +22,7 @@ import {
   relDay,
 } from "../lib/dates.js";
 import { GoalsCard } from "../components/Goals.jsx";
+import { Select } from "../components/Select.jsx";
 import { c } from "../lib/themes.js";
 import { firstOccurrence, occursOn, repeatLabel, todosByDay, viewOn } from "../lib/todos.js";
 import { nextAssignments, nextExams, normalizeAssignments, normalizeExams, normalizeSession, schoolPlanner, studiedMinutes } from "../lib/schoolPlanner.js";
@@ -509,25 +510,26 @@ function DailyPlanPanel({ state, today, ai, agent }) {
   const [s, run] = useCoach((signal) => dailyPlan(input, signal));
   if (!ai?.server) return null;
   return (
-    <Shell icon={Sparkles} title="Planul tău pentru azi" sub="Pași mici, aleși din ce ai deja programat" state={s} run={run} label="Construiește planul">
-      <div className="mb-3 flex flex-wrap items-end gap-2">
-        <label className="text-xs font-extrabold text-dim">
-          Timp disponibil
-          <select className="field mt-1 block min-w-28" value={minutes} onChange={(e) => setMinutes(Number(e.target.value))}>
-            <option value={30}>30 minute</option>
-            <option value={60}>1 oră</option>
-            <option value={120}>2 ore</option>
-          </select>
-        </label>
-        <label className="text-xs font-extrabold text-dim">
-          Energie
-          <select className="field mt-1 block min-w-28" value={energy} onChange={(e) => setEnergy(e.target.value)}>
-            <option value="low">scăzută</option>
-            <option value="medium">medie</option>
-            <option value="high">ridicată</option>
-          </select>
-        </label>
-      </div>
+    <Shell
+      icon={Sparkles}
+      title="Planul tău pentru azi"
+      sub="Pași mici, aleși din ce ai deja programat"
+      state={s}
+      run={run}
+      label="Construiește planul"
+      input={
+        <div className="mb-3 flex flex-wrap items-end gap-3">
+          <div className="w-40">
+            <span className="mb-1.5 block text-xs font-extrabold uppercase tracking-wider text-dim">Timp disponibil</span>
+            <Select id="plan-minutes" value={minutes} onChange={setMinutes} options={[{ value: 30, label: "30 minute" }, { value: 60, label: "1 oră" }, { value: 120, label: "2 ore" }]} />
+          </div>
+          <div className="w-40">
+            <span className="mb-1.5 block text-xs font-extrabold uppercase tracking-wider text-dim">Energie</span>
+            <Select id="plan-energy" value={energy} onChange={setEnergy} options={[{ value: "low", label: "scăzută" }, { value: "medium", label: "medie" }, { value: "high", label: "ridicată" }]} />
+          </div>
+        </div>
+      }
+    >
       {error && <p className="mb-2 text-xs font-bold text-rose">{error}</p>}
       <ol className="space-y-2">
         {s.data?.map((step, i) => {
@@ -561,6 +563,12 @@ function HomeworkPanel({ state, today, ai, onStateChange }) {
   const [text, setText] = useState("");
   const [s, run] = useCoach((signal) => parseHomework(text, today, signal));
   const [minutes, setMinutes] = useState(25);
+  const [hint, setHint] = useState("");
+  const go = () => {
+    if (!text.trim()) return setHint("Scrie mai întâi ce ai de făcut, de exemplu: „Test la mate vineri”.");
+    setHint("");
+    run();
+  };
   const assignments = nextAssignments(state, today);
   const exams = nextExams(state, today);
   if (!ai?.server) return null;
@@ -598,11 +606,21 @@ function HomeworkPanel({ state, today, ai, onStateChange }) {
   const dayLabel = (n) => (n === 0 ? "azi" : n === 1 ? "mâine" : `în ${n} zile`);
   const studiedToday = studiedMinutes(state, today);
   return (
-    <Shell icon={CalendarCheck} title="Teme și examene" sub="Scrie-le natural, iar AI-ul le transformă în pași planificabili" state={s} run={() => text.trim() && run()} label="Interpretează">
-      <div className="flex gap-2">
-        <input className="field min-w-0 flex-1" value={text} onChange={(e) => setText(e.target.value)} placeholder="Test la mate vineri, proiect luni…" aria-label="Teme și examene" />
-        <Button variant="mint" icon={Sparkles} onClick={run} disabled={!text.trim() || s.status === "busy"} busy={s.status === "busy"} aria-label="Interpretează temele" />
-      </div>
+    <Shell
+      icon={CalendarCheck}
+      title="Teme și examene"
+      sub="Scrie-le natural, iar AI-ul le transformă în pași planificabili"
+      state={s}
+      run={go}
+      label="Interpretează"
+      hint={hint}
+      input={
+        <div className="flex gap-2">
+          <input className="field min-w-0 flex-1" value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => e.key === "Enter" && go()} placeholder="Test la mate vineri, proiect luni…" aria-label="Teme și examene" />
+          <Button variant="mint" icon={Sparkles} onClick={go} busy={s.status === "busy"} aria-label="Interpretează temele" />
+        </div>
+      }
+    >
       {s.data?.length > 0 && (
         <div className="mt-3 space-y-2">
           <p className="text-xs font-extrabold uppercase tracking-wide text-dim">Propuneri de salvat</p>
@@ -640,9 +658,9 @@ function HomeworkPanel({ state, today, ai, onStateChange }) {
       {(assignments.length > 0 || exams.length > 0) && (
         <div className="mt-2 flex items-center gap-2 text-[11px] font-bold text-dim">
           <label htmlFor="study-minutes">Sesiune de studiu</label>
-          <select id="study-minutes" className="field !w-auto !py-0.5 text-[11px]" value={minutes} onChange={(e) => setMinutes(Number(e.target.value))}>
-            {[15, 25, 45, 60].map((m) => <option key={m} value={m}>{m} min</option>)}
-          </select>
+          <div className="w-28">
+            <Select id="study-minutes" value={minutes} onChange={setMinutes} options={[15, 25, 45, 60].map((m) => ({ value: m, label: `${m} min` }))} />
+          </div>
           {studiedToday > 0 && <span>Azi: {studiedToday} min</span>}
         </div>
       )}
@@ -653,8 +671,15 @@ function HomeworkPanel({ state, today, ai, onStateChange }) {
 function GoalDecomposer({ today, ai, goals }) {
   const [text, setText] = useState("");
   const [s, run] = useCoach((signal) => decomposeGoal(text, signal));
-  if (!ai?.server) return null;
   const [skip, setSkip] = useState([]);
+  const [hint, setHint] = useState("");
+  if (!ai?.server) return null;
+  const go = () => {
+    if (!text.trim()) return setHint("Scrie mai întâi un obiectiv, de exemplu: „Vreau să învăț programare”.");
+    setHint("");
+    setSkip([]);
+    run();
+  };
   const keyed = (goal) => ({ ...goal, key: periodKey(goal.period, today) });
   const save = (goal) => goals?.add({ period: goal.period, key: periodKey(goal.period, today), text: goal.text });
   const keep = (s.data || []).filter((_, i) => !skip.includes(i));
@@ -664,11 +689,21 @@ function GoalDecomposer({ today, ai, goals }) {
     setSkip([]);
   };
   return (
-    <Shell icon={Sparkles} title="Din intenție în pași" sub="Un obiectiv vag devine câteva acțiuni realizabile" state={s} run={() => text.trim() && run()} label="Descompune">
-      <div className="flex gap-2">
-        <input className="field min-w-0 flex-1" value={text} onChange={(e) => setText(e.target.value)} placeholder="Vreau să învăț programare…" aria-label="Obiectiv de descompus" />
-        <Button variant="violet" icon={Sparkles} onClick={run} disabled={!text.trim() || s.status === "busy"} busy={s.status === "busy"} aria-label="Descompune obiectivul" />
-      </div>
+    <Shell
+      icon={Sparkles}
+      title="Din intenție în pași"
+      sub="Un obiectiv vag devine câteva acțiuni realizabile"
+      state={s}
+      run={go}
+      label="Descompune"
+      hint={hint}
+      input={
+        <div className="flex gap-2">
+          <input className="field min-w-0 flex-1" value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => e.key === "Enter" && go()} placeholder="Vreau să învăț programare…" aria-label="Obiectiv de descompus" />
+          <Button variant="violet" icon={Sparkles} onClick={go} busy={s.status === "busy"} aria-label="Descompune obiectivul" />
+        </div>
+      }
+    >
       {s.data?.length > 0 && (
         <div className="mt-3 space-y-2">
           {s.data.map((goal, i) =>
