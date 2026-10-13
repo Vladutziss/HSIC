@@ -14,6 +14,7 @@ test("milestone set links children to the parent and progress counts them", () =
   let n = 0;
   const set = milestoneSet({ period: "month", key: "2026-10", text: "P" }, [{ period: "week", key: "w", text: "a" }, { period: "week", key: "w", text: "b", due: "2026-10-20" }], (g) => ({ id: `o${++n}`, done: false, ...g }));
   assert.equal(set.length, 3);
+  assert.ok(set.every((g) => g.period === "month" && g.key === "2026-10")); // one slice: the parent and its steps appear together
   assert.ok(set.slice(1).every((c) => c.parentId === set[0].id));
   set[1].done = true;
   assert.deepEqual(progressOf(set, set[0].id), { done: 1, total: 2 });
