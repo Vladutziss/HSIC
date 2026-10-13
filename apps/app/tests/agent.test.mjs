@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readdirSync, readFileSync } from "node:fs";
-import { parseKnowledge, validateProposals } from "../../../supabase/functions/_shared/agent-core.js";
+import { parseKnowledge, recommendationExplanation, validateProposals } from "../../../supabase/functions/_shared/agent-core.js";
 
 const habits = [
   { id: "h1", name: "Alergat" },
@@ -29,6 +29,15 @@ test("a source the agent did not retrieve is never cited", () => {
     8
   );
   assert.deepEqual(p.sources, ["sheeran-2025"]);
+});
+
+test("recommendation explanation is bounded and optional", () => {
+  assert.deepEqual(recommendationExplanation({ dataUsed: ["completion rate", "completion rate", "x".repeat(200)], confidence: "high", expectedEffect: "  easier start  " }), {
+    dataUsed: ["completion rate", "x".repeat(99) + "…"],
+    confidence: "high",
+    expectedEffect: "easier start",
+  });
+  assert.deepEqual(recommendationExplanation(), { dataUsed: [], confidence: "unknown", expectedEffect: null });
 });
 
 test("a proposal can only change a habit that exists, and add only while a slot is free", () => {
@@ -72,4 +81,35 @@ test("an experiment names only an existing habit and a known factor, one per run
   );
   assert.equal(out.length, 1);
   assert.deepEqual(out[0], { action: "experiment", habitId: "h1", factor: "if_then", reason: "0 din 4 miercurea", sources: ["sheeran-2025"] });
+});
+
+test("schoolSnapshot: upcoming exams with daysLeft, open assignments, 14-day study minutes per subject", async () => {
+  const { schoolSnapshot } = await import("../../../supabase/functions/_shared/agent-core.js");
+  const s = schoolSnapshot(
+    {
+      schoolPlanner: {
+        exams: [{ subject: "Mate", title: "Test", date: "2026-10-16" }, { subject: "Fiz", title: "Vechi", date: "2026-10-01" }],
+        assignments: [{ title: "Fișă", subject: "Mate", due: "2026-10-14", estimatedMinutes: 40 }, { title: "Făcută", due: "2026-10-14", done: true }],
+        sessions: [
+          { subject: "Mate", day: "2026-10-12", minutes: 30 },
+          { subject: "mate", day: "2026-10-01", minutes: 20 },
+          { subject: "Fiz", day: "2026-09-20", minutes: 90 },
+        ],
+      },
+    },
+    "2026-10-13",
+  );
+  assert.deepEqual(s.exams, [{ subject: "Mate", title: "Test", date: "2026-10-16", daysLeft: 3 }]);
+  assert.equal(s.assignments.length, 1);
+  assert.equal(s.assignments[0].daysLeft, 1);
+  assert.deepEqual(s.studyMinutes14d, [{ subject: "Mate", minutes: 50 }]);
+  assert.equal(schoolSnapshot({}, "2026-10-13").hasData, false);
+});
+
+test("validateProposals keeps a study todo only with title, a date and 10-60 minutes", () => {
+  const ok = { action: "todo", title: "Recapitulare Mate", date: "2026-10-14", dur: 25, reason: "Examen peste 3 zile" };
+  const out = validateProposals([ok, { ...ok, dur: 5 }, { ...ok, date: "mâine" }, { ...ok, title: "" }], [], new Set(), 3);
+  assert.equal(out.length, 1);
+  assert.equal(out[0].action, "todo");
+  assert.equal(out[0].dur, 25);
 });

@@ -8,6 +8,7 @@ const REJECT_REASONS = ["Nu am timp", "E prea greu", "Nu mi se potrivește"];
 const STATUS = { applied: ["mint", "Aplicat"], rejected: ["dim", "Respins"], undone: ["dim", "Anulat"], failed: ["rose", "Nu s-a putut aplica"], pending: ["gold", "În așteptare"] };
 
 const pct = (x) => (typeof x === "number" ? Math.round(x <= 1 ? x * 100 : x) : null);
+const CONFIDENCE = { high: "ridicată", medium: "medie", low: "scăzută", unknown: "necunoscută" };
 
 /** What the agent did, in one line. */
 export function describe(a, state) {
@@ -17,6 +18,8 @@ export function describe(a, state) {
   switch (a.kind) {
     case "create_todo":
       return `To-do: „${p.title || p.name || "fără titlu"}”`;
+    case "plan_focus":
+      return `Focus: „${p.title || p.name || "fără titlu"}”${p.dur ? `, ${p.dur} min` : ""}`;
     case "change_habit":
       return `Schimbă „${name}”${p.diff ? `, dificultate ${p.diff}` : ""}${Array.isArray(p.days) ? `, ${scheduleLabel(p.days).toLowerCase()}` : ""}`;
     case "add_habit":
@@ -43,6 +46,10 @@ function outcomeText(a) {
       return `Rata ta a scăzut${range}.`;
     case "no_clear_change":
       return "Nu se vede o diferență clară.";
+    case "todo_done":
+      return `Ai făcut pasul${o.activity?.rate != null ? ` · ${o.activity.rate} bife pe zi în jurul lui, față de ${o.activity.baseline} înainte` : ""}.`;
+    case "todo_open":
+      return "Pasul nu a fost bifat.";
     case "insufficient":
       return "Prea puține zile ca să spunem ceva.";
     default:
@@ -60,6 +67,16 @@ function Item({ a, state, children }) {
         <Chip tone={tone}>{label}</Chip>
       </div>
       {a.reason && <p className="mt-1 text-xs font-semibold text-dim">{a.reason}</p>}
+      {a.explanation && (
+        <details className="mt-2 text-xs font-semibold text-dim">
+          <summary className="cursor-pointer font-extrabold text-ink">De ce această recomandare?</summary>
+          <div className="mt-1.5 space-y-1">
+            <p>Siguranță estimată: {CONFIDENCE[a.explanation.confidence] || CONFIDENCE.unknown}.</p>
+            {a.explanation.dataUsed?.length > 0 && <p>Date folosite: {a.explanation.dataUsed.join(" · ")}.</p>}
+            {a.explanation.expectedEffect && <p>Efect urmărit: {a.explanation.expectedEffect}</p>}
+          </div>
+        </details>
+      )}
       {effect && (
         <p className="mt-1 text-xs font-bold text-ink">
           {effect}
