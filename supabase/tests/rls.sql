@@ -376,4 +376,43 @@ begin
   raise notice 'RLS school planner checks passed';
 end $$;
 
+-- ---- chat messages (0024): owner-only select/insert/delete, no update
+do $$
+declare
+  n int;
+  blocked boolean;
+begin
+  perform set_config('request.jwt.claims', '{"sub":"user_aaa","role":"authenticated"}', true);
+  set local role authenticated;
+  insert into public.chat_messages (role, content) values ('user', 'Salut');
+  insert into public.chat_messages (role, content, plan) values ('assistant', 'Iata un plan', '{"steps":[]}');
+  select count(*) into n from public.chat_messages;
+  if n <> 2 then raise exception 'A should see her own chat messages, saw %', n; end if;
+  reset role;
+
+  perform set_config('request.jwt.claims', '{"sub":"user_bbb","role":"authenticated"}', true);
+  set local role authenticated;
+  select count(*) into n from public.chat_messages;
+  if n <> 0 then raise exception 'LEAK: B reads % chat messages of A', n; end if;
+  blocked := false;
+  begin
+    insert into public.chat_messages (user_id, role, content) values ('user_aaa', 'user', 'x');
+  exception when insufficient_privilege then blocked := true;
+  end;
+  if not blocked then raise exception 'LEAK: B inserted a chat message as A'; end if;
+  delete from public.chat_messages;
+  get diagnostics n = row_count;
+  if n <> 0 then raise exception 'LEAK: B deleted % chat messages of A', n; end if;
+  reset role;
+
+  perform set_config('request.jwt.claims', '{"sub":"user_aaa","role":"authenticated"}', true);
+  set local role authenticated;
+  delete from public.chat_messages;
+  get diagnostics n = row_count;
+  if n <> 2 then raise exception 'A should delete her 2 chat messages, deleted %', n; end if;
+  reset role;
+
+  raise notice 'RLS chat messages checks passed';
+end $$;
+
 rollback;
