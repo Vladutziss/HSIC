@@ -25,7 +25,9 @@ export function useCoach(ask) {
   return [s, run];
 }
 
-export function Shell({ icon, title, sub, state, run, label, children, always }) {
+// `input` is always visible (what the player types); `children` is the answer, shown once the AI replied;
+// `hint` says why a tap did nothing yet.
+export function Shell({ icon, title, sub, state, run, label, children, always, input, hint }) {
   return (
     <Panel tone="violet" className="p-4 sm:p-5">
       <SectionTitle
@@ -40,8 +42,10 @@ export function Shell({ icon, title, sub, state, run, label, children, always })
       >
         {title}
       </SectionTitle>
+      {input}
+      {hint && <p className="mt-2 text-xs font-bold text-rose" role="status">{hint}</p>}
       {state.status === "busy" && <Skeleton className="h-24" />}
-      {state.status === "error" && <p className="text-sm font-semibold text-dim">{state.error}</p>}
+      {state.status === "error" && <p className="mt-2 text-sm font-semibold text-dim">{state.error}</p>}
       {state.status === "done" && children}
       {always}
     </Panel>
@@ -71,6 +75,7 @@ export function ReflectionPanel({ state, today, ai }) {
   const data = useMemo(() => coachData(state, today), [state, today]);
   const [answer, setAnswer] = useState("");
   const [history, setHistory] = useState([]);
+  const [hint, setHint] = useState("");
   const server = !!ai?.server;
   useEffect(() => {
     if (!server) return;
@@ -87,9 +92,23 @@ export function ReflectionPanel({ state, today, ai }) {
     return r;
   });
   if (!ai?.server || !hasHistory(data)) return null;
+  const go = () => {
+    if (!answer.trim()) return setHint("Scrie mai întâi câteva cuvinte despre săptămâna ta.");
+    setHint("");
+    run();
+  };
   return (
-    <Shell icon={BookOpen} title="Reflecție de săptămână" sub="Spune ce te-a ajutat sau ce te-a blocat, iar coach-ul propune un singur pas" state={s} run={() => answer.trim() && run()} label="Reflectează" always={history.length > 0 && <ReflectionHistory items={history} />}>
-      <textarea className="field min-h-20 w-full resize-y" value={answer} onChange={(e) => setAnswer(e.target.value)} placeholder="Ce ți-a făcut săptămâna mai ușoară sau mai grea?" aria-label="Răspuns pentru reflecție" />
+    <Shell
+      icon={BookOpen}
+      title="Reflecție de săptămână"
+      sub="Spune ce te-a ajutat sau ce te-a blocat, iar coach-ul propune un singur pas"
+      state={s}
+      run={go}
+      label="Reflectează"
+      hint={hint}
+      always={history.length > 0 && <ReflectionHistory items={history} />}
+      input={<textarea className="field mt-1 min-h-20 w-full resize-y" value={answer} onChange={(e) => setAnswer(e.target.value)} placeholder="Ce ți-a făcut săptămâna mai ușoară sau mai grea?" aria-label="Răspuns pentru reflecție" />}
+    >
       {s.data && (
         <div className="mt-3 inset p-3 text-sm font-semibold text-body">
           <p><strong className="text-ink">Observație:</strong> {s.data.observation}</p>
