@@ -116,14 +116,14 @@ Reply with only JSON: {"assignments":[{"type":"assignment|exam","title":"...","s
 }
 
 function goalDecompose(p: any): string {
-  return `You help a Romanian teenager turn one vague goal into three small goals for the next month. Do not promise outcomes and do not invent a schedule. Keep every step concrete and possible in less than one week.
+  return `You help a Romanian teenager turn one vague goal into three small goals for the next month. Do not promise outcomes and do not invent a schedule. Keep every step concrete and possible in less than one week. Write every "text" and "criteria" in Romanian, addressing the student as "tu" where needed.
 Goal: "${clip(p.goal, 300)}"
 Optionally add "due" (YYYY-MM-DD, only when a date is clearly implied) and "criteria" (one short sentence: how the student will know the step is done).
 Reply with only JSON: {"goals":[{"text":"...","period":"week|month","due":"YYYY-MM-DD","criteria":"..."}]}`;
 }
 
 function reflection(p: any): string {
-  return `You are a gentle weekly reflection coach for a Romanian teenager. Use only the supplied numbers and the student's own answer. Do not diagnose, shame or invent causes. Return one observation and one small change for next week.
+  return `You are a gentle weekly reflection coach for a Romanian teenager. Use only the supplied numbers and the student's own answer. Do not diagnose, shame or invent causes. Return one observation and one small change for next week. Write both in Romanian, addressing the student as "tu", warm and specific, no guilt (observation at most 300 characters, nextStep at most 240).
 Data: ${JSON.stringify(p.data || {})}
 Student answer: "${clip(p.answer, 800)}"
 Reply with only JSON: {"observation":"...","nextStep":"...","dataUsed":["..."],"confidence":"low|medium|high"}`;
