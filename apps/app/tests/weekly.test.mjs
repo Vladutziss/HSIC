@@ -115,3 +115,39 @@ test("deterministic, JSON-safe, every action has reason, sources, baseline", () 
     assert.match(a.reason, /asociație/);
   }
 });
+
+// ---- exam_recap rule
+const school = (exams, sessions = []) => ({ ...state([habit("a")]), schoolPlanner: { assignments: [], exams, sessions } });
+const exam = (subject, date, extra = {}) => ({ id: `e-${subject}-${date}`, subject, title: `Test ${subject}`, date, done: false, ...extra });
+
+test("exam recap: exam in 3 days, no study this week -> confirm create_todo tomorrow, 25 min", () => {
+  const r = plan({ state: school([exam("Mate", "2026-10-14")]) });
+  assert.equal(r.actions.length, 1);
+  const a = r.actions[0];
+  assert.equal(a.kind, "create_todo");
+  assert.equal(a.autonomy, "confirm");
+  assert.deepEqual(a.payload, { title: "Recapitulare Mate", date: "2026-10-12", dur: 25 });
+});
+
+test("exam recap does not fire with study logged, exam beyond 7 days, past/done exam, or no subject", () => {
+  const studied = school([exam("Mate", "2026-10-14")], [{ subject: "mate", day: "2026-10-08", minutes: 20 }]);
+  assert.equal(plan({ state: studied }).actions.length, 0);
+  const old = school([exam("Mate", "2026-10-14")], [{ subject: "Mate", day: "2026-10-04", minutes: 60 }]); // 7 days ago: outside the window
+  assert.equal(plan({ state: old }).actions.length, 1);
+  assert.equal(plan({ state: school([exam("Mate", "2026-10-19")]) }).actions.length, 0);
+  assert.equal(plan({ state: school([exam("Mate", "2026-10-09"), exam("Fiz", "2026-10-14", { done: true })]) }).actions.length, 0);
+  assert.equal(plan({ state: school([exam("", "2026-10-14")]) }).actions.length, 0);
+});
+
+test("exam recap dedupes by subject and open to-do, and respects the action cap and rejections", () => {
+  const two = plan({ state: school([exam("Mate", "2026-10-14"), exam("mate", "2026-10-15")]) });
+  assert.equal(two.actions.length, 1);
+  const dup = plan({ state: { ...school([exam("Mate", "2026-10-14")]), todos: [{ id: "t", title: "Recapitulare Mate", date: "2026-10-12", done: false }] } });
+  assert.equal(dup.actions.length, 0);
+  assert.equal(dup.skipped[0].rule, "exam_recap");
+  const capped = plan({ state: school([exam("Mate", "2026-10-14"), exam("Fiz", "2026-10-15")]), maxActions: 1 });
+  assert.equal(capped.actions.length, 1);
+  assert.equal(capped.skipped.at(-1).rule, "exam_recap");
+  const rej = plan({ state: school([exam("Mate", "2026-10-14")]), feedback: { rejectedByAction: { create_todo: 2 } } });
+  assert.equal(rej.actions.length, 0);
+});

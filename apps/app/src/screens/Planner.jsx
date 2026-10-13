@@ -1,6 +1,9 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { CalendarDays, CalendarPlus, CalendarRange, Check, ChevronLeft, ChevronRight, Clock, GripVertical, ListTodo, Plus, Repeat } from "lucide-react";
+import { CalendarCheck, CalendarDays, CalendarPlus, CalendarRange, Check, ChevronLeft, ChevronRight, Clock, GripVertical, ListTodo, Timer, Plus, Repeat, Sparkles } from "lucide-react";
 import { Button, CheckButton, Chip, Panel, SectionTitle, Tabs } from "../components/ui.jsx";
+import { Shell, useCoach } from "../components/AiCoach.jsx";
+import { aiErrorCopy, dailyPlan, decomposeGoal, parseHomework } from "../lib/ai.js";
+import { hasOpenTodo } from "../lib/agentActions.js";
 import { iconFor } from "../components/icons.js";
 import { isScheduled } from "../lib/engine.js";
 import {
@@ -21,6 +24,8 @@ import {
 import { GoalsCard } from "../components/Goals.jsx";
 import { c } from "../lib/themes.js";
 import { firstOccurrence, occursOn, repeatLabel, todosByDay, viewOn } from "../lib/todos.js";
+import { nextAssignments, nextExams, normalizeAssignments, normalizeExams, normalizeSession, schoolPlanner, studiedMinutes } from "../lib/schoolPlanner.js";
+import { periodKey } from "../lib/goals.js";
 
 const START = 6 * 60;
 const END = 24 * 60;
@@ -56,7 +61,7 @@ function layout(items) {
   return out;
 }
 
-function TodoRow({ t, today, habits, todo }) {
+function TodoRow({ t, today, habits, todo, onFocusTodo }) {
   const h = habits.find((x) => x.id === t.habitId);
   return (
     <li
@@ -91,11 +96,16 @@ function TodoRow({ t, today, habits, todo }) {
           {h && <span style={{ color: h.color }}>· {h.name}</span>}
         </span>
       </button>
+      {t.focus && !t.done && onFocusTodo && (
+        <Button size="sm" variant="violet" icon={Timer} onClick={() => onFocusTodo(t)} aria-label={`Începe Focus: ${t.title}`}>
+          Focus
+        </Button>
+      )}
     </li>
   );
 }
 
-function TodoList({ state, today, todo }) {
+function TodoList({ state, today, todo, onFocusTodo }) {
   const [filter, setFilter] = useState("today");
   const [text, setText] = useState("");
   const raw = state.todos || [];
@@ -168,7 +178,7 @@ function TodoList({ state, today, todo }) {
           <div className="mb-1.5 mt-2 text-[11px] font-extrabold uppercase tracking-wider text-ember">Rămase din zilele trecute</div>
           <ul className="space-y-1.5">
             {overdue.map((t) => (
-              <TodoRow key={t.id} t={t} today={today} habits={habits} todo={todo} />
+              <TodoRow key={t.id} t={t} today={today} habits={habits} todo={todo} onFocusTodo={onFocusTodo} />
             ))}
           </ul>
         </>
@@ -176,7 +186,7 @@ function TodoList({ state, today, todo }) {
       {open.length > 0 && (
         <ul className="mt-2 space-y-1.5">
           {open.map((t) => (
-            <TodoRow key={t.id} t={t} today={today} habits={habits} todo={todo} />
+            <TodoRow key={t.id} t={t} today={today} habits={habits} todo={todo} onFocusTodo={onFocusTodo} />
           ))}
         </ul>
       )}
@@ -186,7 +196,7 @@ function TodoList({ state, today, todo }) {
           <summary className="cursor-pointer text-[11px] font-extrabold uppercase tracking-wider text-dim hover:text-ink">Gata ({done.length})</summary>
           <ul className="mt-2 space-y-1.5">
             {done.slice(0, 30).map((t) => (
-              <TodoRow key={t.id} t={t} today={today} habits={habits} todo={todo} />
+              <TodoRow key={t.id} t={t} today={today} habits={habits} todo={todo} onFocusTodo={onFocusTodo} />
             ))}
           </ul>
         </details>
@@ -457,7 +467,235 @@ function MonthView({ state, today, anchor, onPick }) {
   );
 }
 
-export default function Planner({ state, today, todo, goals, onMoveHabit }) {
+const CONFIDENCE = { high: "ridicată", medium: "medie", low: "scăzută", unknown: "necunoscută" };
+
+function DailyPlanPanel({ state, today, ai, agent }) {
+  const [minutes, setMinutes] = useState(60);
+  const [energy, setEnergy] = useState("medium");
+  const [adding, setAdding] = useState(null); // title being saved
+  const [error, setError] = useState("");
+  const addStep = async (step, focus = false) => {
+    setAdding(step.title);
+    setError("");
+    try {
+      await agent.propose({
+        title: step.title,
+        dur: step.minutes,
+        date: today,
+        reason: step.reason,
+        focus,
+        explanation: { dataUsed: step.dataUsed, confidence: step.confidence, expectedEffect: null },
+      });
+    } catch (e) {
+      setError(aiErrorCopy(e?.code));
+    } finally {
+      setAdding(null);
+    }
+  };
+  const input = useMemo(
+    () => ({
+      today,
+      minutes,
+      energy,
+      habits: (state.habits || [])
+        .filter((h) => !h.archivedAt)
+        .map((h) => ({ name: h.name, done: !!state.log?.[today]?.[h.id], scheduled: isScheduled(h, today) })),
+      todos: (state.todos || []).filter((t) => !t.done && (!t.date || t.date <= today)).slice(0, 12),
+      goals: (state.goals || []).filter((g) => !g.done).slice(0, 6),
+      assignments: nextAssignments(state, today).slice(0, 10),
+    }),
+    [state, today, minutes, energy]
+  );
+  const [s, run] = useCoach((signal) => dailyPlan(input, signal));
+  if (!ai?.server) return null;
+  return (
+    <Shell icon={Sparkles} title="Planul tău pentru azi" sub="Pași mici, aleși din ce ai deja programat" state={s} run={run} label="Construiește planul">
+      <div className="mb-3 flex flex-wrap items-end gap-2">
+        <label className="text-xs font-extrabold text-dim">
+          Timp disponibil
+          <select className="field mt-1 block min-w-28" value={minutes} onChange={(e) => setMinutes(Number(e.target.value))}>
+            <option value={30}>30 minute</option>
+            <option value={60}>1 oră</option>
+            <option value={120}>2 ore</option>
+          </select>
+        </label>
+        <label className="text-xs font-extrabold text-dim">
+          Energie
+          <select className="field mt-1 block min-w-28" value={energy} onChange={(e) => setEnergy(e.target.value)}>
+            <option value="low">scăzută</option>
+            <option value="medium">medie</option>
+            <option value="high">ridicată</option>
+          </select>
+        </label>
+      </div>
+      {error && <p className="mb-2 text-xs font-bold text-rose">{error}</p>}
+      <ol className="space-y-2">
+        {s.data?.map((step, i) => {
+          const added = hasOpenTodo(state, step.title, today);
+          return (
+          <li key={`${step.title}-${i}`} className="inset flex gap-3 p-3">
+            <span className="font-pixel text-lg text-violet">{i + 1}</span>
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                <p className="text-sm font-extrabold text-ink">{step.title}</p>
+                <Chip tone="dim">{step.minutes} min</Chip>
+              </div>
+              <p className="mt-1 text-xs font-semibold text-body">{step.reason}</p>
+              <details className="mt-1 text-[11px] font-bold text-dim">
+                <summary className="cursor-pointer">De ce?</summary>
+                <p className="mt-1">Încredere {CONFIDENCE[step.confidence] || CONFIDENCE.unknown}{step.dataUsed.length ? ` · ${step.dataUsed.join(" · ")}` : ""}.</p>
+              </details>
+            </div>
+            <Button size="sm" variant={added ? "ghost" : "mint"} icon={added ? Check : Plus} disabled={added || adding === step.title} busy={adding === step.title} onClick={() => addStep(step, step.focus)}>
+              {added ? "În planul de azi" : step.focus ? "Planifică Focus" : "Adaugă"}
+            </Button>
+          </li>
+          );
+        })}
+      </ol>
+    </Shell>
+  );
+}
+
+function HomeworkPanel({ state, today, ai, onStateChange }) {
+  const [text, setText] = useState("");
+  const [s, run] = useCoach((signal) => parseHomework(text, today, signal));
+  const [minutes, setMinutes] = useState(25);
+  const assignments = nextAssignments(state, today);
+  const exams = nextExams(state, today);
+  if (!ai?.server) return null;
+  const add = (raw) => {
+    if (raw?.type === "exam") {
+      const exam = normalizeExams([raw], today)[0];
+      if (!exam) return;
+      onStateChange?.((current) => ({
+        ...current,
+        schoolPlanner: { ...schoolPlanner(current), exams: [...schoolPlanner(current).exams, { ...exam, id: `e-${Date.now()}`, done: false }] },
+      }));
+      return;
+    }
+    const parsed = normalizeAssignments([raw], today)[0];
+    if (!parsed) return;
+    onStateChange?.((current) => ({
+      ...current,
+      schoolPlanner: { ...schoolPlanner(current), assignments: [...schoolPlanner(current).assignments, { ...parsed, id: `a-${Date.now()}`, done: false }] },
+    }));
+  };
+  // one tap: `minutes` of study today, against a subject and (optionally) an assignment
+  const study = (subject, assignmentId) => {
+    const session = normalizeSession({ subject, assignmentId, day: today, minutes }, today);
+    if (!session) return;
+    onStateChange?.((current) => ({
+      ...current,
+      schoolPlanner: { ...schoolPlanner(current), sessions: [...schoolPlanner(current).sessions, { ...session, id: `s-${Date.now()}` }] },
+    }));
+  };
+  const studyBtn = (subject, assignmentId) => (
+    <button type="button" className="focus-ring shrink-0 rounded-lg px-2 py-0.5 text-[11px] font-extrabold text-dim ring-1 ring-edge hover:text-ink" onClick={() => study(subject, assignmentId)} aria-label={`Am învățat ${minutes} minute${subject ? ` la ${subject}` : ""}`}>
+      +{minutes} min
+    </button>
+  );
+  const dayLabel = (n) => (n === 0 ? "azi" : n === 1 ? "mâine" : `în ${n} zile`);
+  const studiedToday = studiedMinutes(state, today);
+  return (
+    <Shell icon={CalendarCheck} title="Teme și examene" sub="Scrie-le natural, iar AI-ul le transformă în pași planificabili" state={s} run={() => text.trim() && run()} label="Interpretează">
+      <div className="flex gap-2">
+        <input className="field min-w-0 flex-1" value={text} onChange={(e) => setText(e.target.value)} placeholder="Test la mate vineri, proiect luni…" aria-label="Teme și examene" />
+        <Button variant="mint" icon={Sparkles} onClick={run} disabled={!text.trim() || s.status === "busy"} busy={s.status === "busy"} aria-label="Interpretează temele" />
+      </div>
+      {s.data?.length > 0 && (
+        <div className="mt-3 space-y-2">
+          <p className="text-xs font-extrabold uppercase tracking-wide text-dim">Propuneri de salvat</p>
+          {s.data.map((assignment, i) => (
+            <div key={`${assignment.title}-${i}`} className="inset flex flex-wrap items-center gap-2 p-3">
+              <span className="min-w-0 flex-1 text-sm font-extrabold text-ink">{assignment.title}</span>
+              {assignment.type === "exam" && <Chip tone="gold">Examen</Chip>}
+              <span className="text-xs font-bold text-dim">{assignment.due}{assignment.type === "exam" ? "" : ` · ${assignment.estimatedMinutes || 30} min`}</span>
+              <Button size="sm" variant="ghost" onClick={() => add(assignment)}>Adaugă</Button>
+            </div>
+          ))}
+        </div>
+      )}
+      {exams.length > 0 && (
+        <ul className="mt-3 space-y-1.5">
+          {exams.slice(0, 3).map((exam) => (
+            <li key={exam.id || exam.title} className="flex items-center justify-between gap-2 text-xs font-bold text-body">
+              <span className="truncate">{exam.title}{exam.subject ? ` · ${exam.subject}` : ""}</span>
+              <span className="shrink-0 text-dim">{dayLabel(exam.daysLeft)}</span>
+              {studyBtn(exam.subject, null)}
+            </li>
+          ))}
+        </ul>
+      )}
+      {assignments.length > 0 && (
+        <ul className="mt-3 space-y-1.5">
+          {assignments.slice(0, 5).map((assignment) => (
+            <li key={assignment.id || assignment.title} className="flex items-center justify-between gap-2 text-xs font-bold text-body">
+              <span className="truncate">{assignment.title}</span><span className="ml-auto shrink-0 text-dim">{assignment.due}</span>
+              {studyBtn(assignment.subject, assignment.id)}
+            </li>
+          ))}
+        </ul>
+      )}
+      {(assignments.length > 0 || exams.length > 0) && (
+        <div className="mt-2 flex items-center gap-2 text-[11px] font-bold text-dim">
+          <label htmlFor="study-minutes">Sesiune de studiu</label>
+          <select id="study-minutes" className="field !w-auto !py-0.5 text-[11px]" value={minutes} onChange={(e) => setMinutes(Number(e.target.value))}>
+            {[15, 25, 45, 60].map((m) => <option key={m} value={m}>{m} min</option>)}
+          </select>
+          {studiedToday > 0 && <span>Azi: {studiedToday} min</span>}
+        </div>
+      )}
+    </Shell>
+  );
+}
+
+function GoalDecomposer({ today, ai, goals }) {
+  const [text, setText] = useState("");
+  const [s, run] = useCoach((signal) => decomposeGoal(text, signal));
+  if (!ai?.server) return null;
+  const [skip, setSkip] = useState([]);
+  const keyed = (goal) => ({ ...goal, key: periodKey(goal.period, today) });
+  const save = (goal) => goals?.add({ period: goal.period, key: periodKey(goal.period, today), text: goal.text });
+  const keep = (s.data || []).filter((_, i) => !skip.includes(i));
+  // the typed goal becomes the parent; the steps the user kept are linked to it
+  const saveSet = () => {
+    goals?.addSet(keyed({ text: text.trim().slice(0, 120), period: "month" }), keep.map(keyed));
+    setSkip([]);
+  };
+  return (
+    <Shell icon={Sparkles} title="Din intenție în pași" sub="Un obiectiv vag devine câteva acțiuni realizabile" state={s} run={() => text.trim() && run()} label="Descompune">
+      <div className="flex gap-2">
+        <input className="field min-w-0 flex-1" value={text} onChange={(e) => setText(e.target.value)} placeholder="Vreau să învăț programare…" aria-label="Obiectiv de descompus" />
+        <Button variant="violet" icon={Sparkles} onClick={run} disabled={!text.trim() || s.status === "busy"} busy={s.status === "busy"} aria-label="Descompune obiectivul" />
+      </div>
+      {s.data?.length > 0 && (
+        <div className="mt-3 space-y-2">
+          {s.data.map((goal, i) =>
+            skip.includes(i) ? null : (
+              <div key={`${goal.text}-${i}`} className="inset flex items-center gap-2 p-3">
+                <span className="min-w-0 flex-1 text-sm font-extrabold text-ink">
+                  {goal.text}
+                  {(goal.due || goal.criteria) && <span className="block text-xs font-semibold text-dim">{[goal.due && `până la ${goal.due}`, goal.criteria].filter(Boolean).join(" · ")}</span>}
+                </span>
+                <Chip tone="violet">{goal.period === "month" ? "luna" : "săptămâna"}</Chip>
+                <Button size="sm" variant="ghost" onClick={() => save(goal)}>Salvează</Button>
+                <Button size="sm" variant="ghost" onClick={() => setSkip([...skip, i])} aria-label={`Renunță la: ${goal.text}`}>Scoate</Button>
+              </div>
+            ),
+          )}
+          {keep.length > 1 && (
+            <Button size="sm" variant="violet" onClick={saveSet}>
+              Salvează tot ca obiectiv cu etape
+            </Button>
+          )}
+        </div>
+      )}
+    </Shell>
+  );
+}
+
+export default function Planner({ state, today, todo, goals, ai, agent, onStateChange, onFocusTodo, onMoveHabit }) {
   const [anchor, setAnchor] = useState(today);
   const [mode, setMode] = useState("week");
   const [tab, setTab] = useState("calendar");
@@ -550,10 +788,13 @@ export default function Planner({ state, today, todo, goals, onMoveHabit }) {
           />
         </div>
       </div>
+      <DailyPlanPanel state={state} today={today} ai={ai} agent={agent} />
+      <HomeworkPanel state={state} today={today} ai={ai} onStateChange={onStateChange} />
+      <GoalDecomposer today={today} ai={ai} goals={goals} />
       <div className="grid gap-5 lg:grid-cols-[minmax(300px,360px),1fr]">
         <div className={tab === "list" ? "min-w-0" : "hidden min-w-0 lg:block"}>
           <div className="space-y-5">
-            <TodoList state={state} today={today} todo={todo} />
+            <TodoList state={state} today={today} todo={todo} onFocusTodo={onFocusTodo} />
             <GoalsCard state={state} today={today} goals={goals} />
           </div>
         </div>

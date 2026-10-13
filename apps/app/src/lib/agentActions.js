@@ -6,7 +6,7 @@
 import { CATALOG, habitFromCatalog } from "./catalog.js";
 import { recordFeedback } from "./memory.js";
 
-export const SUPPORTED = ["create_todo", "change_habit", "add_habit"];
+export const SUPPORTED = ["create_todo", "plan_focus", "change_habit", "add_habit"];
 
 // ------------------------------------------------------------ pure
 
@@ -23,6 +23,7 @@ export function mapRow(r) {
     before: r.before ?? null,
     reason: r.reason,
     sources: r.sources || [],
+    explanation: r.explanation || r.payload?.explanation || null,
     baseline: r.baseline ?? null,
     outcome: r.outcome ?? null,
     outcomeDue: r.outcome_due ?? null,
@@ -52,7 +53,8 @@ export function planApply(action, state, today) {
   const todos = state?.todos || [];
   const habits = state?.habits || [];
   switch (action?.kind) {
-    case "create_todo": {
+    case "create_todo":
+    case "plan_focus": {
       const id = action.before?.todoId || todoIdOf(action);
       const title = String(p.title ?? p.name ?? "").trim().slice(0, 120);
       if (!title) return { error: "invalid" };
@@ -66,6 +68,7 @@ export function planApply(action, state, today) {
         doneOn: null,
         createdAt: today,
         fromAgent: true,
+        ...(action.kind === "plan_focus" ? { focus: true } : {}),
       };
       return {
         before: { todoId: id },
@@ -106,6 +109,7 @@ export function planUndo(action, state, today = new Date().toISOString().slice(0
   if (!b) return { error: "no_before" };
   switch (action.kind) {
     case "create_todo":
+    case "plan_focus":
       return { patch: (s) => ({ ...s, todos: (s.todos || []).filter((t) => t.id !== b.todoId) }) };
     case "change_habit": {
       const id = action.habitId || action.payload?.habitId;
@@ -139,6 +143,22 @@ export async function loadActions(client, { limit = 30 } = {}) {
   if (error) throw { code: "db_error" };
   return (data || []).map(mapRow);
 }
+
+/**
+ * Logs a to-do the app itself proposes (daily plan step, rescue) as a pending `create_todo` (or `plan_focus`, a Focus session) row, so it gets
+ * the same apply / undo / outcome path as the agent's. Returns the mapped action.
+ * `explanation` = {dataUsed, confidence, expectedEffect}, shown by AgentLog.
+ */
+export async function recordTodo(client, { title, date, dur, reason, explanation = null, focus = false }) {
+  const payload = { title, date, dur, ...(explanation ? { explanation } : {}) };
+  const row = { run_id: `ui-${Date.now()}`, kind: focus ? "plan_focus" : "create_todo", autonomy: "confirm", status: "pending", payload, reason: String(reason || title).slice(0, 400) };
+  const { data, error } = await need(client).from("agent_actions").insert(row).select().single();
+  if (error || !data) throw { code: "db_error" };
+  return mapRow(data);
+}
+
+/** Is there already an open to-do with this title that day? Keeps repeated taps from piling up copies. */
+export const hasOpenTodo = (state, title, date) => (state?.todos || []).some((t) => !t.done && t.date === date && t.title === title);
 
 /** Marks the action applied, keeps what undo needs, and tells the agent it was accepted (`opts.action` = the action). */
 export async function markApplied(client, id, before, { outcomeDue = null, action = null } = {}) {
