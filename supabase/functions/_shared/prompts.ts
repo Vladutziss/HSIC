@@ -5,7 +5,7 @@
 
 // deno-lint-ignore-file no-explicit-any
 
-export const KINDS = ["review", "moment", "chapter", "insights", "daily_plan", "homework_parse", "goal_decompose", "reflection"] as const;
+export const KINDS = ["review", "moment", "chapter", "insights", "daily_plan", "homework_parse", "goal_decompose", "reflection", "chat"] as const;
 export type Kind = (typeof KINDS)[number];
 
 const clip = (s: unknown, n: number) => {
@@ -129,6 +129,39 @@ Student answer: "${clip(p.answer, 800)}"
 Reply with only JSON: {"observation":"...","nextStep":"...","dataUsed":["..."],"confidence":"low|medium|high"}`;
 }
 
+function chatPrompt(p: any): string {
+  const c = p.context ?? {};
+  const msgs = (Array.isArray(p.messages) ? p.messages.slice(-12) : [])
+    .map((m: any) => `${m?.role === "assistant" ? "Molt" : "Player"}: ${clip(m?.content, 600)}`)
+    .join("\n");
+  const rows = (a: unknown, n: number, f: (x: any) => string) =>
+    (Array.isArray(a) ? a.slice(0, n).map(f).join("\n") : "") || "- none";
+  const days = (d: any) => (Array.isArray(d) ? d.slice(0, 7).join(",") : "");
+  return `You are ${clip(p.name, 40) || "the Molt"}, the player's Molt companion in "Molted", a self-improvement RPG (class: ${clip(p.cls, 40) || "-"}). You are a teen self-improvement and school coach. Talk in Romanian, warm, concise, addressing the player as "tu". The player's main goal: "${clip(p.goal, 200) || "-"}". Today: ${clip(c.today, 20)}.
+
+Context (the only facts you know about the player):
+Habits:
+${rows(c.habits, 10, (h) => `- ${clip(h?.name, 60)} (difficulty ${Number(h?.diff) || "?"}, days ${days(h?.days)})`)}
+Goals:
+${rows(c.goals, 6, (g) => `- ${clip(g?.text, 100)} (${clip(g?.period, 8)})${g?.done ? " (done)" : ""}`)}
+To-dos:
+${rows(c.todos, 10, (t) => `- ${clip(t?.title, 80)}${t?.date ? ` (${clip(t.date, 12)})` : ""}`)}
+School assignments:
+${rows(c.assignments, 6, (a) => `- ${clip(a?.title, 80)}${a?.subject ? ` [${clip(a.subject, 40)}]` : ""} due ${clip(a?.due, 12)}`)}
+Exams:
+${rows(c.exams, 6, (e) => `- ${clip(e?.title, 80)}${e?.subject ? ` [${clip(e.subject, 40)}]` : ""} on ${clip(e?.date, 12)}`)}
+Notes from the player:
+${rows(c.notes, 10, (n) => `- ${clip(n, 200)}`)}
+
+Current plan (JSON, or null): ${p.plan ? clip(JSON.stringify(p.plan), 2500) : "null"}
+
+Conversation:
+${msgs || "(empty)"}
+
+Rules: if the goal is vague, ask at most 2 short clarifying questions and set "plan" to null; otherwise propose a plan. When the player asks to change the plan, return the FULL revised plan, not a diff. Never invent facts about the player beyond the context. No medical or diagnostic claims. You have no web access: say so if asked, and say when something is general knowledge. Do not promise outcomes. Keep plans small and possible for a teenager with school.
+Reply with only JSON: {"reply":"<=600 chars","plan":null | {"title":"<=80","steps":[{"text":"<=120","period":"week|month","due":"YYYY-MM-DD or empty","criteria":"<=120 or empty"}] (max 6),"habits":[{"name":"<=40","diff":1-3,"days":[0-6]}] (max 3),"todos":[{"title":"<=80","date":"YYYY-MM-DD","dur":10-60}] (max 4),"why":"<=200"}}`;
+}
+
 export function buildPrompt(kind: Kind, params: any): string {
   const p = params && typeof params === "object" ? params : {};
   switch (kind) {
@@ -148,5 +181,7 @@ export function buildPrompt(kind: Kind, params: any): string {
       return goalDecompose(p);
     case "reflection":
       return reflection(p);
+    case "chat":
+      return chatPrompt(p);
   }
 }
