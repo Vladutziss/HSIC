@@ -1,4 +1,5 @@
 import React from "react";
+import { ObjectivesMini } from "./Objectives.jsx";
 import { AlertTriangle, CalendarCheck, ChevronDown, Flame, FlaskConical, Gift, Plus, Swords, Timer, TrendingUp, Zap } from "lucide-react";
 import { Bar, Button, Chip, LevelBadge, Panel, SectionTitle } from "../components/ui.jsx";
 import { CompanionCard, GroupMini, QuestCard, ReviewCard } from "../components/Cards.jsx";
@@ -110,7 +111,7 @@ function ResetWarning({ d }) {
   );
 }
 
-export default function Dashboard({ state, d, today, go, ai, months, recentStories, groups, review, onFocus, onCheck, onRevive, onAddHabit }) {
+export default function Dashboard({ state, d, today, go, ai, months, recentStories, groups, review, onFocus, onCheck, onRevive, onAddHabit, goalReminders = [], goalActions }) {
   const chestOpen = d.scheduled.length > 0 && d.doneScheduled === d.scheduled.length;
   const lastStory = [...recentStories].reverse().find((s) => s.story);
   return (
@@ -180,6 +181,7 @@ export default function Dashboard({ state, d, today, go, ai, months, recentStori
       </div>
 
       <div className="min-w-0 space-y-5 lg:col-span-4">
+        <ObjectivesMini state={state} today={today} reminders={goalReminders} go={go} act={goalActions} />
         <CompanionCard c={d.companion} path={state.profile.path} lastStory={lastStory} onOpen={() => go("companion")} />
         <ReviewCard d={d} state={state} months={months} review={review} ai={ai} today={today} />
         <GroupMini groups={groups} go={go} />

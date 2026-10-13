@@ -3,6 +3,7 @@
 // functions, so the rules live in one place and are unit-tested.
 
 import { addDays, dayKey, diffDays, mondayOf, weekday } from "./dates.js";
+import { stepDoneDays } from "./objectives.js";
 
 // xp: momentum for a check-in; ep: evolution points the companion earns from it
 export const DIFF = {
@@ -111,6 +112,7 @@ export function computeTimeline(state, today) {
     if (t.repeat) for (const day of t.doneDays || []) tick(day); // a series counts once per ticked day
     else if (t.done && t.doneOn) tick(t.doneOn);
   }
+  for (const day of stepDoneDays(state.objectives)) tick(day); // goal steps count like to-dos
 
   const days = [];
   const byDay = {};
