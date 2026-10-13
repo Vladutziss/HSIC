@@ -65,5 +65,6 @@ export function suggestDone(goal, todos) {
 /** A parent goal plus children linked to it; `mk` builds a goal from its fields (id, dates, done flags). */
 export function milestoneSet(parent, children, mk) {
   const p = mk({ period: parent.period, key: parent.key, text: parent.text });
-  return [p, ...children.map((c) => mk({ period: c.period, key: c.key, text: c.text, due: c.due, criteria: c.criteria, parentId: p.id }))];
+  // the steps live in the parent's period, or they would show up in another tab than their parent
+  return [p, ...children.map((c) => mk({ period: parent.period, key: parent.key, text: c.text, due: c.due, criteria: c.criteria, parentId: p.id }))];
 }
