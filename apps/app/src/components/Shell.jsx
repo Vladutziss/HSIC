@@ -9,6 +9,7 @@ import {
   Cloud,
   CloudOff,
   Egg,
+  MessageSquare,
   FlaskConical,
   Flame,
   HardDrive,
@@ -32,6 +33,7 @@ export const NAV = [
   { id: "habits", label: "Obiceiuri", icon: ScrollText },
   { id: "goals", label: "Obiective", icon: Target },
   { id: "companion", label: "Molt", icon: Egg },
+  { id: "chat", label: "Chat", icon: MessageSquare },
   { id: "plan", label: "Plan", icon: CalendarDays },
   { id: "group", label: "Grup", icon: Users },
   { id: "stats", label: "Statistici", icon: ChartLine },
@@ -270,7 +272,7 @@ export function Shell({ view, setView, onReview, onFocus, d, state, unread, goal
       </div>
 
       <nav
-        className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-8 border-t border-edge bg-deep/95 backdrop-blur lg:hidden"
+        className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-9 border-t border-edge bg-deep/95 backdrop-blur lg:hidden"
         style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
         aria-label="Navigare"
       >
@@ -285,7 +287,7 @@ export function Shell({ view, setView, onReview, onFocus, d, state, unread, goal
               className="tabbar-item focus-ring relative flex min-w-0 flex-col items-center gap-0.5 py-2 text-[10px] font-extrabold text-dim"
             >
               <Icon size={20} strokeWidth={2.25} aria-hidden="true" />
-              {n.label}
+              <span className="max-w-full truncate px-0.5">{n.label}</span>
               {n.id === "goals" && goalsDue > 0 && <span className="absolute right-[22%] top-1 h-2 w-2 rounded-full bg-ember" />}
               {n.id === "group" && unread > 0 && <span className="absolute right-[22%] top-1 h-2 w-2 rounded-full bg-rose" />}
             </button>

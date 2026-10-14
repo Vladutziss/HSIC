@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mapRow, pendingAuto, pendingConfirm, recent, planApply, planUndo } from "../src/lib/agentActions.js";
+import { hasOpenTodo, mapRow, pendingAuto, pendingConfirm, recent, planApply, planUndo, recordTodo } from "../src/lib/agentActions.js";
 
 const today = "2026-10-11";
 const state = () => ({
@@ -11,10 +11,11 @@ const state = () => ({
 const act = (o) => ({ id: "a1", status: "pending", autonomy: "confirm", payload: {}, before: null, ...o });
 
 test("mapRow maps snake_case to camelCase", () => {
-  const a = mapRow({ id: "1", run_id: "r", kind: "create_todo", autonomy: "auto", status: "pending", habit_id: null, payload: { title: "a" }, reason: "x", created_at: "t", outcome_due: "2026-10-20" });
+  const a = mapRow({ id: "1", run_id: "r", kind: "create_todo", autonomy: "auto", status: "pending", habit_id: null, payload: { title: "a", explanation: { confidence: "medium" } }, reason: "x", created_at: "t", outcome_due: "2026-10-20" });
   assert.equal(a.runId, "r");
   assert.equal(a.outcomeDue, "2026-10-20");
   assert.deepEqual(a.sources, []);
+  assert.deepEqual(a.explanation, { confidence: "medium" });
   assert.equal(a.before, null);
 });
 
@@ -39,6 +40,23 @@ test("create_todo apply, idempotence, undo", () => {
   assert.equal(patch(s1), s1); // second time: untouched
   const s2 = planUndo({ ...a, before }, s1).patch(s1);
   assert.deepEqual(s2.todos, state().todos);
+});
+
+test("plan_focus creates a focus to-do, idempotent, undoable", async () => {
+  const a = act({ kind: "plan_focus", payload: { title: "Mate, probleme", dur: 25 } });
+  const { patch, before } = planApply(a, state(), today);
+  const s1 = patch(state());
+  const todo = s1.todos.find((t) => t.id === before.todoId);
+  assert.equal(todo.focus, true);
+  assert.equal(todo.dur, 25);
+  assert.equal(patch(s1), s1);
+  assert.deepEqual(planUndo({ ...a, before }, s1).patch(s1).todos, state().todos);
+  assert.equal(planApply(act({ kind: "create_todo", payload: { title: "x" } }), state(), today).before.todoId.startsWith("tag-"), true);
+  assert.equal("focus" in planApply(act({ kind: "create_todo", payload: { title: "x" } }), state(), today).patch(state()).todos[1], false);
+  let row;
+  const client = { from: () => ({ insert: (r) => ((row = r), { select: () => ({ single: async () => ({ data: { id: "x", ...r }, error: null }) }) }) }) };
+  await recordTodo(client, { title: "Mate", date: today, dur: 25, reason: "r", focus: true });
+  assert.equal(row.kind, "plan_focus");
 });
 
 test("change_habit apply keeps previous values and undo restores them", () => {
@@ -77,4 +95,17 @@ test("unsupported and invalid kinds", () => {
   assert.deepEqual(planApply(act({ kind: "set_reminder" }), state(), today), { error: "unsupported" });
   assert.equal(planApply(act({ kind: "create_todo", payload: {} }), state(), today).error, "invalid");
   assert.equal(planUndo(act({ kind: "create_todo" }), state()).error, "no_before");
+});
+
+test("recordTodo logs a pending create_todo with its explanation; hasOpenTodo spots duplicates", async () => {
+  let row;
+  const client = { from: () => ({ insert: (r) => ((row = r), { select: () => ({ single: async () => ({ data: { id: "x", ...r }, error: null }) }) }) }) };
+  const a = await recordTodo(client, { title: "Mate 15 min", date: today, dur: 15, reason: "Test vineri", explanation: { dataUsed: ["test"], confidence: "high", expectedEffect: null } });
+  assert.equal(row.kind, "create_todo");
+  assert.equal(row.status, "pending");
+  assert.equal(a.explanation.confidence, "high");
+  assert.equal(planApply(a, state(), today).error, undefined);
+  const s = { todos: [{ title: "Mate 15 min", date: today, done: false }] };
+  assert.equal(hasOpenTodo(s, "Mate 15 min", today), true);
+  assert.equal(hasOpenTodo(s, "Mate 15 min", "2026-10-12"), false);
 });

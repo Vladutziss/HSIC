@@ -15,7 +15,7 @@ const newCode = () => Array.from({ length: 6 }, () => CODE_CHARS[Math.floor(Math
 const newId = (p) => `${p}${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
 
 // Per person: up to 3 groups and 3 progress partners; a partnership is two people.
-// The database enforces the same numbers (supabase/migrations/0012_group_limits.sql).
+// The database enforces the same numbers (supabase/migrations/0022_group_limits.sql).
 export const MAX_GROUPS = 3;
 export const MAX_PARTNERS = 3;
 export const PARTNER_SIZE = 2;

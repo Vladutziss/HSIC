@@ -22,9 +22,13 @@ const SPEC = {
   day_reviews: { pk: ["user_id", "day"], conflict: "user_id,day" },
   streak_revives: { pk: ["user_id", "missed_day"], conflict: "user_id,missed_day" },
   chapters: { pk: ["id"], conflict: "id" },
+  subjects: { pk: ["id"], conflict: "id" },
+  assignments: { pk: ["id"], conflict: "id" },
+  exams: { pk: ["id"], conflict: "id" },
+  study_sessions: { pk: ["id"], conflict: "id" },
 };
-const UPSERT_ORDER = ["habits", "completions", "todos", "day_reviews", "streak_revives", "chapters"];
-const DELETE_ORDER = ["completions", "day_reviews", "streak_revives", "todos", "chapters", "habits"];
+const UPSERT_ORDER = ["habits", "completions", "todos", "day_reviews", "streak_revives", "chapters", "subjects", "assignments", "exams", "study_sessions"];
+const DELETE_ORDER = ["completions", "day_reviews", "streak_revives", "todos", "chapters", "study_sessions", "exams", "assignments", "subjects", "habits"];
 
 const keyOf = (table, row) => SPEC[table].pk.map((c) => row[c]).join("|");
 
@@ -102,7 +106,56 @@ export function toRows(state, uid) {
       at: nul(r?.at),
     })),
     streak_revives: Object.entries(state.streak?.revived || {}).map(([missed, on]) => ({ user_id: uid, missed_day: missed, revived_on: on })),
+    ...plannerRows(state.schoolPlanner, uid),
   };
+}
+
+// Homework planner. A subject is the lowercase name, so the id is the same on every device.
+// `due` is a local calendar day ('YYYY-MM-DD') and travels as that string, never as a Date.
+const subjectKey = (name) => String(name || "").trim().toLowerCase();
+
+function plannerRows(planner, uid) {
+  const subjects = new Map();
+  const subjectId = (subject) => {
+    const name = String(subject || "").trim();
+    if (!name) return null;
+    const id = `${uid}:${subjectKey(name)}`;
+    if (!subjects.has(id)) subjects.set(id, { id, user_id: uid, name });
+    return id;
+  };
+  const titled = (x) => x?.id && String(x.title || "").trim(); // the tables need an id and a title
+  const assignments = [];
+  for (const a of planner?.assignments || []) {
+    if (!titled(a)) continue;
+    assignments.push({
+      id: a.id,
+      user_id: uid,
+      subject_id: subjectId(a.subject),
+      title: a.title ?? "",
+      due: nul(a.due),
+      estimated_minutes: a.estimatedMinutes ?? 30,
+      done: !!a.done,
+    });
+  }
+  const exams = [];
+  for (const e of planner?.exams || []) {
+    if (!titled(e) || !e.date) continue; // exams.date is not null
+    exams.push({ id: e.id, user_id: uid, subject_id: subjectId(e.subject), title: e.title ?? "", date: e.date, done: !!e.done });
+  }
+  const known = new Set(assignments.map((a) => a.id));
+  const study_sessions = [];
+  for (const s of planner?.sessions || []) {
+    if (!s?.id || !s.day || !(s.minutes >= 1)) continue;
+    study_sessions.push({
+      id: s.id,
+      user_id: uid,
+      subject_id: subjectId(s.subject),
+      assignment_id: known.has(s.assignmentId) ? s.assignmentId : null, // FK: a removed assignment must not break the write
+      day: s.day,
+      minutes: Math.min(1440, Math.round(s.minutes)),
+    });
+  }
+  return { subjects: [...subjects.values()], assignments, exams, study_sessions };
 }
 
 /** rows: {profile, habits, completions, todos, day_reviews, streak_revives, groups: [id]} -> state, or null before onboarding. */
@@ -163,7 +216,36 @@ export function fromRows(rows) {
     ...(extra.focusSessions?.length ? { focusSessions: extra.focusSessions } : {}),
     ...(extra.goals?.length ? { goals: extra.goals } : {}),
     ...(extra.objectives?.length ? { objectives: extra.objectives } : {}),
+    ...plannerFromRows(rows, extra),
   };
+}
+
+// rows win; a profile that still carries extra.schoolPlanner (before migration 0020) is read as before
+function plannerFromRows(rows, extra) {
+  const { assignments = [], exams = [], study_sessions = [] } = rows;
+  if (assignments.length || exams.length || study_sessions.length) {
+    const names = new Map((rows.subjects || []).map((s) => [s.id, s.name]));
+    const byCreated = (a, b) => String(a.created_at || "").localeCompare(String(b.created_at || ""));
+    const subject = (r) => names.get(r.subject_id) || "";
+    return {
+      schoolPlanner: {
+        assignments: [...assignments].sort(byCreated).map((a) => ({
+          id: a.id,
+          title: a.title,
+          subject: subject(a),
+          due: a.due,
+          estimatedMinutes: a.estimated_minutes,
+          done: a.done,
+        })),
+        ...(exams.length ? { exams: [...exams].sort(byCreated).map((e) => ({ id: e.id, subject: subject(e), title: e.title, date: e.date, done: e.done })) } : {}),
+        ...(study_sessions.length
+          ? { sessions: [...study_sessions].sort(byCreated).map((x) => ({ id: x.id, subject: subject(x), assignmentId: x.assignment_id, day: x.day, minutes: x.minutes })) }
+          : {}),
+      },
+    };
+  }
+  const old = extra.schoolPlanner;
+  return old?.assignments?.length || old?.exams?.length || old?.sessions?.length ? { schoolPlanner: old } : {};
 }
 
 // ------------------------------------------------------------ month documents <-> rows
@@ -264,7 +346,7 @@ export function diff(prev, next, uid) {
   } else if (prev) {
     ops.push({ op: "update", table: "profiles", match: { id: uid }, row: EMPTY_PROFILE });
   }
-  return toOps(diffTables(a, b, ["habits", "completions", "todos", "day_reviews", "streak_revives"]), ops);
+  return toOps(diffTables(a, b, ["habits", "completions", "todos", "day_reviews", "streak_revives", "subjects", "assignments", "exams", "study_sessions"]), ops);
 }
 
 /** Same for one month document. Review text goes into day_reviews as a partial row. */
@@ -301,7 +383,7 @@ const must = ({ data, error }) => {
 };
 
 export async function loadState(client, uid) {
-  const [profile, habits, completions, todos, day_reviews, streak_revives, groups] = await Promise.all([
+  const [profile, habits, completions, todos, day_reviews, streak_revives, groups, subjects, assignments, exams, study_sessions] = await Promise.all([
     client.from("profiles").select("*").eq("id", uid).maybeSingle().then(must),
     // RLS already scopes these to the caller; the explicit filter keeps the weekly job, which reads
     // other players' rows with the service role (bypassing RLS), from mixing their data
@@ -311,8 +393,12 @@ export async function loadState(client, uid) {
     client.from("day_reviews").select("day, ai_score, at").eq("user_id", uid).then(must),
     client.from("streak_revives").select("missed_day, revived_on").eq("user_id", uid).then(must),
     client.from("group_members").select("group_id").eq("user_id", uid).then(must),
+    client.from("subjects").select("*").eq("user_id", uid).then(must),
+    client.from("assignments").select("*").eq("user_id", uid).then(must),
+    client.from("exams").select("*").eq("user_id", uid).then(must),
+    client.from("study_sessions").select("*").eq("user_id", uid).then(must),
   ]);
-  return fromRows({ profile, habits, completions, todos, day_reviews, streak_revives, groups: (groups || []).map((g) => g.group_id) });
+  return fromRows({ profile, habits, completions, todos, day_reviews, streak_revives, subjects, assignments, exams, study_sessions, groups: (groups || []).map((g) => g.group_id) });
 }
 
 export async function loadMonth(client, uid, ym) {

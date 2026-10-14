@@ -282,4 +282,137 @@ begin
   raise notice 'RLS checks passed';
 end $$;
 
+-- ---- reflections (0018): owner-only, append-only
+do $$
+declare
+  n int;
+  blocked boolean;
+begin
+  perform set_config('request.jwt.claims', '{"sub":"user_aaa","role":"authenticated"}', true);
+  set local role authenticated;
+  insert into public.reflections (week, answer, observation, next_step) values ('2026-W41', 'Bine', 'Observatie', 'Pas');
+  select count(*) into n from public.reflections;
+  if n <> 1 then raise exception 'A should see her own reflection, saw %', n; end if;
+  update public.reflections set answer = 'schimbat';
+  get diagnostics n = row_count;
+  if n <> 0 then raise exception 'LEAK: A updated % reflections (append-only)', n; end if;
+  delete from public.reflections;
+  get diagnostics n = row_count;
+  if n <> 0 then raise exception 'LEAK: A deleted % reflections (append-only)', n; end if;
+  reset role;
+
+  perform set_config('request.jwt.claims', '{"sub":"user_bbb","role":"authenticated"}', true);
+  set local role authenticated;
+  select count(*) into n from public.reflections;
+  if n <> 0 then raise exception 'LEAK: B reads % reflections of A', n; end if;
+  blocked := false;
+  begin
+    insert into public.reflections (user_id, week, answer, observation, next_step) values ('user_aaa', '2026-W41', 'x', 'x', 'x');
+  exception when insufficient_privilege then blocked := true;
+  end;
+  if not blocked then raise exception 'LEAK: B inserted a reflection as A'; end if;
+  reset role;
+
+  raise notice 'RLS reflections checks passed';
+end $$;
+
+-- ---- school planner (migration 0020): subjects, assignments, exams, study_sessions are owner-only
+do $$
+declare
+  a constant text := '{"sub":"user_aaa","role":"authenticated"}';
+  b constant text := '{"sub":"user_bbb","role":"authenticated"}';
+  t text;
+  n int;
+  blocked boolean;
+begin
+  perform set_config('request.jwt.claims', a, true);
+  set local role authenticated;
+  insert into public.subjects (id, user_id, name) values ('user_aaa:mate', 'user_aaa', 'Mate');
+  insert into public.assignments (id, user_id, subject_id, title, due, estimated_minutes)
+    values ('a-sp1', 'user_aaa', 'user_aaa:mate', 'Test', '2026-10-31', 60);
+  insert into public.exams (id, user_id, subject_id, title, date) values ('e-sp1', 'user_aaa', 'user_aaa:mate', 'Teză', '2026-11-05');
+  insert into public.study_sessions (id, user_id, subject_id, assignment_id, day, minutes)
+    values ('s-sp1', 'user_aaa', 'user_aaa:mate', 'a-sp1', '2026-10-05', 30);
+  -- a calendar day stays a calendar day
+  if (select due::text from public.assignments where id = 'a-sp1') <> '2026-10-31' then
+    raise exception 'planner: due date changed';
+  end if;
+  update public.assignments set done = true where id = 'a-sp1';
+  reset role;
+
+  perform set_config('request.jwt.claims', b, true);
+  set local role authenticated;
+  foreach t in array array['subjects', 'assignments', 'exams', 'study_sessions'] loop
+    execute format('select count(*) from public.%I', t) into n;
+    if n <> 0 then raise exception 'LEAK: B reads % rows of A in %', n, t; end if;
+  end loop;
+  update public.assignments set title = 'x', done = false;
+  get diagnostics n = row_count;
+  if n <> 0 then raise exception 'LEAK: B updated % assignments of A', n; end if;
+  delete from public.assignments;
+  get diagnostics n = row_count;
+  if n <> 0 then raise exception 'LEAK: B deleted % assignments of A', n; end if;
+  blocked := false;
+  begin
+    insert into public.assignments (id, user_id, title) values ('a-evil', 'user_aaa', 'x');
+  exception when insufficient_privilege then blocked := true;
+  end;
+  if not blocked then raise exception 'LEAK: B inserted an assignment as A'; end if;
+  blocked := false;
+  begin
+    insert into public.subjects (id, user_id, name) values ('user_aaa:evil', 'user_aaa', 'x');
+  exception when insufficient_privilege then blocked := true;
+  end;
+  if not blocked then raise exception 'LEAK: B inserted a subject as A'; end if;
+  reset role;
+
+  perform set_config('request.jwt.claims', a, true);
+  set local role authenticated;
+  select count(*) into n from public.assignments where done;
+  if n <> 1 then raise exception 'planner: A lost her assignment (% done)', n; end if;
+  delete from public.assignments where id = 'a-sp1';
+  reset role;
+
+  raise notice 'RLS school planner checks passed';
+end $$;
+
+-- ---- chat messages (0024): owner-only select/insert/delete, no update
+do $$
+declare
+  n int;
+  blocked boolean;
+begin
+  perform set_config('request.jwt.claims', '{"sub":"user_aaa","role":"authenticated"}', true);
+  set local role authenticated;
+  insert into public.chat_messages (role, content) values ('user', 'Salut');
+  insert into public.chat_messages (role, content, plan) values ('assistant', 'Iata un plan', '{"steps":[]}');
+  select count(*) into n from public.chat_messages;
+  if n <> 2 then raise exception 'A should see her own chat messages, saw %', n; end if;
+  reset role;
+
+  perform set_config('request.jwt.claims', '{"sub":"user_bbb","role":"authenticated"}', true);
+  set local role authenticated;
+  select count(*) into n from public.chat_messages;
+  if n <> 0 then raise exception 'LEAK: B reads % chat messages of A', n; end if;
+  blocked := false;
+  begin
+    insert into public.chat_messages (user_id, role, content) values ('user_aaa', 'user', 'x');
+  exception when insufficient_privilege then blocked := true;
+  end;
+  if not blocked then raise exception 'LEAK: B inserted a chat message as A'; end if;
+  delete from public.chat_messages;
+  get diagnostics n = row_count;
+  if n <> 0 then raise exception 'LEAK: B deleted % chat messages of A', n; end if;
+  reset role;
+
+  perform set_config('request.jwt.claims', '{"sub":"user_aaa","role":"authenticated"}', true);
+  set local role authenticated;
+  delete from public.chat_messages;
+  get diagnostics n = row_count;
+  if n <> 2 then raise exception 'A should delete her 2 chat messages, deleted %', n; end if;
+  reset role;
+
+  raise notice 'RLS chat messages checks passed';
+end $$;
+
 rollback;
