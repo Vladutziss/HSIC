@@ -54,6 +54,7 @@ export function toRows(state, uid) {
       moments: state.moments || [],
       focusSessions: state.focusSessions || [],
       goals: state.goals || [],
+      objectives: state.objectives || [],
     },
     onboarded: true,
   };
@@ -214,6 +215,7 @@ export function fromRows(rows) {
     moments: extra.moments || [],
     ...(extra.focusSessions?.length ? { focusSessions: extra.focusSessions } : {}),
     ...(extra.goals?.length ? { goals: extra.goals } : {}),
+    ...(extra.objectives?.length ? { objectives: extra.objectives } : {}),
     ...plannerFromRows(rows, extra),
   };
 }

@@ -19,6 +19,7 @@ import {
   Settings,
   Timer,
   Users,
+  Target,
 } from "lucide-react";
 import { Bar, LevelBadge, Ring } from "./ui.jsx";
 import { Sprite, eggCrack } from "./Sprite.jsx";
@@ -30,6 +31,7 @@ import { c as tc } from "../lib/themes.js";
 export const NAV = [
   { id: "home", label: "Acasă", icon: House },
   { id: "habits", label: "Obiceiuri", icon: ScrollText },
+  { id: "goals", label: "Obiective", icon: Target },
   { id: "companion", label: "Molt", icon: Egg },
   { id: "chat", label: "Chat", icon: MessageSquare },
   { id: "plan", label: "Plan", icon: CalendarDays },
@@ -176,7 +178,7 @@ function Hud({ d, state, setView, onReview, unread, mode, saveStatus, now }) {
 
 const SIDE_KEY = "molted.sidebar"; // "closed" when the desktop side menu is folded to icons
 
-export function Shell({ view, setView, onReview, onFocus, d, state, unread, mode, saveStatus, now, children }) {
+export function Shell({ view, setView, onReview, onFocus, d, state, unread, goalsDue = 0, mode, saveStatus, now, children }) {
   const c = d.companion;
   const path = state.profile?.path || "sport";
   const [folded, setFolded] = useState(() => {
@@ -228,6 +230,7 @@ export function Shell({ view, setView, onReview, onFocus, d, state, unread, mode
               >
                 <Icon size={19} strokeWidth={2.25} aria-hidden="true" />
                 {!folded && <span>{n.label}</span>}
+                {n.id === "goals" && goalsDue > 0 && (folded ? <span className="absolute right-2 top-1.5 h-2.5 w-2.5 rounded-full bg-ember" /> : <span className="ml-auto rounded-full bg-ember px-1.5 text-[11px] font-black text-night">{goalsDue}</span>)}
                 {n.id === "group" && unread > 0 && (folded ? <span className="absolute right-2 top-1.5 h-2.5 w-2.5 rounded-full bg-rose" /> : <span className="ml-auto rounded-full bg-rose px-1.5 text-[11px] font-black text-on-rose">{unread}</span>)}
               </button>
             );
@@ -269,7 +272,7 @@ export function Shell({ view, setView, onReview, onFocus, d, state, unread, mode
       </div>
 
       <nav
-        className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-8 border-t border-edge bg-deep/95 backdrop-blur lg:hidden"
+        className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-9 border-t border-edge bg-deep/95 backdrop-blur lg:hidden"
         style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
         aria-label="Navigare"
       >
@@ -284,7 +287,8 @@ export function Shell({ view, setView, onReview, onFocus, d, state, unread, mode
               className="tabbar-item focus-ring relative flex min-w-0 flex-col items-center gap-0.5 py-2 text-[10px] font-extrabold text-dim"
             >
               <Icon size={20} strokeWidth={2.25} aria-hidden="true" />
-              {n.label}
+              <span className="max-w-full truncate px-0.5">{n.label}</span>
+              {n.id === "goals" && goalsDue > 0 && <span className="absolute right-[22%] top-1 h-2 w-2 rounded-full bg-ember" />}
               {n.id === "group" && unread > 0 && <span className="absolute right-[22%] top-1 h-2 w-2 rounded-full bg-rose" />}
             </button>
           );
