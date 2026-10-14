@@ -1,22 +1,25 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { CalendarX, CheckCircle2, FlaskConical, Leaf, Timer, Zap } from "lucide-react";
+import { CalendarCheck, CalendarX, CheckCircle2, FlaskConical, Leaf, Timer, Zap } from "lucide-react";
 import { useAppStore } from "./lib/store.js";
 import { checkInGain, derive, reviewPayload } from "./lib/derive.js";
 import { CODE, focusXpByDay } from "./lib/engine.js";
 import { addDays, dayKey, fmt12, monthKey, nowMinutes, parseHM, todayKey, weekday } from "./lib/dates.js";
 import { detectMoments } from "./lib/moments.js";
+import { milestoneSet, statusPatch, toggleLink } from "./lib/milestones.js";
 import { pickQuote } from "./lib/quotes.js";
 import { agentClient, aiErrorCopy, aiStatus, dailyReview } from "./lib/ai.js";
-import { loadActions, markApplied, markRejected, markUndone, pendingAuto, planApply, planUndo } from "./lib/agentActions.js";
+import { hasOpenTodo, loadActions, markApplied, markRejected, markUndone, pendingAuto, planApply, planUndo, recordTodo } from "./lib/agentActions.js";
 import { permissionState } from "./lib/platform.js";
 import { useGroups } from "./lib/groups.js";
 import { uid } from "./lib/catalog.js";
 import { legacyTodos } from "./lib/legacy.js";
 import { toggleDone } from "./lib/todos.js";
+import { rescueInfo } from "./lib/rescue.js";
 import { Confirm, ToastProvider, useToast } from "./components/ui.jsx";
 import { deleteAccount } from "./lib/account.js";
 import { Shell } from "./components/Shell.jsx";
 import { FocusMode, FocusSetup } from "./components/Focus.jsx";
+import { carryCopies } from "./lib/goals.js";
 import { fmtSpan, loadSession, newSession, saveSession } from "./lib/focus.js";
 import { MomentModal } from "./components/MomentModal.jsx";
 import { HabitEditor, scheduleLabel } from "./components/HabitEditor.jsx";
@@ -25,6 +28,7 @@ import Onboarding from "./screens/Onboarding.jsx";
 import Dashboard from "./screens/Dashboard.jsx";
 import Habits from "./screens/Habits.jsx";
 import Companion from "./screens/Companion.jsx";
+import Chat from "./screens/Chat.jsx";
 import Group from "./screens/Group.jsx";
 import Planner from "./screens/Planner.jsx";
 import Stats from "./screens/Stats.jsx";
@@ -103,11 +107,13 @@ function Game() {
   const [focusSetup, setFocusSetup] = useState(false);
   const [goalEd, setGoalEd] = useState(null); // a draft goal for the editor
   const [celebrate, setCelebrate] = useState(null); // { o, mark }
+  const [focusPrefill, setFocusPrefill] = useState(null); // { work } from a planned to-do's Focus button
   const beginFocus = (pomodoro) => {
     const s = newSession(Date.now(), pomodoro);
     saveSession(s);
     setFocusSession(s);
     setFocusSetup(false);
+    setFocusPrefill(null);
   };
   const changeFocus = useCallback((s) => {
     saveSession(s);
@@ -202,6 +208,24 @@ function Game() {
       decideAction(async () => {
         await markRejected(await agentClient(), a.id, reason, a);
       }),
+    // A to-do the app proposes itself (daily plan, rescue), after the player's tap: logged in agent_actions
+    // and applied with undo when the server build is signed in, a plain local to-do otherwise.
+    // Resolves {duplicate: true} instead of adding a second copy.
+    propose: async ({ title, dur, date = today, reason, explanation, focus = false }) => {
+      if (hasOpenTodo(state, title, date)) return { duplicate: true };
+      const c = ai.server ? await agentClient() : null;
+      if (!c) {
+        todoActions.add({ title, date, dur, fromAgent: true, ...(focus ? { focus: true } : {}) });
+        return {};
+      }
+      const a = await recordTodo(c, { title, date, dur, reason, explanation, focus });
+      const r = planApply(a, state, today);
+      if (r.error) throw { code: "db_error" };
+      update(r.patch);
+      await markApplied(c, a.id, r.before, { outcomeDue: addDays(today, 14), action: a });
+      reloadAgentLog();
+      return {};
+    },
   };
 
   const go = useCallback((v, habitId = null) => {
@@ -341,10 +365,21 @@ function Game() {
   const goalActions = {
     add: ({ period, key, text }) =>
       update((s) => ({ ...s, goals: [...(s.goals || []), { id: uid("o"), period, key, text, done: false, doneOn: null, createdAt: today }].slice(-200) })),
-    toggle: (id) => update((s) => ({ ...s, goals: (s.goals || []).map((g) => (g.id === id ? { ...g, done: !g.done, doneOn: g.done ? null : today } : g)) })),
-    remove: (id) => update((s) => ({ ...s, goals: (s.goals || []).filter((g) => g.id !== id) })),
+    // a parent goal with its milestones, linked by parentId (see lib/milestones.js)
+    addSet: (parent, children) =>
+      update((s) => ({
+        ...s,
+        goals: [...(s.goals || []), ...milestoneSet(parent, children, (g) => ({ id: uid("o"), done: false, doneOn: null, createdAt: today, ...g }))].slice(-200),
+      })),
+    toggle: (id) => update((s) => ({ ...s, goals: (s.goals || []).map((g) => (g.id === id ? { ...g, ...statusPatch(g.done ? "open" : "done", today) } : g)) })),
+    // status: "open" | "done" | "dropped"
+    status: (id, status) => update((s) => ({ ...s, goals: (s.goals || []).map((g) => (g.id === id ? { ...g, ...statusPatch(status, today) } : g)) })),
+    // link/unlink an existing todo ("todoIds") or habit ("habitIds")
+    link: (id, field, itemId) =>
+      update((s) => ({ ...s, goals: (s.goals || []).map((g) => (g.id === id && (field === "todoIds" || field === "habitIds") ? { ...g, [field]: toggleLink(g[field], itemId) } : g)) })),
+    remove: (id) => update((s) => ({ ...s, goals: (s.goals || []).filter((g) => g.id !== id && g.parentId !== id) })),
     carry: (period, key, list) =>
-      update((s) => ({ ...s, goals: [...(s.goals || []), ...list.map((g) => ({ id: uid("o"), period, key, text: g.text, done: false, doneOn: null, createdAt: today }))].slice(-200) })),
+      update((s) => ({ ...s, goals: [...(s.goals || []), ...carryCopies(list, period, key, today, () => uid("o"))].slice(-200) })),
   };
   // ------------------------------------------------------------ goals (Obiective)
   const editGoal = (id, fn) => update((s) => ({ ...s, objectives: (s.objectives || []).map((o) => (o.id === id ? fn(o) : o)) }));
@@ -455,6 +490,7 @@ function Game() {
     edit: (todo) => setTodoEd(state.todos.find((t) => t.id === todo.id) || todo), // a series is edited as a whole, not as the day it was clicked on
     create: (draft) => setTodoEd({ id: uid("t"), title: "", date: today, time: null, dur: 30, done: false, doneOn: null, createdAt: today, ...draft, isNew: true }),
   };
+  const rescue = rescueInfo(d, state, today);
 
   function applyRevive() {
     const offer = d.revive.offer;
@@ -537,7 +573,7 @@ function Game() {
   if (state === null) return <Onboarding onDone={startGame} store={store} today={today} legacy={store.legacy} />;
   if (!d) return <Loading />;
 
-  const common = { state, d, today, go, ai, months, recentStories };
+  const common = { state, d, today, go, ai, months, recentStories, onStateChange: update };
   const reviewInfo = { ...review, run: runReview, reviewMin, now };
 
   return (
@@ -554,6 +590,21 @@ function Game() {
           onAddHabit={() => setHabitEd({ tab: "catalog" })}
           goalReminders={goalReminders}
           goalActions={objectiveActions}
+          rescue={rescue}
+          onRescue={async (step) => {
+            try {
+              await agentActions.propose({
+                title: step.title,
+                date: step.date,
+                dur: step.dur,
+                reason: step.reason,
+                explanation: { dataUsed: [step.source === "reset-risk" ? "risc de resetare a seriei" : "revenire după pauză"], confidence: "high", expectedEffect: "un pas mic ca să reiei ritmul" },
+              });
+              toast({ title: "Pasul de revenire este gata", text: step.title, icon: CalendarCheck, tone: "mint" });
+            } catch (e) {
+              toast({ title: "Nu am putut salva pasul", text: aiErrorCopy(e?.code), icon: CalendarCheck, tone: "rose" });
+            }
+          }}
         />
       )}
       {view === "habits" && (
@@ -577,6 +628,15 @@ function Game() {
           onRename={(name) => update((s) => ({ ...s, companion: { ...s.companion, name } }))}
         />
       )}
+      {view === "chat" && (
+        <Chat
+          {...common}
+          goals={goalActions}
+          todo={todoActions}
+          agent={agentActions}
+          onAddHabit={saveHabit}
+        />
+      )}
       {view === "group" && <Group {...common} groups={groups} />}
       {view === "goals" && (
         <Objectives
@@ -588,7 +648,7 @@ function Game() {
           onEdit={(o) => setGoalEd(o)}
         />
       )}
-      {view === "plan" && <Planner {...common} todo={todoActions} goals={goalActions} onMoveHabit={moveHabit} />}
+      {view === "plan" && <Planner {...common} todo={todoActions} goals={goalActions} agent={agentActions} onFocusTodo={(t) => { setFocusPrefill({ work: t.dur || 25 }); setFocusSetup(true); }} onMoveHabit={moveHabit} />}
       {view === "stats" && <Stats {...common} mode={store.mode} saveStatus={store.saveStatus} onFocus={() => setFocusSetup(true)} />}
       {view === "settings" && (
         <SettingsScreen
@@ -617,7 +677,7 @@ function Game() {
         />
       )}
 
-      <FocusSetup key={String(focusSetup)} open={focusSetup} onStart={beginFocus} onClose={() => setFocusSetup(false)} />
+      <FocusSetup key={String(focusSetup)} open={focusSetup} initial={focusPrefill} onStart={beginFocus} onClose={() => { setFocusSetup(false); setFocusPrefill(null); }} />
       {focusSession && <FocusMode session={focusSession} onChange={changeFocus} onFinish={finishFocus} todos={state.todos} today={today} todoActions={todoActions} />}
       {queue[0] && (
         <MomentModal

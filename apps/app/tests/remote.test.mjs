@@ -167,3 +167,132 @@ test("applyOps maps ops onto the supabase-js query builder", async () => {
     ["completions", "in", "day", ["d1", "d2"]],
   ]);
 });
+
+// ---- homework planner rows (migration 0020)
+
+const plannerState = () => ({
+  ...newState(),
+  schoolPlanner: {
+    assignments: [
+      { id: "a-1", title: "Test mate", subject: "Mate", due: "2026-10-14", estimatedMinutes: 90, done: false },
+      { id: "a-2", title: "Eseu", subject: " mate ", due: "2026-10-31", estimatedMinutes: 45, done: true },
+      { id: "a-3", title: "Fără materie", subject: "", due: "2026-11-01", estimatedMinutes: 30, done: false },
+    ],
+  },
+});
+
+test("planner: assignments become rows, subjects are shared by name, and the state round trips", () => {
+  const s = plannerState();
+  const rows = toRows(s, UID);
+  assert.equal(rows.subjects.length, 1);
+  assert.equal(rows.assignments[0].subject_id, rows.subjects[0].id);
+  assert.equal(rows.assignments[1].subject_id, rows.subjects[0].id);
+  assert.equal(rows.assignments[2].subject_id, null);
+  assert.equal("schoolPlanner" in rows.profile.extra, false);
+  const back = fromRows(database(s, {}).state);
+  assert.deepEqual(
+    back.schoolPlanner.assignments.map((a) => [a.id, a.title, a.due, a.estimatedMinutes, a.done]),
+    s.schoolPlanner.assignments.map((a) => [a.id, a.title, a.due, a.estimatedMinutes, a.done]),
+  );
+  assert.equal(back.schoolPlanner.assignments[0].subject, "Mate");
+});
+
+test("planner: without rows the old profiles.extra.schoolPlanner is still read", () => {
+  const s = plannerState();
+  const db = database(s, {}).state;
+  db.profile.extra.schoolPlanner = s.schoolPlanner;
+  db.assignments = [];
+  assert.deepEqual(fromRows(db).schoolPlanner, s.schoolPlanner);
+});
+
+test("planner: diff upserts the subject before its assignments and deletes assignments first", () => {
+  const next = plannerState();
+  const tables = diff(null, next, UID).map((o) => o.table);
+  assert.ok(tables.indexOf("subjects") < tables.indexOf("assignments"));
+  const ops = diff(next, { ...next, schoolPlanner: { assignments: [] } }, UID);
+  const del = ops.filter((o) => o.op === "delete").map((o) => o.table);
+  assert.deepEqual(del, ["assignments", "subjects"]);
+});
+
+test("planner: due dates are local calendar days, never shifted by the time zone", () => {
+  const saved = process.env.TZ;
+  try {
+    for (const tz of ["Pacific/Kiritimati", "America/Los_Angeles", "Europe/Bucharest"]) {
+      process.env.TZ = tz;
+      const s = { ...newState(), schoolPlanner: { assignments: [{ id: "a-x", title: "Fizică", subject: "Fizică", due: "2026-10-31", estimatedMinutes: 30, done: false }] } };
+      const rows = toRows(s, UID);
+      assert.equal(rows.assignments[0].due, "2026-10-31", tz);
+      assert.equal(typeof rows.assignments[0].due, "string");
+      // what supabase-js returns for a `date` column is the same string
+      const back = fromRows(database(s, {}).state);
+      assert.equal(back.schoolPlanner.assignments[0].due, "2026-10-31", tz);
+    }
+  } finally {
+    if (saved === undefined) delete process.env.TZ;
+    else process.env.TZ = saved;
+  }
+});
+
+test("planner: rows without id or title are not sent", () => {
+  const s = { ...newState(), schoolPlanner: { assignments: [{ title: "Fără id" }, { id: "a-y", title: "  " }] } };
+  assert.deepEqual(toRows(s, UID).assignments, []);
+});
+
+// ---- exams and study sessions (tables from 0020, no new migration)
+
+const withExtras = () => {
+  const s = plannerState();
+  s.schoolPlanner.exams = [{ id: "e-1", subject: "mate", title: "Test", date: "2026-10-20", done: false }];
+  s.schoolPlanner.sessions = [
+    { id: "s-1", subject: "Mate", assignmentId: "a-1", day: "2026-10-12", minutes: 25 },
+    { id: "s-2", subject: "Mate", assignmentId: "gone", day: "2026-10-12", minutes: 30 },
+  ];
+  return s;
+};
+
+test("planner: exams and sessions become rows sharing the subject and round trip", () => {
+  const s = withExtras();
+  const rows = toRows(s, UID);
+  assert.equal(rows.subjects.length, 1);
+  assert.equal(rows.exams[0].subject_id, rows.subjects[0].id);
+  assert.equal(rows.study_sessions[0].assignment_id, "a-1");
+  assert.equal(rows.study_sessions[1].assignment_id, null, "an unknown assignment would break the FK");
+  const back = fromRows(database(s, {}).state).schoolPlanner;
+  assert.deepEqual(back.exams, [{ id: "e-1", subject: "Mate", title: "Test", date: "2026-10-20", done: false }]);
+  assert.deepEqual(back.sessions.map((x) => [x.id, x.subject, x.day, x.minutes]), [["s-1", "Mate", "2026-10-12", 25], ["s-2", "Mate", "2026-10-12", 30]]);
+});
+
+test("planner: only exams or sessions (no assignments) are still read from rows", () => {
+  const s = { ...newState(), schoolPlanner: { assignments: [], exams: [{ id: "e-1", subject: "", title: "Test", date: "2026-10-20" }] } };
+  assert.equal(fromRows(database(s, {}).state).schoolPlanner.exams[0].id, "e-1");
+});
+
+test("planner: diff orders subjects, assignments, exams, sessions; deletes sessions and exams first", () => {
+  const s = withExtras();
+  const up = diff(null, s, UID).filter((o) => o.op === "upsert").map((o) => o.table);
+  assert.deepEqual(up.filter((t) => ["subjects", "assignments", "exams", "study_sessions"].includes(t)), ["subjects", "assignments", "exams", "study_sessions"]);
+  const del = diff(s, { ...s, schoolPlanner: {} }, UID).filter((o) => o.op === "delete").map((o) => o.table);
+  assert.deepEqual(del, ["study_sessions", "exams", "assignments", "subjects"]);
+});
+
+test("planner: exam and session days stay local calendar strings in any time zone", () => {
+  const saved = process.env.TZ;
+  try {
+    for (const tz of ["Pacific/Kiritimati", "America/Los_Angeles", "Europe/Bucharest"]) {
+      process.env.TZ = tz;
+      const rows = toRows(withExtras(), UID);
+      assert.equal(rows.exams[0].date, "2026-10-20", tz);
+      assert.equal(rows.study_sessions[0].day, "2026-10-12", tz);
+      assert.equal(fromRows(database(withExtras(), {}).state).schoolPlanner.sessions[0].day, "2026-10-12", tz);
+    }
+  } finally {
+    if (saved === undefined) delete process.env.TZ;
+    else process.env.TZ = saved;
+  }
+});
+
+test("planner: exams without a date and sessions without minutes are not sent", () => {
+  const s = { ...newState(), schoolPlanner: { exams: [{ id: "e", title: "x" }], sessions: [{ id: "s", day: "2026-10-12", minutes: 0 }] } };
+  const rows = toRows(s, UID);
+  assert.deepEqual([rows.exams, rows.study_sessions], [[], []]);
+});

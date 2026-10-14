@@ -15,6 +15,8 @@ const MIN_SCHEDULED = 8; // fewer scheduled days than this in either window -> '
 const ALPHA = 0.1; // exact two-sided Fisher p threshold
 const MIN_DIFF = 0.15; // and the absolute difference in rate must be at least this
 const HABIT_KINDS = new Set(["change_habit", "add_habit", "start_experiment"]);
+const TODO_KINDS = new Set(["create_todo", "plan_focus"]);
+const TODO_WINDOW = 3; // the to-do's day and the 3 days after it
 
 /** 'YYYY-MM-DD' two weeks after the day the action was decided. */
 export const outcomeDueDate = (decidedDay) => addDays(decidedDay, OUTCOME_DAYS);
@@ -114,6 +116,7 @@ function windowStats(habit, log, days) {
  * calendar days), which does not depend on the schedule.
  */
 export function measureOutcome(action, state, today) {
+  if (TODO_KINDS.has(action?.kind)) return measureTodo(action, state, today);
   if (!HABIT_KINDS.has(action?.kind)) return { verdict: "not_applicable" };
   const habitId = action.habit_id || action.payload?.habit_id || null;
   const decidedDay = decidedDayOf(action);
@@ -139,6 +142,34 @@ export function measureOutcome(action, state, today) {
     ci: roundCi(newcombe(after.done, after.n, before.done, before.n)),
     p: round(p, 6),
     verdict,
+  };
+}
+
+// Check-ins + to-dos done on a day: one deterministic number for "did the player do things that day".
+const activityOn = (state, d) => Object.values(state.log?.[d] || {}).filter(Boolean).length + (state.todos || []).filter((t) => t.done && t.doneOn === d).length;
+
+/**
+ * create_todo / plan_focus: was the to-do done (todo_done | todo_open), and how active was the player on
+ * its day and the 3 days after (check-ins + to-dos done per day) against the 28 days before it.
+ * Activity is context only (same before/after caveat); the verdict is whether the step got done.
+ * ponytail: a to-do deleted since reads as 'insufficient'; repeating to-dos are not tracked per day.
+ */
+function measureTodo(action, state, today) {
+  const decidedDay = decidedDayOf(action);
+  const day = (typeof action.payload?.date === "string" && action.payload.date) || decidedDay;
+  const todoId = action.before?.todoId || action.before?.id || (action.id ? `tag-${action.id}` : null);
+  const todo = (state?.todos || []).find((t) => t.id === todoId);
+  const base = { todoId, decidedDay, day, caveat: "before_after" };
+  if (!todo || !day) return { ...base, verdict: "insufficient" };
+  const sum = (days) => days.reduce((n, d) => n + activityOn(state, d), 0);
+  const win = dayRange(day, addDays(day, TODO_WINDOW)).filter((d) => d < today);
+  const pre = dayRange(addDays(day, -BEFORE_DAYS), addDays(day, -1));
+  const per = (n, k) => (k ? round(n / k, 2) : null);
+  return {
+    ...base,
+    verdict: todo.done ? "todo_done" : "todo_open",
+    completedOn: todo.done ? todo.doneOn || null : null,
+    activity: { rate: per(sum(win), win.length), baseline: per(sum(pre), pre.length), days: win.length },
   };
 }
 

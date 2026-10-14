@@ -43,10 +43,12 @@ function chime(kind) {
 
 // ------------------------------------------------------------ setup
 
-export function FocusSetup({ open, onStart, onClose }) {
+export function FocusSetup({ open, onStart, onClose, initial }) {
   const saved = useMemo(() => loadPrefs().setup || {}, []);
-  const [preset, setPreset] = useState(saved.preset || "p25");
-  const [work, setWork] = useState(saved.work || 25);
+  // `initial.work` (a planned to-do's length) selects "custom", snapped to the nearest choice; the break stays from prefs
+  const snap = initial?.work ? WORK_CHOICES.reduce((a, m) => (Math.abs(m - initial.work) < Math.abs(a - initial.work) ? m : a)) : null;
+  const [preset, setPreset] = useState(snap ? "custom" : saved.preset || "p25");
+  const [work, setWork] = useState(snap || saved.work || 25);
   const [brk, setBrk] = useState(saved.brk || 5);
   const options = [...PRESETS, { id: "custom", label: "Personalizat", sub: "Alegi tu cât lucrezi și cât te odihnești" }];
   const pomodoro = preset === "custom" ? { work, brk } : PRESETS.find((p) => p.id === preset)?.pomodoro ?? null;
