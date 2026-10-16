@@ -1078,3 +1078,12 @@ select.field {
     transform: rotate(-45deg);
   }
 }
+
+/* "Raportul zilei" flashes once when the badge on Acasă sends you to it */
+@keyframes review-ping {
+  0%, 100% { box-shadow: 0 0 0 0 rgb(var(--c-rose) / 0); }
+  25%, 75% { box-shadow: 0 0 0 5px rgb(var(--c-rose) / 0.55); }
+}
+.review-ping {
+  animation: review-ping 1.3s ease-in-out 2;
+}
