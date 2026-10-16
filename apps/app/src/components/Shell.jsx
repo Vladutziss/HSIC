@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import {
   CalendarDays,
   ChartLine,
@@ -26,6 +26,7 @@ import { PATHS } from "../lib/catalog.js";
 import { fmt12, parseHM } from "../lib/dates.js";
 import { REVIVES_PER_MONTH } from "../lib/derive.js";
 import { c as tc } from "../lib/themes.js";
+import { usePref } from "../lib/prefs.js";
 
 // Six places, grouped by what you do there. `also`: other views that belong to the same place
 // (Obiective is a tab of Plan). `ai`: the place where the AI features live, drawn to stand out.
@@ -179,8 +180,6 @@ function Hud({ d, state, setView, onReview, mode, saveStatus, now }) {
   );
 }
 
-const SIDE_KEY = "molted.sidebar"; // "closed" when the desktop side menu is folded to icons
-
 export function Shell({ view, setView, onReview, onFocus, d, state, unread, goalsDue = 0, mode, saveStatus, now, children }) {
   const c = d.companion;
   const path = state.profile?.path || "sport";
@@ -201,22 +200,10 @@ export function Shell({ view, setView, onReview, onFocus, d, state, unread, goal
       setTimeout(() => card.classList.remove("review-ping"), 2600);
     }, 60);
   };
-  const [folded, setFolded] = useState(() => {
-    try {
-      return localStorage.getItem(SIDE_KEY) === "closed";
-    } catch {
-      return false;
-    }
-  });
-  const toggleSide = () =>
-    setFolded((f) => {
-      try {
-        localStorage.setItem(SIDE_KEY, f ? "open" : "closed");
-      } catch {
-        /* the choice then lasts until the page closes */
-      }
-      return !f;
-    });
+  // folded or not is the player's choice, kept with the account (see lib/prefs.js)
+  const [side, setSide] = usePref("sidebar", "open");
+  const folded = side === "closed";
+  const toggleSide = () => setSide(folded ? "open" : "closed");
   return (
     <div className="app-bg min-h-screen text-body">
       <aside className={`fixed inset-y-0 left-0 z-40 hidden flex-col border-r border-edge bg-deep/95 pb-4 pt-5 transition-[width] duration-200 lg:flex ${folded ? "w-[76px] px-3" : "w-64 px-4"}`}>

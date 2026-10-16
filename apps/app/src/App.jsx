@@ -26,6 +26,7 @@ import { MomentModal } from "./components/MomentModal.jsx";
 import { UnlockModal } from "./components/UnlockModal.jsx";
 import { newItems, recordUnlocks } from "./lib/cosmetics.js";
 import { DEFAULT_THEME, getTheme, isTheme, setTheme } from "./lib/themes.js";
+import { allPrefs, bindPrefsSync, hydratePrefs } from "./lib/prefs.js";
 import { HabitEditor, scheduleLabel } from "./components/HabitEditor.jsx";
 import { TodoEditor } from "./components/TodoEditor.jsx";
 import Onboarding from "./screens/Onboarding.jsx";
@@ -295,6 +296,20 @@ function Game() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasState, accountTheme]);
+
+  // the small interface choices (side menu, habit list layout and sort, Focus screen) are the account's too: they come
+  // from settings.prefs, and every change made on this device is saved there. An account without any yet takes this
+  // device's (so what was chosen before this existed is kept).
+  const accountPrefs = state?.settings?.prefs;
+  useEffect(() => {
+    if (!hasState) return undefined;
+    const save = (values) => update((s) => ({ ...s, settings: { ...s.settings, prefs: values } }));
+    const unbind = bindPrefsSync(save);
+    if (accountPrefs) hydratePrefs(accountPrefs);
+    else if (Object.keys(allPrefs()).length) save(allPrefs());
+    return unbind;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasState, accountPrefs]);
 
   // new cosmetic items: recorded in the account and celebrated once each. A player who already has some when this appears gets them in one go.
   useEffect(() => {

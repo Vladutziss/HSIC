@@ -17,8 +17,9 @@
 //     workClosed, breakMs, cycles       // totals of finished phases
 //   }
 
+import { getPref, setPref } from "./prefs.js";
+
 const KEY = "molted.focusSession";
-const PREFS = "molted.focusPrefs";
 const MIN = 60000;
 
 export const PRESETS = [
@@ -145,19 +146,13 @@ export function saveSession(s) {
     /* the session then just does not survive a reload */
   }
 }
+// what the Focus screen remembers (last setup, to-do list open, clock style) belongs to the account: see lib/prefs.js.
+// Only the running session above stays on this device, it is the state of one timer.
 export function loadPrefs() {
-  try {
-    return JSON.parse(localStorage.getItem(PREFS) || "null") || {};
-  } catch {
-    return {};
-  }
+  return getPref("focus", {});
 }
 export function savePrefs(p) {
-  try {
-    localStorage.setItem(PREFS, JSON.stringify({ ...loadPrefs(), ...p }));
-  } catch {
-    /* fine */
-  }
+  setPref("focus", { ...getPref("focus", {}), ...p });
 }
 
 // ------------------------------------------------------------ history helpers
