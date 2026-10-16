@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { History, Undo2 } from "lucide-react";
-import { Button, Chip, Panel, SectionTitle, Skeleton } from "./ui.jsx";
+import { Undo2 } from "lucide-react";
+import { Button, Chip, Skeleton } from "./ui.jsx";
 import { scheduleLabel } from "./HabitEditor.jsx";
 import { SUPPORTED, pendingConfirm, recent } from "../lib/agentActions.js";
 
@@ -92,7 +92,7 @@ function Group({ title, items, children }) {
   if (!items.length) return null;
   return (
     <section className="mt-4 first:mt-0" aria-label={title}>
-      <h3 className="mb-2 text-xs font-extrabold uppercase tracking-wide text-dim">{title}</h3>
+      <h3 className="mb-2 text-sm font-extrabold text-ink">{title}</h3>
       <ul className="space-y-2">{items.map(children)}</ul>
     </section>
   );
@@ -164,16 +164,13 @@ export function AgentLog({ actions, state, onConfirm, onReject, onUndo, busy, er
   }
 
   return (
-    <Panel className="p-5">
-      <SectionTitle icon={History} tone="violet">
-        Ce a făcut Molt
-      </SectionTitle>
+    <div>
       {error && (
         <p role="alert" className="mb-3 text-sm font-bold text-rose">
           {error}
         </p>
       )}
       <div aria-live="polite">{body}</div>
-    </Panel>
+    </div>
   );
 }

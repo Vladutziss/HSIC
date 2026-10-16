@@ -109,7 +109,7 @@ function Game() {
   const [goalEd, setGoalEd] = useState(null); // a draft goal for the editor
   const [celebrate, setCelebrate] = useState(null); // { o, mark }
   const [focusPrefill, setFocusPrefill] = useState(null); // { work } from a planned to-do's Focus button
-  const [moltTab, setMoltTab] = useState("chat"); // Chat | Ajutor AI | Ce știe Molt | Evoluție
+  const [moltTab, setMoltTab] = useState("chat"); // the Molt ability that is open (see SKILLS in screens/Molt.jsx)
   const [moltPrompt, setMoltPrompt] = useState(null); // a question for Molt sent from another screen
   const beginFocus = (pomodoro) => {
     const s = newSession(Date.now(), pomodoro);

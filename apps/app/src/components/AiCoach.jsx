@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { BookOpen, Sparkles, Wand2 } from "lucide-react";
-import { Button, Panel, SectionTitle, Skeleton } from "./ui.jsx";
+import { BookOpen, Clock, RefreshCw, Sparkles } from "lucide-react";
+import { Button, Skeleton } from "./ui.jsx";
 import { aiErrorCopy, habitInsights, weeklyReflection } from "../lib/ai.js";
 import { coachData, hasHistory } from "../lib/coach.js";
 import { getClient } from "../lib/supabase.js";
@@ -25,40 +25,75 @@ export function useCoach(ask) {
   return [s, run];
 }
 
-// `input` is always visible (what the player types); `children` is the answer, shown once the AI replied;
-// `hint` says why a tap did nothing yet.
-export function Shell({ icon, title, sub, state, run, label, children, always, input, hint }) {
+// The body of one Molt ability: the question (`input`), the action button right next to it, then the answer.
+// `input` is always visible (what the player types or picks); `children` is the answer, shown once the AI replied;
+// `hint` says why a tap did nothing yet; `idle` says where the answer will appear; `always` sits under the answer; `stack` puts the button under a wide input
+// (a text area) instead of beside it. The title and the line Molt says live in the Molt page, not here.
+export function Shell({ state, run, label, children, always, input, hint, idle, stack = false }) {
+  const busy = state.status === "busy";
   return (
-    <Panel tone="violet" className="p-4 sm:p-5">
-      <SectionTitle
-        icon={icon}
-        tone="violet"
-        sub={sub}
-        action={
-          <Button size="sm" variant="ghost" icon={Sparkles} busy={state.status === "busy"} disabled={state.status === "busy"} onClick={run}>
-            {state.status === "done" ? "Din nou" : label}
-          </Button>
-        }
-      >
-        {title}
-      </SectionTitle>
-      {input}
-      {hint && <p className="mt-2 text-xs font-bold text-rose" role="status">{hint}</p>}
-      {state.status === "busy" && <Skeleton className="h-24" />}
-      {state.status === "error" && <p className="mt-2 text-sm font-semibold text-dim">{state.error}</p>}
-      {state.status === "done" && children}
+    <div>
+      <div className={`flex flex-wrap items-end gap-3 ${stack ? "flex-col items-stretch sm:items-start" : ""}`}>
+        {input && <div className={`min-w-0 ${stack ? "w-full" : "flex-1 basis-60"}`}>{input}</div>}
+        <Button variant="gold" icon={state.status === "done" ? RefreshCw : Sparkles} busy={busy} disabled={busy} onClick={run} className="max-sm:w-full sm:shrink-0">
+          {busy ? "Se gândește…" : state.status === "done" ? "Din nou" : label}
+        </Button>
+      </div>
+      {hint && (
+        <p className="mt-2 text-xs font-bold text-rose" role="status">
+          {hint}
+        </p>
+      )}
+      <div aria-live="polite">
+        {state.status === "idle" && idle && (
+          <div className="mt-5 flex items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-edge px-4 py-8 text-center text-sm font-semibold text-faint">
+            <Sparkles size={16} className="shrink-0" aria-hidden="true" />
+            {idle}
+          </div>
+        )}
+        {busy && (
+          <div className="mt-4 space-y-2">
+            <p className="text-xs font-extrabold text-violet-hi">Molt se gândește…</p>
+            <Skeleton className="h-12" />
+            <Skeleton className="h-12" />
+          </div>
+        )}
+        {state.status === "error" && <p className="mt-4 rounded-xl bg-rose/10 p-3 text-sm font-semibold text-body ring-1 ring-rose/30">{state.error}</p>}
+        {state.status === "done" && <div className="anim-slide mt-4 border-t border-edge/60 pt-4">{children}</div>}
+      </div>
       {always}
-    </Panel>
+    </div>
+  );
+}
+
+/** Shown where an analysis needs the player's check-in history and there is not enough of it yet. */
+export function NeedHistory({ data, onNotes }) {
+  const best = Math.max(0, ...data.habits.map((h) => h.sched));
+  return (
+    <div className="inset flex items-start gap-3 p-4">
+      <Clock size={18} className="mt-0.5 shrink-0 text-violet-hi" aria-hidden="true" />
+      <div className="text-sm font-semibold text-body">
+        <p>
+          Mai are nevoie de câteva zile de bifări: caută tipare abia când un obicei are cel puțin 7 zile programate în ultimele 4 săptămâni (acum cel mai lung are {best}).
+        </p>
+        {onNotes && (
+          <button type="button" onClick={onNotes} className="focus-ring mt-1.5 text-violet-hi underline">
+            Până atunci, spune-i lui Molt ce se întâmplă
+          </button>
+        )}
+      </div>
+    </div>
   );
 }
 
 /** Patterns in the last 4 weeks of check-ins (Statistici). */
-export function InsightsPanel({ state, today, ai }) {
+export function InsightsPanel({ state, today, ai, onNotes }) {
   const data = useMemo(() => coachData(state, today), [state, today]);
   const [s, run] = useCoach((signal) => habitInsights(data, signal));
-  if (!ai?.server || !hasHistory(data)) return null;
+  if (!ai?.server) return null;
+  if (!hasHistory(data)) return <NeedHistory data={data} onNotes={onNotes} />;
   return (
-    <Shell icon={Wand2} title="Ce observă Molt" sub="Tipare din ultimele 4 săptămâni, calculate din bifările tale" state={s} run={run} label="Analizează">
+    <Shell state={s} run={run} label="Ce observi?" idle="Aici apar 3 tipare găsite în bifările tale.">
       <ul className="grid gap-3 md:grid-cols-3">
         {s.data?.map((i) => (
           <li key={i.title} className="inset p-3">
@@ -71,7 +106,7 @@ export function InsightsPanel({ state, today, ai }) {
   );
 }
 
-export function ReflectionPanel({ state, today, ai }) {
+export function ReflectionPanel({ state, today, ai, onNotes }) {
   const data = useMemo(() => coachData(state, today), [state, today]);
   const [answer, setAnswer] = useState("");
   const [history, setHistory] = useState([]);
@@ -91,7 +126,8 @@ export function ReflectionPanel({ state, today, ai }) {
     }
     return r;
   });
-  if (!ai?.server || !hasHistory(data)) return null;
+  if (!ai?.server) return null;
+  if (!hasHistory(data)) return <NeedHistory data={data} onNotes={onNotes} />;
   const go = () => {
     if (!answer.trim()) return setHint("Scrie mai întâi câteva cuvinte despre săptămâna ta.");
     setHint("");
@@ -99,18 +135,17 @@ export function ReflectionPanel({ state, today, ai }) {
   };
   return (
     <Shell
-      icon={BookOpen}
-      title="Reflecție de săptămână"
-      sub="Spune ce te-a ajutat sau ce te-a blocat, iar Molt propune un singur pas"
       state={s}
       run={go}
       label="Reflectează"
       hint={hint}
+      idle="Aici apar observația lui Molt și un singur pas pentru săptămâna viitoare."
+      stack
       always={history.length > 0 && <ReflectionHistory items={history} />}
-      input={<textarea className="field mt-1 min-h-20 w-full resize-y" value={answer} onChange={(e) => setAnswer(e.target.value)} placeholder="Ce ți-a făcut săptămâna mai ușoară sau mai grea?" aria-label="Răspuns pentru reflecție" />}
+      input={<textarea className="field min-h-20 w-full resize-y" value={answer} onChange={(e) => setAnswer(e.target.value)} placeholder="Ce ți-a făcut săptămâna mai ușoară sau mai grea?" aria-label="Răspuns pentru reflecție" />}
     >
       {s.data && (
-        <div className="mt-3 inset p-3 text-sm font-semibold text-body">
+        <div className="inset p-3 text-sm font-semibold text-body">
           <p><strong className="text-ink">Observație:</strong> {s.data.observation}</p>
           <p className="mt-2"><strong className="text-ink">Următorul pas:</strong> {s.data.nextStep}</p>
           {s.data.dataUsed.length > 0 && <p className="mt-2 text-xs font-bold text-dim">Date folosite: {s.data.dataUsed.join(" · ")}.</p>}

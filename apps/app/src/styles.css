@@ -1052,3 +1052,29 @@ select.field {
     transition-duration: 0.001ms !important;
   }
 }
+
+/* ------------------------------------------------------------ Molt workbench
+   The panel the chosen ability opens in reads as Molt speaking: its tail points at the character
+   (left on wide screens; on narrow ones Molt sits above, so there is no tail). */
+.speech {
+  --speech-edge: color-mix(in srgb, rgb(var(--c-violet)) 50%, rgb(var(--c-night)));
+}
+.speech::before {
+  display: none;
+  content: "";
+  position: absolute;
+  z-index: 1;
+  width: 12px;
+  height: 12px;
+  background: rgb(var(--c-panel));
+  border-top: 1px solid var(--speech-edge);
+  border-left: 1px solid var(--speech-edge);
+}
+@media (min-width: 1024px) {
+  .speech::before {
+    display: block;
+    top: 34px;
+    left: -7px;
+    transform: rotate(-45deg);
+  }
+}
