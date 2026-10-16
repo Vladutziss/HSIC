@@ -183,6 +183,8 @@ const SIDE_KEY = "molted.sidebar"; // "closed" when the desktop side menu is fol
 export function Shell({ view, setView, onReview, onFocus, d, state, unread, goalsDue = 0, mode, saveStatus, now, children }) {
   const c = d.companion;
   const path = state.profile?.path || "sport";
+  // the evening report is waiting: its time has come and today's is not written yet (Acasă shows a badge, like Grup)
+  const reviewDue = now >= parseHM(state.settings?.reviewTime || "21:00") && !state.reviews?.[d.today];
   const [folded, setFolded] = useState(() => {
     try {
       return localStorage.getItem(SIDE_KEY) === "closed";
@@ -239,6 +241,7 @@ export function Shell({ view, setView, onReview, onFocus, d, state, unread, goal
                   </span>
                 )}
                 {n.id === "plan" && goalsDue > 0 && (folded ? <span className="absolute right-2 top-1.5 h-2.5 w-2.5 rounded-full bg-ember" /> : <span className="ml-auto rounded-full bg-ember px-1.5 text-[11px] font-black text-night">{goalsDue}</span>)}
+                {n.id === "home" && reviewDue && (folded ? <span className="absolute right-2 top-1.5 h-2.5 w-2.5 rounded-full bg-rose" /> : <span className="ml-auto rounded-full bg-rose px-1.5 text-[11px] font-black text-on-rose" title="E ora raportului de seară" aria-label="Raportul de seară te așteaptă">1</span>)}
                 {n.id === "group" && unread > 0 && (folded ? <span className="absolute right-2 top-1.5 h-2.5 w-2.5 rounded-full bg-rose" /> : <span className="ml-auto rounded-full bg-rose px-1.5 text-[11px] font-black text-on-rose">{unread}</span>)}
               </button>
             );
@@ -298,6 +301,7 @@ export function Shell({ view, setView, onReview, onFocus, d, state, unread, goal
               <Icon size={20} strokeWidth={2.25} aria-hidden="true" />
               <span className="max-w-full truncate px-0.5">{n.short || n.label}</span>
               {n.id === "plan" && goalsDue > 0 && <span className="absolute right-[22%] top-1 h-2 w-2 rounded-full bg-ember" />}
+              {n.id === "home" && reviewDue && <span className="absolute right-[22%] top-1 h-2 w-2 rounded-full bg-rose" aria-label="Raportul de seară te așteaptă" />}
               {n.id === "group" && unread > 0 && <span className="absolute right-[22%] top-1 h-2 w-2 rounded-full bg-rose" />}
             </button>
           );
