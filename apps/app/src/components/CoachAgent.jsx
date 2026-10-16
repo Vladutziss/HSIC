@@ -1,8 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { BookOpen, CalendarCheck, FlaskConical, Plus, Search, Sparkles, X } from "lucide-react";
-import { Button, Panel, SectionTitle } from "./ui.jsx";
+import { FlaskConical, Plus, Search, Sparkles, X } from "lucide-react";
+import { Button } from "./ui.jsx";
 import { CoachNotes } from "./CoachNotes.jsx";
-import { Shell, Sources, useCoach } from "./AiCoach.jsx";
+import { NeedHistory, Shell, Sources, useCoach } from "./AiCoach.jsx";
 import { scheduleLabel } from "./HabitEditor.jsx";
 import { agentClient, aiErrorCopy, coachAgent } from "../lib/ai.js";
 import { cancelExperiment, decideAction, finishDue, loadExperiments, startExperiment } from "../lib/agentLog.js";
@@ -42,28 +42,15 @@ const stepText = (x) => {
  * every change is applied by the player, never on its own. `steps` shows what it did, so the answer
  * can be checked, and each decision is logged (agent_actions) and remembered as feedback.
  */
-export function PlanPanel({ state, today, ai, onAddHabit, onEdit, onExperiment }) {
+export function PlanPanel({ state, today, ai, onAddHabit, onEdit, onExperiment, onNotes }) {
   const data = useMemo(() => coachData(state, today), [state, today]);
   const [s, run] = useCoach((signal) => coachAgent(today, signal));
   const [decided, setDecided] = useState({}); // index -> "accepted" | "rejected"
   const [rejecting, setRejecting] = useState(null);
   const [problem, setProblem] = useState("");
   if (!ai?.server) return null;
-  if (!hasHistory(data)) {
-    // not hidden: say what is missing, so a new player knows Molt is there and why it waits
-    const best = Math.max(0, ...data.habits.map((h) => h.sched));
-    return (
-      <Panel tone="violet" className="p-4 sm:p-5">
-        <SectionTitle icon={CalendarCheck} tone="violet" sub="Lucrează cu istoricul tău real, nu cu presupuneri">
-          Planul săptămânii cu Molt
-        </SectionTitle>
-        <p className="text-sm font-semibold text-body">
-          Mai are nevoie de câteva zile de bifări: caută tipare abia când un obicei are cel puțin 7 zile programate în ultimele 4 săptămâni (acum cel mai lung are {best}).
-          Până atunci îi poți spune lui Molt ce se întâmplă în „Ce știe Molt despre tine”.
-        </p>
-      </Panel>
-    );
-  }
+  // not hidden: say what is missing, so a new player knows Molt is there and why it waits
+  if (!hasHistory(data)) return <NeedHistory data={data} onNotes={onNotes} />;
 
   const record = async (sg, i, decision, reason) => {
     setProblem("");
@@ -100,21 +87,10 @@ export function PlanPanel({ state, today, ai, onAddHabit, onEdit, onExperiment }
   const r = s.data;
   const habitName = (id) => (state.habits || []).find((h) => h.id === id)?.name;
   return (
-    <Shell icon={CalendarCheck} title="Planul săptămânii cu Molt" sub="Molt citește bifările, notele și cercetarea, apoi propune pașii pentru săptămâna viitoare" state={s} run={run} label="Cere un plan">
+    <Shell state={s} run={run} label="Cere un plan" idle="Aici apar schimbările propuse pentru săptămâna viitoare.">
       {r && (
         <div className="space-y-3">
-          <ol className="space-y-1 text-xs font-bold text-dim">
-            {r.steps
-              .map((x) => [x, stepText(x)])
-              .filter(([, t]) => t)
-              .map(([x, t], i) => (
-                <li key={i} className="flex items-center gap-1.5">
-                  {x.kind === "search" ? <Search size={12} aria-hidden="true" /> : <Sparkles size={12} aria-hidden="true" />}
-                  {t}
-                </li>
-              ))}
-          </ol>
-          {r.summary && <p className="text-sm font-semibold text-body">{r.summary}</p>}
+          {r.summary && <p className="text-[15px] font-semibold text-ink">{r.summary}</p>}
           {r.notEnoughData && (
             <p className="text-sm font-semibold text-dim">
               Încă prea puține zile ca să spun ceva despre progresul tău: cel mai lung obicei are {r.notEnoughData.longest} din {r.notEnoughData.needed} zile programate necesare.
@@ -199,6 +175,22 @@ export function PlanPanel({ state, today, ai, onAddHabit, onEdit, onExperiment }
                 </li>
               ))}
             </ul>
+          )}
+          {r.steps.some((x) => stepText(x)) && (
+            <details className="text-xs font-bold text-dim">
+              <summary className="cursor-pointer font-extrabold hover:text-ink">Ce a verificat Molt ca să ajungă aici</summary>
+              <ol className="mt-2 space-y-1">
+                {r.steps
+                  .map((x) => [x, stepText(x)])
+                  .filter(([, t]) => t)
+                  .map(([x, t], i) => (
+                    <li key={i} className="flex items-center gap-1.5">
+                      {x.kind === "search" ? <Search size={12} aria-hidden="true" /> : <Sparkles size={12} aria-hidden="true" />}
+                      {t}
+                    </li>
+                  ))}
+              </ol>
+            </details>
           )}
         </div>
       )}
@@ -286,10 +278,14 @@ export function ExperimentsPanel({ state, today, ai, refreshKey = 0 }) {
   const f = running ? FACTORS[running.factor] : null;
 
   return (
-    <Panel tone="violet" className="space-y-3 p-4 sm:p-5">
-      <SectionTitle icon={FlaskConical} tone="violet" sub="Teste pe tine însuți: zilele sunt trase la sorți, iar rezultatul e raportat cu incertitudine">
-        Experimente
-      </SectionTitle>
+    <section className="mt-6 space-y-3 border-t border-edge/60 pt-5" aria-label="Experimente">
+      <div>
+        <h3 className="flex items-center gap-2 font-pixel text-lg text-ink">
+          <FlaskConical size={16} className="text-violet-hi" aria-hidden="true" />
+          Experimentele tale
+        </h3>
+        <p className="text-xs font-semibold text-dim">Teste pe tine însuți: zilele sunt trase la sorți, iar rezultatul e raportat cu incertitudine.</p>
+      </div>
       {running && (
         <div className="inset space-y-1 p-3">
           <p className="text-sm font-extrabold text-ink">
@@ -321,6 +317,6 @@ export function ExperimentsPanel({ state, today, ai, refreshKey = 0 }) {
           <p className="text-sm font-semibold text-body">{(VERDICT[e.result?.verdict] || VERDICT.insufficient)(e.result || {})}</p>
         </div>
       ))}
-    </Panel>
+    </section>
   );
 }

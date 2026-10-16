@@ -1,11 +1,14 @@
-// Molt: the player's own character, and the place where every AI feature lives. The character is the assistant:
-// it knows the habits, to-dos, goals and notes, talks (Chat), makes plans and analyses (Ajutor AI), keeps what it was
-// told (Ce știe Molt) and grows (Evoluție). The pieces are the same panels that used to be spread over Obiceiuri,
-// Plan and Statistici; here they sit together, so using the AI reads as the main way to reach the goals.
+// Molt: the player's own character, and the place where every AI feature lives. The character is the assistant: it knows
+// the habits, to-dos, goals and notes, talks (Chat), makes plans and analyses, keeps what it was told (Ce știe Molt) and
+// grows (Evoluție).
+//
+// One screen, no long scroll: Molt and the list of what it can do sit on the left, and the chosen ability opens in a
+// single workbench on the right, styled as Molt speaking (its tail points at the character). Inside it the question,
+// the action button and the answer are one block, so nothing needs hunting for.
 
-import React, { useMemo, useState } from "react";
-import { BarChart3, Bot, Check, Egg, Eye, MessageSquare, NotebookPen, Pencil, Sparkles, Target, Wand2 } from "lucide-react";
-import { Bar, Button, Chip, Empty, Panel, Tabs } from "../components/ui.jsx";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { BookOpen, Bot, CalendarCheck, CalendarRange, Check, Egg, History, Lock, MessageSquare, NotebookPen, Pencil, Sparkles, Target, Wand2 } from "lucide-react";
+import { Bar, Button, Chip, Panel } from "../components/ui.jsx";
 import { Sprite, eggCrack } from "../components/Sprite.jsx";
 import { moodLine } from "../components/Cards.jsx";
 import { AgentLog } from "../components/AgentLog.jsx";
@@ -17,104 +20,104 @@ import { PATHS } from "../lib/catalog.js";
 import Chat from "./Chat.jsx";
 import Companion from "./Companion.jsx";
 
-export const MOLT_TABS = ["chat", "ai", "memory", "evolution"];
-
-// what Molt can do, in plain words: shown to everyone, so the player sees what the AI is for even before signing in
-const ABILITIES = [
-  { icon: MessageSquare, title: "Vorbește cu el", text: "Întreabă-l orice despre școală, obiective și rutină; îți face planuri pe care le aplici dintr-un click." },
-  { icon: Sparkles, title: "Planul zilei și al săptămânii", text: "Alege din ce ai deja programat pașii potriviți pentru timpul și energia pe care le ai." },
-  { icon: Target, title: "Scopuri împărțite în pași", text: "Din „vreau să învăț programare” face etape mici, cu termene." },
-  { icon: BarChart3, title: "Analize și reflecții", text: "Vede tiparele din bifările tale și îți propune un singur pas care contează." },
-  { icon: NotebookPen, title: "Își amintește", text: "Ce îi spui (un examen, o restricție, o preferință) rămâne la el și îi ghidează sfaturile." },
+// `group` heads a run of abilities in the list; `say` is the line Molt speaks at the top of the workbench.
+// `ai`: needs the server (signed-in). The order here is the order in the list.
+const SKILLS = [
+  { id: "chat", label: "Vorbește", icon: MessageSquare, ai: true, title: (n) => `Vorbește cu ${n}`, say: "Întreabă-mă orice despre școală, obiective și rutină. Îți fac planuri pe care le aplici dintr-un click." },
+  { id: "day", label: "Planul zilei", icon: Sparkles, group: "Planifică", ai: true, title: () => "Planul zilei", say: "Spune-mi cât timp și câtă energie ai, iar eu aleg pașii potriviți din ce ai deja programat." },
+  { id: "school", label: "Teme și examene", icon: CalendarCheck, group: "Planifică", ai: true, title: () => "Teme și examene", say: "Scrie-mi ce ai de făcut, de exemplu „Test la mate vineri”, și le fac pași pe care îi poți planifica." },
+  { id: "week", label: "Planul săptămânii", icon: CalendarRange, group: "Planifică", ai: true, title: () => "Planul săptămânii", say: "Citesc bifările tale, notele și cercetarea, apoi îți propun pașii pentru săptămâna viitoare." },
+  { id: "goal", label: "Scop în pași", icon: Target, group: "Planifică", ai: true, title: () => "Scop în pași", say: "Dă-mi un scop mare și îl tai în pași mici, cu termene. Îi salvezi în Plan, la Obiective." },
+  { id: "mirror", label: "Reflecție", icon: BookOpen, group: "Înțelege", ai: true, title: () => "Reflecția săptămânii", say: "Cum a fost săptămâna? Spune-mi ce te-a ajutat sau ce te-a blocat și îți propun un singur pas." },
+  { id: "patterns", label: "Tipare", icon: Wand2, group: "Înțelege", ai: true, title: () => "Ce observ la tine", say: "Mă uit la ultimele 4 săptămâni de bifări și îți spun ce tipare văd." },
+  { id: "memory", label: "Ce știe Molt", icon: NotebookPen, group: "Molt", title: () => "Ce știu despre tine", say: "Ce-mi spui aici rămâne la mine și îmi ghidează sfaturile: examene, restricții, preferințe." },
+  { id: "log", label: "Ce a făcut Molt", icon: History, group: "Molt", ai: true, title: () => "Ce am făcut", say: "Tot ce ți-am propus sau am făcut, cu efectul măsurat și opțiunea de a anula." },
+  { id: "evolution", label: "Evoluție", icon: Egg, group: "Molt", title: () => "Evoluția mea", say: "Cresc odată cu obiceiurile pe care le bifezi: fiecare bifă aduce 1, 2 sau 3 puncte de evoluție, după dificultate." },
 ];
 
-function Group({ title, sub, children }) {
-  return (
-    <section className="space-y-3">
-      <div>
-        <h2 className="font-pixel text-lg text-ink">{title}</h2>
-        {sub && <p className="text-xs font-semibold text-dim">{sub}</p>}
-      </div>
-      {children}
-    </section>
-  );
+const ALIAS = { ai: "day" }; // the old "Ajutor AI" tab, still reachable from other screens
+export const MOLT_TABS = [...SKILLS.map((s) => s.id), ...Object.keys(ALIAS)];
+
+const WIDE = "(min-width: 1024px)";
+function useWide() {
+  const [wide, setWide] = useState(() => window.matchMedia?.(WIDE).matches ?? true);
+  useEffect(() => {
+    const m = window.matchMedia?.(WIDE);
+    if (!m) return undefined;
+    const on = () => setWide(m.matches);
+    m.addEventListener("change", on);
+    return () => m.removeEventListener("change", on);
+  }, []);
+  return wide;
 }
 
-function Hero({ state, d, ai, onRename, setTab }) {
+function MoltCard({ state, d, ai, wide, waiting, onWaiting, onRename }) {
   const c = d.companion;
   const path = state.profile?.path || "sport";
   const p = PATHS[path];
   const [renaming, setRenaming] = useState(false);
   const [name, setName] = useState(c.name || "");
-  const habits = (state.habits || []).filter((h) => !h.archivedAt).length;
-  const goals = (state.objectives || []).filter((o) => !o.archived && !o.doneOn).length;
   const label = c.name || "Moltul tău";
   return (
     <Panel tone="violet" corners className="overflow-hidden">
-      <div className="grid gap-0 sm:grid-cols-[auto,1fr] [&>*]:min-w-0">
-        <div className="pedestal flex items-end justify-center px-8 pt-5 sm:min-w-[210px]">
-          <Sprite path={path} stage={c.stage.id} mood={c.mood} size={148} crack={eggCrack(c.ep)} label={`${label}, ${c.stage.name}`} />
+      <div className="flex items-center gap-3 p-3 lg:flex-col lg:items-stretch lg:gap-0 lg:p-0">
+        <div className="pedestal flex h-[84px] w-[84px] shrink-0 items-end justify-center rounded-xl lg:h-auto lg:w-auto lg:rounded-none lg:px-6 lg:pt-4">
+          <Sprite path={path} stage={c.stage.id} mood={c.mood} size={wide ? 128 : 64} crack={eggCrack(c.ep)} label={`${label}, ${c.stage.name}`} />
         </div>
-        <div className="flex flex-col justify-center gap-3 p-4 sm:p-6">
-          <div className="flex flex-wrap items-center gap-2">
-            <Chip tone="violet" icon={Sparkles}>
-              Asistentul tău personal AI
-            </Chip>
-            <Chip tone={ai?.server ? "mint" : "dim"} icon={Bot}>
-              {ai?.server ? "AI activ" : "AI indisponibil aici"}
-            </Chip>
-          </div>
-          <div>
-            <div className="text-xs font-extrabold uppercase tracking-[0.2em] text-violet-hi">
-              {c.stage.name} · {p.cls}
-            </div>
-            {renaming ? (
-              <form
-                className="mt-1 flex gap-2"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  if (name.trim()) onRename(name.trim().slice(0, 20));
-                  setRenaming(false);
-                }}
-              >
-                <input className="field" value={name} maxLength={20} onChange={(e) => setName(e.target.value)} aria-label="Numele personajului" autoFocus />
-                <Button type="submit" size="sm" icon={Check} aria-label="Salvează numele" />
-              </form>
-            ) : (
-              <div className="mt-1 flex items-center gap-2">
-                <h1 className="font-pixel text-3xl text-ink sm:text-4xl">{label}</h1>
+        <div className="min-w-0 flex-1 space-y-2 lg:p-4 lg:pt-3">
+          {renaming ? (
+            <form
+              className="flex gap-2"
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (name.trim()) onRename(name.trim().slice(0, 20));
+                setRenaming(false);
+              }}
+            >
+              <input className="field" value={name} maxLength={20} onChange={(e) => setName(e.target.value)} aria-label="Numele personajului" autoFocus />
+              <Button type="submit" size="sm" icon={Check} aria-label="Salvează numele" />
+            </form>
+          ) : (
+            <div>
+              <div className="flex items-center gap-1.5">
+                <h1 className="truncate font-pixel text-2xl leading-tight text-ink lg:text-3xl">{label}</h1>
                 {c.stage.id !== "egg" && (
-                  <button type="button" onClick={() => setRenaming(true)} className="focus-ring rounded-lg p-1.5 text-dim hover:bg-panel-hi hover:text-ink" aria-label="Redenumește">
-                    <Pencil size={16} aria-hidden="true" />
+                  <button type="button" onClick={() => setRenaming(true)} className="focus-ring shrink-0 rounded-lg p-1.5 text-dim hover:bg-panel-hi hover:text-ink" aria-label="Redenumește">
+                    <Pencil size={15} aria-hidden="true" />
                   </button>
                 )}
               </div>
-            )}
-            <p className="mt-1.5 text-sm font-semibold text-body">
-              {c.stage.id === "egg" ? moodLine(c, c.name) : `Îți știu obiceiurile, to-do-urile și obiectivele, ca să te ajut să le atingi. ${moodLine(c, c.name)}`}
-            </p>
-          </div>
-          <div className="flex flex-wrap items-center gap-1.5 text-[11px] font-extrabold text-dim">
-            <span className="inline-flex items-center gap-1 rounded-full bg-well px-2.5 py-1 ring-1 ring-edge">
-              <Eye size={12} aria-hidden="true" /> văd {habits} {habits === 1 ? "obicei" : "obiceiuri"}
-            </span>
-            <span className="rounded-full bg-well px-2.5 py-1 ring-1 ring-edge">
-              {goals} {goals === 1 ? "obiectiv activ" : "obiective active"}
-            </span>
-            <button type="button" onClick={() => setTab("memory")} className="focus-ring rounded-full bg-well px-2.5 py-1 ring-1 ring-edge hover:text-ink">
-              ce știu despre tine →
-            </button>
-          </div>
-          {c.next && (
+              <p className="text-sm font-extrabold text-violet-hi">
+                {c.stage.name} · {p.cls}
+              </p>
+            </div>
+          )}
+          <p className="hidden text-sm font-semibold leading-snug text-body lg:block">{moodLine(c, c.name)}</p>
+          {c.next ? (
             <div>
-              <div className="mb-1 flex justify-between text-xs font-extrabold text-dim">
-                <span>Următoarea evoluție: {c.next.name}</span>
-                <span className="tabular">
+              <Bar value={c.progress} tone="violet" label="Progres spre evoluția următoare" />
+              <p className="mt-1 flex justify-between gap-2 text-[11px] font-extrabold text-dim">
+                <span className="truncate">Spre {c.next.name}</span>
+                <span className="tabular shrink-0">
                   {c.ep} / {c.next.min} PE
                 </span>
-              </div>
-              <Bar value={c.progress} tone="violet" label="Progres spre evoluția următoare" />
+              </p>
             </div>
+          ) : (
+            <Chip tone="gold" icon={Sparkles}>
+              Evoluție completă
+            </Chip>
+          )}
+          {!ai?.server && (
+            <Chip tone="dim" icon={Bot}>
+              AI indisponibil aici
+            </Chip>
+          )}
+          {waiting > 0 && (
+            <button type="button" onClick={onWaiting} className="focus-ring flex w-full items-center gap-2 rounded-xl bg-gold/15 px-2.5 py-1.5 text-left text-xs font-extrabold text-ink ring-1 ring-gold/40 hover:bg-gold/20">
+              <Sparkles size={14} className="shrink-0 text-gold-ink" aria-hidden="true" />
+              Molt așteaptă {waiting} {waiting === 1 ? "propunere" : "propuneri"}
+            </button>
           )}
         </div>
       </div>
@@ -122,66 +125,87 @@ function Hero({ state, d, ai, onRename, setTab }) {
   );
 }
 
-function AiTab({ props }) {
-  const { state, today, ai, agent, goals, onStateChange, onAddHabit, onEdit } = props;
-  const [expKey, setExpKey] = useState(0);
-  const waiting = agent?.log ? pendingConfirm(agent.log).length : 0;
+// The list of abilities: a column beside the workbench on wide screens, a strip you swipe on phones.
+function SkillNav({ active, setTab, wide, waiting, locked }) {
+  useEffect(() => {
+    if (!wide) document.getElementById(`molt-tab-${active}`)?.scrollIntoView({ inline: "center", block: "nearest" });
+  }, [active, wide]);
 
-  if (!ai?.server) {
-    return (
-      <Panel className="p-4 sm:p-6">
-        <Empty icon={Bot} title="Ajutorul AI e disponibil când ești în cont">
-          Funcțiile de mai jos folosesc inteligența artificială de pe server. Intră în contul tău și Molt va putea să-ți facă planuri, analize și reflecții.
-        </Empty>
-        <ul className="mt-2 grid gap-2 sm:grid-cols-2">
-          {ABILITIES.map((a) => {
-            const Icon = a.icon;
-            return (
-              <li key={a.title} className="inset flex items-start gap-3 p-3">
-                <Icon size={18} className="mt-0.5 shrink-0 text-violet-hi" aria-hidden="true" />
-                <div>
-                  <p className="text-sm font-extrabold text-ink">{a.title}</p>
-                  <p className="text-xs font-semibold text-dim">{a.text}</p>
-                </div>
-              </li>
-            );
-          })}
-        </ul>
-      </Panel>
-    );
-  }
+  const onKeyDown = (e) => {
+    const step = { ArrowDown: 1, ArrowRight: 1, ArrowUp: -1, ArrowLeft: -1 }[e.key];
+    const at = SKILLS.findIndex((s) => s.id === active);
+    let next;
+    if (step) next = (at + step + SKILLS.length) % SKILLS.length;
+    else if (e.key === "Home") next = 0;
+    else if (e.key === "End") next = SKILLS.length - 1;
+    else return;
+    e.preventDefault();
+    setTab(SKILLS[next].id);
+    document.getElementById(`molt-tab-${SKILLS[next].id}`)?.focus();
+  };
+
+  let prev;
   return (
-    <div className="space-y-7">
-      {waiting > 0 && (
-        <a href="#molt-log" className="focus-ring flex items-center gap-3 rounded-2xl bg-gold/15 p-3 text-sm font-extrabold text-ink ring-1 ring-gold/40 hover:bg-gold/20">
-          <Sparkles size={18} className="shrink-0 text-gold-ink" aria-hidden="true" />
-          <span className="flex-1">
-            Molt așteaptă răspunsul tău la {waiting} {waiting === 1 ? "propunere" : "propuneri"}.
-          </span>
-          <span className="text-xs">Vezi mai jos ↓</span>
-        </a>
-      )}
-      <Group title="Pentru azi" sub="Cere-i lui Molt să te ajute cu ziua de azi">
-        <DailyPlanPanel state={state} today={today} ai={ai} agent={agent} />
-        <HomeworkPanel state={state} today={today} ai={ai} onStateChange={onStateChange} />
-      </Group>
-      <Group title="Pentru săptămâna asta" sub="Planuri și analize făcute din bifările tale reale">
-        <PlanPanel state={state} today={today} ai={ai} onAddHabit={onAddHabit} onEdit={onEdit} onExperiment={() => setExpKey((k) => k + 1)} />
-        <ReflectionPanel state={state} today={today} ai={ai} />
-        <InsightsPanel state={state} today={today} ai={ai} />
-      </Group>
-      <Group title="Pentru scopurile tale" sub="Scopurile salvate apar în Plan, la Obiective">
-        <GoalDecomposer today={today} ai={ai} goals={goals} />
-        <ExperimentsPanel state={state} today={today} ai={ai} refreshKey={expKey} />
-      </Group>
-      <div id="molt-log">
-        <AgentLog actions={agent?.log} state={state} busy={agent?.busy} error={agent?.error} onConfirm={agent?.onConfirm} onReject={agent?.onReject} onUndo={agent?.onUndo} />
+    <nav aria-label="Ce poate face Molt">
+      <div
+        role="tablist"
+        aria-orientation={wide ? "vertical" : "horizontal"}
+        onKeyDown={onKeyDown}
+        className="-mx-3 flex gap-1.5 overflow-x-auto px-3 py-1 [scrollbar-width:none] sm:-mx-4 sm:px-4 lg:mx-0 lg:flex-col lg:gap-0.5 lg:overflow-visible lg:px-0 [&::-webkit-scrollbar]:hidden"
+      >
+        {SKILLS.map((sk) => {
+          const on = sk.id === active;
+          const Icon = sk.icon;
+          const head = sk.group && sk.group !== prev;
+          prev = sk.group || prev;
+          const count = sk.id === "log" ? waiting : 0;
+          return (
+            <React.Fragment key={sk.id}>
+              {head && (
+                <>
+                  <span role="presentation" className="hidden px-2 pb-0.5 pt-2.5 text-xs font-extrabold text-faint lg:block">
+                    {sk.group}
+                  </span>
+                  <span role="presentation" aria-hidden="true" className="mx-0.5 h-7 w-px shrink-0 self-center bg-edge lg:hidden" />
+                </>
+              )}
+              <button
+                id={`molt-tab-${sk.id}`}
+                type="button"
+                role="tab"
+                aria-selected={on}
+                aria-controls="molt-panel"
+                tabIndex={on ? 0 : -1}
+                onClick={() => setTab(sk.id)}
+                className={`focus-ring flex shrink-0 items-center gap-2 rounded-full py-1 pl-1 pr-3 text-left text-sm font-extrabold transition lg:w-full lg:rounded-xl lg:py-1 lg:pl-1.5 ${
+                  on ? "bg-violet/15 text-ink ring-1 ring-violet/50" : "bg-well text-dim ring-1 ring-edge hover:text-ink lg:bg-transparent lg:ring-0 lg:hover:bg-panel-hi"
+                }`}
+              >
+                <span className={`grid h-7 w-7 shrink-0 place-items-center rounded-full ring-1 lg:h-8 lg:w-8 lg:rounded-lg ${on ? "bg-violet text-on-violet ring-violet-hi" : "bg-panel-hi text-violet-hi ring-edge lg:bg-well"}`}>
+                  <Icon size={15} strokeWidth={2.5} aria-hidden="true" />
+                </span>
+                <span className="whitespace-nowrap lg:flex-1 lg:truncate">{sk.label}</span>
+                {count > 0 && <span className="rounded-full bg-rose px-1.5 text-[10px] text-on-rose">{count}</span>}
+                {locked && sk.ai && <Lock size={12} className="hidden shrink-0 text-faint lg:block" aria-label="cere un cont" />}
+              </button>
+            </React.Fragment>
+          );
+        })}
       </div>
+    </nav>
+  );
+}
+
+function Locked() {
+  return (
+    <div className="inset flex items-start gap-3 p-4">
+      <Lock size={18} className="mt-0.5 shrink-0 text-violet-hi" aria-hidden="true" />
+      <p className="text-sm font-semibold text-body">Funcția asta folosește inteligența artificială de pe server și e disponibilă când ești în cont. Intră în cont și Molt îți poate face planuri, analize și reflecții.</p>
     </div>
   );
 }
 
-function MemoryTab({ props }) {
+function MemoryBody({ props }) {
   const { state, ai, today } = props;
   const reads = [
     "bifările și obiceiurile tale",
@@ -192,57 +216,91 @@ function MemoryTab({ props }) {
   ];
   return (
     <div className="space-y-5">
-      <Panel className="p-4 sm:p-5">
-        <h2 className="font-pixel text-lg text-ink">Ce citește Molt din aplicație</h2>
-        <p className="mt-0.5 text-xs font-semibold text-dim">Doar ce ai în Molted; nimic din afară. Le folosește ca să-ți dea sfaturi potrivite.</p>
-        <ul className="mt-3 flex flex-wrap gap-2">
+      <div>
+        <p className="mb-2 text-sm font-extrabold text-ink">Ce citesc din aplicație</p>
+        <ul className="flex flex-wrap gap-2">
           {reads.map((r) => (
             <li key={r} className="inline-flex items-center gap-1.5 rounded-full bg-well px-3 py-1 text-xs font-bold text-body ring-1 ring-edge">
               <Check size={12} className="text-mint" aria-hidden="true" /> {r}
             </li>
           ))}
         </ul>
-      </Panel>
-      {ai?.server ? <NotesPanel ai={ai} today={today} /> : <Empty icon={NotebookPen} title="Notele cer un cont">Intră în cont ca să-i poți spune lui Molt ce nu se vede în bifări.</Empty>}
+      </div>
+      <div className="border-t border-edge/60 pt-5">
+        <p className="mb-3 text-sm font-extrabold text-ink">Spune-mi ce nu se vede în bifări</p>
+        {ai?.server ? <NotesPanel ai={ai} today={today} /> : <Locked />}
+      </div>
     </div>
   );
 }
 
 export default function Molt(props) {
-  const { state, d, ai, agent, tab, setTab, prompt, onPromptUsed, onRename, loadMonth, months, today, go } = props;
+  const { state, d, ai, agent, tab, setTab, prompt, onPromptUsed, onRename, loadMonth, months, today, go, goals, todo, onAddHabit, onEdit, onStateChange } = props;
+  const wide = useWide();
+  const [expKey, setExpKey] = useState(0);
   const waiting = useMemo(() => (agent?.log ? pendingConfirm(agent.log).length : 0), [agent?.log]);
-  const active = MOLT_TABS.includes(tab) ? tab : "chat";
+  const wanted = ALIAS[tab] || tab;
+  const active = SKILLS.some((s) => s.id === wanted) ? wanted : "chat";
+  const skill = SKILLS.find((s) => s.id === active);
+  const name = d.companion.name || "Moltul";
+  const server = !!ai?.server;
+  const toNotes = () => setTab("memory");
+
+  let body;
+  switch (active) {
+    case "chat":
+      body = <Chat state={state} d={d} today={today} ai={ai} goals={goals} todo={props.todo} agent={agent} onAddHabit={onAddHabit} embedded initialPrompt={prompt} onPromptUsed={onPromptUsed} />;
+      break;
+    case "day":
+      body = server ? <DailyPlanPanel state={state} today={today} ai={ai} agent={agent} /> : <Locked />;
+      break;
+    case "school":
+      body = server ? <HomeworkPanel state={state} today={today} ai={ai} onStateChange={onStateChange} /> : <Locked />;
+      break;
+    case "week":
+      body = server ? (
+        <>
+          <PlanPanel state={state} today={today} ai={ai} onAddHabit={onAddHabit} onEdit={onEdit} onExperiment={() => setExpKey((k) => k + 1)} onNotes={toNotes} />
+          <ExperimentsPanel state={state} today={today} ai={ai} refreshKey={expKey} />
+        </>
+      ) : (
+        <Locked />
+      );
+      break;
+    case "goal":
+      body = server ? <GoalDecomposer today={today} ai={ai} goals={goals} /> : <Locked />;
+      break;
+    case "mirror":
+      body = server ? <ReflectionPanel state={state} today={today} ai={ai} onNotes={toNotes} /> : <Locked />;
+      break;
+    case "patterns":
+      body = server ? <InsightsPanel state={state} today={today} ai={ai} onNotes={toNotes} /> : <Locked />;
+      break;
+    case "memory":
+      body = <MemoryBody props={props} />;
+      break;
+    case "log":
+      body = server ? <AgentLog actions={agent?.log} state={state} busy={agent?.busy} error={agent?.error} onConfirm={agent?.onConfirm} onReject={agent?.onReject} onUndo={agent?.onUndo} /> : <Locked />;
+      break;
+    default:
+      body = <Companion state={state} d={d} today={today} months={months} loadMonth={loadMonth} onRename={onRename} go={go} embedded />;
+  }
+
   return (
-    <div className="space-y-5">
-      <Hero state={state} d={d} ai={ai} onRename={onRename} setTab={setTab} />
-      <Tabs
-        value={active}
-        onChange={setTab}
-        items={[
-          { value: "chat", label: "Chat", icon: MessageSquare, id: "molt-tab-chat" },
-          { value: "ai", label: "Ajutor AI", icon: Wand2, count: waiting, id: "molt-tab-ai" },
-          { value: "memory", label: "Ce știe Molt", icon: NotebookPen, id: "molt-tab-memory" },
-          { value: "evolution", label: "Evoluție", icon: Egg, id: "molt-tab-evolution" },
-        ]}
-      />
-      {active === "chat" && (
-        <Chat
-          state={state}
-          d={d}
-          today={today}
-          ai={ai}
-          goals={props.goals}
-          todo={props.todo}
-          agent={agent}
-          onAddHabit={props.onAddHabit}
-          embedded
-          initialPrompt={prompt}
-          onPromptUsed={onPromptUsed}
-        />
-      )}
-      {active === "ai" && <AiTab props={props} />}
-      {active === "memory" && <MemoryTab props={props} />}
-      {active === "evolution" && <Companion state={state} d={d} today={today} months={months} loadMonth={loadMonth} onRename={onRename} go={go} embedded />}
+    <div className="grid gap-4 lg:grid-cols-[272px,minmax(0,1fr)] lg:items-start lg:gap-6">
+      <div className="min-w-0 space-y-3 lg:space-y-4">
+        <MoltCard state={state} d={d} ai={ai} wide={wide} waiting={waiting} onWaiting={() => setTab("log")} onRename={onRename} />
+        <SkillNav active={active} setTab={setTab} wide={wide} waiting={waiting} locked={!server} />
+      </div>
+      <Panel tone="violet" id="molt-panel" role="tabpanel" aria-labelledby={`molt-tab-${active}`} className="speech min-w-0 p-4 sm:p-6">
+        <header className="mb-5">
+          <h2 className="font-pixel text-2xl leading-tight text-ink">{skill.title(name)}</h2>
+          <p className="mt-1.5 max-w-prose text-[15px] font-semibold leading-relaxed text-body">{skill.say}</p>
+        </header>
+        <div key={active} className="anim-slide">
+          {body}
+        </div>
+      </Panel>
     </div>
   );
 }

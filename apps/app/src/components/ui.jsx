@@ -125,6 +125,31 @@ export function Tabs({ value, onChange, items, className = "", size = "md" }) {
   );
 }
 
+// A few options as pills, one tap each (instead of a dropdown) — for short, frequent choices such as time or energy.
+export function Choice({ value, onChange, options, label, className = "" }) {
+  return (
+    <div role="radiogroup" aria-label={label} className={`flex flex-wrap gap-1.5 ${className}`}>
+      {options.map((o) => {
+        const on = o.value === value;
+        return (
+          <button
+            key={o.value}
+            type="button"
+            role="radio"
+            aria-checked={on}
+            onClick={() => onChange(o.value)}
+            className={`focus-ring rounded-full px-3 py-1.5 text-sm font-extrabold ring-1 transition ${
+              on ? "bg-violet text-on-violet ring-violet-hi" : "bg-well text-dim ring-edge hover:text-ink hover:ring-edge-hi"
+            }`}
+          >
+            {o.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 export function Toggle({ checked, onChange, label, id }) {
   return (
     <button
