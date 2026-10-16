@@ -344,6 +344,36 @@ function drawHalo(g) {
   putSym(g, 10, 2, GOLD.lo);
 }
 
+// ------------------------------------------------------------ look (what the player chose to wear)
+
+// Each slot is a registry id -> drawer. "signature" is what the class wears on its own (the pieces above), "none" leaves
+// the slot empty; an id that is not in the registry falls back to the default, so a look that came from elsewhere
+// (a group member's published stats, an older app version) can never break the drawing.
+// More entries are added here as items are introduced (see lib/cosmetics.js in the app for the catalog and the rules).
+export const HATS = { signature: (g, pal, path) => HEAD[path]?.(g, pal), none: null };
+export const HELD_ITEMS = { signature: (g, pal, path) => HELD[path]?.(g, pal), none: null };
+// drawn after the outline pass, like the halo: (g, pal, { tier }) => void
+export const AURAS = { none: null };
+// palette variants: (pal) => pal
+export const DYES = { none: null };
+
+export const DEFAULT_LOOK = { hat: "signature", held: "signature", aura: "none", dye: "none" };
+
+/** The slots the renderer draws, each with a registry id that exists (anything else becomes the default). */
+export function resolveLook(look) {
+  const pick = (reg, id, fallback) => (typeof id === "string" && Object.hasOwn(reg, id) ? id : fallback);
+  return {
+    hat: pick(HATS, look?.hat, DEFAULT_LOOK.hat),
+    held: pick(HELD_ITEMS, look?.held, DEFAULT_LOOK.held),
+    aura: pick(AURAS, look?.aura, DEFAULT_LOOK.aura),
+    dye: pick(DYES, look?.dye, DEFAULT_LOOK.dye),
+  };
+}
+
+// Stage -> what it can wear. Tiers: 0 egg, 1 hatchling, 2 apprentice, 3 adept, 4 master, 5 legend.
+export const STAGE_TIER = ["egg", "hatchling", "apprentice", "adept", "master", "legend"];
+export const wearable = { hat: 2, held: 3, aura: 0, dye: 0 };
+
 // ------------------------------------------------------------ public API
 
 const cache = new Map();
@@ -352,25 +382,29 @@ const cache = new Map();
  * Returns pixel runs [x, y, width, color] for one frame.
  * stage: egg | hatchling | apprentice | adept | master | legend
  * mood: idle | happy | joy | sleep;  eyes: open | closed (blink frame)
+ * look: optional {hat, held, aura, dye} (see resolveLook); without it the class wears its own items, as always.
  */
-export function spriteRuns({ path = "sport", stage = "egg", mood = "idle", eyes = "open", crack = 0 }) {
-  const key = `${path}|${stage}|${mood}|${eyes}|${crack}`;
+export function spriteRuns({ path = "sport", stage = "egg", mood = "idle", eyes = "open", crack = 0, look }) {
+  const L = resolveLook(look);
+  const key = `${path}|${stage}|${mood}|${eyes}|${crack}|${L.hat}|${L.held}|${L.aura}|${L.dye}`;
   if (cache.has(key)) return cache.get(key);
-  const pal = PALETTES[path] || PALETTES.sport;
+  const base = PALETTES[path] || PALETTES.sport;
+  const pal = DYES[L.dye] ? DYES[L.dye](base) : base;
   let g = grid();
-  const tier = ["egg", "hatchling", "apprentice", "adept", "master", "legend"].indexOf(stage);
+  const tier = STAGE_TIER.indexOf(stage);
 
   if (tier <= 0) drawEgg(g, pal, crack);
   else if (tier === 1) drawHatchling(g, pal, mood, eyes);
   else {
     if (tier >= 4) drawCape(g, pal);
     drawCreature(g, pal, mood, eyes);
-    HEAD[path]?.(g, pal);
-    if (tier >= 3) HELD[path]?.(g, pal);
+    if (tier >= wearable.hat) HATS[L.hat]?.(g, pal, path);
+    if (tier >= wearable.held) HELD_ITEMS[L.held]?.(g, pal, path);
     if (tier >= 4) drawMedal(g);
   }
   g = outline(g, tier >= 5 ? GOLD_OUT : OUT);
   if (tier >= 5) drawHalo(g);
+  if (tier >= wearable.aura) AURAS[L.aura]?.(g, pal, { tier });
 
   const runs = [];
   for (let y = 0; y < S; y++) {

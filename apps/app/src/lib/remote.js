@@ -55,6 +55,9 @@ export function toRows(state, uid) {
       focusSessions: state.focusSessions || [],
       goals: state.goals || [],
       objectives: state.objectives || [],
+      // cosmetics: events that unlocked an item, and the items already celebrated (what Molt wears is companion.look)
+      earned: state.earned || {},
+      seenItems: state.seenItems || [],
     },
     onboarded: true,
   };
@@ -216,6 +219,8 @@ export function fromRows(rows) {
     ...(extra.focusSessions?.length ? { focusSessions: extra.focusSessions } : {}),
     ...(extra.goals?.length ? { goals: extra.goals } : {}),
     ...(extra.objectives?.length ? { objectives: extra.objectives } : {}),
+    ...(extra.earned && Object.keys(extra.earned).length ? { earned: extra.earned } : {}),
+    ...(extra.seenItems?.length ? { seenItems: extra.seenItems } : {}),
     ...plannerFromRows(rows, extra),
   };
 }
