@@ -7,6 +7,7 @@ import {
   Clock,
   Cloud,
   CloudOff,
+  Egg,
   FlaskConical,
   Flame,
   HardDrive,
@@ -29,14 +30,21 @@ import { c as tc } from "../lib/themes.js";
 // (Obiective is a tab of Plan). `ai`: the place where the AI features live, drawn to stand out.
 export const NAV = [
   { id: "home", label: "Acasă", icon: House },
-  { id: "molt", label: "Molt", icon: Sparkles, ai: true },
+  { id: "molt", label: "Molt", icon: Egg, ai: true },
   { id: "habits", label: "Obiceiuri", icon: ScrollText },
-  { id: "plan", label: "Plan", icon: CalendarDays, also: ["goals"] },
+  { id: "plan", label: "Plan și obiective", short: "Plan", icon: CalendarDays, also: ["goals"] },
   { id: "group", label: "Grup", icon: Users },
   { id: "stats", label: "Statistici", icon: ChartLine },
   { id: "settings", label: "Setări", icon: Settings },
 ];
 const isHere = (n, view) => view === n.id || !!n.also?.includes(view);
+
+// the gradient behind the AI entry follows the finger or the mouse when it is pressed (the CSS reads --x and --y)
+const aim = (e) => {
+  const r = e.currentTarget.getBoundingClientRect();
+  e.currentTarget.style.setProperty("--x", `${e.clientX - r.left}px`);
+  e.currentTarget.style.setProperty("--y", `${e.clientY - r.top}px`);
+};
 
 export const MOOD_LABEL = {
   sleep: "doarme",
@@ -220,11 +228,16 @@ export function Shell({ view, setView, onReview, onFocus, d, state, unread, goal
                 aria-current={isHere(n, view) ? "page" : undefined}
                 aria-label={folded ? n.label : undefined}
                 title={folded ? n.label : undefined}
-                className={`nav-item focus-ring relative ${folded ? "justify-center px-0" : ""} ${n.ai && !isHere(n, view) ? "text-violet-hi ring-1 ring-violet/40" : ""}`}
+                onPointerDown={n.ai ? aim : undefined}
+                className={`nav-item focus-ring relative ${folded ? "justify-center px-0" : ""} ${n.ai ? "nav-ai" : ""}`}
               >
                 <Icon size={19} strokeWidth={2.25} aria-hidden="true" />
                 {!folded && <span>{n.label}</span>}
-                {n.ai && !folded && <span className="ml-auto rounded-md bg-violet/25 px-1.5 text-[10px] font-black tracking-wider text-violet-hi">AI</span>}
+                {n.ai && !folded && (
+                  <span className="ml-auto inline-flex items-center gap-0.5 rounded-md bg-violet/30 px-1.5 py-0.5 text-[10px] font-black tracking-wider text-violet-hi">
+                    <Sparkles size={10} strokeWidth={3} aria-hidden="true" /> AI
+                  </span>
+                )}
                 {n.id === "plan" && goalsDue > 0 && (folded ? <span className="absolute right-2 top-1.5 h-2.5 w-2.5 rounded-full bg-ember" /> : <span className="ml-auto rounded-full bg-ember px-1.5 text-[11px] font-black text-night">{goalsDue}</span>)}
                 {n.id === "group" && unread > 0 && (folded ? <span className="absolute right-2 top-1.5 h-2.5 w-2.5 rounded-full bg-rose" /> : <span className="ml-auto rounded-full bg-rose px-1.5 text-[11px] font-black text-on-rose">{unread}</span>)}
               </button>
@@ -279,10 +292,11 @@ export function Shell({ view, setView, onReview, onFocus, d, state, unread, goal
               type="button"
               onClick={() => setView(n.id)}
               aria-current={isHere(n, view) ? "page" : undefined}
-              className={`tabbar-item focus-ring relative flex min-w-0 flex-col items-center gap-0.5 py-2 text-[10px] font-extrabold ${n.ai ? "text-violet-hi" : "text-dim"}`}
+              onPointerDown={n.ai ? aim : undefined}
+              className={`tabbar-item focus-ring relative flex min-w-0 flex-col items-center gap-0.5 py-2 text-[10px] font-extrabold ${n.ai ? "nav-ai mx-0.5 my-1 rounded-xl text-violet-hi" : "text-dim"}`}
             >
               <Icon size={20} strokeWidth={2.25} aria-hidden="true" />
-              <span className="max-w-full truncate px-0.5">{n.label}</span>
+              <span className="max-w-full truncate px-0.5">{n.short || n.label}</span>
               {n.id === "plan" && goalsDue > 0 && <span className="absolute right-[22%] top-1 h-2 w-2 rounded-full bg-ember" />}
               {n.id === "group" && unread > 0 && <span className="absolute right-[22%] top-1 h-2 w-2 rounded-full bg-rose" />}
             </button>

@@ -673,6 +673,66 @@
   color: rgb(var(--c-gold-text));
 }
 
+/* The AI entry of the menu: a slow gradient that drifts all the time, speeds up on hover and, when pressed,
+   shrinks a little and lights up where it was touched (--x/--y are set by the pointer handler). */
+.nav-item.nav-ai,
+.tabbar-item.nav-ai {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background-image: linear-gradient(115deg, rgb(var(--c-violet) / 0.34), rgb(var(--c-sky) / 0.26), rgb(var(--c-gold) / 0.3), rgb(var(--c-violet) / 0.34));
+  background-size: 300% 100%;
+  box-shadow: inset 0 0 0 1px rgb(var(--c-violet) / 0.45);
+  animation: ai-flow 8s ease-in-out infinite;
+  transition:
+    transform 0.15s,
+    filter 0.2s,
+    box-shadow 0.2s;
+}
+.nav-item.nav-ai:hover,
+.tabbar-item.nav-ai:hover {
+  animation-duration: 3.5s;
+  filter: brightness(1.12);
+}
+.nav-item.nav-ai[aria-current="page"],
+.tabbar-item.nav-ai[aria-current="page"] {
+  box-shadow:
+    inset 0 0 0 1px rgb(var(--c-violet) / 0.7),
+    inset 3px 0 0 rgb(var(--c-gold));
+}
+.nav-item.nav-ai::after,
+.tabbar-item.nav-ai::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: radial-gradient(circle 70px at var(--x, 50%) var(--y, 50%), rgb(255 255 255 / 0.55), transparent 70%);
+  opacity: 0;
+  transition: opacity 0.5s;
+}
+.nav-item.nav-ai:active,
+.tabbar-item.nav-ai:active {
+  transform: scale(0.96);
+  animation-duration: 1.2s;
+  filter: brightness(1.25);
+}
+.nav-item.nav-ai:active::after,
+.tabbar-item.nav-ai:active::after {
+  opacity: 1;
+  transition: none;
+}
+@keyframes ai-flow {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
 /* ------------------------------------------------------------ form fields */
 .field {
   width: 100%;
