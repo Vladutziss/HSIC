@@ -16,6 +16,11 @@ const STAGE_TEXT = {
   legend: "Contur de aur și aură. Rar întâlnit.",
 };
 
+// a framed panel on its own page; a plain section when it sits inside the Molt workbench (which is the frame)
+function Sect({ embedded, tone, children }) {
+  return embedded ? <section className="border-t border-edge/60 pt-5 first:border-t-0 first:pt-0">{children}</section> : <Panel tone={tone} className="p-4 sm:p-5">{children}</Panel>;
+}
+
 // `embedded`: shown inside the Molt page, whose header already has the picture, the name and the evolution bar
 export default function Companion({ state, d, today, months, loadMonth, onRename, go, embedded = false }) {
   const c = d.companion;
@@ -42,7 +47,7 @@ export default function Companion({ state, d, today, months, loadMonth, onRename
   const canLoadMore = oldest && span[0] > oldest;
 
   return (
-    <div className="space-y-5">
+    <div className={embedded ? "space-y-6" : "space-y-5"}>
       {!embedded && (
         <Panel tone="violet" corners className="overflow-hidden">
           <div className="grid gap-0 lg:grid-cols-[1.1fr,1fr] [&>*]:min-w-0">
@@ -107,10 +112,12 @@ export default function Companion({ state, d, today, months, loadMonth, onRename
         </Panel>
       )}
 
-      <Panel className="p-4 sm:p-5">
-        <SectionTitle icon={Sparkles} tone="violet" sub="Evoluția vine din obiceiurile pe care le bifezi">
-          Drumul evoluției
-        </SectionTitle>
+      <Sect embedded={embedded}>
+        {!embedded && (
+          <SectionTitle icon={Sparkles} tone="violet" sub="Evoluția vine din obiceiurile pe care le bifezi">
+            Drumul evoluției
+          </SectionTitle>
+        )}
         <ol className="grid grid-cols-3 gap-3 sm:grid-cols-6">
           {STAGES.map((s, i) => {
             const reached = c.stageIndex >= i;
@@ -133,15 +140,21 @@ export default function Companion({ state, d, today, months, loadMonth, onRename
             );
           })}
         </ol>
-      </Panel>
+      </Sect>
 
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Stat icon={Sparkles} tone="violet" label="Puncte de evoluție" value={c.ep} />
-        <Stat icon={Zap} tone="gold" label="Bifări" value={c.checkins} sub="în total" />
-        <Stat icon={BookOpenText} tone="sky" label="Capitole" value={story.length} sub="în perioada afișată" />
-      </div>
+      {embedded ? (
+        <p className="text-sm font-bold text-dim">
+          {c.ep} puncte de evoluție · {c.checkins} bifări în total · {story.length} {story.length === 1 ? "capitol" : "capitole"} în perioada afișată
+        </p>
+      ) : (
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <Stat icon={Sparkles} tone="violet" label="Puncte de evoluție" value={c.ep} />
+          <Stat icon={Zap} tone="gold" label="Bifări" value={c.checkins} sub="în total" />
+          <Stat icon={BookOpenText} tone="sky" label="Capitole" value={story.length} sub="în perioada afișată" />
+        </div>
+      )}
 
-      <Panel tone="gold" className="p-4 sm:p-5">
+      <Sect embedded={embedded} tone="gold">
         <SectionTitle icon={ScrollText} tone="gold" sub="Un capitol nou la fiecare evoluție">
           Povestea lui {c.name || "Molt-ului tău"}
         </SectionTitle>
@@ -171,7 +184,7 @@ export default function Companion({ state, d, today, months, loadMonth, onRename
             </Button>
           </div>
         )}
-      </Panel>
+      </Sect>
     </div>
   );
 }

@@ -14,7 +14,7 @@ import {
   Target,
   Trash2,
 } from "lucide-react";
-import { Button, Chip, Confirm, Panel, SectionTitle, Skeleton, useToast } from "../components/ui.jsx";
+import { Button, Chip, Confirm, IconButton, Panel, Skeleton, useToast } from "../components/ui.jsx";
 import { Sprite, eggCrack } from "../components/Sprite.jsx";
 import { PATHS } from "../lib/catalog.js";
 import { append as appendChat, clear as clearChat, load as loadChat, loadLocal, saveLocal } from "../lib/chatStore.js";
@@ -234,6 +234,7 @@ export default function Chat({ state, d, today, ai, goals, todo, agent, onAddHab
     }
   };
 
+  const Wrap = embedded ? "div" : Panel;
   return (
     <div className="space-y-4">
       {!embedded && (
@@ -275,32 +276,28 @@ export default function Chat({ state, d, today, ai, goals, todo, agent, onAddHab
         </div>
       )}
 
-      {embedded && messages.length > 0 && (
-        <div className="flex justify-end">
-          <Button size="sm" variant="ghost" icon={Trash2} onClick={() => setClearOpen(true)} className="text-dim hover:text-rose">
-            Șterge conversația
-          </Button>
-        </div>
-      )}
-
       {/* Chat Messages Container */}
-      <Panel tone="violet" className="flex min-h-[460px] flex-col justify-between p-3 sm:p-5">
-        <div className="space-y-4 overflow-y-auto pr-1">
+      <Wrap {...(embedded ? { className: "flex flex-col" } : { tone: "violet", className: "flex min-h-[460px] flex-col justify-between p-3 sm:p-5" })}>
+        <div className={`space-y-4 overflow-y-auto pr-1 ${embedded ? "max-h-[min(56vh,520px)] min-h-[220px]" : ""}`}>
           {messages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center gap-4 py-8 text-center">
-              <div className="pedestal grid h-20 w-20 place-items-center rounded-2xl">
-                <Sprite path={path} stage={companion.stage?.id || "egg"} mood={companion.mood || "idle"} size={64} crack={eggCrack(companion.ep || 0)} />
-              </div>
-              <div className="max-w-md">
-                <h2 className="font-pixel text-lg text-ink">Salut! Eu sunt {moltName}.</h2>
-                <p className="mt-1 text-sm font-semibold text-dim">
-                  Sunt aici să te ajut să îți organizezi învățatul, să pregătești examenele sau să-ți construiești obiceiuri solide. Despre ce vrei să vorbim?
-                </p>
-              </div>
+            <div className={`flex flex-col items-center justify-center gap-4 text-center ${embedded ? "py-3" : "py-8"}`}>
+              {!embedded && (
+                <>
+                  <div className="pedestal grid h-20 w-20 place-items-center rounded-2xl">
+                    <Sprite path={path} stage={companion.stage?.id || "egg"} mood={companion.mood || "idle"} size={64} crack={eggCrack(companion.ep || 0)} />
+                  </div>
+                  <div className="max-w-md">
+                    <h2 className="font-pixel text-lg text-ink">Salut! Eu sunt {moltName}.</h2>
+                    <p className="mt-1 text-sm font-semibold text-dim">
+                      Sunt aici să te ajut să îți organizezi învățatul, să pregătești examenele sau să-ți construiești obiceiuri solide. Despre ce vrei să vorbim?
+                    </p>
+                  </div>
+                </>
+              )}
 
               {ai?.server && (
                 <div className="mt-2 w-full max-w-lg space-y-2">
-                  <p className="text-[11px] font-black uppercase tracking-wider text-violet-hi">Idei de început:</p>
+                  <p className="text-sm font-extrabold text-violet-hi">Cu ce începem?</p>
                   <div className="flex flex-col gap-1.5 sm:grid sm:grid-cols-2">
                     {STARTERS.map((s, idx) => (
                       <button
@@ -466,8 +463,9 @@ export default function Chat({ state, d, today, ai, goals, todo, agent, onAddHab
             e.preventDefault();
             handleSend();
           }}
-          className="mt-4 flex gap-2 border-t border-edge/60 pt-3"
+          className="mt-4 flex items-center gap-2 border-t border-edge/60 pt-3"
         >
+          {messages.length > 0 && <IconButton icon={Trash2} label="Șterge conversația" onClick={() => setClearOpen(true)} className="shrink-0 hover:text-rose" />}
           <input
             className="field flex-1 text-sm"
             value={input}
@@ -485,7 +483,7 @@ export default function Chat({ state, d, today, ai, goals, todo, agent, onAddHab
             Trimite
           </Button>
         </form>
-      </Panel>
+      </Wrap>
 
       <Confirm
         open={clearOpen}
