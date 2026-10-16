@@ -6,11 +6,10 @@ import { MOMENT_META } from "../lib/moments.js";
 import { quoteById } from "../lib/quotes.js";
 import { LEVELS } from "../lib/engine.js";
 import { FocusStats } from "../components/FocusStats.jsx";
-import { InsightsPanel, ReflectionPanel } from "../components/AiCoach.jsx";
 import { useStats } from "../lib/useStats.js";
 import { fmtDay, relDay } from "../lib/dates.js";
 
-export default function Stats({ state, d, today, mode, saveStatus, ai, onFocus }) {
+export default function Stats({ state, d, today, go, mode, saveStatus, ai, onFocus }) {
   const { stats: s, loading } = useStats(state, today, mode, saveStatus);
   const [range, setRange] = useState(60);
   const [hidden, setHidden] = useState([]);
@@ -199,8 +198,20 @@ export default function Stats({ state, d, today, mode, saveStatus, ai, onFocus }
         </Panel>
       </div>
 
-      <ReflectionPanel state={state} today={today} ai={ai} />
-      <InsightsPanel state={state} today={today} ai={ai} />
+      {ai?.server && (
+        <button
+          type="button"
+          onClick={() => go?.("molt", "ai")}
+          className="focus-ring flex w-full items-center gap-3 rounded-2xl bg-violet/10 p-3 text-left ring-1 ring-violet/30 transition hover:bg-violet/15"
+        >
+          <Sparkles size={18} className="shrink-0 text-violet-hi" aria-hidden="true" />
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm font-extrabold text-ink">Ce înseamnă cifrele astea? Întreabă-l pe Molt</span>
+            <span className="block text-xs font-semibold text-dim">Molt vede tiparele din ultimele 4 săptămâni și te ajută cu o reflecție de săptămână.</span>
+          </span>
+          <span className="shrink-0 text-xs font-extrabold text-violet-hi">Deschide →</span>
+        </button>
+      )}
 
       <FocusStats sessions={state.focusSessions || []} today={today} onFocus={onFocus} />
 

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { BookOpenText, ChevronDown, Clock, Crown, MessageCircle, Moon, ScrollText, Sparkles, Users } from "lucide-react";
+import { ChevronDown, Clock, Crown, MessageCircle, Moon, Send, Sparkles, Users } from "lucide-react";
 import { Bar, Button, Chip, CheckButton, Gems, Panel, Ring, SectionTitle, Skeleton } from "./ui.jsx";
 import { Sprite, eggCrack } from "./Sprite.jsx";
 import { iconFor } from "./icons.js";
@@ -75,74 +75,92 @@ export function moodLine(c, name) {
   return `${n} te așteaptă la următoarea bifă.`;
 }
 
-export function CompanionCard({ c, path, lastStory, onOpen }) {
+// What Molt can be asked from Acasă: the same questions work in the chat and use everything the app knows
+const QUICK_ASKS = ["Fă-mi planul pentru azi", "Cu ce ar trebui să încep?", "Ajută-mă să mă pregătesc pentru un examen", "Cum pot să rămân constant?"];
+
+/**
+ * Molt on the home screen: the character and an input to talk to it. Questions open the Molt page with the
+ * answer on its way. Without the server there is no AI, so the card just leads to the page.
+ */
+export function MoltCard({ c, path, ai, waiting = 0, onAsk, onOpen }) {
+  const [text, setText] = useState("");
+  const label = c.name || "Moltul tău";
   const cls = PATHS[path]?.cls;
-  const [open, setOpen] = useState(false);
+  const ask = (q) => {
+    const t = (q ?? text).trim();
+    if (!t) return;
+    setText("");
+    onAsk?.(t);
+  };
   return (
-    <Panel tone="violet" corners="gold">
-      <div className="pedestal flex justify-center rounded-t-[18px] pt-5">
-        <Sprite path={path} stage={c.stage.id} mood={c.mood} size={160} crack={eggCrack(c.ep)} label={`${c.name || "Oul tău"}, ${c.stage.name}`} />
-      </div>
-      <div className="scene-ground h-3" />
-      <div className="flex items-start justify-between gap-2 p-4 pb-3">
-        <div className="min-w-0">
-          <div className="truncate font-pixel text-2xl text-ink">{c.name || "Oul tău"}</div>
-          <div className="text-xs font-extrabold uppercase tracking-wider text-violet-hi">
+    <Panel tone="violet" corners className="p-4 sm:p-5">
+      <div className="flex items-start gap-3 sm:gap-4">
+        <button type="button" onClick={onOpen} className="focus-ring pedestal grid h-24 w-24 shrink-0 place-items-center rounded-2xl sm:h-28 sm:w-28" aria-label={`Deschide pagina lui ${label}`}>
+          <Sprite path={path} stage={c.stage.id} mood={c.mood} size={88} crack={eggCrack(c.ep)} label={`${label}, ${c.stage.name}`} />
+        </button>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+            <h2 className="font-pixel text-xl text-ink sm:text-2xl">{label}</h2>
+            <Chip tone="violet" icon={Sparkles}>
+              AI
+            </Chip>
+            {waiting > 0 && (
+              <button type="button" onClick={onOpen} className="focus-ring rounded-full">
+                <Chip tone="gold">
+                  {waiting} {waiting === 1 ? "propunere" : "propuneri"} pentru tine
+                </Chip>
+              </button>
+            )}
+          </div>
+          <div className="text-[11px] font-extrabold uppercase tracking-wider text-violet-hi">
             {c.stage.name} · {cls}
           </div>
-        </div>
-        <div className="flex items-center gap-2">
-          {open && (
-            <Chip tone="violet" icon={Sparkles}>
-              {c.ep} PE
-            </Chip>
-          )}
-          <button
-            type="button"
-            onClick={() => setOpen((v) => !v)}
-            aria-expanded={open}
-            aria-controls="companion-details"
-            aria-label={open ? "Ascunde detaliile personajului" : "Arată detaliile personajului"}
-            className="grid h-8 w-8 place-items-center rounded-lg text-dim transition hover:bg-well hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-hi"
-          >
-            <ChevronDown size={18} className={`transition-transform duration-300 ${open ? "rotate-180" : ""}`} aria-hidden="true" />
-          </button>
+          <p className="relative mt-2 rounded-xl bg-well p-2.5 text-sm font-semibold text-body ring-1 ring-edge">{moodLine(c, c.name)}</p>
         </div>
       </div>
-      <div id="companion-details" className={`grid transition-[grid-template-rows] duration-300 ${open ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`} inert={open ? undefined : ""}>
-        <div className="min-h-0 overflow-hidden">
-          <div className="space-y-3 px-4 pb-4">
-            <div className="relative rounded-xl bg-well p-3 text-sm font-semibold text-body ring-1 ring-edge">
-              <span className="absolute -top-1.5 left-8 h-3 w-3 rotate-45 bg-well ring-1 ring-edge [clip-path:polygon(0_0,100%_0,0_100%)]" aria-hidden="true" />
-              {moodLine(c, c.name)}
-            </div>
-            {c.next && (
-              <div>
-                <div className="mb-1 flex justify-between text-xs font-bold text-dim">
-                  <span>Spre {c.next.name}</span>
-                  <span className="tabular">
-                    {c.ep} / {c.next.min} PE
-                  </span>
-                </div>
-                <Bar value={c.progress} tone="violet" label="Progres spre evoluția următoare" />
-              </div>
-            )}
-            {lastStory && (
-              <figure className="inset p-3">
-                <figcaption className="mb-1 flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-wider text-gold">
-                  <ScrollText size={12} aria-hidden="true" /> {lastStory.title}
-                </figcaption>
-                <p className="line-clamp-3 text-sm italic leading-relaxed text-body">{lastStory.story}</p>
-              </figure>
-            )}
-            <div className="flex flex-wrap gap-2">
-              <Button variant="violet" size="sm" icon={BookOpenText} onClick={onOpen}>
-                Povestea
-              </Button>
-            </div>
+
+      {ai?.server ? (
+        <div className="mt-3 space-y-2">
+          <form
+            className="flex gap-2"
+            onSubmit={(e) => {
+              e.preventDefault();
+              ask();
+            }}
+          >
+            <input className="field min-w-0 flex-1" value={text} maxLength={400} onChange={(e) => setText(e.target.value)} placeholder={`Întreabă-l pe ${label} orice…`} aria-label={`Întrebare pentru ${label}`} />
+            <Button type="submit" variant="violet" icon={Send} disabled={!text.trim()} aria-label="Trimite întrebarea">
+              <span className="hidden sm:inline">Întreabă</span>
+            </Button>
+          </form>
+          <div className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {QUICK_ASKS.map((q) => (
+              <button key={q} type="button" onClick={() => ask(q)} className="focus-ring shrink-0 whitespace-nowrap rounded-full bg-violet/10 px-3 py-1 text-xs font-bold text-violet-hi ring-1 ring-violet/25 hover:bg-violet/20">
+                {q}
+              </button>
+            ))}
           </div>
         </div>
-      </div>
+      ) : (
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <Button variant="violet" size="sm" icon={Sparkles} onClick={onOpen}>
+            Vezi ce poate face {label}
+          </Button>
+          <span className="text-xs font-semibold text-dim">Planuri, analize și chat, când ești în cont.</span>
+        </div>
+      )}
+
+      {c.next && (
+        <div className="mt-3">
+          <div className="mb-1 flex justify-between text-xs font-bold text-dim">
+            <span>Spre {c.next.name}</span>
+            <span className="tabular">
+              {c.ep} / {c.next.min} PE
+            </span>
+          </div>
+          <Bar value={c.progress} tone="violet" label="Progres spre evoluția următoare" />
+        </div>
+      )}
     </Panel>
   );
 }

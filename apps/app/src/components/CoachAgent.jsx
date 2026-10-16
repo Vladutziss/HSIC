@@ -50,16 +50,16 @@ export function PlanPanel({ state, today, ai, onAddHabit, onEdit, onExperiment }
   const [problem, setProblem] = useState("");
   if (!ai?.server) return null;
   if (!hasHistory(data)) {
-    // not hidden: say what is missing, so a new player knows the coach is there and why it waits
+    // not hidden: say what is missing, so a new player knows Molt is there and why it waits
     const best = Math.max(0, ...data.habits.map((h) => h.sched));
     return (
       <Panel tone="violet" className="p-4 sm:p-5">
         <SectionTitle icon={CalendarCheck} tone="violet" sub="Lucrează cu istoricul tău real, nu cu presupuneri">
-          Coach-ul tău
+          Planul săptămânii cu Molt
         </SectionTitle>
         <p className="text-sm font-semibold text-body">
           Mai are nevoie de câteva zile de bifări: caută tipare abia când un obicei are cel puțin 7 zile programate în ultimele 4 săptămâni (acum cel mai lung are {best}).
-          Până atunci poți nota ce se întâmplă în „Notele coach-ului”.
+          Până atunci îi poți spune lui Molt ce se întâmplă în „Ce știe Molt despre tine”.
         </p>
       </Panel>
     );
@@ -100,7 +100,7 @@ export function PlanPanel({ state, today, ai, onAddHabit, onEdit, onExperiment }
   const r = s.data;
   const habitName = (id) => (state.habits || []).find((h) => h.id === id)?.name;
   return (
-    <Shell icon={CalendarCheck} title="Coach-ul tău" sub="Citește bifările, notele și cercetarea, apoi propune pașii pentru săptămâna viitoare" state={s} run={run} label="Cere un plan">
+    <Shell icon={CalendarCheck} title="Planul săptămânii cu Molt" sub="Molt citește bifările, notele și cercetarea, apoi propune pașii pentru săptămâna viitoare" state={s} run={run} label="Cere un plan">
       {r && (
         <div className="space-y-3">
           <ol className="space-y-1 text-xs font-bold text-dim">
@@ -137,7 +137,7 @@ export function PlanPanel({ state, today, ai, onAddHabit, onEdit, onExperiment }
                         <>
                           <p className="text-sm font-extrabold text-ink">To-do: {sg.title}</p>
                           <p className="text-xs font-bold text-dim">
-                            {fmtDay(sg.date)} · {sg.dur} min · îl găsești în jurnalul coach-ului, de unde îl aplici
+                            {fmtDay(sg.date)} · {sg.dur} min · îl găsești în „Ce a făcut Molt”, de unde îl aplici
                           </p>
                         </>
                       ) : sg.action === "experiment" ? (

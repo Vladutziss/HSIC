@@ -58,7 +58,7 @@ export function InsightsPanel({ state, today, ai }) {
   const [s, run] = useCoach((signal) => habitInsights(data, signal));
   if (!ai?.server || !hasHistory(data)) return null;
   return (
-    <Shell icon={Wand2} title="Ce observă AI-ul" sub="Tipare din ultimele 4 săptămâni, calculate din bifările tale" state={s} run={run} label="Analizează">
+    <Shell icon={Wand2} title="Ce observă Molt" sub="Tipare din ultimele 4 săptămâni, calculate din bifările tale" state={s} run={run} label="Analizează">
       <ul className="grid gap-3 md:grid-cols-3">
         {s.data?.map((i) => (
           <li key={i.title} className="inset p-3">
@@ -101,7 +101,7 @@ export function ReflectionPanel({ state, today, ai }) {
     <Shell
       icon={BookOpen}
       title="Reflecție de săptămână"
-      sub="Spune ce te-a ajutat sau ce te-a blocat, iar coach-ul propune un singur pas"
+      sub="Spune ce te-a ajutat sau ce te-a blocat, iar Molt propune un singur pas"
       state={s}
       run={go}
       label="Reflectează"
