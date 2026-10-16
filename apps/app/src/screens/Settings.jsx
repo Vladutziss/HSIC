@@ -159,6 +159,13 @@ export default function Settings({ state, d, ai, mode, env, onChange, onWipe, on
               Personajul tău e <span className="font-extrabold text-ink">{path.cls}</span>. Drumul se alege o singură dată, la ou.
             </span>
           </p>
+          <SwitchRow
+            id="set-share-look"
+            title="Arată ținuta lui Molt în grup"
+            hint="Colegii din grup văd pălăria și unealta pe care le porți. Oprită, ei îl văd pe Molt fără ele."
+            checked={settings.shareLook !== false}
+            onChange={(v) => set({ shareLook: v })}
+          />
         </Panel>
 
         {/* the evening report */}

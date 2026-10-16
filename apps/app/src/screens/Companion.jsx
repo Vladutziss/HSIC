@@ -53,7 +53,7 @@ export default function Companion({ state, d, today, months, loadMonth, onRename
           <div className="grid gap-0 lg:grid-cols-[1.1fr,1fr] [&>*]:min-w-0">
             <div className="relative">
               <div className="pedestal flex min-h-[300px] items-end justify-center pt-8">
-                <Sprite path={path} stage={c.stage.id} mood={c.mood} size={224} crack={eggCrack(c.ep)} label={`${c.name || "Oul tău"}, ${c.stage.name}`} />
+                <Sprite path={path} stage={c.stage.id} mood={c.mood} size={224} crack={eggCrack(c.ep)} look={c.look} label={`${c.name || "Oul tău"}, ${c.stage.name}`} />
               </div>
               <div className="scene-ground h-8" />
             </div>

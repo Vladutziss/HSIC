@@ -4,10 +4,10 @@
 // Only the player's choices are stored: `state.companion.look`. See docs/PLAN_MOLT_CUSTOMIZARE.md.
 //
 // The renderer (packages/ui/sprites.js) draws four slots by itself (hat, held, aura, dye); the other slots (effect,
-// scene, pet, title) are drawn by the screens. Phase 0 has only the defaults in the catalog: the items themselves come
-// with the next phases.
+// scene, pet, title) are drawn by the screens. Phase 1 brings the hats and the auras; the other slots only have their
+// defaults until their phase.
 
-import { LEVELS } from "./engine.js";
+import { LEVELS, STAGES } from "./engine.js";
 
 export const SLOTS = ["hat", "aura", "effect", "held", "dye", "scene", "pet", "title"];
 export const SLOT_LABEL = { hat: "Pălărie", aura: "Aură", effect: "Efect", held: "În mână", dye: "Culoare", scene: "Scenă", pet: "Companion", title: "Titlu" };
@@ -27,18 +27,53 @@ export const DEFAULT_LOOK = { hat: "signature", aura: "none", effect: "none", he
  * The defaults are free; every real item is added in the phase that draws it.
  */
 const free = (slot, id, name) => ({ id, slot, rarity: "common", name, hint: "", rule: { type: "always" } });
+const item = (slot, id, rarity, name, rule) => ({ id, slot, rarity, name, rule });
+
+// What a count fact is called, as [one, few (2-19), many (20+)], for the hint "încă 6 sesiuni Focus".
+const COUNT_LABEL = {
+  focusSessions: ["sesiune Focus", "sesiuni Focus", "de sesiuni Focus"],
+  studySessions: ["sesiune de studiu", "sesiuni de studiu", "de sesiuni de studiu"],
+  reviews: ["raport de seară", "rapoarte de seară", "de rapoarte de seară"],
+  goalsDone: ["obiectiv terminat", "obiective terminate", "de obiective terminate"],
+};
+
+// The auras follow the momentum levels (their names are flames, so the auras are too): level 2 = Jar … 10 = Supernovă.
+const AURA_LEVELS = [
+  ["embers", 2, "common", "Licurici"],
+  ["warm", 3, "common", "Contur cald"],
+  ["torch", 4, "rare", "Flăcărui la picioare"],
+  ["sparks", 5, "rare", "Scântei care urcă"],
+  ["beam", 6, "rare", "Fascicul de far"],
+  ["blaze", 7, "epic", "Aură roșu-aurie"],
+  ["comet", 8, "epic", "Coadă de cometă"],
+  ["constellation", 9, "legendary", "Constelație"],
+  ["nova", 10, "legendary", "Explozie de culori"],
+];
+
 export const CATALOG = [
   free("hat", "signature", "Semnul clasei"),
   free("hat", "none", "Fără pălărie"),
+  item("hat", "focus-cap", "common", "Cască de focus", { type: "count", fact: "focusSessions", min: 10 }),
+  item("hat", "night-cap", "common", "Fes de noapte", { type: "count", fact: "reviews", min: 7 }),
+  item("hat", "grad-cap", "rare", "Beretă de absolvent", { type: "count", fact: "studySessions", min: 10 }),
+  item("hat", "wizard", "epic", "Pălărie de vrăjitor", { type: "streak", min: 30 }),
+  item("hat", "laurel", "epic", "Coroană de lauri", { type: "count", fact: "goalsDone", min: 1 }),
+  item("hat", "crown", "legendary", "Coroană", { type: "stage", min: 5 }),
   free("held", "signature", "Unealta clasei"),
   free("held", "none", "Mâinile libere"),
   free("aura", "none", "Fără aură"),
+  ...AURA_LEVELS.map(([id, min, rarity, name]) => item("aura", id, rarity, name, { type: "level", min })),
   free("dye", "none", "Culoarea clasei"),
   free("effect", "none", "Fără efect"),
   free("scene", "none", "Noaptea înstelată"),
   free("pet", "none", "Fără companion"),
   free("title", "none", "Fără titlu"),
 ];
+
+export const itemsFor = (slot, catalog = CATALOG) => catalog.filter((i) => i.slot === slot);
+/** An earnable item by id (ids of earnable items are unique across slots; the always-free defaults are not). */
+export const itemById = (id, catalog = CATALOG) => catalog.find((i) => i.id === id && i.rule.type !== "always") || null;
+export const findItem = (slot, id, catalog = CATALOG) => catalog.find((i) => i.slot === slot && i.id === id) || null;
 
 /**
  * The numbers the rules read. `companion`, `timeline` and `streak` come from derive(); `extra` holds the few facts
@@ -51,7 +86,10 @@ export function collectFacts({ state, timeline, companion, streak }) {
     level: timeline?.bestLevel ?? 1,
     streak: streak?.best ?? 0,
     focusSessions: (state?.focusSessions || []).length,
+    studySessions: (state?.schoolPlanner?.sessions || []).length,
     reviews: Object.keys(state?.reviews || {}).length,
+    // goals with steps that were finished
+    goalsDone: (state?.objectives || []).filter((o) => o.doneOn && (o.steps || []).length > 0).length,
   };
 }
 
@@ -122,6 +160,13 @@ export function normalizeLook(look, unlocked = null, catalog = CATALOG) {
   return out;
 }
 
+/** The slots that differ from the default, as the few ids that other members get to see (published with the group stats). */
+export function compactLook(look) {
+  const out = {};
+  for (const slot of SLOTS) if (look?.[slot] && look[slot] !== DEFAULT_LOOK[slot]) out[slot] = look[slot];
+  return out;
+}
+
 /** The look to draw for this player: their choices, cleaned against what they really have. */
 export function currentLook(state, facts, catalog = CATALOG) {
   return normalizeLook(state?.companion?.look, unlockedIds(facts, state?.earned, catalog), catalog);
@@ -136,3 +181,37 @@ export function newItems(facts, earned, seen, catalog = CATALOG) {
 
 /** Level name for a hint, e.g. "nivelul 5 (Foc de tabără)". */
 export const levelHint = (lvl) => `nivelul ${lvl} (${LEVELS.find((l) => l.lvl === lvl)?.name || "?"})`;
+
+const countText = (fact, n) => {
+  const [one, few, many] = COUNT_LABEL[fact] || ["lucru", "lucruri", "de lucruri"];
+  return `${n} ${n === 1 ? one : n < 20 ? few : many}`;
+};
+
+/**
+ * What the player has to do for a locked item, in words: { text, progress } where `text` is e.g. "Încă 6 sesiuni Focus"
+ * and `progress` is progressToward(). An unlocked item has no hint ("").
+ */
+export function hintFor(item, facts) {
+  const r = item.rule;
+  const progress = progressToward(item, facts);
+  if (!progress || progress.ratio >= 1) return { text: "", progress };
+  const left = progress.need - progress.have;
+  let text;
+  switch (r.type) {
+    case "count":
+      text = `Încă ${countText(r.fact, left)}`;
+      break;
+    case "level":
+      text = `Atinge ${levelHint(r.min)}`;
+      break;
+    case "streak":
+      text = `Serie de ${r.min} de zile (recordul tău: ${progress.have})`;
+      break;
+    case "stage":
+      text = `Evoluează până la ${STAGES[r.min]?.name || "următorul stadiu"}`;
+      break;
+    default:
+      text = "";
+  }
+  return { text, progress };
+}

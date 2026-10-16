@@ -5,6 +5,7 @@ import { dayKey, fmt12, fmtDay, relDay, todayKey } from "../lib/dates.js";
 import { Sprite } from "../components/Sprite.jsx";
 import { MAX_GROUPS, MAX_PARTNERS, NUDGE_TEMPLATES } from "../lib/groups.js";
 import { PATHS } from "../lib/catalog.js";
+import { normalizeLook } from "../lib/cosmetics.js";
 
 const timeAgo = (iso) => {
   const min = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
@@ -164,7 +165,7 @@ function Leaderboard({ g, loading }) {
                 )}
               </span>
               <span className="pedestal grid h-11 w-11 shrink-0 place-items-center rounded-xl">
-                <Sprite path={m.path || "sport"} stage={m.stage || "egg"} mood={m.mood || "idle"} size={32} still />
+                <Sprite path={m.path || "sport"} stage={m.stage || "egg"} mood={m.mood || "idle"} size={32} look={normalizeLook(m.look)} still />
               </span>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
@@ -300,7 +301,7 @@ function ChatPanel({ g, groups, loading }) {
                   </div>
                 )}
                 <div className={`flex items-end gap-2 ${n.mine ? "justify-end" : "justify-start"}`}>
-                  {!n.mine && <Sprite path={who?.path || "sport"} stage={who?.stage || "egg"} mood="idle" size={36} still className="-mb-1 shrink-0" />}
+                  {!n.mine && <Sprite path={who?.path || "sport"} stage={who?.stage || "egg"} mood="idle" size={36} look={normalizeLook(who?.look)} still className="-mb-1 shrink-0" />}
                   <div className={`flex min-w-0 max-w-[82%] flex-col ${n.mine ? "items-end" : "items-start"}`}>
                     {!n.mine && <span className="mb-0.5 px-1 text-xs font-extrabold text-ink">{who?.name || "Un membru"}</span>}
                     <p
@@ -351,7 +352,7 @@ function ChatPanel({ g, groups, loading }) {
                   onClick={() => toggle(m.id)}
                   className={`focus-ring inline-flex items-center gap-1 rounded-full py-0.5 pl-0.5 pr-2.5 text-xs font-extrabold transition ${on ? "bg-mint text-on-mint" : "text-body ring-1 ring-edge hover:text-ink"}`}
                 >
-                  <Sprite path={m.path || "sport"} stage={m.stage || "egg"} mood="idle" size={24} still />
+                  <Sprite path={m.path || "sport"} stage={m.stage || "egg"} mood="idle" size={24} look={normalizeLook(m.look)} still />
                   {m.name}
                 </button>
               );

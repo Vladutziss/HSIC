@@ -1,10 +1,11 @@
 import React, { useEffect, useRef, useState } from "react";
-import { BookOpenText, ChevronDown, Clock, Crown, MessageCircle, Moon, ScrollText, Send, Sparkles, Users } from "lucide-react";
+import { BookOpenText, ChevronDown, Clock, Crown, MessageCircle, Moon, ScrollText, Send, Shirt, Sparkles, Users } from "lucide-react";
 import { Bar, Button, Chip, CheckButton, Gems, Panel, Ring, SectionTitle, Skeleton } from "./ui.jsx";
 import { Sprite, eggCrack } from "./Sprite.jsx";
 import { iconFor } from "./icons.js";
 import { PATHS } from "../lib/catalog.js";
 import { checkInGain } from "../lib/derive.js";
+import { normalizeLook } from "../lib/cosmetics.js";
 import { fmt12, monthKey } from "../lib/dates.js";
 import { c as tc } from "../lib/themes.js";
 
@@ -82,7 +83,8 @@ const QUICK_ASKS = ["Fă-mi planul pentru azi", "Cu ce ar trebui să încep?", "
  * Molt on Acasă: the picture and the name, folded by default; the arrow opens what Molt says, the evolution bar, the last
  * chapter of the story and, with the server, a field to ask it something (the answer opens in the Molt page).
  */
-export function CompanionCard({ c, path, lastStory, ai, waiting = 0, onAsk, onOpen, onChat }) {
+// `reward`: { name, text, ratio } for the closest unlocked-to-be item (see Garderobă), shown as one line under the name
+export function CompanionCard({ c, path, lastStory, ai, waiting = 0, reward = null, onReward, onAsk, onOpen, onChat }) {
   const cls = PATHS[path]?.cls;
   const label = c.name || "Oul tău";
   const [open, setOpen] = useState(false);
@@ -96,7 +98,7 @@ export function CompanionCard({ c, path, lastStory, ai, waiting = 0, onAsk, onOp
   return (
     <Panel tone="violet" corners="gold">
       <div className="pedestal flex justify-center rounded-t-[18px] pt-5">
-        <Sprite path={path} stage={c.stage.id} mood={c.mood} size={160} crack={eggCrack(c.ep)} label={`${label}, ${c.stage.name}`} />
+        <Sprite path={path} stage={c.stage.id} mood={c.mood} size={160} crack={eggCrack(c.ep)} look={c.look} label={`${label}, ${c.stage.name}`} />
       </div>
       <div className="scene-ground h-3" />
       <div className="flex items-start justify-between gap-2 p-4 pb-3">
@@ -138,6 +140,16 @@ export function CompanionCard({ c, path, lastStory, ai, waiting = 0, onAsk, onOp
           </button>
         </div>
       </div>
+      {reward && (
+        <button type="button" onClick={onReward} className="focus-ring mx-4 mb-3 flex w-[calc(100%-2rem)] items-center gap-3 rounded-xl bg-violet/10 px-3 py-2 text-left ring-1 ring-violet/25 transition hover:bg-violet/15">
+          <Shirt size={16} className="shrink-0 text-violet-hi" aria-hidden="true" />
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-xs font-extrabold text-ink">Următoarea recompensă: {reward.name}</span>
+            <span className="block truncate text-[11px] font-semibold text-dim">{reward.text}</span>
+            <Bar className="mt-1" value={reward.ratio} tone="violet" height={6} segmented={false} label={`Progres spre ${reward.name}`} />
+          </span>
+        </button>
+      )}
       <div id="companion-details" className={`grid transition-[grid-template-rows] duration-300 ${open ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`} inert={open ? undefined : ""}>
         <div className="min-h-0 overflow-hidden">
           <div className="space-y-3 px-4 pb-4">
@@ -386,7 +398,7 @@ export function GroupMini({ groups, go }) {
                   <span className={`w-5 text-center font-pixel text-base ${rank === 1 ? "text-gold" : rank === 2 ? "text-body" : rank === 3 ? "text-ember" : "text-dim"}`}>
                     {rank === 1 ? <Crown size={16} className="mx-auto text-gold" aria-label="Locul 1" /> : rank}
                   </span>
-                  <Sprite path={m.path || "sport"} stage={m.stage || "egg"} mood={m.mood || "idle"} size={32} still />
+                  <Sprite path={m.path || "sport"} stage={m.stage || "egg"} mood={m.mood || "idle"} size={32} look={normalizeLook(m.look)} still />
                   <span className="min-w-0 flex-1 truncate text-sm font-extrabold text-ink">
                     {m.name}
                     {m.isMe && <span className="ml-1 text-xs text-gold-hi">(tu)</span>}
