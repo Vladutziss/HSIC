@@ -659,7 +659,7 @@ function Game() {
       )}
       {view === "group" && <Group {...common} groups={groups} />}
       {(view === "plan" || view === "goals") && (
-        <PlanHub view={view} go={go} goalsDue={goalReminders.length}>
+        <PlanHub view={view} go={go} state={state} today={today} goalsDue={goalReminders.length}>
           {view === "goals" ? (
             <Objectives
               {...common}

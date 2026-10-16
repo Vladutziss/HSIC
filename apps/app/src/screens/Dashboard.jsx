@@ -1,8 +1,8 @@
 import React from "react";
-import { ObjectivesMini } from "./Objectives.jsx";
 import { AlertTriangle, CalendarCheck, ChevronDown, Flame, FlaskConical, Gift, Plus, Swords, Timer, TrendingUp, Zap } from "lucide-react";
 import { Bar, Button, Chip, LevelBadge, Panel, SectionTitle } from "../components/ui.jsx";
-import { GroupMini, MoltCard, QuestCard, ReviewCard } from "../components/Cards.jsx";
+import { CompanionCard, GroupMini, QuestCard, ReviewCard } from "../components/Cards.jsx";
+import { ObjectivesMini } from "./Objectives.jsx";
 import { fmtDay, fmtLong } from "../lib/dates.js";
 import { RULES } from "../lib/engine.js";
 
@@ -126,7 +126,8 @@ function RescueCard({ rescue, onRescue, goalReminders = [], goalActions }) {
   );
 }
 
-export default function Dashboard({ state, d, today, go, ai, months, groups, review, onFocus, onCheck, onRevive, onAddHabit, rescue, onRescue, goalReminders = [], goalActions, onAskMolt, moltWaiting = 0 }) {
+export default function Dashboard({ state, d, today, go, ai, months, recentStories, groups, review, onFocus, onCheck, onRevive, onAddHabit, rescue, onRescue, goalReminders = [], goalActions, onAskMolt, moltWaiting = 0 }) {
+  const lastStory = [...recentStories].reverse().find((s) => s.story);
   const chestOpen = d.scheduled.length > 0 && d.doneScheduled === d.scheduled.length;
   return (
     <div className="grid gap-5 lg:grid-cols-12">
@@ -134,7 +135,6 @@ export default function Dashboard({ state, d, today, go, ai, months, groups, rev
         <Hero state={state} d={d} today={today} onFocus={onFocus} />
         <ReviveBanner d={d} onRevive={onRevive} />
         <ResetWarning d={d} />
-        <MoltCard c={d.companion} path={state.profile.path} ai={ai} waiting={moltWaiting} onAsk={onAskMolt} onOpen={() => go("molt")} />
         <RescueCard rescue={rescue} onRescue={onRescue} />
 
         <Panel className="p-4 sm:p-5">
@@ -197,6 +197,7 @@ export default function Dashboard({ state, d, today, go, ai, months, groups, rev
       </div>
 
       <div className="min-w-0 space-y-5 lg:col-span-4">
+        <CompanionCard c={d.companion} path={state.profile.path} lastStory={lastStory} ai={ai} waiting={moltWaiting} onAsk={onAskMolt} onOpen={() => go("companion")} onChat={() => go("molt", "chat")} />
         <ObjectivesMini state={state} today={today} reminders={goalReminders} go={go} act={goalActions} />
         <ReviewCard d={d} state={state} months={months} review={review} ai={ai} today={today} />
         <GroupMini groups={groups} go={go} />

@@ -291,6 +291,9 @@ export function useGroups({ store, state, update, myStats }) {
         const { error } = await env.client.from("nudges").insert({ id: nid, group_id: gid, from_user: env.uid, to_users: to, text: body });
         if (error) throw error;
         notifyNudge(env.client, nid);
+        // shown right away: the next load brings the same row from the table, with the same id
+        const mine = { id: nid, from: env.uid, to, text: body, at: new Date().toISOString(), read: {} };
+        setSent((m) => ({ ...m, [gid]: [mine, ...(m[gid] || []).filter((n) => n.id !== nid)] }));
         return;
       }
       await env.db.doc(`groups/${gid}/nudges/${nid}`).set({ from: env.uid, to, text: body, at: new Date().toISOString(), read: {} });
