@@ -1,5 +1,5 @@
 import React, { memo } from "react";
-import { spriteRuns } from "../lib/sprites.js";
+import { auraRuns, spriteRuns } from "../lib/sprites.js";
 
 const Pixels = memo(function Pixels({ runs, className }) {
   return (
@@ -52,9 +52,12 @@ function Twinkles({ size }) {
 }
 
 /** The companion. Sizes that are multiples of 32 keep the pixels crisp. */
-export function Sprite({ path = "sport", stage = "egg", mood = "idle", size = 128, crack = 0, still = false, label, silhouette = false, className = "" }) {
-  const runs = spriteRuns({ path, stage, mood, crack });
-  const blink = !still && stage !== "egg" && mood === "idle" ? spriteRuns({ path, stage, mood, eyes: "closed", crack }) : null;
+// `look`: what Molt wears (see lib/cosmetics.js); without it the class wears its own items.
+export function Sprite({ path = "sport", stage = "egg", mood = "idle", size = 128, crack = 0, still = false, label, silhouette = false, look, className = "" }) {
+  const runs = spriteRuns({ path, stage, mood, crack, look });
+  const blink = !still && stage !== "egg" && mood === "idle" ? spriteRuns({ path, stage, mood, eyes: "closed", crack, look }) : null;
+  // the aura is a layer of its own behind the body, animated by itself; too small to read below 64px
+  const aura = size >= 64 ? auraRuns({ path, stage, crack, look }) : null;
   const motion = still ? "" : stage === "egg" ? (mood === "joy" ? "anim-wobble-fast" : "anim-wobble") : mood === "sleep" ? "anim-breathe" : mood === "joy" ? "anim-hop" : "anim-bob";
   return (
     <div
@@ -63,6 +66,11 @@ export function Sprite({ path = "sport", stage = "egg", mood = "idle", size = 12
       className={`relative inline-block shrink-0 ${className}`}
       style={{ width: size, height: size, filter: silhouette ? "brightness(0) opacity(0.45)" : undefined }}
     >
+      {aura && (
+        <div className={`pointer-events-none absolute inset-0 ${still ? "" : aura.anim}`} style={{ transformOrigin: "50% 50%" }}>
+          <Pixels runs={aura.runs} className="absolute inset-0 h-full w-full" />
+        </div>
+      )}
       <div className={`absolute inset-0 ${motion} ${stage === "legend" && !still ? "anim-glow" : ""}`} style={{ transformOrigin: "50% 92%" }}>
         <Pixels runs={runs} className="absolute inset-0 h-full w-full" />
         {blink && <Pixels runs={blink} className="anim-blink absolute inset-0 h-full w-full" />}

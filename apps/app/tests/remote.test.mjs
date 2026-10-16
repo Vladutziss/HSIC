@@ -296,3 +296,24 @@ test("planner: exams without a date and sessions without minutes are not sent", 
   const rows = toRows(s, UID);
   assert.deepEqual([rows.exams, rows.study_sessions], [[], []]);
 });
+
+test("what Molt wears and the cosmetic events survive the trip to the database and back", () => {
+  const state = newState();
+  state.companion = { name: "Ecou", look: { hat: "none", aura: "none" } };
+  state.earned = { "some-item": "2026-10-04" };
+  state.seenItems = ["some-item"];
+  const back = fromRows({ ...database(state, {}).state, groups: [] });
+  assert.deepEqual(back.companion, state.companion);
+  assert.deepEqual(back.earned, state.earned);
+  assert.deepEqual(back.seenItems, state.seenItems);
+  // a player without any of it gets no empty keys
+  const plain = fromRows({ ...database(newState(), {}).state, groups: [] });
+  assert.equal("earned" in plain, false);
+  assert.equal("seenItems" in plain, false);
+  // changing the look is a plain profile update
+  const dressed = structuredClone(state);
+  dressed.companion.look = { hat: "signature" };
+  const ops = diff(state, dressed, UID);
+  assert.equal(ops.length, 1);
+  assert.equal(ops[0].table, "profiles");
+});
