@@ -1,7 +1,8 @@
 // What Molt can wear, and how each piece is earned. Like engine.js, everything here is a pure function of the stored
-// state: nothing about "owned" items is stored, an item is unlocked when the history says so, which means it can
-// never be lost (a momentum reset lowers the level, not `bestLevel`) and it works the same on every device.
-// Only the player's choices are stored: `state.companion.look`. See docs/PLAN_MOLT_CUSTOMIZARE.md.
+// state. The rules say when an item is earned; the moment it is, it is written to `state.unlocked` ({ id: day }, the
+// table wardrobe_items) and from then on it counts whatever the history does, so it can never be lost (a momentum
+// reset lowers the level, not `bestLevel`) and it is the same on every device. What Molt wears is
+// `state.companion.look`. See docs/PLAN_MOLT_CUSTOMIZARE.md.
 //
 // The renderer (packages/ui/sprites.js) draws four slots by itself (hat, held, aura, dye); the other slots (effect,
 // scene, pet, title) are drawn by the screens. Phase 1 brings the hats and the auras; the other slots only have their
@@ -76,8 +77,7 @@ export const itemById = (id, catalog = CATALOG) => catalog.find((i) => i.id === 
 export const findItem = (slot, id, catalog = CATALOG) => catalog.find((i) => i.slot === slot && i.id === id) || null;
 
 /**
- * The numbers the rules read. `companion`, `timeline` and `streak` come from derive(); `extra` holds the few facts
- * that only exist as stored events (see `earned`).
+ * The numbers the rules read. `companion`, `timeline` and `streak` come from derive().
  */
 export function collectFacts({ state, timeline, companion, streak }) {
   return {
@@ -111,10 +111,10 @@ export function ruleMet(rule, facts) {
   }
 }
 
-/** Ids of the items the player has, as a Set. `earned` = ids written when an event happened (see the plan, section 9). */
-export function unlockedIds(facts, earned = {}, catalog = CATALOG) {
+/** Ids of the items the player has, as a Set: the rules are met, or the item was already recorded in `unlocked` ({ id: day }). */
+export function unlockedIds(facts, unlocked = {}, catalog = CATALOG) {
   const out = new Set();
-  for (const item of catalog) if (ruleMet(item.rule, facts) || earned?.[item.id]) out.add(item.id);
+  for (const item of catalog) if (ruleMet(item.rule, facts) || unlocked?.[item.id]) out.add(item.id);
   return out;
 }
 
@@ -131,8 +131,8 @@ export function progressToward(item, facts) {
  * The locked item the player is closest to (the most useful hint, not the rarest). Items already unlocked and those
  * that cannot be measured are skipped. Ties go to the earlier item in the catalog.
  */
-export function nextReward(facts, earned = {}, catalog = CATALOG) {
-  const have = unlockedIds(facts, earned, catalog);
+export function nextReward(facts, unlocked = {}, catalog = CATALOG) {
+  const have = unlockedIds(facts, unlocked, catalog);
   let best = null;
   for (const item of catalog) {
     if (have.has(item.id)) continue;
@@ -169,14 +169,19 @@ export function compactLook(look) {
 
 /** The look to draw for this player: their choices, cleaned against what they really have. */
 export function currentLook(state, facts, catalog = CATALOG) {
-  return normalizeLook(state?.companion?.look, unlockedIds(facts, state?.earned, catalog), catalog);
+  return normalizeLook(state?.companion?.look, unlockedIds(facts, state?.unlocked, catalog), catalog);
 }
 
-/** Items that are unlocked now and were not in `seen` (the ids already celebrated), newest rules first. */
-export function newItems(facts, earned, seen, catalog = CATALOG) {
-  const have = unlockedIds(facts, earned, catalog);
-  const old = new Set(seen || []);
-  return catalog.filter((item) => have.has(item.id) && !old.has(item.id) && item.rule.type !== "always");
+/** Earnable items whose rule is met but are not recorded yet: the ones to celebrate and to write to `unlocked`. */
+export function newItems(facts, unlocked, catalog = CATALOG) {
+  return catalog.filter((item) => item.rule.type !== "always" && ruleMet(item.rule, facts) && !unlocked?.[item.id]);
+}
+
+/** `unlocked` with `ids` added for `day` (an id already there keeps its first day). */
+export function recordUnlocks(unlocked, ids, day) {
+  const out = { ...(unlocked || {}) };
+  for (const id of ids) if (!out[id]) out[id] = day;
+  return out;
 }
 
 /** Level name for a hint, e.g. "nivelul 5 (Foc de tabără)". */

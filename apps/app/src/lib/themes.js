@@ -47,6 +47,10 @@ export function getTheme() {
   return current;
 }
 
+export const isTheme = (id) => !!byId(id);
+
+// The choice belongs to the account (settings.theme, see App.jsx), so the same theme shows on every device; this
+// device keeps a copy only so the page can paint it before the account has loaded.
 export function setTheme(id) {
   const t = byId(id);
   if (!t || t.id === current) return;

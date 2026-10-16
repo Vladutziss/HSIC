@@ -297,23 +297,47 @@ test("planner: exams without a date and sessions without minutes are not sent", 
   assert.deepEqual([rows.exams, rows.study_sessions], [[], []]);
 });
 
-test("what Molt wears and the cosmetic events survive the trip to the database and back", () => {
+test("the wardrobe: what Molt wears, the unlocked items and the theme survive the trip to the database and back", () => {
   const state = newState();
-  state.companion = { name: "Ecou", look: { hat: "none", aura: "none" } };
-  state.earned = { "some-item": "2026-10-04" };
-  state.seenItems = ["some-item"];
-  const back = fromRows({ ...database(state, {}).state, groups: [] });
+  state.companion = { name: "Ecou", look: { hat: "none", aura: "embers" } };
+  state.unlocked = { embers: "2026-10-04", wizard: "2026-10-05" };
+  state.settings.theme = "padure";
+  const db = database(state, {}).state;
+  assert.deepEqual(db.wardrobe_items.map((r) => [r.item_id, r.unlocked_on]).sort(), [["embers", "2026-10-04"], ["wizard", "2026-10-05"]]);
+  assert.ok(db.wardrobe_items.every((r) => r.user_id === UID));
+  const back = fromRows({ ...db, groups: [] });
   assert.deepEqual(back.companion, state.companion);
-  assert.deepEqual(back.earned, state.earned);
-  assert.deepEqual(back.seenItems, state.seenItems);
-  // a player without any of it gets no empty keys
-  const plain = fromRows({ ...database(newState(), {}).state, groups: [] });
-  assert.equal("earned" in plain, false);
-  assert.equal("seenItems" in plain, false);
-  // changing the look is a plain profile update
-  const dressed = structuredClone(state);
-  dressed.companion.look = { hat: "signature" };
-  const ops = diff(state, dressed, UID);
+  assert.deepEqual(back.unlocked, state.unlocked);
+  assert.equal(back.settings.theme, "padure");
+  // a player without any of it gets no empty key
+  assert.equal("unlocked" in fromRows({ ...database(newState(), {}).state, groups: [] }), false);
+});
+
+test("wardrobe writes: a new item is one upsert, a changed look is a profile update, a removed item a delete", () => {
+  const prev = newState();
+  const next = structuredClone(prev);
+  next.unlocked = { crown: "2026-10-05" };
+  assert.deepEqual(diff(prev, next, UID), [{ op: "upsert", table: "wardrobe_items", rows: [{ user_id: UID, item_id: "crown", unlocked_on: "2026-10-05" }], onConflict: "user_id,item_id" }]);
+  const dressed = structuredClone(next);
+  dressed.companion.look = { hat: "crown" };
+  const ops = diff(next, dressed, UID);
   assert.equal(ops.length, 1);
   assert.equal(ops[0].table, "profiles");
+  const stripped = structuredClone(next);
+  delete stripped.unlocked;
+  assert.deepEqual(diff(next, stripped, UID), [{ op: "delete", table: "wardrobe_items", match: { user_id: UID, item_id: ["crown"] } }]);
+  // a malformed day never reaches the database
+  const bad = structuredClone(prev);
+  bad.unlocked = { crown: "yesterday" };
+  assert.deepEqual(diff(prev, bad, UID), []);
+});
+
+test("the first version of the wardrobe (extra.seenItems / extra.earned) is still read, and the rows win", () => {
+  const db = database(newState(), {}).state;
+  db.profile.extra = { ...db.profile.extra, seenItems: ["embers", "crown"], earned: { wizard: "2026-09-30" } };
+  const old = fromRows({ ...db, groups: [] });
+  assert.deepEqual(Object.keys(old.unlocked).sort(), ["crown", "embers", "wizard"]);
+  assert.equal(old.unlocked.wizard, "2026-09-30");
+  const migrated = fromRows({ ...db, wardrobe_items: [{ item_id: "embers", unlocked_on: "2026-10-01" }], groups: [] });
+  assert.equal(migrated.unlocked.embers, "2026-10-01");
 });
