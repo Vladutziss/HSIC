@@ -21,7 +21,6 @@ import {
   parseHM,
   relDay,
 } from "../lib/dates.js";
-import { GoalsCard } from "../components/Goals.jsx";
 import { Select } from "../components/Select.jsx";
 import { c } from "../lib/themes.js";
 import { firstOccurrence, occursOn, repeatLabel, todosByDay, viewOn } from "../lib/todos.js";
@@ -470,7 +469,7 @@ function MonthView({ state, today, anchor, onPick }) {
 
 const CONFIDENCE = { high: "ridicată", medium: "medie", low: "scăzută", unknown: "necunoscută" };
 
-function DailyPlanPanel({ state, today, ai, agent }) {
+export function DailyPlanPanel({ state, today, ai, agent }) {
   const [minutes, setMinutes] = useState(60);
   const [energy, setEnergy] = useState("medium");
   const [adding, setAdding] = useState(null); // title being saved
@@ -559,7 +558,7 @@ function DailyPlanPanel({ state, today, ai, agent }) {
   );
 }
 
-function HomeworkPanel({ state, today, ai, onStateChange }) {
+export function HomeworkPanel({ state, today, ai, onStateChange }) {
   const [text, setText] = useState("");
   const [s, run] = useCoach((signal) => parseHomework(text, today, signal));
   const [minutes, setMinutes] = useState(25);
@@ -609,7 +608,7 @@ function HomeworkPanel({ state, today, ai, onStateChange }) {
     <Shell
       icon={CalendarCheck}
       title="Teme și examene"
-      sub="Scrie-le natural, iar AI-ul le transformă în pași planificabili"
+      sub="Scrie-le natural, iar Molt le transformă în pași planificabili"
       state={s}
       run={go}
       label="Interpretează"
@@ -668,7 +667,7 @@ function HomeworkPanel({ state, today, ai, onStateChange }) {
   );
 }
 
-function GoalDecomposer({ today, ai, goals }) {
+export function GoalDecomposer({ today, ai, goals }) {
   const [text, setText] = useState("");
   const [s, run] = useCoach((signal) => decomposeGoal(text, signal));
   const [skip, setSkip] = useState([]);
@@ -691,11 +690,11 @@ function GoalDecomposer({ today, ai, goals }) {
   return (
     <Shell
       icon={Sparkles}
-      title="Din intenție în pași"
-      sub="Un obiectiv vag devine câteva acțiuni realizabile"
+      title="Împarte un scop în pași"
+      sub="Un scop vag devine câteva acțiuni realizabile, salvate la Plan → Obiective"
       state={s}
       run={go}
-      label="Descompune"
+      label="Împarte"
       hint={hint}
       input={
         <div className="flex gap-2">
@@ -730,7 +729,9 @@ function GoalDecomposer({ today, ai, goals }) {
   );
 }
 
-export default function Planner({ state, today, todo, goals, ai, agent, onStateChange, onFocusTodo, onMoveHabit }) {
+// Calendar and to-dos. The AI helpers that used to sit above it (daily plan, homework, goal in steps) live on the Molt
+// page; the goals (Scopuri) are with the Obiective in the other tab of Plan.
+export default function Planner({ state, today, todo, ai, go, onFocusTodo, onMoveHabit }) {
   const [anchor, setAnchor] = useState(today);
   const [mode, setMode] = useState("week");
   const [tab, setTab] = useState("calendar");
@@ -807,31 +808,33 @@ export default function Planner({ state, today, todo, goals, ai, agent, onStateC
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="font-pixel text-3xl text-ink">Planificator</h1>
-          <p className="text-sm font-semibold text-dim">To-do-uri și programul tău, lângă obiceiurile de fiecare zi.</p>
-        </div>
-        <div className="lg:hidden">
-          <Tabs
-            value={tab}
-            onChange={setTab}
-            items={[
-              { value: "calendar", label: "Calendar", icon: CalendarDays },
-              { value: "list", label: "Listă", icon: ListTodo },
-            ]}
-          />
-        </div>
+      <div className="lg:hidden">
+        <Tabs
+          value={tab}
+          onChange={setTab}
+          items={[
+            { value: "calendar", label: "Calendar", icon: CalendarDays },
+            { value: "list", label: "Listă", icon: ListTodo },
+          ]}
+        />
       </div>
-      <DailyPlanPanel state={state} today={today} ai={ai} agent={agent} />
-      <HomeworkPanel state={state} today={today} ai={ai} onStateChange={onStateChange} />
-      <GoalDecomposer today={today} ai={ai} goals={goals} />
+      {ai?.server && (
+        <button
+          type="button"
+          onClick={() => go?.("molt", "ai")}
+          className="focus-ring flex w-full items-center gap-3 rounded-2xl bg-violet/10 p-3 text-left ring-1 ring-violet/30 transition hover:bg-violet/15"
+        >
+          <Sparkles size={18} className="shrink-0 text-violet-hi" aria-hidden="true" />
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm font-extrabold text-ink">Lasă-l pe Molt să-ți facă planul</span>
+            <span className="block text-xs font-semibold text-dim">Planul de azi, temele și examenele, pașii pentru un scop: alege din ce ai deja programat, în funcție de timp și energie.</span>
+          </span>
+          <span className="shrink-0 text-xs font-extrabold text-violet-hi">Cere un plan →</span>
+        </button>
+      )}
       <div className="grid gap-5 lg:grid-cols-[minmax(300px,360px),1fr]">
         <div className={tab === "list" ? "min-w-0" : "hidden min-w-0 lg:block"}>
-          <div className="space-y-5">
-            <TodoList state={state} today={today} todo={todo} onFocusTodo={onFocusTodo} />
-            <GoalsCard state={state} today={today} goals={goals} />
-          </div>
+          <TodoList state={state} today={today} todo={todo} onFocusTodo={onFocusTodo} />
         </div>
         <div className={tab === "calendar" ? "min-w-0" : "hidden min-w-0 lg:block"}>{calendar}</div>
       </div>

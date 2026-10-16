@@ -179,8 +179,8 @@ export default function Settings({ state, d, ai, mode, env, onChange, onWipe, on
           {ai.server && (
             <SwitchRow
               id="set-weekly"
-              title="Coach săptămânal"
-              hint="Duminică seara coach-ul îți pregătește săptămâna: adaugă singur memento-uri (le poți anula) și îți propune schimbări, pe care le confirmi tu."
+              title="Planul săptămânal cu Molt"
+              hint="Duminică seara Molt îți pregătește săptămâna: adaugă singur memento-uri (le poți anula) și îți propune schimbări, pe care le confirmi tu."
               checked={!!settings.agentWeekly}
               onChange={(v) => set({ agentWeekly: v })}
             />
