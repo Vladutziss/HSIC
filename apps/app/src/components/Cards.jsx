@@ -123,11 +123,6 @@ export function CompanionCard({ c, path, lastStory, ai, waiting = 0, reward = nu
           </div>
         </div>
         <div className="flex items-center gap-2">
-          {open && (
-            <Chip tone="violet" icon={Sparkles}>
-              {c.ep} PE
-            </Chip>
-          )}
           <button
             type="button"
             onClick={() => setOpen((v) => !v)}
@@ -150,6 +145,32 @@ export function CompanionCard({ c, path, lastStory, ai, waiting = 0, reward = nu
           </span>
         </button>
       )}
+      {/* always visible, folded or not: the question field and the evolution bar */}
+      <div className="space-y-3 px-4 pb-3">
+        {ai?.server && (
+          <form
+            className="flex gap-2"
+            onSubmit={(e) => {
+              e.preventDefault();
+              ask();
+            }}
+          >
+            <input className="field min-w-0 flex-1" value={text} maxLength={400} onChange={(e) => setText(e.target.value)} placeholder={`Întreabă-l pe ${label} orice…`} aria-label={`Întrebare pentru ${label}`} />
+            <Button type="submit" variant="violet" icon={Send} disabled={!text.trim()} aria-label="Trimite întrebarea" />
+          </form>
+        )}
+        {c.next && (
+          <div>
+            <div className="mb-1 flex justify-between text-xs font-bold text-dim">
+              <span>Spre {c.next.name}</span>
+              <span className="tabular">
+                {c.ep} / {c.next.min} PE
+              </span>
+            </div>
+            <Bar value={c.progress} tone="violet" label="Progres spre evoluția următoare" />
+          </div>
+        )}
+      </div>
       <div id="companion-details" className={`grid transition-[grid-template-rows] duration-300 ${open ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`} inert={open ? undefined : ""}>
         <div className="min-h-0 overflow-hidden">
           <div className="space-y-3 px-4 pb-4">
@@ -159,16 +180,6 @@ export function CompanionCard({ c, path, lastStory, ai, waiting = 0, reward = nu
             </div>
             {ai?.server && (
               <div className="space-y-2">
-                <form
-                  className="flex gap-2"
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    ask();
-                  }}
-                >
-                  <input className="field min-w-0 flex-1" value={text} maxLength={400} onChange={(e) => setText(e.target.value)} placeholder={`Întreabă-l pe ${label} orice…`} aria-label={`Întrebare pentru ${label}`} />
-                  <Button type="submit" variant="violet" icon={Send} disabled={!text.trim()} aria-label="Trimite întrebarea" />
-                </form>
                 <div className="flex flex-wrap gap-1.5">
                   {QUICK_ASKS.map((q) => (
                     <button key={q} type="button" onClick={() => ask(q)} className="focus-ring rounded-full bg-violet/10 px-2.5 py-1 text-left text-xs font-bold text-violet-hi ring-1 ring-violet/25 hover:bg-violet/20">
@@ -176,17 +187,6 @@ export function CompanionCard({ c, path, lastStory, ai, waiting = 0, reward = nu
                     </button>
                   ))}
                 </div>
-              </div>
-            )}
-            {c.next && (
-              <div>
-                <div className="mb-1 flex justify-between text-xs font-bold text-dim">
-                  <span>Spre {c.next.name}</span>
-                  <span className="tabular">
-                    {c.ep} / {c.next.min} PE
-                  </span>
-                </div>
-                <Bar value={c.progress} tone="violet" label="Progres spre evoluția următoare" />
               </div>
             )}
             {lastStory && (
