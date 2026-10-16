@@ -130,7 +130,7 @@ function RescueCard({ rescue, onRescue, goalReminders = [], goalActions }) {
 export default function Dashboard({ state, d, today, go, ai, months, recentStories, groups, review, onFocus, onCheck, onRevive, onAddHabit, rescue, onRescue, goalReminders = [], goalActions, onAskMolt, moltWaiting = 0 }) {
   const lastStory = [...recentStories].reverse().find((s) => s.story);
   // the closest thing Molt can still earn, as one line on its card
-  const next = nextReward(d.facts, state.earned);
+  const next = nextReward(d.facts, state.unlocked);
   const reward = next ? { name: next.item.name, text: hintFor(next.item, d.facts).text, ratio: next.progress.ratio } : null;
   const chestOpen = d.scheduled.length > 0 && d.doneScheduled === d.scheduled.length;
   return (
