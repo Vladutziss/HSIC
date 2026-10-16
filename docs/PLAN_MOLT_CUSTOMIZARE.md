@@ -1,6 +1,6 @@
 # Plan: Molt personalizabil (garderobă, aure, efecte, animal de companie)
 
-Stare: propunere, nimic implementat. Scris pe 2026-10-16.
+Stare: Faza 0 (fundația) făcută; fazele 1–5 neîncepute. Scris pe 2026-10-16.
 
 ## 1. Ideea
 
@@ -141,7 +141,7 @@ Molt → Garderobă
 
 | Fază | Conținut | Estimare |
 |---|---|---|
-| 0. Fundație | `cosmetics.js` + teste, persistare, straturi în sprites.js, look implicit = ce e azi (zero regresii) | 1,5–2 zile |
+| 0. Fundație (făcută) | `cosmetics.js` + teste, persistare, straturi în sprites.js, look implicit = ce e azi (zero regresii) | 1,5–2 zile |
 | 1. MVP vizibil | 6 pălării + 9 aure + Garderobă + celebrare + teaser pe Acasă + ținută în grup | 3–4 zile |
 | 2. Profunzime | efecte de serie, costume de clasă, culori, scene, titluri, secrete, „Probează”, ținute salvate, context AI | 3–4 zile |
 | 3. Companion | oul, 5 familii × 3 stadii, nume, reacții, Legendă ★ | 4–5 zile |

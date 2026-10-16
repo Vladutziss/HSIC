@@ -52,9 +52,10 @@ function Twinkles({ size }) {
 }
 
 /** The companion. Sizes that are multiples of 32 keep the pixels crisp. */
-export function Sprite({ path = "sport", stage = "egg", mood = "idle", size = 128, crack = 0, still = false, label, silhouette = false, className = "" }) {
-  const runs = spriteRuns({ path, stage, mood, crack });
-  const blink = !still && stage !== "egg" && mood === "idle" ? spriteRuns({ path, stage, mood, eyes: "closed", crack }) : null;
+// `look`: what Molt wears (see lib/cosmetics.js); without it the class wears its own items.
+export function Sprite({ path = "sport", stage = "egg", mood = "idle", size = 128, crack = 0, still = false, label, silhouette = false, look, className = "" }) {
+  const runs = spriteRuns({ path, stage, mood, crack, look });
+  const blink = !still && stage !== "egg" && mood === "idle" ? spriteRuns({ path, stage, mood, eyes: "closed", crack, look }) : null;
   const motion = still ? "" : stage === "egg" ? (mood === "joy" ? "anim-wobble-fast" : "anim-wobble") : mood === "sleep" ? "anim-breathe" : mood === "joy" ? "anim-hop" : "anim-bob";
   return (
     <div

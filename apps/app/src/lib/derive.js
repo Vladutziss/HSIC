@@ -14,6 +14,7 @@ import {
   weekGain,
 } from "./engine.js";
 import { addDays } from "./dates.js";
+import { collectFacts, currentLook } from "./cosmetics.js";
 import { occursOn, viewOn } from "./todos.js";
 
 export function activeHabits(state, day) {
@@ -25,6 +26,9 @@ export function derive(state, today) {
   const streak = streakInfo(state, today);
   const revive = reviveInfo(state, today);
   const companion = companionInfo(state, timeline, today);
+  // what unlocks cosmetics, and what Molt wears (the player's choice, cleaned against what they really have)
+  const facts = collectFacts({ state, timeline, companion, streak });
+  const look = currentLook(state, facts);
   const entry = timeline.byDay[today];
   const yesterday = timeline.byDay[addDays(today, -1)];
   const habits = activeHabits(state, today);
@@ -72,6 +76,8 @@ export function derive(state, today) {
     level,
     runMult,
     publicStats,
+    facts,
+    look,
   };
 }
 
