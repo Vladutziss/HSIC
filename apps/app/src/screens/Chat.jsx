@@ -44,7 +44,7 @@ export default function Chat({ state, d, today, ai, goals, todo, agent, onAddHab
   const [loaded, setLoaded] = useState(false);
   const [appliedPlans, setAppliedPlans] = useState(() => new Set());
   const toast = useToast();
-  const bottomRef = useRef(null);
+  const listRef = useRef(null);
 
   const companion = d?.companion || state?.companion || {};
   const path = state?.profile?.path || "sport";
@@ -89,7 +89,10 @@ export default function Chat({ state, d, today, ai, goals, todo, agent, onAddHab
 
   // Scroll to bottom on new messages
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    // follow the conversation inside the list only: scrollIntoView would also move the whole page, and opening the
+    // chat (nothing said yet) must not scroll anything
+    const list = listRef.current;
+    if (list && messages.length > 0) list.scrollTo({ top: list.scrollHeight, behavior: "smooth" });
   }, [messages, busy]);
 
   const handleSend = async (textToSend) => {
@@ -278,7 +281,7 @@ export default function Chat({ state, d, today, ai, goals, todo, agent, onAddHab
 
       {/* Chat Messages Container */}
       <Wrap {...(embedded ? { className: "flex flex-col" } : { tone: "violet", className: "flex min-h-[460px] flex-col justify-between p-3 sm:p-5" })}>
-        <div className={`space-y-4 overflow-y-auto pr-1 ${embedded ? "max-h-[min(56vh,520px)] min-h-[220px]" : ""}`}>
+        <div ref={listRef} className={`space-y-4 overflow-y-auto pr-1 ${embedded ? "max-h-[min(56vh,520px)] min-h-[220px]" : ""}`}>
           {messages.length === 0 ? (
             <div className={`flex flex-col items-center justify-center gap-4 text-center ${embedded ? "py-3" : "py-8"}`}>
               {!embedded && (
@@ -454,7 +457,6 @@ export default function Chat({ state, d, today, ai, goals, todo, agent, onAddHab
             </div>
           )}
 
-          <div ref={bottomRef} />
         </div>
 
         {/* Input Bar */}
