@@ -22,14 +22,14 @@ export default function Wardrobe({ state, d, onLook }) {
   const path = state.profile?.path || "sport";
   const [slot, setSlot] = useState(SLOTS_SHOWN[0]);
   const [picked, setPicked] = useState(null); // a locked item being previewed
-  const have = useMemo(() => unlockedIds(d.facts, state.earned), [d.facts, state.earned]);
+  const have = useMemo(() => unlockedIds(d.facts, state.unlocked), [d.facts, state.unlocked]);
   const items = itemsFor(slot);
   const worn = d.look[slot];
   const wornItem = findItem(slot, worn);
   const shown = picked ? { ...d.look, [slot]: picked.id } : d.look;
   const detail = picked || wornItem;
   const detailHint = detail ? hintFor(detail, d.facts) : null;
-  const next = useMemo(() => nextReward(d.facts, state.earned), [d.facts, state.earned]);
+  const next = useMemo(() => nextReward(d.facts, state.unlocked), [d.facts, state.unlocked]);
   const tooYoung = WORN_FROM[slot] != null && c.stageIndex < WORN_FROM[slot];
 
   const choose = (item) => {

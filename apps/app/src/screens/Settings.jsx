@@ -13,7 +13,8 @@ const TIMES = ["18:00", "18:30", "19:00", "19:30", "20:00", "20:30", "21:00", "2
 
 // Each card carries data-theme/data-mode, so it paints itself with that theme's real colours
 // even while another theme is active.
-function ThemePicker() {
+// `onPick` saves the choice with the account (settings.theme), so it follows the player to every device
+function ThemePicker({ onPick }) {
   const active = useTheme();
   return (
     <div role="radiogroup" aria-label="Temă de culori" className="grid grid-cols-3 gap-2 sm:grid-cols-5 lg:grid-cols-9">
@@ -28,7 +29,10 @@ function ThemePicker() {
             aria-checked={on}
             aria-label={`${t.name}, ${t.mode === "dark" ? "întunecat" : "luminos"}. ${t.blurb}`}
             title={t.blurb}
-            onClick={() => setTheme(t.id)}
+            onClick={() => {
+              setTheme(t.id);
+              onPick?.(t.id);
+            }}
             data-theme={t.id}
             data-mode={t.mode}
             className={`focus-ring flex flex-col rounded-xl bg-night p-1.5 text-left ring-2 transition ${on ? "ring-gold-deep" : "ring-edge hover:ring-edge-hi"}`}
@@ -214,7 +218,7 @@ export default function Settings({ state, d, ai, mode, env, onChange, onWipe, on
           <SectionTitle icon={Palette} tone="violet" sub="Se păstrează pe acest dispozitiv." className="!mb-1">
             Aspect
           </SectionTitle>
-          <ThemePicker />
+          <ThemePicker onPick={(id) => set({ theme: id })} />
         </Panel>
 
         {/* the rules: the one setting up front, the explanations folded */}

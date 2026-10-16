@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { CATALOG, DEFAULT_LOOK, RARITIES, SLOTS, collectFacts, currentLook, findItem, hintFor, itemsFor, compactLook, levelHint, newItems, nextReward, normalizeLook, progressToward, ruleMet, unlockedIds } from "../src/lib/cosmetics.js";
+import { CATALOG, DEFAULT_LOOK, RARITIES, SLOTS, collectFacts, currentLook, findItem, hintFor, itemsFor, compactLook, levelHint, newItems, nextReward, normalizeLook, progressToward, recordUnlocks, ruleMet, unlockedIds } from "../src/lib/cosmetics.js";
 import { computeTimeline, streakInfo, companionInfo } from "../src/lib/engine.js";
 import { AURAS, HATS, HELD_ITEMS, resolveLook, spriteRuns, auraRuns } from "../src/lib/sprites.js";
 import { seedHistory } from "./fixtures/history.mjs";
@@ -99,11 +99,21 @@ test("currentLook draws what the player chose among what they really have", () =
   assert.deepEqual(currentLook({}, facts(), TEST), DEFAULT_LOOK);
 });
 
-test("newItems lists unlocked items not yet celebrated, never the always-free ones", () => {
+test("newItems lists earned items not recorded yet, never the always-free ones; recordUnlocks keeps the first day", () => {
   const f = facts({ level: 2, focusSessions: 10 });
-  assert.deepEqual(newItems(f, {}, [], TEST).map((i) => i.id).sort(), ["embers", "focus-cap"]);
-  assert.deepEqual(newItems(f, {}, ["embers"], TEST).map((i) => i.id), ["focus-cap"]);
-  assert.deepEqual(newItems(f, {}, ["embers", "focus-cap"], TEST), []);
+  assert.deepEqual(newItems(f, {}, TEST).map((i) => i.id).sort(), ["embers", "focus-cap"]);
+  assert.deepEqual(newItems(f, { embers: "2026-10-01" }, TEST).map((i) => i.id), ["focus-cap"]);
+  assert.deepEqual(newItems(f, { embers: "2026-10-01", "focus-cap": "2026-10-02" }, TEST), []);
+  const rec = recordUnlocks({ embers: "2026-10-01" }, ["embers", "focus-cap"], "2026-10-09");
+  assert.deepEqual(rec, { embers: "2026-10-01", "focus-cap": "2026-10-09" });
+  assert.deepEqual(recordUnlocks(undefined, ["a"], "2026-10-09"), { a: "2026-10-09" });
+});
+
+test("a recorded item stays unlocked when the history no longer meets its rule", () => {
+  const rec = { wizard: "2026-09-01" }; // streak 30, since broken and the habit deleted: facts fall back to zero
+  assert.ok(unlockedIds(facts(), rec, TEST).has("wizard"));
+  assert.equal(normalizeLook({ hat: "wizard" }, unlockedIds(facts(), rec, TEST), TEST).hat, "wizard");
+  assert.equal(nextReward(facts({ streak: 3 }), rec, TEST).item.id !== "wizard", true);
 });
 
 test("levelHint names the level", () => {

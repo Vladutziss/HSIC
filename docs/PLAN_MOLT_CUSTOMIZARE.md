@@ -117,10 +117,10 @@ Molt → Garderobă
 - `unlockedItems(input)`, `progressToward(item, input)`, `nextReward(input)`, `normalizeLook(look, unlocked)`.
 - Teste în `apps/app/tests/cosmetics.test.mjs`: praguri, *peak* vs curent (un reset nu retrage nimic), look invalid curățat.
 
-**Date:**
-- `companion.look = { hat, aura, effect, held, dye, scene, pet, title }` în `profiles.companion` (fără migrare; mapare în `remote.js` + test în `remote.test.mjs`).
-- Fapte care trăiesc doar în DB (experimente terminate) se scriu ca `extra.earned[id] = zi`, la momentul evenimentului (idempotent). Restul se derivă din state, deci merg offline și în artifact.
-- `extra.seenItems` pentru „ce e nou”.
+**Date (totul e per utilizator, în Supabase):**
+- `companion.look = { hat, aura, effect, held, dye, scene, pet, title }` în `profiles.companion` (jsonb).
+- Obiectele deblocate: tabelul `wardrobe_items` (migrarea 0025, RLS doar pentru proprietar), `state.unlocked = { id: zi }`. Regulile spun *când* se câștigă un obiect; din clipa în care e înregistrat, rămâne al tău orice ar face istoricul.
+- Tema de culori: `profiles.settings.theme` (aceeași pe orice dispozitiv; dispozitivul păstrează doar o copie ca să picteze înainte să se încarce contul).
 - Grup: `publicStats.look` (doar id-uri, câțiva octeți); la citire, ce nu e în catalog se ignoră. De verificat dacă `group_members.stats` are limită de mărime.
 
 **Sprite (`packages/ui/sprites.js`):**

@@ -7,7 +7,7 @@ import { RARITY_LABEL, SLOT_LABEL, itemById } from "../lib/cosmetics.js";
 const RARITY_TONE = { common: "dim", rare: "sky", epic: "violet", legendary: "gold" };
 
 /**
- * "Ai deblocat…": shown once per new item (App keeps `seenItems`). One item can be worn on the spot; several are
+ * "Ai deblocat…": shown once per new item (App records them in `state.unlocked`). One item can be worn on the spot; several are
  * looked at in the Garderobă. Molt is drawn wearing the first one, so the reward is seen and not only read about.
  */
 export function UnlockModal({ ids, state, d, onWear, onOpen, onClose }) {
