@@ -140,6 +140,7 @@ export default function Dashboard({ state, d, today, go, ai, months, recentStori
         <ReviveBanner d={d} onRevive={onRevive} />
         <ResetWarning d={d} />
         <RescueCard rescue={rescue} onRescue={onRescue} />
+        <ObjectivesMini state={state} today={today} reminders={goalReminders} go={go} act={goalActions} />
 
         <Panel className="p-4 sm:p-5">
           <SectionTitle
@@ -202,7 +203,6 @@ export default function Dashboard({ state, d, today, go, ai, months, recentStori
 
       <div className="min-w-0 space-y-5 lg:col-span-4">
         <CompanionCard c={d.companion} path={state.profile.path} lastStory={lastStory} ai={ai} waiting={moltWaiting} reward={reward} onReward={() => go("molt", "wardrobe")} onAsk={onAskMolt} onOpen={() => go("companion")} onChat={() => go("molt", "chat")} />
-        <ObjectivesMini state={state} today={today} reminders={goalReminders} go={go} act={goalActions} />
         <ReviewCard d={d} state={state} months={months} review={review} ai={ai} today={today} />
         <GroupMini groups={groups} go={go} />
       </div>
