@@ -3,6 +3,7 @@
 // functions, so the rules live in one place and are unit-tested.
 
 import { addDays, dayKey, diffDays, mondayOf, weekday } from "./dates.js";
+import { withHistory } from "./retired.js";
 import { stepDoneDays } from "./objectives.js";
 
 // xp: momentum for a check-in; ep: evolution points the companion earns from it
@@ -100,6 +101,7 @@ function firstDay(state, today) {
  * and the day score turns into momentum. Today stays provisional until then.
  */
 export function computeTimeline(state, today) {
+  state = withHistory(state); // habits the player deleted still count for the days they were there
   const habits = state.habits || [];
   const log = state.log || {};
   const reviews = state.reviews || {};
@@ -290,6 +292,7 @@ const streakActive = (state, d) => {
 };
 
 export function streakInfo(state, today) {
+  state = withHistory(state);
   const todayDone = streakActive(state, today);
   let current = 0;
   for (let d = todayDone ? today : addDays(today, -1); streakActive(state, d); d = addDays(d, -1)) current++;
@@ -307,6 +310,7 @@ export function streakInfo(state, today) {
  * offer stands on the day after the miss (two missed days need two revives).
  */
 export function reviveInfo(state, today) {
+  state = withHistory(state);
   const revived = state.streak?.revived || {};
   const month = today.slice(0, 7);
   const used = Object.values(revived).filter((usedOn) => String(usedOn).slice(0, 7) === month).length;
@@ -339,6 +343,7 @@ export const STAGES = [
 
 /** The companion grows from check-ins: each one earns the habit's difficulty in points (1, 2 or 3). */
 export function evolutionPoints(state) {
+  state = withHistory(state);
   const diff = Object.fromEntries((state.habits || []).map((h) => [h.id, h.diff]));
   let ep = 0;
   let checkins = 0;

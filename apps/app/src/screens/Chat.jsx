@@ -32,13 +32,16 @@ const STARTERS = [
   "Cum pot să-mi împart un proiect mare de școală în pași mici?",
 ];
 
-export default function Chat({ state, d, today, ai, goals, todo, agent, onAddHabit }) {
+// `embedded`: inside the Molt page, which already has the header. `initialPrompt`: a question sent as soon as the
+// conversation has loaded (from the quick questions on Acasă); `onPromptUsed` clears it so it is sent once.
+export default function Chat({ state, d, today, ai, goals, todo, agent, onAddHabit, embedded = false, initialPrompt = null, onPromptUsed }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [notes, setNotes] = useState([]);
   const [clearOpen, setClearOpen] = useState(false);
+  const [loaded, setLoaded] = useState(false);
   const [appliedPlans, setAppliedPlans] = useState(() => new Set());
   const toast = useToast();
   const bottomRef = useRef(null);
@@ -67,12 +70,17 @@ export default function Chat({ state, d, today, ai, goals, todo, agent, onAddHab
           } catch {
             if (alive) setMessages(loadLocal());
           }
+          if (alive) setLoaded(true);
         })
         .catch(() => {
-          if (alive) setMessages(loadLocal());
+          if (alive) {
+            setMessages(loadLocal());
+            setLoaded(true);
+          }
         });
     } else {
       setMessages(loadLocal());
+      setLoaded(true);
     }
     return () => {
       alive = false;
@@ -138,6 +146,16 @@ export default function Chat({ state, d, today, ai, goals, todo, agent, onAddHab
       setBusy(false);
     }
   };
+
+  // a question asked from elsewhere in the app goes out once, after the old messages are in
+  const promptSent = useRef(false);
+  useEffect(() => {
+    if (!loaded || !initialPrompt || promptSent.current || !ai?.server) return;
+    promptSent.current = true;
+    onPromptUsed?.();
+    handleSend(initialPrompt);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loaded, initialPrompt, ai?.server]);
 
   const handleApplyPlan = async (plan, msgId) => {
     if (!plan || appliedPlans.has(msgId)) return;
@@ -218,30 +236,34 @@ export default function Chat({ state, d, today, ai, goals, todo, agent, onAddHab
 
   return (
     <div className="space-y-4">
-      {/* Header Panel */}
-      <Panel tone="violet" corners className="p-4 sm:p-5">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <span className="pedestal grid h-12 w-12 shrink-0 place-items-center rounded-xl sm:h-14 sm:w-14">
-              <Sprite path={path} stage={companion.stage?.id || "egg"} mood={companion.mood || "idle"} size={48} crack={eggCrack(companion.ep || 0)} />
-            </span>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="font-pixel text-lg sm:text-xl text-ink">{moltName}</h1>
-                <Chip tone="violet">{pInfo.cls}</Chip>
+      {!embedded && (
+        <>
+        {/* Header Panel */}
+        <Panel tone="violet" corners className="p-4 sm:p-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <span className="pedestal grid h-12 w-12 shrink-0 place-items-center rounded-xl sm:h-14 sm:w-14">
+                <Sprite path={path} stage={companion.stage?.id || "egg"} mood={companion.mood || "idle"} size={48} crack={eggCrack(companion.ep || 0)} />
+              </span>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h1 className="font-pixel text-lg sm:text-xl text-ink">{moltName}</h1>
+                  <Chip tone="violet">{pInfo.cls}</Chip>
+                </div>
+                <p className="text-xs font-semibold text-dim">
+                  Asistentul tău personal AI · Întreabă orice despre școală, obiective și rutină
+                </p>
               </div>
-              <p className="text-xs font-semibold text-dim">
-                Asistentul tău personal AI · Întreabă orice despre școală, obiective și rutină
-              </p>
             </div>
+            {messages.length > 0 && (
+              <Button size="sm" variant="ghost" icon={Trash2} onClick={() => setClearOpen(true)} className="text-dim hover:text-rose">
+                Șterge conversația
+              </Button>
+            )}
           </div>
-          {messages.length > 0 && (
-            <Button size="sm" variant="ghost" icon={Trash2} onClick={() => setClearOpen(true)} className="text-dim hover:text-rose">
-              Șterge conversația
-            </Button>
-          )}
-        </div>
-      </Panel>
+        </Panel>
+        </>
+      )}
 
       {/* Offline banner if server is unavailable */}
       {!ai?.server && (
@@ -250,6 +272,14 @@ export default function Chat({ state, d, today, ai, goals, todo, agent, onAddHab
           <span>
             Chat-ul cu Moltul folosește inteligența artificială de pe server. În modul local/offline conversațiile anterioare sunt păstrate, dar generarea răspunsurilor noi necesită conexiune activă.
           </span>
+        </div>
+      )}
+
+      {embedded && messages.length > 0 && (
+        <div className="flex justify-end">
+          <Button size="sm" variant="ghost" icon={Trash2} onClick={() => setClearOpen(true)} className="text-dim hover:text-rose">
+            Șterge conversația
+          </Button>
         </div>
       )}
 

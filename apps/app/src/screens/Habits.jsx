@@ -1,12 +1,10 @@
 import React, { useMemo, useState } from "react";
 import { Archive, ArrowLeft, CalendarDays, Clock, Flame, Info, LayoutGrid, List, Pencil, Plus, Rows3, RotateCcw, ScrollText, Sparkles, Target, Trophy } from "lucide-react";
-import { Button, Chip, Empty, Field, Gems, HoldToDelete, Panel, SectionTitle, Stat } from "../components/ui.jsx";
+import { Button, Chip, Empty, DeleteButton, Field, Gems, Panel, SectionTitle, Stat } from "../components/ui.jsx";
 import { Select } from "../components/Select.jsx";
 import { HabitArea, Heatmap, Sparkline } from "../components/Charts.jsx";
 import { iconFor } from "../components/icons.js";
 import { scheduleLabel } from "../components/HabitEditor.jsx";
-import { ExperimentsPanel, NotesPanel, PlanPanel } from "../components/CoachAgent.jsx";
-import { AgentLog } from "../components/AgentLog.jsx";
 import { MAX_HABITS, PATHS } from "../lib/catalog.js";
 import { DIFF, habitStats, isScheduled } from "../lib/engine.js";
 import { fmt12, fmtDay } from "../lib/dates.js";
@@ -63,7 +61,7 @@ function HabitCard({ h, stats, series, onOpen, onEdit, onDelete, code, today }) 
             Editează
           </Button>
         </div>
-        <HoldToDelete label={`Șterge obiceiul ${h.name}`} onConfirm={onDelete} />
+        <DeleteButton label={`Șterge obiceiul ${h.name}`} onClick={onDelete} />
       </div>
     </Panel>
   );
@@ -320,13 +318,13 @@ function HabitRow({ h, stats, code, today, detailed, onOpen, onEdit, onDelete })
         <button type="button" onClick={onEdit} aria-label={`Editează: ${h.name}`} title="Editează" className="focus-ring grid h-9 w-9 place-items-center rounded-lg text-dim hover:bg-well hover:text-ink">
           <Pencil size={16} aria-hidden="true" />
         </button>
-        <HoldToDelete label={`Șterge obiceiul ${h.name}`} onConfirm={onDelete} />
+        <DeleteButton label={`Șterge obiceiul ${h.name}`} onClick={onDelete} />
       </div>
     </li>
   );
 }
 
-export default function Habits({ state, d, today, ai, agent, focus, setFocus, onAdd, onAddHabit, onEdit, onArchive, onDelete }) {
+export default function Habits({ state, d, today, go, ai, focus, setFocus, onAdd, onEdit, onArchive, onDelete }) {
   const [showArchived, setShowArchived] = useState(false);
   const [layout, setLayoutState] = useState(loadLayout);
   const [sortState, setSortState] = useState(loadSort);
@@ -341,7 +339,6 @@ export default function Habits({ state, d, today, ai, agent, focus, setFocus, on
     setLayoutState(v);
     saveLayout(v);
   };
-  const [expKey, setExpKey] = useState(0);
   const habits = state.habits || [];
   const active = habits.filter((h) => !h.archivedAt);
   const statsById = useMemo(() => Object.fromEntries(active.map((h) => [h.id, habitStats(h, state, d.timeline, today)])), [active, state, d.timeline, today]);
@@ -435,12 +432,20 @@ export default function Habits({ state, d, today, ai, agent, focus, setFocus, on
           </ul>
         )
       )}
-      {ai?.server && agent && (
-        <AgentLog actions={agent.log} state={state} busy={agent.busy} error={agent.error} onConfirm={agent.onConfirm} onReject={agent.onReject} onUndo={agent.onUndo} />
+      {ai?.server && (
+        <button
+          type="button"
+          onClick={() => go?.("molt", "ai")}
+          className="focus-ring flex w-full items-center gap-3 rounded-2xl bg-violet/10 p-3 text-left ring-1 ring-violet/30 transition hover:bg-violet/15"
+        >
+          <Sparkles size={18} className="shrink-0 text-violet-hi" aria-hidden="true" />
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm font-extrabold text-ink">Cere-i lui Molt un plan pentru obiceiurile tale</span>
+            <span className="block text-xs font-semibold text-dim">Analizează bifările, propune schimbări și experimente. Notele și propunerile lui sunt în pagina Molt.</span>
+          </span>
+          <span className="shrink-0 text-xs font-extrabold text-violet-hi">Deschide →</span>
+        </button>
       )}
-      <PlanPanel state={state} today={today} ai={ai} onAddHabit={onAddHabit} onEdit={onEdit} onExperiment={() => setExpKey((k) => k + 1)} />
-      <ExperimentsPanel state={state} today={today} ai={ai} refreshKey={expKey} />
-      <NotesPanel ai={ai} today={today} />
       {archived.length > 0 && (
         <div>
           <button type="button" className="focus-ring inline-flex items-center gap-2 text-sm font-extrabold text-dim hover:text-ink" onClick={() => setShowArchived((x) => !x)}>

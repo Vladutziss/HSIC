@@ -30,6 +30,7 @@ import {
 } from "lucide-react";
 import { Bar, Button, CheckButton, Chip, Empty, Field, HoldToDelete, IconButton, Modal, Panel, SectionTitle, Toggle, plural } from "../components/ui.jsx";
 import { DateSelect, TimeSelect } from "../components/Select.jsx";
+import { GoalsCard } from "../components/Goals.jsx";
 import { DayPicker } from "../components/HabitEditor.jsx";
 import { HABIT_ICONS, iconFor } from "../components/icons.js";
 import { HABIT_COLORS, uid } from "../lib/catalog.js";
@@ -783,7 +784,7 @@ function Detail({ o, state, d, today, act, onBack, onEdit, go }) {
 
 // ------------------------------------------------------------ screen
 
-export default function Objectives({ state, d, today, go, focus, setFocus, act, onCreate, onEdit }) {
+export default function Objectives({ state, d, today, go, ai, goals, focus, setFocus, act, onCreate, onEdit }) {
   const [showArchive, setShowArchive] = useState(false);
   const all = state.objectives || [];
   const open = all.find((o) => o.id === focus);
@@ -800,13 +801,28 @@ export default function Objectives({ state, d, today, go, focus, setFocus, act, 
     <div className="space-y-5">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="font-pixel text-3xl text-ink">Obiective</h1>
+          <h2 className="font-pixel text-2xl text-ink">Obiective</h2>
           <p className="text-sm font-semibold text-dim">Ținte mari, împărțite în pași mici. Fiecare pas bifat aduce momentum.</p>
         </div>
         <Button icon={Plus} disabled={full} onClick={() => onCreate()} title={full ? `Maxim ${MAX_OBJECTIVES} obiective active` : undefined}>
           Obiectiv nou
         </Button>
       </div>
+
+      {ai?.server && (
+        <button
+          type="button"
+          onClick={() => go?.("molt", "chat")}
+          className="focus-ring flex w-full items-center gap-3 rounded-2xl bg-violet/10 p-3 text-left ring-1 ring-violet/30 transition hover:bg-violet/15"
+        >
+          <Sparkles size={18} className="shrink-0 text-violet-hi" aria-hidden="true" />
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm font-extrabold text-ink">Nu știi cum să-ți împarți obiectivul?</span>
+            <span className="block text-xs font-semibold text-dim">Spune-i lui Molt ce vrei să atingi: îți face un plan cu etape, obiceiuri și to-do-uri, pe care îl aplici dintr-un click.</span>
+          </span>
+          <span className="shrink-0 text-xs font-extrabold text-violet-hi">Vorbește cu Molt →</span>
+        </button>
+      )}
 
       {active.length > 0 && (
         <div className="grid grid-cols-3 gap-2 sm:gap-3">
@@ -901,6 +917,16 @@ export default function Objectives({ state, d, today, go, focus, setFocus, act, 
             </ul>
           )}
         </div>
+      )}
+
+      {goals && (
+        <section className="space-y-3 pt-2">
+          <div>
+            <h2 className="font-pixel text-2xl text-ink">Scopuri pe termen scurt</h2>
+            <p className="text-sm font-semibold text-dim">Ce vrei să faci în săptămâna asta și în luna asta.</p>
+          </div>
+          <GoalsCard state={state} today={today} goals={goals} />
+        </section>
       )}
 
       <p className="flex items-center gap-2 text-xs font-semibold text-dim">

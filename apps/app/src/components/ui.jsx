@@ -307,6 +307,21 @@ export function CheckButton({ checked, onClick, label, size = "md", tone = "mint
   );
 }
 
+// Round red outline button for deleting something: a plain click (the caller asks "are you sure?" in a modal).
+export function DeleteButton({ label, onClick }) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      title="Șterge"
+      onClick={onClick}
+      className="focus-ring grid h-9 w-9 shrink-0 place-items-center rounded-full border-2 border-rose bg-transparent text-rose transition hover:bg-rose hover:text-on-rose active:scale-95"
+    >
+      <Trash2 size={16} aria-hidden="true" />
+    </button>
+  );
+}
+
 // Round red outline button: hold it to delete. The red fill grows while pressed and the action fires when it is full;
 // letting go early cancels. Space/Enter work the same way for keyboard users.
 export function HoldToDelete({ label, onConfirm, ms = 900 }) {
