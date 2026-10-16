@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Bell, Check, Copy, Crown, Flame, Handshake, Inbox, LogOut, Medal, Send, UserPlus, Users, X } from "lucide-react";
+import { Bell, Check, CheckCheck, Copy, Crown, Flame, Handshake, Inbox, LogOut, Medal, Send, UserPlus, Users, X } from "lucide-react";
 import { Button, Chip, Empty, Field, LevelBadge, Panel, SectionTitle, Skeleton, Tabs, useToast } from "../components/ui.jsx";
 import { dayKey, fmt12, fmtDay, relDay, todayKey } from "../lib/dates.js";
 import { Sprite } from "../components/Sprite.jsx";
@@ -234,6 +234,16 @@ function ChatPanel({ g, groups, loading }) {
     setBusy(false);
   }
   const unread = g.inbox.filter((n) => !n.read).length;
+  const [markingAll, setMarkingAll] = useState(false);
+  async function markAll() {
+    setMarkingAll(true);
+    try {
+      await groups.markAllRead(g.id);
+    } catch {
+      toast({ title: "Nu am putut marca mesajele", tone: "rose", icon: Bell });
+    }
+    setMarkingAll(false);
+  }
   const thread = useMemo(
     () =>
       [...g.inbox.map((n) => ({ ...n, mine: false })), ...g.sent.map((n) => ({ ...n, mine: true }))]
@@ -255,7 +265,16 @@ function ChatPanel({ g, groups, loading }) {
         icon={Inbox}
         tone="violet"
         sub="Încurajări între voi, ca într-un chat"
-        action={unread ? <Chip tone="violet">{unread} necitite</Chip> : null}
+        action={
+          unread ? (
+            <div className="flex flex-wrap items-center justify-end gap-2">
+              <Chip tone="violet">{unread} necitite</Chip>
+              <Button size="sm" variant="ghost" icon={CheckCheck} busy={markingAll} disabled={markingAll} onClick={markAll}>
+                Marchează toate citite
+              </Button>
+            </div>
+          ) : null
+        }
       >
         Chat-ul grupului
       </SectionTitle>
