@@ -24,7 +24,8 @@ import { carryCopies } from "./lib/goals.js";
 import { fmtSpan, loadSession, newSession, saveSession } from "./lib/focus.js";
 import { MomentModal } from "./components/MomentModal.jsx";
 import { UnlockModal } from "./components/UnlockModal.jsx";
-import { newItems } from "./lib/cosmetics.js";
+import { newItems, recordUnlocks } from "./lib/cosmetics.js";
+import { DEFAULT_THEME, getTheme, isTheme, setTheme } from "./lib/themes.js";
 import { HabitEditor, scheduleLabel } from "./components/HabitEditor.jsx";
 import { TodoEditor } from "./components/TodoEditor.jsx";
 import Onboarding from "./screens/Onboarding.jsx";
@@ -140,7 +141,7 @@ function Game() {
     });
   };
   const [queue, setQueue] = useState([]);
-  const [unlocks, setUnlocks] = useState([]); // ids of new cosmetic items, celebrated once (see seenItems)
+  const [unlocks, setUnlocks] = useState([]); // ids of new cosmetic items, celebrated once (recorded in state.unlocked)
   const [review, setReview] = useState({ status: "idle", error: null });
   const autoTried = useRef(null);
 
@@ -282,13 +283,26 @@ function Game() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [d]);
 
-  // new cosmetic items: celebrated once each. A player who already has some when this appears gets them in one go.
+  // the colour theme is the account's: it is applied when the account loads and when it changes on another device.
+  // An account without one yet takes this device's theme (so a choice made before this existed is not lost).
+  const accountTheme = state?.settings?.theme;
+  useEffect(() => {
+    if (!hasState) return;
+    if (isTheme(accountTheme)) {
+      if (accountTheme !== getTheme()) setTheme(accountTheme);
+    } else if (getTheme() !== DEFAULT_THEME) {
+      update((s) => ({ ...s, settings: { ...s.settings, theme: getTheme() } }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasState, accountTheme]);
+
+  // new cosmetic items: recorded in the account and celebrated once each. A player who already has some when this appears gets them in one go.
   useEffect(() => {
     if (!d || !state) return;
-    const fresh = newItems(d.facts, state.earned, state.seenItems);
+    const fresh = newItems(d.facts, state.unlocked);
     if (!fresh.length) return;
     const ids = fresh.map((i) => i.id);
-    update((s) => ({ ...s, seenItems: [...new Set([...(s.seenItems || []), ...ids])] }));
+    update((s) => ({ ...s, unlocked: recordUnlocks(s.unlocked, ids, today) })); // saved with the account (wardrobe_items)
     setUnlocks((u) => [...new Set([...u, ...ids])]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [d]);

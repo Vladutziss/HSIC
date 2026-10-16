@@ -415,4 +415,38 @@ begin
   raise notice 'RLS chat messages checks passed';
 end $$;
 
+-- ---- wardrobe (migration 0025): wardrobe_items is owner-only
+do $$
+declare
+  a constant text := '{"sub":"user_aaa","role":"authenticated"}';
+  b constant text := '{"sub":"user_bbb","role":"authenticated"}';
+  n int;
+  blocked boolean;
+begin
+  perform set_config('request.jwt.claims', a, true);
+  set local role authenticated;
+  insert into public.wardrobe_items (user_id, item_id, unlocked_on) values ('user_aaa', 'wizard', '2026-10-05');
+  if (select unlocked_on::text from public.wardrobe_items where item_id = 'wizard') <> '2026-10-05' then
+    raise exception 'wardrobe: day changed';
+  end if;
+  reset role;
+
+  perform set_config('request.jwt.claims', b, true);
+  set local role authenticated;
+  select count(*) into n from public.wardrobe_items;
+  if n <> 0 then raise exception 'LEAK: B reads % wardrobe rows of A', n; end if;
+  delete from public.wardrobe_items;
+  get diagnostics n = row_count;
+  if n <> 0 then raise exception 'LEAK: B deleted % wardrobe rows of A', n; end if;
+  blocked := false;
+  begin
+    insert into public.wardrobe_items (user_id, item_id, unlocked_on) values ('user_aaa', 'crown', '2026-10-05');
+  exception when insufficient_privilege then blocked := true;
+  end;
+  if not blocked then raise exception 'LEAK: B unlocked an item for A'; end if;
+  reset role;
+
+  raise notice 'RLS wardrobe checks passed';
+end $$;
+
 rollback;
