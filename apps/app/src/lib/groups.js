@@ -319,7 +319,25 @@ export function useGroups({ store, state, update, myStats }) {
     [cloud]
   );
 
-  return { cloud: !!cloud, status, myId, groups, limits, unread, create, join, leave, send, markRead };
+  // every unread message of one group at once
+  const markAllRead = useCallback(
+    async (gid) => {
+      if (!cloud) return;
+      const ids = (inbox[gid] || []).filter((n) => !n.read?.[env.uid]).map((n) => n.id);
+      if (!ids.length) return;
+      if (sb) {
+        await env.client.from("nudge_reads").upsert(ids.map((nid) => ({ nudge_id: nid, user_id: env.uid })), { onConflict: "nudge_id,user_id", ignoreDuplicates: true });
+        const all = new Set(ids);
+        setInbox((m) => ({ ...m, [gid]: (m[gid] || []).map((n) => (all.has(n.id) ? { ...n, read: { [env.uid]: true } } : n)) }));
+        return;
+      }
+      await Promise.all(ids.map((nid) => env.db.doc(`groups/${gid}/nudges/${nid}`).update({ read: { [env.uid]: true } }).catch(() => {})));
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [cloud, inbox]
+  );
+
+  return { cloud: !!cloud, status, myId, groups, limits, unread, create, join, leave, send, markRead, markAllRead };
 }
 
 /** Points earned since Monday; the leaderboard ranks by this. */

@@ -332,17 +332,17 @@ export function CheckButton({ checked, onClick, label, size = "md", tone = "mint
   );
 }
 
-// Round red outline button for deleting something: a plain click (the caller asks "are you sure?" in a modal).
-export function DeleteButton({ label, onClick }) {
+// Round red outline button for deleting (or leaving) something: a plain click (the caller asks "are you sure?" in a modal).
+export function DeleteButton({ label, onClick, icon: Icon = Trash2, title = "Șterge" }) {
   return (
     <button
       type="button"
       aria-label={label}
-      title="Șterge"
+      title={title}
       onClick={onClick}
       className="focus-ring grid h-9 w-9 shrink-0 place-items-center rounded-full border-2 border-rose bg-transparent text-rose transition hover:bg-rose hover:text-on-rose active:scale-95"
     >
-      <Trash2 size={16} aria-hidden="true" />
+      <Icon size={16} aria-hidden="true" />
     </button>
   );
 }

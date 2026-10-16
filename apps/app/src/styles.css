@@ -1078,3 +1078,35 @@ select.field {
     transform: rotate(-45deg);
   }
 }
+
+/* "Raportul zilei" flashes once when the badge on Acasă sends you to it */
+@keyframes review-ping {
+  0%, 100% { box-shadow: 0 0 0 0 rgb(var(--c-rose) / 0); }
+  25%, 75% { box-shadow: 0 0 0 5px rgb(var(--c-rose) / 0.55); }
+}
+.review-ping {
+  animation: review-ping 1.3s ease-in-out 2;
+}
+
+/* Auras (see AURAS in packages/ui/sprites.js): each runs on its own layer behind Molt */
+@keyframes aura-pulse {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+@keyframes aura-rise {
+  0% { transform: translateY(6%); opacity: 0.25; }
+  60% { opacity: 1; }
+  100% { transform: translateY(-6%); opacity: 0.25; }
+}
+@keyframes aura-spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes aura-comet {
+  0%, 100% { transform: translate(0, 0); opacity: 1; }
+  50% { transform: translate(-3%, 3%); opacity: 0.7; }
+}
+.anim-aura-pulse { animation: aura-pulse 2.4s ease-in-out infinite; }
+.anim-aura-rise { animation: aura-rise 2.2s ease-in-out infinite; }
+.anim-aura-spin { animation: aura-spin 9s linear infinite; }
+.anim-aura-spin-slow { animation: aura-spin 24s linear infinite; }
+.anim-aura-comet { animation: aura-comet 2.8s ease-in-out infinite; }

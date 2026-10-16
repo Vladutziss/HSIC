@@ -7,7 +7,7 @@
 // the action button and the answer are one block, so nothing needs hunting for.
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { BookOpen, Bot, CalendarCheck, CalendarRange, Check, Egg, History, Lock, MessageSquare, NotebookPen, Pencil, Sparkles, Target, Wand2 } from "lucide-react";
+import { BookOpen, Bot, CalendarCheck, CalendarRange, Check, Egg, History, Lock, MessageSquare, NotebookPen, Pencil, Shirt, Sparkles, Target, Wand2 } from "lucide-react";
 import { Bar, Button, Chip, Panel } from "../components/ui.jsx";
 import { Sprite, eggCrack } from "../components/Sprite.jsx";
 import { moodLine } from "../components/Cards.jsx";
@@ -19,6 +19,7 @@ import { pendingConfirm } from "../lib/agentActions.js";
 import { PATHS } from "../lib/catalog.js";
 import Chat from "./Chat.jsx";
 import Companion from "./Companion.jsx";
+import Wardrobe from "./Wardrobe.jsx";
 
 // `group` heads a run of abilities in the list; `say` is the line Molt speaks at the top of the workbench.
 // `ai`: needs the server (signed-in). The order here is the order in the list.
@@ -30,6 +31,7 @@ const SKILLS = [
   { id: "goal", label: "Scop în pași", icon: Target, group: "Planifică", ai: true, title: () => "Scop în pași", say: "Dă-mi un scop mare și îl tai în pași mici, cu termene. Îi salvezi în Plan, la Obiective." },
   { id: "mirror", label: "Reflecție", icon: BookOpen, group: "Înțelege", ai: true, title: () => "Reflecția săptămânii", say: "Cum a fost săptămâna? Spune-mi ce te-a ajutat sau ce te-a blocat și îți propun un singur pas." },
   { id: "patterns", label: "Tipare", icon: Wand2, group: "Înțelege", ai: true, title: () => "Ce observ la tine", say: "Mă uit la ultimele 4 săptămâni de bifări și îți spun ce tipare văd." },
+  { id: "wardrobe", label: "Garderobă", icon: Shirt, group: "Molt", title: () => "Garderoba mea", say: "Ce port arată ce ai făcut. Alege ce îți place și vezi ce mai pot câștiga." },
   { id: "memory", label: "Ce știe Molt", icon: NotebookPen, group: "Molt", title: () => "Ce știu despre tine", say: "Ce-mi spui aici rămâne la mine și îmi ghidează sfaturile: examene, restricții, preferințe." },
   { id: "log", label: "Ce a făcut Molt", icon: History, group: "Molt", ai: true, title: () => "Ce am făcut", say: "Tot ce ți-am propus sau am făcut, cu efectul măsurat și opțiunea de a anula." },
   { id: "evolution", label: "Evoluție", icon: Egg, group: "Molt", title: () => "Evoluția mea", say: "Cresc odată cu obiceiurile pe care le bifezi: fiecare bifă aduce 1, 2 sau 3 puncte de evoluție, după dificultate." },
@@ -62,7 +64,7 @@ function MoltCard({ state, d, ai, wide, waiting, onWaiting, onRename }) {
     <Panel tone="violet" corners className="overflow-hidden">
       <div className="flex items-center gap-3 p-3 lg:flex-col lg:items-stretch lg:gap-0 lg:p-0">
         <div className="pedestal flex h-[84px] w-[84px] shrink-0 items-end justify-center rounded-xl lg:h-auto lg:w-auto lg:rounded-none lg:px-6 lg:pt-4">
-          <Sprite path={path} stage={c.stage.id} mood={c.mood} size={wide ? 128 : 64} crack={eggCrack(c.ep)} label={`${label}, ${c.stage.name}`} />
+          <Sprite path={path} stage={c.stage.id} mood={c.mood} size={wide ? 128 : 64} crack={eggCrack(c.ep)} look={c.look} label={`${label}, ${c.stage.name}`} />
         </div>
         <div className="min-w-0 flex-1 space-y-2 lg:p-4 lg:pt-3">
           {renaming ? (
@@ -235,7 +237,7 @@ function MemoryBody({ props }) {
 }
 
 export default function Molt(props) {
-  const { state, d, ai, agent, tab, setTab, prompt, onPromptUsed, onRename, loadMonth, months, today, go, goals, todo, onAddHabit, onEdit, onStateChange } = props;
+  const { state, d, ai, agent, tab, setTab, prompt, onPromptUsed, onRename, loadMonth, months, today, go, goals, todo, onAddHabit, onEdit, onStateChange, onLook } = props;
   const wide = useWide();
   const [expKey, setExpKey] = useState(0);
   const waiting = useMemo(() => (agent?.log ? pendingConfirm(agent.log).length : 0), [agent?.log]);
@@ -275,6 +277,9 @@ export default function Molt(props) {
       break;
     case "patterns":
       body = server ? <InsightsPanel state={state} today={today} ai={ai} onNotes={toNotes} /> : <Locked />;
+      break;
+    case "wardrobe":
+      body = <Wardrobe state={state} d={d} onLook={onLook} />;
       break;
     case "memory":
       body = <MemoryBody props={props} />;
