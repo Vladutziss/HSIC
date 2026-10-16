@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Bell, Check, CheckCheck, Copy, Crown, Flame, Handshake, Inbox, LogOut, Medal, Send, UserPlus, Users, X } from "lucide-react";
-import { Button, Chip, Empty, Field, LevelBadge, Panel, SectionTitle, Skeleton, Tabs, useToast } from "../components/ui.jsx";
+import { Button, Chip, Confirm, DeleteButton, Empty, Field, LevelBadge, Panel, SectionTitle, Skeleton, Tabs, useToast } from "../components/ui.jsx";
 import { dayKey, fmt12, fmtDay, relDay, todayKey } from "../lib/dates.js";
 import { Sprite } from "../components/Sprite.jsx";
 import { MAX_GROUPS, MAX_PARTNERS, NUDGE_TEMPLATES } from "../lib/groups.js";
@@ -404,6 +404,7 @@ function ChatPanel({ g, groups, loading }) {
 
 function GroupView({ g, groups, loading }) {
   const toast = useToast();
+  const [leaving, setLeaving] = useState(false);
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(g.info.code);
@@ -432,11 +433,21 @@ function GroupView({ g, groups, loading }) {
             <span className="font-pixel text-lg tracking-[0.25em] text-gold-hi">{g.info.code}</span>
             <Copy size={15} className="text-dim" aria-hidden="true" />
           </button>
-          <Button variant="ghost" size="sm" icon={LogOut} onClick={() => groups.leave(g.id)}>
-            Ieși
-          </Button>
+          <DeleteButton icon={LogOut} title="Ieși din grup" label={`Ieși din grupul ${g.info.name || ""}`.trim()} onClick={() => setLeaving(true)} />
         </div>
       </Panel>
+      <Confirm
+        open={leaving}
+        title="Ieși din grup?"
+        confirmLabel="Ieși din grup"
+        onClose={() => setLeaving(false)}
+        onConfirm={() => {
+          setLeaving(false);
+          groups.leave(g.id);
+        }}
+      >
+        Nu vei mai vedea clasamentul și mesajele grupului „{g.info.name || "Grup"}”. Poți reveni mai târziu cu codul de invitație ({g.info.code}).
+      </Confirm>
       <div className="grid gap-5 lg:grid-cols-5">
         <div className="min-w-0 lg:col-span-3">
           <ChatPanel g={g} groups={groups} loading={loading} />

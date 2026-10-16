@@ -321,7 +321,18 @@ export function ReviewCard({ d, state, months, review, ai, today }) {
         tone="gold"
         sub={saved ? "Ziua de azi e închisă" : `Ritualul de seară · ${fmt12(time)}`}
         action={
-          !saved && d.pending > 0 ? (
+          !saved && due ? (
+            <span className="inline-flex items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-rose px-2.5 py-0.5 text-[11px] font-black text-on-rose" title="Același semn ca insigna de la Acasă, din meniu">
+                <Moon size={11} strokeWidth={3} aria-hidden="true" /> Te așteaptă
+              </span>
+              {d.pending > 0 && (
+                <span className="font-pixel text-xl text-gold-hi" title="Momentum pe care îl aduce raportul dacă închizi ziua acum">
+                  +{d.pending}
+                </span>
+              )}
+            </span>
+          ) : !saved && d.pending > 0 ? (
             <span className="font-pixel text-xl text-gold-hi" title="Momentum pe care îl aduce raportul dacă închizi ziua acum">
               +{d.pending}
             </span>

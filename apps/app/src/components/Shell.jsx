@@ -13,6 +13,7 @@ import {
   HardDrive,
   House,
   Loader2,
+  Moon,
   ScrollText,
   Settings,
   Sparkles,
@@ -185,6 +186,21 @@ export function Shell({ view, setView, onReview, onFocus, d, state, unread, goal
   const path = state.profile?.path || "sport";
   // the evening report is waiting: its time has come and today's is not written yet (Acasă shows a badge, like Grup)
   const reviewDue = now >= parseHM(state.settings?.reviewTime || "21:00") && !state.reviews?.[d.today];
+  // the Acasă badge comes from the "Raportul zilei" card: opening Acasă while it is due takes you to that card and
+  // makes it flash once, so the badge and the card read as one thing
+  const openNav = (id) => {
+    setView(id);
+    if (id !== "home" || !reviewDue) return;
+    setTimeout(() => {
+      const card = document.getElementById("review-card");
+      if (!card) return;
+      card.scrollIntoView({ block: "center" });
+      card.classList.remove("review-ping");
+      void card.offsetWidth; // restart the animation when it was already played
+      card.classList.add("review-ping");
+      setTimeout(() => card.classList.remove("review-ping"), 2600);
+    }, 60);
+  };
   const [folded, setFolded] = useState(() => {
     try {
       return localStorage.getItem(SIDE_KEY) === "closed";
@@ -226,7 +242,7 @@ export function Shell({ view, setView, onReview, onFocus, d, state, unread, goal
               <button
                 key={n.id}
                 type="button"
-                onClick={() => setView(n.id)}
+                onClick={() => openNav(n.id)}
                 aria-current={isHere(n, view) ? "page" : undefined}
                 aria-label={folded ? n.label : undefined}
                 title={folded ? n.label : undefined}
@@ -241,7 +257,7 @@ export function Shell({ view, setView, onReview, onFocus, d, state, unread, goal
                   </span>
                 )}
                 {n.id === "plan" && goalsDue > 0 && (folded ? <span className="absolute right-2 top-1.5 h-2.5 w-2.5 rounded-full bg-ember" /> : <span className="ml-auto rounded-full bg-ember px-1.5 text-[11px] font-black text-night">{goalsDue}</span>)}
-                {n.id === "home" && reviewDue && (folded ? <span className="absolute right-2 top-1.5 h-2.5 w-2.5 rounded-full bg-rose" /> : <span className="ml-auto rounded-full bg-rose px-1.5 text-[11px] font-black text-on-rose" title="E ora raportului de seară" aria-label="Raportul de seară te așteaptă">1</span>)}
+                {n.id === "home" && reviewDue && (folded ? <span className="absolute right-2 top-1.5 h-2.5 w-2.5 rounded-full bg-rose" /> : <span className="ml-auto grid h-5 w-5 place-items-center rounded-full bg-rose text-on-rose" title="Raportul zilei te așteaptă" role="img" aria-label="Raportul zilei te așteaptă"><Moon size={11} strokeWidth={3} aria-hidden="true" /></span>)}
                 {n.id === "group" && unread > 0 && (folded ? <span className="absolute right-2 top-1.5 h-2.5 w-2.5 rounded-full bg-rose" /> : <span className="ml-auto rounded-full bg-rose px-1.5 text-[11px] font-black text-on-rose">{unread}</span>)}
               </button>
             );
@@ -293,7 +309,7 @@ export function Shell({ view, setView, onReview, onFocus, d, state, unread, goal
             <button
               key={n.id}
               type="button"
-              onClick={() => setView(n.id)}
+              onClick={() => openNav(n.id)}
               aria-current={isHere(n, view) ? "page" : undefined}
               onPointerDown={n.ai ? aim : undefined}
               className={`tabbar-item focus-ring relative flex min-w-0 flex-col items-center gap-0.5 py-2 text-[10px] font-extrabold ${n.ai ? "nav-ai mx-0.5 my-1 rounded-xl text-violet-hi" : "text-dim"}`}
@@ -301,7 +317,7 @@ export function Shell({ view, setView, onReview, onFocus, d, state, unread, goal
               <Icon size={20} strokeWidth={2.25} aria-hidden="true" />
               <span className="max-w-full truncate px-0.5">{n.short || n.label}</span>
               {n.id === "plan" && goalsDue > 0 && <span className="absolute right-[22%] top-1 h-2 w-2 rounded-full bg-ember" />}
-              {n.id === "home" && reviewDue && <span className="absolute right-[22%] top-1 h-2 w-2 rounded-full bg-rose" aria-label="Raportul de seară te așteaptă" />}
+              {n.id === "home" && reviewDue && <span className="absolute right-[22%] top-1 h-2 w-2 rounded-full bg-rose" aria-label="Raportul zilei te așteaptă" />}
               {n.id === "group" && unread > 0 && <span className="absolute right-[22%] top-1 h-2 w-2 rounded-full bg-rose" />}
             </button>
           );
