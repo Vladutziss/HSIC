@@ -5,6 +5,7 @@ import { CompanionCard, GroupMini, QuestCard, ReviewCard } from "../components/C
 import { ObjectivesMini } from "./Objectives.jsx";
 import { fmtDay, fmtLong } from "../lib/dates.js";
 import { RULES } from "../lib/engine.js";
+import { hintFor, nextReward } from "../lib/cosmetics.js";
 
 function greeting() {
   const h = new Date().getHours();
@@ -128,6 +129,9 @@ function RescueCard({ rescue, onRescue, goalReminders = [], goalActions }) {
 
 export default function Dashboard({ state, d, today, go, ai, months, recentStories, groups, review, onFocus, onCheck, onRevive, onAddHabit, rescue, onRescue, goalReminders = [], goalActions, onAskMolt, moltWaiting = 0 }) {
   const lastStory = [...recentStories].reverse().find((s) => s.story);
+  // the closest thing Molt can still earn, as one line on its card
+  const next = nextReward(d.facts, state.earned);
+  const reward = next ? { name: next.item.name, text: hintFor(next.item, d.facts).text, ratio: next.progress.ratio } : null;
   const chestOpen = d.scheduled.length > 0 && d.doneScheduled === d.scheduled.length;
   return (
     <div className="grid gap-5 lg:grid-cols-12">
@@ -197,7 +201,7 @@ export default function Dashboard({ state, d, today, go, ai, months, recentStori
       </div>
 
       <div className="min-w-0 space-y-5 lg:col-span-4">
-        <CompanionCard c={d.companion} path={state.profile.path} lastStory={lastStory} ai={ai} waiting={moltWaiting} onAsk={onAskMolt} onOpen={() => go("companion")} onChat={() => go("molt", "chat")} />
+        <CompanionCard c={d.companion} path={state.profile.path} lastStory={lastStory} ai={ai} waiting={moltWaiting} reward={reward} onReward={() => go("molt", "wardrobe")} onAsk={onAskMolt} onOpen={() => go("companion")} onChat={() => go("molt", "chat")} />
         <ObjectivesMini state={state} today={today} reminders={goalReminders} go={go} act={goalActions} />
         <ReviewCard d={d} state={state} months={months} review={review} ai={ai} today={today} />
         <GroupMini groups={groups} go={go} />

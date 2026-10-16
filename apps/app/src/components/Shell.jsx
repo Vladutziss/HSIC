@@ -281,7 +281,7 @@ export function Shell({ view, setView, onReview, onFocus, d, state, unread, goal
           className={`panel panel-violet focus-ring mt-auto flex items-center text-left transition hover:brightness-110 ${folded ? "justify-center p-1.5" : "gap-3 p-3"}`}
         >
           <span className={`pedestal grid shrink-0 place-items-center rounded-xl ${folded ? "h-12 w-12" : "h-16 w-16"}`}>
-            <Sprite path={path} stage={c.stage.id} mood={c.mood} size={folded ? 48 : 64} crack={eggCrack(c.ep)} />
+            <Sprite path={path} stage={c.stage.id} mood={c.mood} size={folded ? 48 : 64} crack={eggCrack(c.ep)} look={c.look} />
           </span>
           <span className={`min-w-0 ${folded ? "hidden" : ""}`}>
             <span className="block truncate font-pixel text-base text-ink">{c.name || "Oul tău"}</span>

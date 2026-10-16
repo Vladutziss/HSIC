@@ -23,6 +23,8 @@ import { FocusMode, FocusSetup } from "./components/Focus.jsx";
 import { carryCopies } from "./lib/goals.js";
 import { fmtSpan, loadSession, newSession, saveSession } from "./lib/focus.js";
 import { MomentModal } from "./components/MomentModal.jsx";
+import { UnlockModal } from "./components/UnlockModal.jsx";
+import { newItems } from "./lib/cosmetics.js";
 import { HabitEditor, scheduleLabel } from "./components/HabitEditor.jsx";
 import { TodoEditor } from "./components/TodoEditor.jsx";
 import Onboarding from "./screens/Onboarding.jsx";
@@ -138,6 +140,7 @@ function Game() {
     });
   };
   const [queue, setQueue] = useState([]);
+  const [unlocks, setUnlocks] = useState([]); // ids of new cosmetic items, celebrated once (see seenItems)
   const [review, setReview] = useState({ status: "idle", error: null });
   const autoTried = useRef(null);
 
@@ -278,6 +281,18 @@ function Game() {
     if (found.length) setQueue((q) => [...q, ...found]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [d]);
+
+  // new cosmetic items: celebrated once each. A player who already has some when this appears gets them in one go.
+  useEffect(() => {
+    if (!d || !state) return;
+    const fresh = newItems(d.facts, state.earned, state.seenItems);
+    if (!fresh.length) return;
+    const ids = fresh.map((i) => i.id);
+    update((s) => ({ ...s, seenItems: [...new Set([...(s.seenItems || []), ...ids])] }));
+    setUnlocks((u) => [...new Set([...u, ...ids])]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [d]);
+  const wear = (slot, id) => update((s) => ({ ...s, companion: { ...s.companion, look: { ...(s.companion?.look || {}), [slot]: id } } }));
 
   // ------------------------------------------------------------ actions
 
@@ -649,6 +664,7 @@ function Game() {
           onPromptUsed={() => setMoltPrompt(null)}
           loadMonth={store.loadMonth}
           onRename={(name) => update((s) => ({ ...s, companion: { ...s.companion, name } }))}
+          onLook={wear}
           goals={goalActions}
           todo={todoActions}
           agent={agentActions}
@@ -726,6 +742,7 @@ function Game() {
           onClose={() => setQueue((q) => q.slice(1))}
         />
       )}
+      {unlocks.length > 0 && !queue[0] && !celebrate && <UnlockModal ids={unlocks} state={state} d={d} onWear={wear} onOpen={() => go("molt", "wardrobe")} onClose={() => setUnlocks([])} />}
       {habitEd && (
         <HabitEditor
           open

@@ -14,7 +14,7 @@ import {
   weekGain,
 } from "./engine.js";
 import { addDays } from "./dates.js";
-import { collectFacts, currentLook } from "./cosmetics.js";
+import { collectFacts, compactLook, currentLook } from "./cosmetics.js";
 import { occursOn, viewOn } from "./todos.js";
 
 export function activeHabits(state, day) {
@@ -29,6 +29,7 @@ export function derive(state, today) {
   // what unlocks cosmetics, and what Molt wears (the player's choice, cleaned against what they really have)
   const facts = collectFacts({ state, timeline, companion, streak });
   const look = currentLook(state, facts);
+  companion.look = look; // every screen that draws Molt reads it from here
   const entry = timeline.byDay[today];
   const yesterday = timeline.byDay[addDays(today, -1)];
   const habits = activeHabits(state, today);
@@ -55,6 +56,8 @@ export function derive(state, today) {
     streak: streak.current,
     todayDone: doneScheduled,
     todayTotal: scheduled.length,
+    // what the others in a group see Molt wearing: only the choices, and only when the player allows it (Setări)
+    look: state.settings?.shareLook === false ? {} : compactLook(look),
   };
 
   return {

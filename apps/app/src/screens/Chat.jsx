@@ -247,7 +247,7 @@ export default function Chat({ state, d, today, ai, goals, todo, agent, onAddHab
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-3">
               <span className="pedestal grid h-12 w-12 shrink-0 place-items-center rounded-xl sm:h-14 sm:w-14">
-                <Sprite path={path} stage={companion.stage?.id || "egg"} mood={companion.mood || "idle"} size={48} crack={eggCrack(companion.ep || 0)} />
+                <Sprite path={path} stage={companion.stage?.id || "egg"} mood={companion.mood || "idle"} size={48} crack={eggCrack(companion.ep || 0)} look={companion.look} />
               </span>
               <div>
                 <div className="flex items-center gap-2">
@@ -287,7 +287,7 @@ export default function Chat({ state, d, today, ai, goals, todo, agent, onAddHab
               {!embedded && (
                 <>
                   <div className="pedestal grid h-20 w-20 place-items-center rounded-2xl">
-                    <Sprite path={path} stage={companion.stage?.id || "egg"} mood={companion.mood || "idle"} size={64} crack={eggCrack(companion.ep || 0)} />
+                    <Sprite path={path} stage={companion.stage?.id || "egg"} mood={companion.mood || "idle"} size={64} crack={eggCrack(companion.ep || 0)} look={companion.look} />
                   </div>
                   <div className="max-w-md">
                     <h2 className="font-pixel text-lg text-ink">Salut! Eu sunt {moltName}.</h2>
