@@ -30,8 +30,8 @@ export function CoachNotes({ notes, onAdd, onRemove, busy = false, error = "" })
 
   return (
     <Panel tone="violet" className="p-4 sm:p-5">
-      <SectionTitle icon={NotebookPen} tone="violet" sub="Ce știe coach-ul despre tine, pe lângă bifări">
-        Notele coach-ului
+      <SectionTitle icon={NotebookPen} tone="violet" sub="Spune-i lui Molt ce nu se vede în bifări: examene, restricții, preferințe">
+        Ce știe Molt despre tine
       </SectionTitle>
 
       <form onSubmit={submit} className="grid gap-2 sm:grid-cols-[1fr_auto]">

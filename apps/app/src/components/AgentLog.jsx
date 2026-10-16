@@ -29,7 +29,7 @@ export function describe(a, state) {
     case "start_experiment":
       return `Experiment la „${name}”`;
     default:
-      return "Acțiune a coach-ului";
+      return "Acțiune a lui Molt";
   }
 }
 
@@ -105,7 +105,7 @@ export function AgentLog({ actions, state, onConfirm, onReject, onUndo, busy, er
 
   let body;
   if (actions == null) body = <Skeleton className="h-20 w-full" />;
-  else if (!actions.length) body = <p className="text-sm font-semibold text-dim">Coach-ul n-a făcut încă nimic. Ce face sau propune apare aici, cu opțiunea de a anula.</p>;
+  else if (!actions.length) body = <p className="text-sm font-semibold text-dim">Molt n-a făcut încă nimic. Ce face sau propune apare aici, cu opțiunea de a anula.</p>;
   else {
     const waiting = pendingConfirm(actions);
     const done = recent(actions);
@@ -140,7 +140,7 @@ export function AgentLog({ actions, state, onConfirm, onReject, onUndo, busy, er
                     ))}
                 </div>
               ) : (
-                <p className="mt-2 text-xs font-semibold text-dim">Se confirmă din ecranul Coach.</p>
+                <p className="mt-2 text-xs font-semibold text-dim">Se confirmă din ecranul Molt.</p>
               )}
             </Item>
           )}
@@ -166,7 +166,7 @@ export function AgentLog({ actions, state, onConfirm, onReject, onUndo, busy, er
   return (
     <Panel className="p-5">
       <SectionTitle icon={History} tone="violet">
-        Ce a făcut coach-ul
+        Ce a făcut Molt
       </SectionTitle>
       {error && (
         <p role="alert" className="mb-3 text-sm font-bold text-rose">

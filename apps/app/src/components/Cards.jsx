@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { BookOpenText, ChevronDown, Clock, Crown, MessageCircle, Moon, ScrollText, Sparkles, Users } from "lucide-react";
+import { BookOpenText, ChevronDown, Clock, Crown, MessageCircle, Moon, ScrollText, Send, Sparkles, Users } from "lucide-react";
 import { Bar, Button, Chip, CheckButton, Gems, Panel, Ring, SectionTitle, Skeleton } from "./ui.jsx";
 import { Sprite, eggCrack } from "./Sprite.jsx";
 import { iconFor } from "./icons.js";
@@ -75,18 +75,47 @@ export function moodLine(c, name) {
   return `${n} te așteaptă la următoarea bifă.`;
 }
 
-export function CompanionCard({ c, path, lastStory, onOpen }) {
+// What Molt can be asked from Acasă: the same questions work in the chat and use everything the app knows
+const QUICK_ASKS = ["Fă-mi planul pentru azi", "Cu ce ar trebui să încep?", "Ajută-mă să mă pregătesc pentru un examen", "Cum pot să rămân constant?"];
+
+/**
+ * Molt on Acasă: the picture and the name, folded by default; the arrow opens what Molt says, the evolution bar, the last
+ * chapter of the story and, with the server, a field to ask it something (the answer opens in the Molt page).
+ */
+export function CompanionCard({ c, path, lastStory, ai, waiting = 0, onAsk, onOpen, onChat }) {
   const cls = PATHS[path]?.cls;
+  const label = c.name || "Oul tău";
   const [open, setOpen] = useState(false);
+  const [text, setText] = useState("");
+  const ask = (q) => {
+    const t = (q ?? text).trim();
+    if (!t) return;
+    setText("");
+    onAsk?.(t);
+  };
   return (
     <Panel tone="violet" corners="gold">
       <div className="pedestal flex justify-center rounded-t-[18px] pt-5">
-        <Sprite path={path} stage={c.stage.id} mood={c.mood} size={160} crack={eggCrack(c.ep)} label={`${c.name || "Oul tău"}, ${c.stage.name}`} />
+        <Sprite path={path} stage={c.stage.id} mood={c.mood} size={160} crack={eggCrack(c.ep)} label={`${label}, ${c.stage.name}`} />
       </div>
       <div className="scene-ground h-3" />
       <div className="flex items-start justify-between gap-2 p-4 pb-3">
         <div className="min-w-0">
-          <div className="truncate font-pixel text-2xl text-ink">{c.name || "Oul tău"}</div>
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+            <div className="truncate font-pixel text-2xl text-ink">{label}</div>
+            {ai?.server && (
+              <Chip tone="violet" icon={Sparkles}>
+                AI
+              </Chip>
+            )}
+            {waiting > 0 && (
+              <button type="button" onClick={onChat} className="focus-ring rounded-full">
+                <Chip tone="gold">
+                  {waiting} {waiting === 1 ? "propunere" : "propuneri"}
+                </Chip>
+              </button>
+            )}
+          </div>
           <div className="text-xs font-extrabold uppercase tracking-wider text-violet-hi">
             {c.stage.name} · {cls}
           </div>
@@ -116,6 +145,27 @@ export function CompanionCard({ c, path, lastStory, onOpen }) {
               <span className="absolute -top-1.5 left-8 h-3 w-3 rotate-45 bg-well ring-1 ring-edge [clip-path:polygon(0_0,100%_0,0_100%)]" aria-hidden="true" />
               {moodLine(c, c.name)}
             </div>
+            {ai?.server && (
+              <div className="space-y-2">
+                <form
+                  className="flex gap-2"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    ask();
+                  }}
+                >
+                  <input className="field min-w-0 flex-1" value={text} maxLength={400} onChange={(e) => setText(e.target.value)} placeholder={`Întreabă-l pe ${label} orice…`} aria-label={`Întrebare pentru ${label}`} />
+                  <Button type="submit" variant="violet" icon={Send} disabled={!text.trim()} aria-label="Trimite întrebarea" />
+                </form>
+                <div className="flex flex-wrap gap-1.5">
+                  {QUICK_ASKS.map((q) => (
+                    <button key={q} type="button" onClick={() => ask(q)} className="focus-ring rounded-full bg-violet/10 px-2.5 py-1 text-left text-xs font-bold text-violet-hi ring-1 ring-violet/25 hover:bg-violet/20">
+                      {q}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
             {c.next && (
               <div>
                 <div className="mb-1 flex justify-between text-xs font-bold text-dim">
@@ -136,7 +186,10 @@ export function CompanionCard({ c, path, lastStory, onOpen }) {
               </figure>
             )}
             <div className="flex flex-wrap gap-2">
-              <Button variant="violet" size="sm" icon={BookOpenText} onClick={onOpen}>
+              <Button variant="violet" size="sm" icon={MessageCircle} onClick={onChat}>
+                {ai?.server ? `Vorbește cu ${label}` : `Ce poate face ${label}`}
+              </Button>
+              <Button variant="ghost" size="sm" icon={BookOpenText} onClick={onOpen}>
                 Povestea
               </Button>
             </div>
