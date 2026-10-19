@@ -26,6 +26,8 @@ export function describe(a, state) {
       return `Obicei nou: „${name}”${Array.isArray(p.days) ? `, ${scheduleLabel(p.days).toLowerCase()}` : ""}`;
     case "set_reminder":
       return `Memento pentru „${name}”`;
+    case "add_note":
+      return `Să țin minte: „${p.body || ""}”`;
     case "start_experiment":
       return `Experiment la „${name}”`;
     default:

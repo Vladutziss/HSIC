@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { hasOpenTodo, mapRow, pendingAuto, pendingConfirm, recent, planApply, planUndo, recordTodo } from "../src/lib/agentActions.js";
+import { SUPPORTED, traceLines, hasOpenTodo, mapRow, pendingAuto, pendingConfirm, recent, planApply, planUndo, recordTodo } from "../src/lib/agentActions.js";
 
 const today = "2026-10-11";
 const state = () => ({
@@ -110,11 +110,15 @@ test("recordTodo logs a pending create_todo with its explanation; hasOpenTodo sp
   assert.equal(hasOpenTodo(s, "Mate 15 min", "2026-10-12"), false);
 });
 
-import { traceLines } from "../src/lib/agentActions.js";
+test("add_note is a supported kind confirmed by the player", () => {
+  assert.ok(SUPPORTED.includes("add_note"));
+});
+
 test("traceLines: one line per tool call, proposals and unknown steps skipped", () => {
   const out = traceLines([{ kind: "stats" }, { kind: "patterns", findings: 1, tested: 6 }, { kind: "search", query: "ancore", sources: ["a"] }, { kind: "propose", ok: true }]);
   assert.equal(out.length, 3);
   assert.match(out[1], /1 găsit din 6/);
   assert.match(out[2], /ancore/);
   assert.deepEqual(traceLines(null), []);
+
 });
