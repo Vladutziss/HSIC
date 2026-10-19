@@ -30,8 +30,8 @@ import { c as tc } from "../lib/themes.js";
 export const NAV = [
   { id: "home", label: "Acasă", icon: House },
   { id: "habits", label: "Obiceiuri", icon: ScrollText },
+  { id: "chat", label: "Coach AI", icon: MessageSquare },
   { id: "companion", label: "Molt", icon: Egg },
-  { id: "chat", label: "Chat", icon: MessageSquare },
   { id: "plan", label: "Plan", icon: CalendarDays },
   { id: "group", label: "Grup", icon: Users },
   { id: "stats", label: "Statistici", icon: ChartLine },

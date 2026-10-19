@@ -479,6 +479,7 @@ function Game() {
         <Dashboard
           {...common}
           groups={groups}
+          agent={agentActions}
           review={reviewInfo}
           onFocus={() => setFocusSetup(true)}
           onCheck={checkIn}

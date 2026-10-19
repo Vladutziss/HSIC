@@ -34,7 +34,13 @@ const STARTERS = [
 
 export default function Chat({ state, d, today, ai, goals, todo, agent, onAddHabit }) {
   const [messages, setMessages] = useState([]);
-  const [input, setInput] = useState("");
+  const [input, setInput] = useState(() => {
+    try {
+      return sessionStorage.getItem("molted.chatPrefill") || "";
+    } catch {
+      return "";
+    }
+  });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [notes, setNotes] = useState([]);
@@ -78,6 +84,12 @@ export default function Chat({ state, d, today, ai, goals, todo, agent, onAddHab
       alive = false;
     };
   }, [ai?.server]);
+
+  useEffect(() => {
+    try {
+      sessionStorage.removeItem("molted.chatPrefill");
+    } catch {}
+  }, []);
 
   // Scroll to bottom on new messages
   useEffect(() => {
