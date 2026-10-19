@@ -38,7 +38,7 @@ export default {
       },
       fontFamily: {
         sans: ["Nunito", "ui-rounded", "system-ui", "Segoe UI", "sans-serif"],
-        pixel: ['"Pixelify Sans"', "Nunito", "ui-monospace", "monospace"],
+        pixel: ["Nunito", "ui-sans-serif", "system-ui", "sans-serif"],
       },
     },
   },
