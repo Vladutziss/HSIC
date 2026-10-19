@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Undo2 } from "lucide-react";
 import { Button, Chip, Skeleton } from "./ui.jsx";
 import { scheduleLabel } from "./HabitEditor.jsx";
-import { SUPPORTED, pendingConfirm, recent } from "../lib/agentActions.js";
+import { SUPPORTED, pendingConfirm, recent, traceLines } from "../lib/agentActions.js";
 
 const REJECT_REASONS = ["Nu am timp", "E prea greu", "Nu mi se potrivește"];
 const STATUS = { applied: ["mint", "Aplicat"], rejected: ["dim", "Respins"], undone: ["dim", "Anulat"], failed: ["rose", "Nu s-a putut aplica"], pending: ["gold", "În așteptare"] };

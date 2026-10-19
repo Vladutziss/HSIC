@@ -205,3 +205,20 @@ export async function markRejected(client, id, reason, action = null) {
   must(await c.from("agent_actions").update({ status: "rejected", decided_at: now() }).eq("id", id));
   if (action) await recordFeedback(c, { proposal: proposalOf(action), decision: "rejected", reason });
 }
+
+const STEP = {
+  stats: () => "a citit statisticile obiceiurilor tale",
+  context: (s) => `a citit ${s.notes} ${s.notes === 1 ? "notiță" : "notițe"} despre tine`,
+  feedback: () => "a verificat ce ai acceptat sau respins înainte",
+  history: (s) => `a verificat ${s.count} ${s.count === 1 ? "acțiune trecută" : "acțiuni trecute"}`,
+  experiments: (s) => `a verificat ${s.count} ${s.count === 1 ? "experiment" : "experimente"}`,
+  school: (s) => `a citit ${s.exams} ${s.exams === 1 ? "examen" : "examene"} și ${s.assignments} teme`,
+  patterns: (s) => `a testat tipare în istoric: ${s.findings} ${s.findings === 1 ? "găsit" : "găsite"} din ${s.tested} testate`,
+  search: (s) => `a căutat în sursele lui${s.query ? `: „${s.query}”` : ""}${s.sources?.length ? ` (${s.sources.length} ${s.sources.length === 1 ? "sursă citată" : "surse citate"})` : ""}`,
+};
+
+/** The tools the agent called for a proposal, one plain line each (propose steps are the proposals themselves). */
+export function traceLines(trace) {
+  if (!Array.isArray(trace)) return [];
+  return trace.filter((s) => STEP[s?.kind]).map((s) => STEP[s.kind](s));
+}
