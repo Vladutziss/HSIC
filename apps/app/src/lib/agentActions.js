@@ -4,9 +4,9 @@
 // player's own supabase client. Errors are thrown as {code}: unavailable | db_error.
 
 import { CATALOG, habitFromCatalog } from "./catalog.js";
-import { recordFeedback } from "./memory.js";
+import { addNote, recordFeedback, removeNote } from "./memory.js";
 
-export const SUPPORTED = ["create_todo", "plan_focus", "change_habit", "add_habit"];
+export const SUPPORTED = ["create_todo", "plan_focus", "change_habit", "add_habit", "add_note"];
 
 // ------------------------------------------------------------ pure
 
@@ -122,6 +122,20 @@ export function planUndo(action, state, today = new Date().toISOString().slice(0
   }
 }
 
+// ------------------------------------------------------------ notes (live in user_context, not in the app state)
+
+/** Inserts the proposed note; returns `before` for markApplied so undo can delete it. */
+export async function applyNote(client, action, today) {
+  const p = action?.payload || {};
+  const row = await addNote(client, { kind: p.noteKind, body: p.body, startsOn: p.startsOn, endsOn: p.endsOn }, today);
+  return { noteId: row.id };
+}
+
+export async function undoNote(client, action) {
+  if (!action?.before?.noteId) throw { code: "db_error" };
+  await removeNote(client, action.before.noteId);
+}
+
 // ------------------------------------------------------------ data layer
 
 function need(client) {
@@ -133,7 +147,7 @@ const must = ({ error }) => {
 };
 const proposalOf = (a) => {
   const p = a.payload || {};
-  return { action: a.kind, habitId: a.habitId || p.habitId, name: p.name || p.title, diff: p.diff, days: p.days, reason: a.reason };
+  return { action: a.kind, habitId: a.habitId || p.habitId, name: p.name || p.title || p.body, diff: p.diff, days: p.days, reason: a.reason };
 };
 const now = () => new Date().toISOString();
 

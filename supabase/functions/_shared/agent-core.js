@@ -11,6 +11,9 @@ const clip = (s, n) => {
 /** Factors the agent may test on a player (the catalog with texts is lib/experiments.js FACTORS). */
 export const EXPERIMENT_FACTORS = ["if_then", "easier_version"];
 
+/** Kinds of note the agent may propose (lib/memory.js KINDS minus the free-form "note"). */
+export const NOTE_KINDS = ["constraint", "preference", "event"];
+
 const CONFIDENCE = new Set(["low", "medium", "high"]);
 
 /** Normalizes optional recommendation evidence without making old proposals invalid. */
@@ -84,6 +87,7 @@ export function parseKnowledge(text) {
  * A source the agent did not retrieve is dropped, so it can never be cited; a proposal with no
  * source left is kept but shown as "fără sursă". Returns at most 3, and at most one experiment
  * (which only names a habit and a factor: the days are drawn by the server, never by the model).
+ * A "remember" is a note about the player (noteKind, body, optional startsOn/endsOn) for them to confirm.
  * A "todo" is a small study to-do (title, date YYYY-MM-DD, dur 10-60 min).
  */
 export function validateProposals(raw, habits, retrieved, max) {
@@ -98,6 +102,17 @@ export function validateProposals(raw, habits, retrieved, max) {
     if (p?.action === "experiment") {
       if (ids.has(p.habitId) && EXPERIMENT_FACTORS.includes(p.factor) && !out.some((o) => o.action === "experiment")) {
         out.push({ action: "experiment", habitId: p.habitId, factor: p.factor, reason, sources, ...explanationOf(p) });
+      }
+      continue;
+    }
+    if (p?.action === "remember") {
+      // something the player said that should outlive this chat: the app inserts a user_context row once they confirm
+      const body = clip(p.body, 300);
+      const isDay = (d) => typeof d === "string" && /^\d{4}-\d{2}-\d{2}$/.test(d);
+      const startsOn = isDay(p.startsOn) ? p.startsOn : null;
+      const endsOn = isDay(p.endsOn) ? p.endsOn : null;
+      if (body && NOTE_KINDS.includes(p.noteKind) && !(startsOn && endsOn && endsOn < startsOn) && !out.some((o) => o.action === "remember" && o.body === body)) {
+        out.push({ action: "remember", noteKind: p.noteKind, body, startsOn, endsOn, reason, sources, ...explanationOf(p) });
       }
       continue;
     }
