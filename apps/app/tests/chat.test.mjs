@@ -67,3 +67,8 @@ test("buildPrompt chat includes the last message and asks for JSON", () => {
   assert.ok(out.includes("20 de minute pe zi"));
   assert.ok(out.includes("JSON"));
 });
+
+test("buildPrompt chat forbids claims about completions it has no data for", () => {
+  const out = buildPrompt("chat", { messages: [{ role: "user", content: "cum stau azi?" }], context: { today: "2026-10-19", habits: [{ name: "Citit", diff: 1, days: [0, 1] }] } });
+  assert.ok(out.includes("NO completion data"));
+});
