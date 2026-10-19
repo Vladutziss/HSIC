@@ -68,7 +68,18 @@ test("buildPrompt chat includes the last message and asks for JSON", () => {
   assert.ok(out.includes("JSON"));
 });
 
-test("buildPrompt chat forbids claims about completions it has no data for", () => {
-  const out = buildPrompt("chat", { messages: [{ role: "user", content: "cum stau azi?" }], context: { today: "2026-10-19", habits: [{ name: "Citit", diff: 1, days: [0, 1] }] } });
-  assert.ok(out.includes("NO completion data"));
+test("chatContext and the chat prompt carry today's ticks per habit", () => {
+  const state = {
+    habits: [
+      { id: "h1", name: "Citit", diff: 1, days: [0, 1, 2, 3, 4, 5, 6] },
+      { id: "h2", name: "Hidratare", diff: 1, days: [0, 1, 2, 3, 4, 5, 6] },
+    ],
+    log: { "2026-10-19": { h2: 1 } },
+  };
+  const ctx = chatContext(state, "2026-10-19");
+  assert.deepEqual(ctx.habits.map((h) => [h.name, h.scheduledToday, h.doneToday]), [["Citit", true, false], ["Hidratare", true, true]]);
+  const out = buildPrompt("chat", { messages: [{ role: "user", content: "ce am bifat?" }], context: ctx });
+  assert.ok(out.includes("Citit (difficulty 1, days 0,1,2,3,4,5,6; today: scheduled, not done yet)"));
+  assert.ok(out.includes("Hidratare (difficulty 1, days 0,1,2,3,4,5,6; today: scheduled, done)"));
+  assert.ok(out.includes("never claim that"));
 });
