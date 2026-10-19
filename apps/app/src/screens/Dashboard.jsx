@@ -1,9 +1,11 @@
 import React from "react";
-import { AlertTriangle, CalendarCheck, ChevronDown, Flame, FlaskConical, Gift, Plus, Swords, Timer, TrendingUp, Zap } from "lucide-react";
+import { AlertTriangle, Bot, CalendarCheck, ChevronDown, Flame, FlaskConical, Gift, Plus, Send, Swords, Timer, TrendingUp, Zap } from "lucide-react";
 import { Bar, Button, Chip, LevelBadge, Panel, SectionTitle } from "../components/ui.jsx";
 import { CompanionCard, GroupMini, QuestCard, ReviewCard } from "../components/Cards.jsx";
 import { fmtDay, fmtLong } from "../lib/dates.js";
+import { AgentLog } from "../components/AgentLog.jsx";
 import { RULES } from "../lib/engine.js";
+import { pendingConfirm } from "../lib/agentActions.js";
 
 function greeting() {
   const h = new Date().getHours();
@@ -125,12 +127,71 @@ function RescueCard({ rescue, onRescue }) {
   );
 }
 
-export default function Dashboard({ state, d, today, go, ai, months, recentStories, groups, review, onFocus, onCheck, onRevive, onAddHabit, rescue, onRescue }) {
+const ASK = ["Ce să schimb săptămâna asta?", "Fă-mi planul de azi", "De ce ratez seara?"];
+
+/** The coach is the front door: ask it, see what it proposes, decide. The game below is the reward. */
+function CoachDesk({ state, go, ai, agent }) {
+  const [q, setQ] = React.useState("");
+  const waiting = agent?.log ? pendingConfirm(agent.log).length : 0;
+  const open = (text) => {
+    try {
+      sessionStorage.setItem("molted.chatPrefill", text);
+    } catch {}
+    go("chat");
+  };
+  return (
+    <>
+      <Panel tone="violet" corners className="p-5 sm:p-6">
+        <div className="flex flex-wrap items-center gap-3">
+          <span className="grid h-11 w-11 place-items-center rounded-2xl bg-violet/15 text-violet-hi ring-1 ring-violet/30">
+            <Bot size={22} aria-hidden="true" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <h2 className="font-pixel text-2xl leading-tight text-ink">Coach-ul tău AI</h2>
+            <p className="text-sm font-semibold text-body">
+              Îți citește obiceiurile, caută în sursele lui și propune pași. Tu confirmi sau respingi.
+              {waiting > 0 && <span className="font-extrabold text-gold-hi"> {waiting === 1 ? "O propunere așteaptă" : `${waiting} propuneri așteaptă`} răspunsul tău.</span>}
+            </p>
+          </div>
+        </div>
+        <form
+          className="mt-4 flex gap-2"
+          onSubmit={(e) => {
+            e.preventDefault();
+            open(q.trim());
+          }}
+        >
+          <input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder={`Spune-i coach-ului ce ai de făcut, ${state.profile?.nick || "aventurierule"}…`}
+            aria-label="Întreabă coach-ul"
+            className="focus-ring min-w-0 flex-1 rounded-xl bg-well px-3 py-2.5 text-sm font-semibold text-ink ring-1 ring-edge placeholder:text-dim"
+          />
+          <Button variant="violet" icon={Send} type="submit">
+            Trimite
+          </Button>
+        </form>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {ASK.map((t) => (
+            <button key={t} type="button" className="focus-ring rounded-full bg-well px-3 py-1 text-xs font-extrabold text-body ring-1 ring-edge hover:text-ink" onClick={() => open(t)}>
+              {t}
+            </button>
+          ))}
+        </div>
+      </Panel>
+      {ai?.server && agent && <AgentLog actions={agent.log} state={state} busy={agent.busy} error={agent.error} onConfirm={agent.onConfirm} onReject={agent.onReject} onUndo={agent.onUndo} />}
+    </>
+  );
+}
+
+export default function Dashboard({ state, d, today, go, ai, agent, months, recentStories, groups, review, onFocus, onCheck, onRevive, onAddHabit, rescue, onRescue }) {
   const chestOpen = d.scheduled.length > 0 && d.doneScheduled === d.scheduled.length;
   const lastStory = [...recentStories].reverse().find((s) => s.story);
   return (
     <div className="grid gap-5 lg:grid-cols-12">
       <div className="min-w-0 space-y-5 lg:col-span-8">
+        <CoachDesk state={state} go={go} ai={ai} agent={agent} />
         <Hero state={state} d={d} today={today} onFocus={onFocus} />
         <ReviveBanner d={d} onRevive={onRevive} />
         <ResetWarning d={d} />
