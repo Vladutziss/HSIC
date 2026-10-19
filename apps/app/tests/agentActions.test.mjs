@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { SUPPORTED, traceLines, hasOpenTodo, mapRow, pendingAuto, pendingConfirm, recent, planApply, planUndo, recordTodo } from "../src/lib/agentActions.js";
+import { agentImpact, SUPPORTED, traceLines, hasOpenTodo, mapRow, pendingAuto, pendingConfirm, recent, planApply, planUndo, recordTodo } from "../src/lib/agentActions.js";
 
 const today = "2026-10-11";
 const state = () => ({
@@ -121,4 +121,16 @@ test("traceLines: one line per tool call, proposals and unknown steps skipped", 
   assert.match(out[2], /ancore/);
   assert.deepEqual(traceLines(null), []);
 
+});
+
+test("agentImpact: counts proposals that needed a tap and their measured verdicts", () => {
+  const log = [
+    { autonomy: "confirm", status: "applied", outcome: { verdict: "improved" } },
+    { autonomy: "confirm", status: "applied", outcome: { verdict: "no_clear_change" } },
+    { autonomy: "confirm", status: "applied", outcome: { verdict: "insufficient" } },
+    { autonomy: "confirm", status: "rejected" },
+    { autonomy: "auto", status: "applied", outcome: { verdict: "todo_done" } },
+  ];
+  assert.deepEqual(agentImpact(log), { proposals: 4, applied: 3, rejected: 1, measured: 2, improved: 1, same: 1, worse: 0 });
+  assert.equal(agentImpact(null).proposals, 0);
 });

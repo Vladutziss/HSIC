@@ -5,6 +5,7 @@
 
 import { CATALOG, habitFromCatalog } from "./catalog.js";
 import { addNote, recordFeedback, removeNote } from "./memory.js";
+import { summarizeOutcomes } from "./outcomes.js";
 
 export const SUPPORTED = ["create_todo", "plan_focus", "change_habit", "add_habit", "add_note"];
 
@@ -221,4 +222,20 @@ const STEP = {
 export function traceLines(trace) {
   if (!Array.isArray(trace)) return [];
   return trace.filter((s) => STEP[s?.kind]).map((s) => STEP[s.kind](s));
+}
+
+/** What the player's own log says about the coach: proposals needing a tap, what became of them, measured effects. */
+export function agentImpact(actions) {
+  const asked = (actions || []).filter((a) => a.autonomy === "confirm");
+  const verdicts = summarizeOutcomes(asked).byVerdict;
+  const measured = ["improved", "worse", "no_clear_change"].reduce((n, k) => n + (verdicts[k] || 0), 0);
+  return {
+    proposals: asked.length,
+    applied: asked.filter((a) => a.status === "applied").length,
+    rejected: asked.filter((a) => a.status === "rejected").length,
+    measured,
+    improved: verdicts.improved || 0,
+    same: verdicts.no_clear_change || 0,
+    worse: verdicts.worse || 0,
+  };
 }
