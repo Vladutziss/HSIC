@@ -17,7 +17,7 @@
 //   4 data + cap            no action on a habit with < 14 scheduled days in the last 56 (recorded);
 //                           at most `maxActions` in total, 'auto' first, then 'confirm'.
 import { addDays, dayRange, RO_DAYS, weekday } from "./app/dates.js";
-import { isScheduled } from "./app/engine.js";
+import { isScheduled, streakInfo } from "./app/engine.js";
 import { withObservedStart } from "./app/history.js";
 import { nextExams, schoolPlanner } from "./app/schoolPlanner.js";
 
@@ -156,4 +156,16 @@ export function planWeek({ state: raw, today, patterns, context, feedback, pastA
   for (const a of ordered.slice(maxActions)) skip(recaps.includes(a) ? "exam_recap" : a.kind === "create_todo" ? "weak_weekday_prompt" : "repeat_miss_downshift", `Peste limita de ${maxActions} acțiuni pe săptămână.`);
 
   return { runDay: today, actions: ordered.slice(0, maxActions), skipped };
+}
+
+/**
+ * Daily evening check (a separate, opt-in run): is a streak of `minStreak`+ days about to break, because today has
+ * scheduled habits and nothing is done yet? Returns {streak, habit} (the first open habit) or null. No text here:
+ * the message is written by the model, or not sent.
+ */
+export function streakAlert({ state, today, minStreak = 3 } = {}) {
+  const streak = streakInfo(state || {}, today);
+  if (streak.todayDone || streak.current < minStreak) return null;
+  const left = (state?.habits || []).filter((h) => !h.archivedAt && isScheduled(h, today) && !state.log?.[today]?.[h.id]);
+  return left.length ? { streak: streak.current, habit: left[0] } : null;
 }

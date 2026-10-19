@@ -2,7 +2,7 @@
 // same `state` object (and month documents) it always had; this file turns it
 // into table rows and back:
 //
-//   toRows / fromRows           state          <-> profiles, habits, completions, todos, day_reviews, streak_revives
+//   toRows / fromRows           state          <-> profiles, habits, completions, todos, day_reviews, streak_revives, wardrobe_items, …
 //   monthToRows / rowsToMonth   month document <-> chapters, day_reviews (text part)
 //   diff / diffMonth            old doc + new doc -> the minimal list of writes
 //
@@ -26,9 +26,10 @@ const SPEC = {
   assignments: { pk: ["id"], conflict: "id" },
   exams: { pk: ["id"], conflict: "id" },
   study_sessions: { pk: ["id"], conflict: "id" },
+  wardrobe_items: { pk: ["user_id", "item_id"], conflict: "user_id,item_id" },
 };
-const UPSERT_ORDER = ["habits", "completions", "todos", "day_reviews", "streak_revives", "chapters", "subjects", "assignments", "exams", "study_sessions"];
-const DELETE_ORDER = ["completions", "day_reviews", "streak_revives", "todos", "chapters", "study_sessions", "exams", "assignments", "subjects", "habits"];
+const UPSERT_ORDER = ["habits", "completions", "todos", "day_reviews", "streak_revives", "chapters", "subjects", "assignments", "exams", "study_sessions", "wardrobe_items"];
+const DELETE_ORDER = ["completions", "day_reviews", "streak_revives", "todos", "chapters", "study_sessions", "exams", "assignments", "subjects", "wardrobe_items", "habits"];
 
 const keyOf = (table, row) => SPEC[table].pk.map((c) => row[c]).join("|");
 
@@ -106,6 +107,10 @@ export function toRows(state, uid) {
       at: nul(r?.at),
     })),
     streak_revives: Object.entries(state.streak?.revived || {}).map(([missed, on]) => ({ user_id: uid, missed_day: missed, revived_on: on })),
+    // the wardrobe: one row per unlocked item (what Molt wears is companion.look, the theme is settings.theme)
+    wardrobe_items: Object.entries(state.unlocked || {})
+      .filter(([id, on]) => id && /^\d{4}-\d{2}-\d{2}$/.test(String(on)))
+      .map(([id, on]) => ({ user_id: uid, item_id: id.slice(0, 40), unlocked_on: on })),
     ...plannerRows(state.schoolPlanner, uid),
   };
 }
@@ -216,8 +221,20 @@ export function fromRows(rows) {
     ...(extra.focusSessions?.length ? { focusSessions: extra.focusSessions } : {}),
     ...(extra.goals?.length ? { goals: extra.goals } : {}),
     ...(extra.objectives?.length ? { objectives: extra.objectives } : {}),
+    ...unlockedFromRows(rows, extra, p),
     ...plannerFromRows(rows, extra),
   };
+}
+
+// the wardrobe: rows win; the first version kept it in extra (seenItems: [id], earned: {id: day}), which is still read
+// so nothing is lost before migration 0025 has copied it
+function unlockedFromRows(rows, extra) {
+  const out = {};
+  const day = /^\d{4}-\d{2}-\d{2}$/;
+  for (const id of Array.isArray(extra.seenItems) ? extra.seenItems : []) if (typeof id === "string" && id) out[id] = out[id] || "1970-01-01";
+  for (const [id, on] of Object.entries(extra.earned && typeof extra.earned === "object" ? extra.earned : {})) if (id) out[id] = day.test(on) ? on : out[id] || "1970-01-01";
+  for (const r of rows.wardrobe_items || []) out[r.item_id] = r.unlocked_on;
+  return Object.keys(out).length ? { unlocked: out } : {};
 }
 
 // rows win; a profile that still carries extra.schoolPlanner (before migration 0020) is read as before
@@ -346,7 +363,7 @@ export function diff(prev, next, uid) {
   } else if (prev) {
     ops.push({ op: "update", table: "profiles", match: { id: uid }, row: EMPTY_PROFILE });
   }
-  return toOps(diffTables(a, b, ["habits", "completions", "todos", "day_reviews", "streak_revives", "subjects", "assignments", "exams", "study_sessions"]), ops);
+  return toOps(diffTables(a, b, ["habits", "completions", "todos", "day_reviews", "streak_revives", "subjects", "assignments", "exams", "study_sessions", "wardrobe_items"]), ops);
 }
 
 /** Same for one month document. Review text goes into day_reviews as a partial row. */
@@ -383,7 +400,7 @@ const must = ({ data, error }) => {
 };
 
 export async function loadState(client, uid) {
-  const [profile, habits, completions, todos, day_reviews, streak_revives, groups, subjects, assignments, exams, study_sessions] = await Promise.all([
+  const [profile, habits, completions, todos, day_reviews, streak_revives, groups, subjects, assignments, exams, study_sessions, wardrobe_items] = await Promise.all([
     client.from("profiles").select("*").eq("id", uid).maybeSingle().then(must),
     // RLS already scopes these to the caller; the explicit filter keeps the weekly job, which reads
     // other players' rows with the service role (bypassing RLS), from mixing their data
@@ -397,8 +414,9 @@ export async function loadState(client, uid) {
     client.from("assignments").select("*").eq("user_id", uid).then(must),
     client.from("exams").select("*").eq("user_id", uid).then(must),
     client.from("study_sessions").select("*").eq("user_id", uid).then(must),
+    client.from("wardrobe_items").select("item_id, unlocked_on").eq("user_id", uid).then(must),
   ]);
-  return fromRows({ profile, habits, completions, todos, day_reviews, streak_revives, subjects, assignments, exams, study_sessions, groups: (groups || []).map((g) => g.group_id) });
+  return fromRows({ profile, habits, completions, todos, day_reviews, streak_revives, subjects, assignments, exams, study_sessions, wardrobe_items, groups: (groups || []).map((g) => g.group_id) });
 }
 
 export async function loadMonth(client, uid, ym) {

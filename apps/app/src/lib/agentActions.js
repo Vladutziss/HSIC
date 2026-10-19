@@ -4,9 +4,10 @@
 // player's own supabase client. Errors are thrown as {code}: unavailable | db_error.
 
 import { CATALOG, habitFromCatalog } from "./catalog.js";
-import { recordFeedback } from "./memory.js";
+import { addNote, recordFeedback, removeNote } from "./memory.js";
+import { summarizeOutcomes } from "./outcomes.js";
 
-export const SUPPORTED = ["create_todo", "plan_focus", "change_habit", "add_habit"];
+export const SUPPORTED = ["create_todo", "plan_focus", "change_habit", "add_habit", "add_note"];
 
 // ------------------------------------------------------------ pure
 
@@ -122,6 +123,20 @@ export function planUndo(action, state, today = new Date().toISOString().slice(0
   }
 }
 
+// ------------------------------------------------------------ notes (live in user_context, not in the app state)
+
+/** Inserts the proposed note; returns `before` for markApplied so undo can delete it. */
+export async function applyNote(client, action, today) {
+  const p = action?.payload || {};
+  const row = await addNote(client, { kind: p.noteKind, body: p.body, startsOn: p.startsOn, endsOn: p.endsOn }, today);
+  return { noteId: row.id };
+}
+
+export async function undoNote(client, action) {
+  if (!action?.before?.noteId) throw { code: "db_error" };
+  await removeNote(client, action.before.noteId);
+}
+
 // ------------------------------------------------------------ data layer
 
 function need(client) {
@@ -133,7 +148,7 @@ const must = ({ error }) => {
 };
 const proposalOf = (a) => {
   const p = a.payload || {};
-  return { action: a.kind, habitId: a.habitId || p.habitId, name: p.name || p.title, diff: p.diff, days: p.days, reason: a.reason };
+  return { action: a.kind, habitId: a.habitId || p.habitId, name: p.name || p.title || p.body, diff: p.diff, days: p.days, reason: a.reason };
 };
 const now = () => new Date().toISOString();
 
@@ -190,4 +205,37 @@ export async function markRejected(client, id, reason, action = null) {
   const c = need(client);
   must(await c.from("agent_actions").update({ status: "rejected", decided_at: now() }).eq("id", id));
   if (action) await recordFeedback(c, { proposal: proposalOf(action), decision: "rejected", reason });
+}
+
+const STEP = {
+  stats: () => "a citit statisticile obiceiurilor tale",
+  context: (s) => `a citit ${s.notes} ${s.notes === 1 ? "notiță" : "notițe"} despre tine`,
+  feedback: () => "a verificat ce ai acceptat sau respins înainte",
+  history: (s) => `a verificat ${s.count} ${s.count === 1 ? "acțiune trecută" : "acțiuni trecute"}`,
+  experiments: (s) => `a verificat ${s.count} ${s.count === 1 ? "experiment" : "experimente"}`,
+  school: (s) => `a citit ${s.exams} ${s.exams === 1 ? "examen" : "examene"} și ${s.assignments} teme`,
+  patterns: (s) => `a testat tipare în istoric: ${s.findings} ${s.findings === 1 ? "găsit" : "găsite"} din ${s.tested} testate`,
+  search: (s) => `a căutat în sursele lui${s.query ? `: „${s.query}”` : ""}${s.sources?.length ? ` (${s.sources.length} ${s.sources.length === 1 ? "sursă citată" : "surse citate"})` : ""}`,
+};
+
+/** The tools the agent called for a proposal, one plain line each (propose steps are the proposals themselves). */
+export function traceLines(trace) {
+  if (!Array.isArray(trace)) return [];
+  return trace.filter((s) => STEP[s?.kind]).map((s) => STEP[s.kind](s));
+}
+
+/** What the player's own log says about the coach: proposals needing a tap, what became of them, measured effects. */
+export function agentImpact(actions) {
+  const asked = (actions || []).filter((a) => a.autonomy === "confirm");
+  const verdicts = summarizeOutcomes(asked).byVerdict;
+  const measured = ["improved", "worse", "no_clear_change"].reduce((n, k) => n + (verdicts[k] || 0), 0);
+  return {
+    proposals: asked.length,
+    applied: asked.filter((a) => a.status === "applied").length,
+    rejected: asked.filter((a) => a.status === "rejected").length,
+    measured,
+    improved: verdicts.improved || 0,
+    same: verdicts.no_clear_change || 0,
+    worse: verdicts.worse || 0,
+  };
 }

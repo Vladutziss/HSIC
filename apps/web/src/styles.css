@@ -8,7 +8,7 @@
   .skip:focus { left: 0.5rem; top: 0.5rem; }
   a:focus-visible, summary:focus-visible { outline: 2px solid #ffd978; outline-offset: 3px; border-radius: 6px; }
 
-  .btn { display: inline-flex; align-items: center; justify-content: center; border-radius: 1rem; background: #ffc542; color: #0c0a1d; font-family: "Pixelify Sans", Nunito, monospace; font-weight: 700; font-size: 1.125rem; padding: 0.75rem 1.75rem; box-shadow: 0 6px 0 #a8740a, 0 10px 24px rgba(0, 0, 0, 0.35); transition: transform 0.1s, box-shadow 0.1s, background 0.15s; }
+  .btn { display: inline-flex; align-items: center; justify-content: center; border-radius: 1rem; background: #ffc542; color: #0c0a1d; font-family: Nunito, monospace; font-weight: 700; font-size: 1.125rem; padding: 0.75rem 1.75rem; box-shadow: 0 6px 0 #a8740a, 0 10px 24px rgba(0, 0, 0, 0.35); transition: transform 0.1s, box-shadow 0.1s, background 0.15s; }
   .btn:hover { background: #ffd978; }
   .btn:active { transform: translateY(3px); box-shadow: 0 3px 0 #a8740a; }
   .btn-sm { font-size: 0.9rem; padding: 0.45rem 1rem; border-radius: 0.8rem; box-shadow: 0 4px 0 #a8740a; }
@@ -18,7 +18,7 @@
   .pedestal { background: radial-gradient(closest-side, rgba(255, 214, 120, 0.22), rgba(255, 214, 120, 0) 70%), radial-gradient(120% 80% at 50% 120%, rgba(143, 107, 255, 0.35), transparent 60%); position: relative; }
   .pedestal::after { content: ""; position: absolute; left: 50%; bottom: 6%; width: 46%; height: 9%; transform: translateX(-50%); border-radius: 50%; background: radial-gradient(closest-side, rgba(5, 3, 18, 0.65), transparent); }
 
-  .step { display: inline-grid; place-items: center; width: 2rem; height: 2rem; margin-bottom: 0.75rem; border-radius: 0.6rem; background: #221d45; color: #ffc542; font-family: "Pixelify Sans", monospace; font-weight: 700; box-shadow: inset 0 0 0 2px #463c8c; }
+  .step { display: inline-grid; place-items: center; width: 2rem; height: 2rem; margin-bottom: 0.75rem; border-radius: 0.6rem; background: #221d45; color: #ffc542; font-family: Nunito, monospace; font-weight: 700; box-shadow: inset 0 0 0 2px #463c8c; }
   .tick { position: relative; padding-left: 1.5rem; }
   .tick::before { content: ""; position: absolute; left: 0.2rem; top: 0.35rem; width: 0.55rem; height: 0.55rem; background: #3fe0a5; box-shadow: 0 0 0 2px #1a9e6f; }
 
@@ -43,7 +43,7 @@
   .faq { border-radius: 1rem; background: #1a1636; box-shadow: inset 0 0 0 2px #2e2860; }
   .faq summary { cursor: pointer; padding: 1rem 1.25rem; font-weight: 800; color: #f3efff; list-style: none; display: flex; justify-content: space-between; gap: 1rem; }
   .faq summary::-webkit-details-marker { display: none; }
-  .faq summary::after { content: "+"; font-family: "Pixelify Sans", monospace; color: #ffc542; }
+  .faq summary::after { content: "+"; font-family: Nunito, monospace; color: #ffc542; }
   .faq[open] summary::after { content: "–"; }
   .faq p { padding: 0 1.25rem 1.25rem; }
 

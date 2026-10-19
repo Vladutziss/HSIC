@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { Activity, BarChart3, CalendarDays, Flame, Gauge, Quote, Sparkles, Trophy, Zap } from "lucide-react";
+import { Activity, BarChart3, Bot, CalendarDays, Flame, Gauge, Quote, Sparkles, Trophy, Zap } from "lucide-react";
 import { Chip, Empty, LevelBadge, Panel, SectionTitle, Skeleton, Stat, Tabs } from "../components/ui.jsx";
 import { HEAT, HabitLines, Heatmap, MomentumChart, ScoreBars, heatLevel } from "../components/Charts.jsx";
 import { MOMENT_META } from "../lib/moments.js";
@@ -7,9 +7,34 @@ import { quoteById } from "../lib/quotes.js";
 import { LEVELS } from "../lib/engine.js";
 import { FocusStats } from "../components/FocusStats.jsx";
 import { useStats } from "../lib/useStats.js";
+import { agentImpact } from "../lib/agentActions.js";
 import { fmtDay, relDay } from "../lib/dates.js";
 
-export default function Stats({ state, d, today, go, mode, saveStatus, ai, onFocus }) {
+/** The coach, measured on this player: what it proposed, what they did with it, and the before/after of the accepted changes. */
+function AgentImpact({ log }) {
+  const m = agentImpact(log);
+  if (!m.proposals) return null;
+  return (
+    <Panel className="p-5">
+      <SectionTitle icon={Bot} tone="violet" sub="Doar pe datele tale">
+        Cum te ajută coach-ul
+      </SectionTitle>
+      <div className="flex flex-wrap gap-2">
+        <Chip tone="dim">{m.proposals} propuneri</Chip>
+        <Chip tone="mint">{m.applied} aplicate</Chip>
+        <Chip tone="dim">{m.rejected} respinse</Chip>
+      </div>
+      <p className="mt-3 text-sm font-semibold text-body">
+        {m.measured
+          ? `Din ${m.measured} schimbări măsurate: rata a crescut la ${m.improved}, nu s-a văzut o diferență clară la ${m.same}, a scăzut la ${m.worse}.`
+          : "Efectul schimbărilor aplicate se măsoară după 14 zile."}
+      </p>
+      <p className="mt-1 text-xs font-semibold text-dim">Comparație înainte/după pe tine. Nu dovedește că schimbarea a cauzat diferența.</p>
+    </Panel>
+  );
+}
+
+export default function Stats({ state, d, today, go, mode, saveStatus, ai, agent, onFocus }) {
   const { stats: s, loading } = useStats(state, today, mode, saveStatus);
   const [range, setRange] = useState(60);
   const [hidden, setHidden] = useState([]);
@@ -213,6 +238,7 @@ export default function Stats({ state, d, today, go, mode, saveStatus, ai, onFoc
         </button>
       )}
 
+      {ai?.server && agent?.log && <AgentImpact log={agent.log} />}
       <FocusStats sessions={state.focusSessions || []} today={today} onFocus={onFocus} />
 
       <Panel className="p-4 sm:p-5">
