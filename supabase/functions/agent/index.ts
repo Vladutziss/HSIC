@@ -433,7 +433,7 @@ Deno.serve(async (req) => {
         autonomy: "confirm",
         status: "pending",
         habit_id: p.habitId ?? null,
-        payload: p.action === "todo" ? { title: p.title, date: p.date, dur: p.dur, ...(p.explanation ? { explanation: p.explanation } : {}) } : { ...p, sources: p.sources, ...(experiment ? { experiment } : {}) },
+        payload: p.action === "todo" ? { title: p.title, date: p.date, dur: p.dur, trace: steps, ...(p.explanation ? { explanation: p.explanation } : {}) } : { ...p, sources: p.sources, trace: steps, ...(experiment ? { experiment } : {}) },
         reason: p.reason,
         sources: p.sources,
         baseline: p.habitId ? { rate28: rate(p.habitId), asOf: today } : null,
