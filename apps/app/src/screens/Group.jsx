@@ -265,6 +265,7 @@ function ChatPanel({ g, groups, loading }) {
       <SectionTitle
         icon={Inbox}
         tone="violet"
+        className="flex-wrap gap-y-2"
         sub="Încurajări între voi, ca într-un chat"
         action={
           unread ? (
