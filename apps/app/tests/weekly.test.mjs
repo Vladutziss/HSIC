@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { planWeek } from "../../../supabase/functions/_shared/weekly-core.js";
+import { planWeek, streakAlert } from "../../../supabase/functions/_shared/weekly-core.js";
 
 const TODAY = "2026-10-11"; // Sunday; next week is 2026-10-12 (Mon) .. 2026-10-18 (Sun)
 const habit = (id, extra = {}) => ({ id, name: `Obicei ${id}`, diff: 2, days: [0, 1, 2, 3, 4, 5, 6], createdAt: "2026-01-01", ...extra });
@@ -150,4 +150,15 @@ test("exam recap dedupes by subject and open to-do, and respects the action cap 
   assert.equal(capped.skipped.at(-1).rule, "exam_recap");
   const rej = plan({ state: school([exam("Mate", "2026-10-14")]), feedback: { rejectedByAction: { create_todo: 2 } } });
   assert.equal(rej.actions.length, 0);
+});
+
+test("streakAlert: a 3+ day streak with nothing done today is at risk", () => {
+  const days = ["2026-10-08", "2026-10-09", "2026-10-10"];
+  const log = Object.fromEntries(days.map((d) => [d, { a: 1 }]));
+  const st = { habits: [habit("a")], log, reviews: {}, todos: [], meta: { start: "2026-10-01" } };
+  const r = streakAlert({ state: st, today: TODAY });
+  assert.equal(r.streak, 3);
+  assert.equal(r.habit.id, "a");
+  assert.equal(streakAlert({ state: { ...st, log: { ...log, [TODAY]: { a: 1 } } }, today: TODAY }), null); // done today
+  assert.equal(streakAlert({ state: { ...st, log: { "2026-10-10": { a: 1 } } }, today: TODAY }), null); // streak too short
 });
