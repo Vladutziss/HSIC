@@ -2,9 +2,12 @@
 // normalizePlan/chatContext are pure; askChat is the only part that calls the server (web build only).
 
 import { askCoach } from "./ai.js";
-import { isScheduled } from "./engine.js";
+import { addDays, dayKey } from "./dates.js";
+import { isScheduled, streakInfo } from "./engine.js";
+import { periodKey } from "./goals.js";
 import { activeContext } from "./memory.js";
 import { nextAssignments, nextExams } from "./schoolPlanner.js";
+import { isDoneOn, todosByDay } from "./todos.js";
 
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 const str = (s, n) => {
@@ -50,25 +53,39 @@ export function normalizePlan(raw) {
  */
 export function chatContext(state, today, noteRows = []) {
   const s = state || {};
+  const log = s.log || {};
+  const habits = (s.habits || []).filter((h) => !h.archivedAt).slice(0, 10);
+  const week = Array.from({ length: 7 }, (_, i) => addDays(today, i - 6));
+  // the calendar: today and the next 7 days (repeating to-dos expanded), done or not, earliest first
+  const agenda = Object.entries(todosByDay(s.todos, today, addDays(today, 7)))
+    .flatMap(([day, list]) => list.map((t) => ({ title: str(t.title, 80), date: day, time: t.time || "", dur: t.dur || 0, done: isDoneOn(t, day) })))
+    .sort((x, y) => (x.date + x.time).localeCompare(y.date + y.time))
+    .slice(0, 24);
+  const goalKeys = new Set([periodKey("week", today), periodKey("month", today)]);
   return {
-    habits: (s.habits || [])
-      .filter((h) => !h.archivedAt)
-      .slice(0, 10)
-      .map((h) => ({
-        name: str(h.name, 60),
-        diff: h.diff,
-        days: Array.isArray(h.days) ? h.days : [],
-        scheduledToday: isScheduled(h, today),
-        doneToday: !!s.log?.[today]?.[h.id],
-      })),
+    habits: habits.map((h) => ({
+      name: str(h.name, 60),
+      diff: h.diff,
+      days: Array.isArray(h.days) ? h.days : [],
+      scheduledToday: isScheduled(h, today),
+      doneToday: !!log[today]?.[h.id],
+      // last 7 days including today: scheduled days vs ticked days
+      weekScheduled: week.filter((d) => isScheduled(h, d)).length,
+      weekDone: week.filter((d) => isScheduled(h, d) && log[d]?.[h.id]).length,
+    })),
+    streak: streakInfo(s, today).current,
+    focusMinutesToday: Math.round(
+      (s.focusSessions || []).filter((f) => f.start && dayKey(new Date(f.start)) === today).reduce((a, f) => a + (f.work || 0) / 60, 0),
+    ),
     goals: (s.goals || [])
-      .filter((g) => !g.done)
-      .slice(0, 6)
-      .map((g) => ({ text: str(g.text, 100), period: g.period, done: false })),
-    todos: (s.todos || [])
-      .filter((t) => !t.done)
+      .filter((g) => goalKeys.has(g.key) || !g.done)
       .slice(0, 10)
-      .map((t) => ({ title: str(t.title, 80), date: t.date || "" })),
+      .map((g) => ({ text: str(g.text, 100), period: g.period, done: !!g.done })),
+    todos: agenda,
+    undatedTodos: (s.todos || [])
+      .filter((t) => !t.date && !t.done)
+      .slice(0, 8)
+      .map((t) => str(t.title, 80)),
     assignments: nextAssignments(s, today)
       .slice(0, 6)
       .map((a) => ({ title: str(a.title, 80), subject: str(a.subject, 40), due: a.due || "" })),
