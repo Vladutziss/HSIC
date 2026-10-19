@@ -6,7 +6,7 @@
 | 2 | Build app + landing | VERIFIED | build OK |
 | 3 | Sincronizare `_shared/app` | VERIFIED | fără drift de conținut |
 | 4 | RLS activat pe toate tabelele | VERIFIED | query pg_class |
-| 5 | Revocare EXECUTE `rls_auto_enable` pentru anon/authenticated | VERIFIED | revocat; `has_function_privilege` = false pentru ambele (aplicat direct pe DB, fără fișier de migrare) |
+| 5 | Revocare EXECUTE `rls_auto_enable` pentru anon/authenticated | VERIFIED | aplicat pe Momentum (`has_function_privilege` = false) și fixat în `supabase/migrations/0030_revoke_rls_auto_enable.sql` |
 | 6 | Decizie `agent_stats` expus anon | VERIFIED (intenționat) | 0028: doar agregate, null sub 20 propuneri decise și 3 jucători; folosit de landing (`apps/web/src/main.js`). Fără modificare |
 | 7 | Rulare `supabase/tests/rls*.sql` | VERIFIED | rulate pe Momentum cu rollback, fără excepții (NOTICE-urile nu sunt returnate de tool; succesul = absența erorii) |
 | 8 | Test live Edge Functions | PARTIAL | neautentificat: ai/agent/weekly/stats → 401 session_expired, push fără acțiune → 400, nicio scurgere; cu sesiune validă și cron secret: neverificat (necesită login/secrete) |
