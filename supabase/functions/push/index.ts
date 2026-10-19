@@ -47,7 +47,7 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   if (req.method !== "POST") return reply(405, { code: "bad_request" });
 
-  let input: { action?: string; id?: string; userId?: string; count?: number };
+  let input: { action?: string; id?: string; userId?: string; count?: number; text?: string };
   try {
     input = await req.json();
   } catch {
@@ -82,6 +82,15 @@ Deno.serve(async (req) => {
         url: "/",
         tag: "coach-weekly",
       });
+      return reply(200, { sent });
+    }
+
+    // the daily streak check of the same function: one message, already written by the model
+    if (input.action === "coach_nudge" && typeof input.userId === "string" && typeof input.text === "string") {
+      const secret = Deno.env.get("AGENT_CRON_SECRET");
+      if (!secret || req.headers.get("x-cron-secret") !== secret) return reply(401, { code: "session_expired" });
+      const { data: subs } = await admin.from("push_subscriptions").select("endpoint,p256dh,auth").eq("user_id", input.userId);
+      const sent = await send(admin, subs ?? [], { title: "Molt îți ține seria", body: input.text.slice(0, 200), url: "/", tag: "coach-nudge" });
       return reply(200, { sent });
     }
 
