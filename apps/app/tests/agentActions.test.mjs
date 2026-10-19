@@ -109,3 +109,12 @@ test("recordTodo logs a pending create_todo with its explanation; hasOpenTodo sp
   assert.equal(hasOpenTodo(s, "Mate 15 min", today), true);
   assert.equal(hasOpenTodo(s, "Mate 15 min", "2026-10-12"), false);
 });
+
+import { traceLines } from "../src/lib/agentActions.js";
+test("traceLines: one line per tool call, proposals and unknown steps skipped", () => {
+  const out = traceLines([{ kind: "stats" }, { kind: "patterns", findings: 1, tested: 6 }, { kind: "search", query: "ancore", sources: ["a"] }, { kind: "propose", ok: true }]);
+  assert.equal(out.length, 3);
+  assert.match(out[1], /1 găsit din 6/);
+  assert.match(out[2], /ancore/);
+  assert.deepEqual(traceLines(null), []);
+});
