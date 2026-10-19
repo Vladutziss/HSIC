@@ -29,7 +29,7 @@ const appearance = {
     footerAction: { display: "none" }, // admins already have accounts: no sign-up link
     socialButtonsBlockButton: { backgroundColor: "#221d45", border: "1px solid #2e2860" },
     dividerLine: { backgroundColor: "#2e2860" },
-    headerTitle: { fontFamily: '"Pixelify Sans", Nunito, monospace' },
+    headerTitle: { fontFamily: 'Nunito, monospace' },
     formButtonPrimary: { fontWeight: 800 },
   },
 };

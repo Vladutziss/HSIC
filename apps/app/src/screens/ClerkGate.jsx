@@ -37,7 +37,7 @@ function appearanceFor() {
       footerAction: { display: "none" }, // its link would leave the page; the toggle below keeps both forms here
       socialButtonsBlockButton: { backgroundColor: token("well"), border: `1px solid ${token("edge")}` },
       dividerLine: { backgroundColor: token("edge") },
-      headerTitle: { fontFamily: '"Pixelify Sans", Nunito, monospace' },
+      headerTitle: { fontFamily: 'Nunito, monospace' },
       formButtonPrimary: { fontWeight: 800 },
     },
   };
