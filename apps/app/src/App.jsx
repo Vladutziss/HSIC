@@ -739,7 +739,7 @@ function Game() {
           )}
         </PlanHub>
       )}
-      {view === "stats" && <Stats {...common} mode={store.mode} saveStatus={store.saveStatus} onFocus={() => setFocusSetup(true)} />}
+      {view === "stats" && <Stats {...common} agent={agentActions} mode={store.mode} saveStatus={store.saveStatus} onFocus={() => setFocusSetup(true)} />}
       {view === "settings" && (
         <SettingsScreen
           {...common}
