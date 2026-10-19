@@ -10,6 +10,9 @@
 //   3. logs the plan in agent_actions: reversible low-risk actions as `auto` (the app applies them on the
 //      next open, with an undo), anything that changes the plan as `confirm`;
 //   4. sends one push notification if something was logged.
+// Body {mode: "streak"} (daily, evening, for players with settings.agentNudge): if a streak of 3+ days is about
+// to break, the model writes one short message and one push goes out; at most one per player per day. No text from
+// the model means no push. It is logged as an applied `set_reminder` so the player sees it in "Ce a făcut Molt".
 // It never edits the player's state itself: the app is the only writer of habits and to-dos.
 
 import { createClient } from "jsr:@supabase/supabase-js@2";
@@ -17,13 +20,38 @@ import { loadState } from "../_shared/app/remote.js";
 import { analyzePatterns } from "../_shared/app/patterns.js";
 import { activeContext, summarizeFeedback } from "../_shared/app/memory.js";
 import { isOutcomeDue, measureOutcome } from "../_shared/app/outcomes.js";
-import { planWeek } from "../_shared/weekly-core.js";
+import { planWeek, streakAlert } from "../_shared/weekly-core.js";
 
 const TZ = "Europe/Bucharest"; // the app's audience; per-player time zones would come from push_subscriptions
 const MAX_USERS = 500;
 
 const reply = (status: number, body: unknown) => new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
 const dayIn = (tz: string) => new Intl.DateTimeFormat("en-CA", { timeZone: tz }).format(new Date());
+
+const NUDGE_SYSTEM = `You write one push notification for "Molted", a habit app used by teenagers. The player has a streak that breaks if they do nothing today. Write ONE sentence in Romanian, at most 120 characters, addressing the player as "tu", warm, no guilt, no emojis, naming the habit as given and the streak length. Use only the numbers given. Answer with the sentence only.`;
+
+/** One short message from the model, or null (no key, no answer, nonsense): then nothing is sent. */
+async function nudgeText(facts: { nick: string; streak: number; habit: string }): Promise<string | null> {
+  const key = Deno.env.get("OPENROUTER_API_KEY");
+  const models = (Deno.env.get("AGENT_MODEL") ?? Deno.env.get("AI_MODEL") ?? "").split(",").map((m) => m.trim()).filter(Boolean);
+  if (!key || !models.length) return null;
+  for (const model of models) {
+    try {
+      const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json", "X-Title": "Molted" },
+        body: JSON.stringify({ model, messages: [{ role: "system", content: NUDGE_SYSTEM }, { role: "user", content: JSON.stringify(facts) }], max_tokens: 200, temperature: 0.7 }),
+        signal: AbortSignal.timeout(30_000),
+      });
+      if (!res.ok) continue;
+      const text = String((await res.json())?.choices?.[0]?.message?.content ?? "").replace(/\s+/g, " ").trim();
+      if (text.length >= 10 && text.length <= 200) return text;
+    } catch {
+      /* try the next model */
+    }
+  }
+  return null;
+}
 
 Deno.serve(async (req) => {
   if (req.method !== "POST") return reply(405, { code: "bad_request" });
@@ -34,6 +62,56 @@ Deno.serve(async (req) => {
   const admin = createClient(url, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
   const today = dayIn(TZ);
   const runId = `weekly-${today}`;
+
+  const mode = (await req.json().catch(() => ({})))?.mode;
+  if (mode === "streak") {
+    const { data: nudgees, error: nErr } = await admin.from("profiles").select("id, name").eq("settings->>agentNudge", "true").limit(MAX_USERS);
+    if (nErr) {
+      console.error("nudge users", nErr);
+      return reply(500, { code: "upstream_error" });
+    }
+    const out = { players: nudgees?.length ?? 0, sent: 0, skipped: 0, failed: 0 };
+    for (const { id, name } of nudgees ?? []) {
+      try {
+        const nudgeRun = `nudge-${today}`; // one per player per day
+        const { data: done } = await admin.from("agent_actions").select("id").eq("user_id", id).eq("run_id", nudgeRun).limit(1);
+        const state = done?.length ? null : await loadState(admin, id);
+        const alert = state ? streakAlert({ state, today }) : null;
+        if (!alert) {
+          out.skipped++;
+          continue;
+        }
+        const text = await nudgeText({ nick: state.profile?.nick || name || "", streak: alert.streak, habit: alert.habit.name });
+        if (!text) {
+          out.skipped++;
+          continue;
+        }
+        const { error: insErr } = await admin.from("agent_actions").insert({
+          user_id: id,
+          run_id: nudgeRun,
+          kind: "set_reminder",
+          autonomy: "auto",
+          status: "applied",
+          habit_id: alert.habit.id,
+          payload: { text, streak: alert.streak },
+          reason: text,
+          sources: [],
+          decided_at: new Date().toISOString(),
+        });
+        if (insErr) throw insErr;
+        await fetch(`${url}/functions/v1/push`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "x-cron-secret": secret, Authorization: `Bearer ${Deno.env.get("SUPABASE_ANON_KEY") ?? ""}` },
+          body: JSON.stringify({ action: "coach_nudge", userId: id, text }),
+        }).catch((e) => console.error("nudge push", e));
+        out.sent++;
+      } catch (e) {
+        out.failed++;
+        console.error("nudge player", id, e);
+      }
+    }
+    return reply(200, out);
+  }
 
   const { data: users, error } = await admin.from("profiles").select("id").eq("settings->>agentWeekly", "true").limit(MAX_USERS);
   if (error) {
