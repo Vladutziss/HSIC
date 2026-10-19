@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Undo2 } from "lucide-react";
 import { Button, Chip, Skeleton } from "./ui.jsx";
 import { scheduleLabel } from "./HabitEditor.jsx";
-import { SUPPORTED, pendingConfirm, recent } from "../lib/agentActions.js";
+import { SUPPORTED, pendingConfirm, recent, traceLines } from "../lib/agentActions.js";
 
 const REJECT_REASONS = ["Nu am timp", "E prea greu", "Nu mi se potrivește"];
 const STATUS = { applied: ["mint", "Aplicat"], rejected: ["dim", "Respins"], undone: ["dim", "Anulat"], failed: ["rose", "Nu s-a putut aplica"], pending: ["gold", "În așteptare"] };
@@ -26,6 +26,8 @@ export function describe(a, state) {
       return `Obicei nou: „${name}”${Array.isArray(p.days) ? `, ${scheduleLabel(p.days).toLowerCase()}` : ""}`;
     case "set_reminder":
       return `Memento pentru „${name}”`;
+    case "add_note":
+      return `Să țin minte: „${p.body || ""}”`;
     case "start_experiment":
       return `Experiment la „${name}”`;
     default:

@@ -196,6 +196,15 @@ export default function Settings({ state, d, ai, mode, env, onChange, onWipe, on
               onChange={(v) => set({ agentWeekly: v })}
             />
           )}
+          {ai.server && (
+            <SwitchRow
+              id="set-nudge"
+              title="Molt îți ține seria"
+              hint="Seara, dacă o serie de 3+ zile e pe cale să se rupă, Molt îți trimite o notificare cu un mesaj scurt. Cel mult una pe zi."
+              checked={!!settings.agentNudge}
+              onChange={(v) => set({ agentNudge: v })}
+            />
+          )}
           <p className="flex items-start gap-2 text-xs font-semibold text-dim">
             <Bot size={15} className={`shrink-0 ${ai.available ? "text-mint" : "text-faint"}`} aria-hidden="true" />
             <span>

@@ -63,6 +63,7 @@ Rules of evidence:
 Rules for proposals:
 - "change" only for habits done under 50% of the scheduled days: lower difficulty (1-3) or move to the weekdays where it was done more. "add" only if every habit is done over 70% of the time, one small habit (difficulty 1 or 2).
 - "todo" (a small study to-do, 10-60 minutes, title in Romanian, date YYYY-MM-DD from today onward, before the exam or due date) only when get_school shows an exam or assignment within 14 days and little or no study time logged for that subject; at most one per subject. Name it in dataUsed (for example "examen mate în 4 zile", "0 min studiate la mate în 14 zile"). Never invent exams, dates or minutes; if get_school has no data, propose no study to-do and do not mention school.
+- "remember" (noteKind constraint, preference or event; body in Romanian, at most 300 characters; optional startsOn/endsOn YYYY-MM-DD) only when the player stated something durable that get_context does not already hold, for example in feedback reasons. Never infer a constraint they did not state, and never store anything sensitive such as health diagnoses.
 - If a habit has fewer than 7 scheduled days of history, or everything is going well, propose nothing and say so.
 - When you mention research, say who and when in words (for example "un studiu din 2024") and carry its limit: a source's "limits" is part of what it says. Never present an effect size as a percentage of people who succeed, never say "21 days", never promise results.
 - For every proposal, include dataUsed with the concrete measurements or context behind it, confidence as low, medium or high, and expectedEffect as a short measurable outcome. Keep these claims modest and never turn an association into a cause.
@@ -141,11 +142,15 @@ const TOOLS = [
     type: "function",
     function: {
       name: "propose_action",
-      description: "Propose one thing for the player to confirm: change a habit, add a habit, run a 2-week experiment, or add a small study to-do (todo). Returns 'recorded' or why it was rejected.",
+      description: "Propose one thing for the player to confirm: change a habit, add a habit, run a 2-week experiment, add a small study to-do (todo), or ask to remember something the player said (remember). Returns 'recorded' or why it was rejected.",
       parameters: {
         type: "object",
         properties: {
-          action: { type: "string", enum: ["change", "add", "experiment", "todo"] },
+          action: { type: "string", enum: ["change", "add", "experiment", "todo", "remember"] },
+          noteKind: { type: "string", enum: ["constraint", "preference", "event"], description: "For remember only." },
+          body: { type: "string", description: "The note, for remember only (Romanian, at most 300 characters)." },
+          startsOn: { type: "string", description: "Optional first day YYYY-MM-DD, for remember only." },
+          endsOn: { type: "string", description: "Optional last day YYYY-MM-DD, for remember only." },
           title: { type: "string", description: "Study to-do title, for todo only (Romanian, at most 120 characters)." },
           date: { type: "string", description: "To-do day YYYY-MM-DD, for todo only; not before today." },
           dur: { type: "integer", minimum: 10, maximum: 60, description: "To-do minutes, for todo only." },
@@ -339,7 +344,7 @@ Deno.serve(async (req) => {
       const ok = after > before;
       if (ok) rawProposals.push(args);
       steps.push({ kind: "propose", ok });
-      return ok ? "recorded" : "rejected: change needs an existing habitId and weekdays 0-6; add needs a free slot, a name and weekdays; experiment needs an existing habitId and a factor (one per run); todo needs title, date YYYY-MM-DD and dur 10-60; all need a reason; at most 3 proposals";
+      return ok ? "recorded" : "rejected: change needs an existing habitId and weekdays 0-6; add needs a free slot, a name and weekdays; experiment needs an existing habitId and a factor (one per run); todo needs title, date YYYY-MM-DD and dur 10-60; remember needs noteKind (constraint, preference or event) and a body; all need a reason; at most 3 proposals";
     }
     return "error: unknown tool";
   }
@@ -429,11 +434,11 @@ Deno.serve(async (req) => {
       .from("agent_actions")
       .insert({
         run_id: runId,
-        kind: p.action === "todo" ? "create_todo" : p.action === "experiment" ? "start_experiment" : p.action === "add" ? "add_habit" : "change_habit",
+        kind: p.action === "todo" ? "create_todo" : p.action === "experiment" ? "start_experiment" : p.action === "remember" ? "add_note" : p.action === "add" ? "add_habit" : "change_habit",
         autonomy: "confirm",
         status: "pending",
         habit_id: p.habitId ?? null,
-        payload: p.action === "todo" ? { title: p.title, date: p.date, dur: p.dur, ...(p.explanation ? { explanation: p.explanation } : {}) } : { ...p, sources: p.sources, ...(experiment ? { experiment } : {}) },
+        payload: p.action === "todo" ? { title: p.title, date: p.date, dur: p.dur, trace: steps, ...(p.explanation ? { explanation: p.explanation } : {}) } : { ...p, sources: p.sources, trace: steps, ...(experiment ? { experiment } : {}) },
         reason: p.reason,
         sources: p.sources,
         baseline: p.habitId ? { rate28: rate(p.habitId), asOf: today } : null,

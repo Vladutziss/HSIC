@@ -71,8 +71,9 @@ h3 {
 }
 @layer components {
 .font-pixel {
-  font-family: "Pixelify Sans", Nunito, ui-monospace, monospace;
-  letter-spacing: 0.01em;
+  font-family: Nunito, ui-sans-serif, system-ui, sans-serif;
+  font-weight: 800;
+  letter-spacing: 0;
 }
 
 .tabular {
