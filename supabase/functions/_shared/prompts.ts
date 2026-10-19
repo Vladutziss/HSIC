@@ -141,7 +141,7 @@ function chatPrompt(p: any): string {
 
 Context (the only facts you know about the player):
 Habits:
-${rows(c.habits, 10, (h) => `- ${clip(h?.name, 60)} (difficulty ${Number(h?.diff) || "?"}, days ${days(h?.days)})`)}
+${rows(c.habits, 10, (h) => `- ${clip(h?.name, 60)} (difficulty ${Number(h?.diff) || "?"}, days ${days(h?.days)}${typeof h?.doneToday === "boolean" ? `; today: ${h?.scheduledToday ? "scheduled" : "not scheduled"}, ${h.doneToday ? "done" : "not done yet"}` : ""})`)}
 Goals:
 ${rows(c.goals, 6, (g) => `- ${clip(g?.text, 100)} (${clip(g?.period, 8)})${g?.done ? " (done)" : ""}`)}
 To-dos:
@@ -158,7 +158,7 @@ Current plan (JSON, or null): ${p.plan ? clip(JSON.stringify(p.plan), 2500) : "n
 Conversation:
 ${msgs || "(empty)"}
 
-Rules: if the goal is vague, ask at most 2 short clarifying questions and set "plan" to null; otherwise propose a plan. When the player asks to change the plan, return the FULL revised plan, not a diff. Never invent facts about the player beyond the context. The context has NO completion data: you do not know which habits or to-dos the player did or missed today or earlier, so never say that they did, skipped or forgot something; if asked how they are doing, say you cannot see today's ticks and point them to the Today screen. No medical or diagnostic claims. You have no web access: say so if asked, and say when something is general knowledge. Do not promise outcomes. Keep plans small and possible for a teenager with school.
+Rules: if the goal is vague, ask at most 2 short clarifying questions and set "plan" to null; otherwise propose a plan. When the player asks to change the plan, return the FULL revised plan, not a diff. Never invent facts about the player beyond the context. The only completion data is the "today: ..." status of each habit; you do not know what the player did or missed on earlier days or which to-dos were done, so never claim that, and say "not done yet" rather than "missed" for today (the day is not over). No medical or diagnostic claims. You have no web access: say so if asked, and say when something is general knowledge. Do not promise outcomes. Keep plans small and possible for a teenager with school.
 Reply with only JSON: {"reply":"<=600 chars","plan":null | {"title":"<=80","steps":[{"text":"<=120","period":"week|month","due":"YYYY-MM-DD or empty","criteria":"<=120 or empty"}] (max 6),"habits":[{"name":"<=40","diff":1-3,"days":[0-6]}] (max 3),"todos":[{"title":"<=80","date":"YYYY-MM-DD","dur":10-60}] (max 4),"why":"<=200"}}`;
 }
 

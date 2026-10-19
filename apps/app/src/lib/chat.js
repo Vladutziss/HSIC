@@ -2,6 +2,7 @@
 // normalizePlan/chatContext are pure; askChat is the only part that calls the server (web build only).
 
 import { askCoach } from "./ai.js";
+import { isScheduled } from "./engine.js";
 import { activeContext } from "./memory.js";
 import { nextAssignments, nextExams } from "./schoolPlanner.js";
 
@@ -53,7 +54,13 @@ export function chatContext(state, today, noteRows = []) {
     habits: (s.habits || [])
       .filter((h) => !h.archivedAt)
       .slice(0, 10)
-      .map((h) => ({ name: str(h.name, 60), diff: h.diff, days: Array.isArray(h.days) ? h.days : [] })),
+      .map((h) => ({
+        name: str(h.name, 60),
+        diff: h.diff,
+        days: Array.isArray(h.days) ? h.days : [],
+        scheduledToday: isScheduled(h, today),
+        doneToday: !!s.log?.[today]?.[h.id],
+      })),
     goals: (s.goals || [])
       .filter((g) => !g.done)
       .slice(0, 6)
