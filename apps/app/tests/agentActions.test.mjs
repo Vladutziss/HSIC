@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { hasOpenTodo, mapRow, pendingAuto, pendingConfirm, recent, planApply, planUndo, recordTodo } from "../src/lib/agentActions.js";
+import { SUPPORTED, hasOpenTodo, mapRow, pendingAuto, pendingConfirm, recent, planApply, planUndo, recordTodo } from "../src/lib/agentActions.js";
 
 const today = "2026-10-11";
 const state = () => ({
@@ -108,4 +108,8 @@ test("recordTodo logs a pending create_todo with its explanation; hasOpenTodo sp
   const s = { todos: [{ title: "Mate 15 min", date: today, done: false }] };
   assert.equal(hasOpenTodo(s, "Mate 15 min", today), true);
   assert.equal(hasOpenTodo(s, "Mate 15 min", "2026-10-12"), false);
+});
+
+test("add_note is a supported kind confirmed by the player", () => {
+  assert.ok(SUPPORTED.includes("add_note"));
 });

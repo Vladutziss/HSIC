@@ -113,3 +113,17 @@ test("validateProposals keeps a study todo only with title, a date and 10-60 min
   assert.equal(out[0].action, "todo");
   assert.equal(out[0].dur, 25);
 });
+
+test("remember: kept only with a valid kind and body, once per body", () => {
+  const raw = [
+    { action: "remember", noteKind: "constraint", body: "  Nu pot seara, am antrenament  ", reason: "a spus-o" },
+    { action: "remember", noteKind: "constraint", body: "Nu pot seara, am antrenament", reason: "dublură" },
+    { action: "remember", noteKind: "diagnosis", body: "x", reason: "tip greșit" },
+    { action: "remember", noteKind: "event", body: "Tabără", startsOn: "2026-11-10", endsOn: "2026-11-01", reason: "date inversate" },
+    { action: "remember", noteKind: "event", body: "", reason: "gol" },
+  ];
+  const out = validateProposals(raw, habits, read, 8);
+  assert.equal(out.length, 1);
+  assert.equal(out[0].body, "Nu pot seara, am antrenament");
+  assert.equal(out[0].startsOn, null);
+});
