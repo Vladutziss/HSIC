@@ -16,7 +16,13 @@ const STAGE_TEXT = {
   legend: "Contur de aur și aură. Rar întâlnit.",
 };
 
-export default function Companion({ state, d, today, months, loadMonth, onRename, go }) {
+// a framed panel on its own page; a plain section when it sits inside the Molt workbench (which is the frame)
+function Sect({ embedded, tone, children }) {
+  return embedded ? <section className="border-t border-edge/60 pt-5 first:border-t-0 first:pt-0">{children}</section> : <Panel tone={tone} className="p-4 sm:p-5">{children}</Panel>;
+}
+
+// `embedded`: shown inside the Molt page, whose header already has the picture, the name and the evolution bar
+export default function Companion({ state, d, today, months, loadMonth, onRename, go, embedded = false }) {
   const c = d.companion;
   const path = state.profile?.path || "sport";
   const p = PATHS[path];
@@ -41,73 +47,77 @@ export default function Companion({ state, d, today, months, loadMonth, onRename
   const canLoadMore = oldest && span[0] > oldest;
 
   return (
-    <div className="space-y-5">
-      <Panel tone="violet" corners className="overflow-hidden">
-        <div className="grid gap-0 lg:grid-cols-[1.1fr,1fr] [&>*]:min-w-0">
-          <div className="relative">
-            <div className="pedestal flex min-h-[300px] items-end justify-center pt-8">
-              <Sprite path={path} stage={c.stage.id} mood={c.mood} size={224} crack={eggCrack(c.ep)} label={`${c.name || "Oul tău"}, ${c.stage.name}`} />
-            </div>
-            <div className="scene-ground h-8" />
-          </div>
-          <div className="flex flex-col justify-center gap-4 p-5 sm:p-7">
-            <div>
-              <div className="text-xs font-extrabold uppercase tracking-[0.2em] text-violet-hi">
-                {c.stage.name} · {p.cls}
+    <div className={embedded ? "space-y-6" : "space-y-5"}>
+      {!embedded && (
+        <Panel tone="violet" corners className="overflow-hidden">
+          <div className="grid gap-0 lg:grid-cols-[1.1fr,1fr] [&>*]:min-w-0">
+            <div className="relative">
+              <div className="pedestal flex min-h-[300px] items-end justify-center pt-8">
+                <Sprite path={path} stage={c.stage.id} mood={c.mood} size={224} crack={eggCrack(c.ep)} look={c.look} label={`${c.name || "Oul tău"}, ${c.stage.name}`} />
               </div>
-              {renaming ? (
-                <form
-                  className="mt-1 flex gap-2"
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    if (name.trim()) onRename(name.trim().slice(0, 20));
-                    setRenaming(false);
-                  }}
-                >
-                  <input className="field" value={name} maxLength={20} onChange={(e) => setName(e.target.value)} aria-label="Numele personajului" autoFocus />
-                  <Button type="submit" size="sm" icon={Check} aria-label="Salvează numele" />
-                </form>
-              ) : (
-                <div className="mt-1 flex items-center gap-2">
-                  <h1 className="font-pixel text-4xl text-ink">{c.name || "Oul tău"}</h1>
-                  {c.stage.id !== "egg" && (
-                    <button type="button" onClick={() => setRenaming(true)} className="focus-ring rounded-lg p-1.5 text-dim hover:bg-panel-hi hover:text-ink" aria-label="Redenumește">
-                      <Pencil size={16} aria-hidden="true" />
-                    </button>
-                  )}
-                </div>
-              )}
-              <p className="mt-2 text-[15px] font-semibold text-body">{moodLine(c, c.name)}</p>
-              <div className="mt-3">
-                <Button variant="violet" size="sm" icon={MessageSquare} onClick={() => go?.("chat")}>
-                  Vorbește cu {c.name || "Moltul"} (Chat AI)
-                </Button>
-              </div>
+              <div className="scene-ground h-8" />
             </div>
-            {c.next ? (
+            <div className="flex flex-col justify-center gap-4 p-5 sm:p-7">
               <div>
-                <div className="mb-1 flex justify-between text-xs font-extrabold text-dim">
-                  <span>Următoarea evoluție: {c.next.name}</span>
-                  <span className="tabular">
-                    {c.ep} / {c.next.min} PE
-                  </span>
+                <div className="text-xs font-extrabold uppercase tracking-[0.2em] text-violet-hi">
+                  {c.stage.name} · {p.cls}
                 </div>
-                <Bar value={c.progress} tone="violet" label="Progres spre evoluția următoare" />
-                <p className="mt-1 text-xs font-semibold text-faint">Puncte de evoluție (PE): fiecare bifă aduce 1, 2 sau 3, după dificultatea obiceiului.</p>
+                {renaming ? (
+                  <form
+                    className="mt-1 flex gap-2"
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      if (name.trim()) onRename(name.trim().slice(0, 20));
+                      setRenaming(false);
+                    }}
+                  >
+                    <input className="field" value={name} maxLength={20} onChange={(e) => setName(e.target.value)} aria-label="Numele personajului" autoFocus />
+                    <Button type="submit" size="sm" icon={Check} aria-label="Salvează numele" />
+                  </form>
+                ) : (
+                  <div className="mt-1 flex items-center gap-2">
+                    <h1 className="font-pixel text-4xl text-ink">{c.name || "Oul tău"}</h1>
+                    {c.stage.id !== "egg" && (
+                      <button type="button" onClick={() => setRenaming(true)} className="focus-ring rounded-lg p-1.5 text-dim hover:bg-panel-hi hover:text-ink" aria-label="Redenumește">
+                        <Pencil size={16} aria-hidden="true" />
+                      </button>
+                    )}
+                  </div>
+                )}
+                <p className="mt-2 text-[15px] font-semibold text-body">{moodLine(c, c.name)}</p>
+                <div className="mt-3">
+                  <Button variant="violet" size="sm" icon={MessageSquare} onClick={() => go?.("chat")}>
+                    Vorbește cu {c.name || "Moltul"} (Chat AI)
+                  </Button>
+                </div>
               </div>
-            ) : (
-              <Chip tone="gold" icon={Sparkles}>
-                Evoluție completă
-              </Chip>
-            )}
+              {c.next ? (
+                <div>
+                  <div className="mb-1 flex justify-between text-xs font-extrabold text-dim">
+                    <span>Următoarea evoluție: {c.next.name}</span>
+                    <span className="tabular">
+                      {c.ep} / {c.next.min} PE
+                    </span>
+                  </div>
+                  <Bar value={c.progress} tone="violet" label="Progres spre evoluția următoare" />
+                  <p className="mt-1 text-xs font-semibold text-faint">Puncte de evoluție (PE): fiecare bifă aduce 1, 2 sau 3, după dificultatea obiceiului.</p>
+                </div>
+              ) : (
+                <Chip tone="gold" icon={Sparkles}>
+                  Evoluție completă
+                </Chip>
+              )}
+            </div>
           </div>
-        </div>
-      </Panel>
+        </Panel>
+      )}
 
-      <Panel className="p-4 sm:p-5">
-        <SectionTitle icon={Sparkles} tone="violet" sub="Evoluția vine din obiceiurile pe care le bifezi">
-          Drumul evoluției
-        </SectionTitle>
+      <Sect embedded={embedded}>
+        {!embedded && (
+          <SectionTitle icon={Sparkles} tone="violet" sub="Evoluția vine din obiceiurile pe care le bifezi">
+            Drumul evoluției
+          </SectionTitle>
+        )}
         <ol className="grid grid-cols-3 gap-3 sm:grid-cols-6">
           {STAGES.map((s, i) => {
             const reached = c.stageIndex >= i;
@@ -130,15 +140,21 @@ export default function Companion({ state, d, today, months, loadMonth, onRename
             );
           })}
         </ol>
-      </Panel>
+      </Sect>
 
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Stat icon={Sparkles} tone="violet" label="Puncte de evoluție" value={c.ep} />
-        <Stat icon={Zap} tone="gold" label="Bifări" value={c.checkins} sub="în total" />
-        <Stat icon={BookOpenText} tone="sky" label="Capitole" value={story.length} sub="în perioada afișată" />
-      </div>
+      {embedded ? (
+        <p className="text-sm font-bold text-dim">
+          {c.ep} puncte de evoluție · {c.checkins} bifări în total · {story.length} {story.length === 1 ? "capitol" : "capitole"} în perioada afișată
+        </p>
+      ) : (
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <Stat icon={Sparkles} tone="violet" label="Puncte de evoluție" value={c.ep} />
+          <Stat icon={Zap} tone="gold" label="Bifări" value={c.checkins} sub="în total" />
+          <Stat icon={BookOpenText} tone="sky" label="Capitole" value={story.length} sub="în perioada afișată" />
+        </div>
+      )}
 
-      <Panel tone="gold" className="p-4 sm:p-5">
+      <Sect embedded={embedded} tone="gold">
         <SectionTitle icon={ScrollText} tone="gold" sub="Un capitol nou la fiecare evoluție">
           Povestea lui {c.name || "Molt-ului tău"}
         </SectionTitle>
@@ -168,7 +184,7 @@ export default function Companion({ state, d, today, months, loadMonth, onRename
             </Button>
           </div>
         )}
-      </Panel>
+      </Sect>
     </div>
   );
 }

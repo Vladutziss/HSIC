@@ -14,7 +14,7 @@ import {
   Target,
   Trash2,
 } from "lucide-react";
-import { Button, Chip, Confirm, Panel, SectionTitle, Skeleton, useToast } from "../components/ui.jsx";
+import { Button, Chip, Confirm, IconButton, Panel, Skeleton, useToast } from "../components/ui.jsx";
 import { Sprite, eggCrack } from "../components/Sprite.jsx";
 import { PATHS } from "../lib/catalog.js";
 import { append as appendChat, clear as clearChat, load as loadChat, loadLocal, saveLocal } from "../lib/chatStore.js";
@@ -32,22 +32,19 @@ const STARTERS = [
   "Cum pot să-mi împart un proiect mare de școală în pași mici?",
 ];
 
-export default function Chat({ state, d, today, ai, goals, todo, agent, onAddHabit }) {
+// `embedded`: inside the Molt page, which already has the header. `initialPrompt`: a question sent as soon as the
+// conversation has loaded (from the quick questions on Acasă); `onPromptUsed` clears it so it is sent once.
+export default function Chat({ state, d, today, ai, goals, todo, agent, onAddHabit, embedded = false, initialPrompt = null, onPromptUsed }) {
   const [messages, setMessages] = useState([]);
-  const [input, setInput] = useState(() => {
-    try {
-      return sessionStorage.getItem("molted.chatPrefill") || "";
-    } catch {
-      return "";
-    }
-  });
+  const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [notes, setNotes] = useState([]);
   const [clearOpen, setClearOpen] = useState(false);
+  const [loaded, setLoaded] = useState(false);
   const [appliedPlans, setAppliedPlans] = useState(() => new Set());
   const toast = useToast();
-  const bottomRef = useRef(null);
+  const listRef = useRef(null);
 
   const companion = d?.companion || state?.companion || {};
   const path = state?.profile?.path || "sport";
@@ -73,27 +70,29 @@ export default function Chat({ state, d, today, ai, goals, todo, agent, onAddHab
           } catch {
             if (alive) setMessages(loadLocal());
           }
+          if (alive) setLoaded(true);
         })
         .catch(() => {
-          if (alive) setMessages(loadLocal());
+          if (alive) {
+            setMessages(loadLocal());
+            setLoaded(true);
+          }
         });
     } else {
       setMessages(loadLocal());
+      setLoaded(true);
     }
     return () => {
       alive = false;
     };
   }, [ai?.server]);
 
-  useEffect(() => {
-    try {
-      sessionStorage.removeItem("molted.chatPrefill");
-    } catch {}
-  }, []);
-
   // Scroll to bottom on new messages
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    // follow the conversation inside the list only: scrollIntoView would also move the whole page, and opening the
+    // chat (nothing said yet) must not scroll anything
+    const list = listRef.current;
+    if (list && messages.length > 0) list.scrollTo({ top: list.scrollHeight, behavior: "smooth" });
   }, [messages, busy]);
 
   const handleSend = async (textToSend) => {
@@ -150,6 +149,16 @@ export default function Chat({ state, d, today, ai, goals, todo, agent, onAddHab
       setBusy(false);
     }
   };
+
+  // a question asked from elsewhere in the app goes out once, after the old messages are in
+  const promptSent = useRef(false);
+  useEffect(() => {
+    if (!loaded || !initialPrompt || promptSent.current || !ai?.server) return;
+    promptSent.current = true;
+    onPromptUsed?.();
+    handleSend(initialPrompt);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loaded, initialPrompt, ai?.server]);
 
   const handleApplyPlan = async (plan, msgId) => {
     if (!plan || appliedPlans.has(msgId)) return;
@@ -228,32 +237,37 @@ export default function Chat({ state, d, today, ai, goals, todo, agent, onAddHab
     }
   };
 
+  const Wrap = embedded ? "div" : Panel;
   return (
     <div className="space-y-4">
-      {/* Header Panel */}
-      <Panel tone="violet" corners className="p-4 sm:p-5">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <span className="pedestal grid h-12 w-12 shrink-0 place-items-center rounded-xl sm:h-14 sm:w-14">
-              <Sprite path={path} stage={companion.stage?.id || "egg"} mood={companion.mood || "idle"} size={48} crack={eggCrack(companion.ep || 0)} />
-            </span>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="font-pixel text-lg sm:text-xl text-ink">{moltName}</h1>
-                <Chip tone="violet">{pInfo.cls}</Chip>
+      {!embedded && (
+        <>
+        {/* Header Panel */}
+        <Panel tone="violet" corners className="p-4 sm:p-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <span className="pedestal grid h-12 w-12 shrink-0 place-items-center rounded-xl sm:h-14 sm:w-14">
+                <Sprite path={path} stage={companion.stage?.id || "egg"} mood={companion.mood || "idle"} size={48} crack={eggCrack(companion.ep || 0)} look={companion.look} />
+              </span>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h1 className="font-pixel text-lg sm:text-xl text-ink">{moltName}</h1>
+                  <Chip tone="violet">{pInfo.cls}</Chip>
+                </div>
+                <p className="text-xs font-semibold text-dim">
+                  Asistentul tău personal AI · Întreabă orice despre școală, obiective și rutină
+                </p>
               </div>
-              <p className="text-xs font-semibold text-dim">
-                Asistentul tău personal AI · Întreabă orice despre școală, obiective și rutină
-              </p>
             </div>
+            {messages.length > 0 && (
+              <Button size="sm" variant="ghost" icon={Trash2} onClick={() => setClearOpen(true)} className="text-dim hover:text-rose">
+                Șterge conversația
+              </Button>
+            )}
           </div>
-          {messages.length > 0 && (
-            <Button size="sm" variant="ghost" icon={Trash2} onClick={() => setClearOpen(true)} className="text-dim hover:text-rose">
-              Șterge conversația
-            </Button>
-          )}
-        </div>
-      </Panel>
+        </Panel>
+        </>
+      )}
 
       {/* Offline banner if server is unavailable */}
       {!ai?.server && (
@@ -266,23 +280,27 @@ export default function Chat({ state, d, today, ai, goals, todo, agent, onAddHab
       )}
 
       {/* Chat Messages Container */}
-      <Panel tone="violet" className="flex min-h-[460px] flex-col justify-between p-3 sm:p-5">
-        <div className="space-y-4 overflow-y-auto pr-1">
+      <Wrap {...(embedded ? { className: "flex flex-col" } : { tone: "violet", className: "flex min-h-[460px] flex-col justify-between p-3 sm:p-5" })}>
+        <div ref={listRef} className={`space-y-4 overflow-y-auto pr-1 ${embedded ? "max-h-[min(56vh,520px)] min-h-[220px]" : ""}`}>
           {messages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center gap-4 py-8 text-center">
-              <div className="pedestal grid h-20 w-20 place-items-center rounded-2xl">
-                <Sprite path={path} stage={companion.stage?.id || "egg"} mood={companion.mood || "idle"} size={64} crack={eggCrack(companion.ep || 0)} />
-              </div>
-              <div className="max-w-md">
-                <h2 className="font-pixel text-lg text-ink">Salut! Eu sunt {moltName}.</h2>
-                <p className="mt-1 text-sm font-semibold text-dim">
-                  Sunt aici să te ajut să îți organizezi învățatul, să pregătești examenele sau să-ți construiești obiceiuri solide. Despre ce vrei să vorbim?
-                </p>
-              </div>
+            <div className={`flex flex-col items-center justify-center gap-4 text-center ${embedded ? "py-3" : "py-8"}`}>
+              {!embedded && (
+                <>
+                  <div className="pedestal grid h-20 w-20 place-items-center rounded-2xl">
+                    <Sprite path={path} stage={companion.stage?.id || "egg"} mood={companion.mood || "idle"} size={64} crack={eggCrack(companion.ep || 0)} look={companion.look} />
+                  </div>
+                  <div className="max-w-md">
+                    <h2 className="font-pixel text-lg text-ink">Salut! Eu sunt {moltName}.</h2>
+                    <p className="mt-1 text-sm font-semibold text-dim">
+                      Sunt aici să te ajut să îți organizezi învățatul, să pregătești examenele sau să-ți construiești obiceiuri solide. Despre ce vrei să vorbim?
+                    </p>
+                  </div>
+                </>
+              )}
 
               {ai?.server && (
                 <div className="mt-2 w-full max-w-lg space-y-2">
-                  <p className="text-[11px] font-black uppercase tracking-wider text-violet-hi">Idei de început:</p>
+                  <p className="text-sm font-extrabold text-violet-hi">Cu ce începem?</p>
                   <div className="flex flex-col gap-1.5 sm:grid sm:grid-cols-2">
                     {STARTERS.map((s, idx) => (
                       <button
@@ -439,7 +457,6 @@ export default function Chat({ state, d, today, ai, goals, todo, agent, onAddHab
             </div>
           )}
 
-          <div ref={bottomRef} />
         </div>
 
         {/* Input Bar */}
@@ -448,8 +465,9 @@ export default function Chat({ state, d, today, ai, goals, todo, agent, onAddHab
             e.preventDefault();
             handleSend();
           }}
-          className="mt-4 flex gap-2 border-t border-edge/60 pt-3"
+          className="mt-4 flex items-center gap-2 border-t border-edge/60 pt-3"
         >
+          {messages.length > 0 && <IconButton icon={Trash2} label="Șterge conversația" onClick={() => setClearOpen(true)} className="shrink-0 hover:text-rose" />}
           <input
             className="field flex-1 text-sm"
             value={input}
@@ -467,7 +485,7 @@ export default function Chat({ state, d, today, ai, goals, todo, agent, onAddHab
             Trimite
           </Button>
         </form>
-      </Panel>
+      </Wrap>
 
       <Confirm
         open={clearOpen}

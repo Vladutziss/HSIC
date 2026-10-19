@@ -1,6 +1,6 @@
 // Account actions for the web build: sign out, export, delete. The session is Clerk's.
 
-const TABLES = ["profiles", "habits", "completions", "day_reviews", "todos", "chapters", "streak_revives"];
+const TABLES = ["profiles", "habits", "completions", "day_reviews", "todos", "chapters", "streak_revives", "wardrobe_items"];
 
 export async function signOut() {
   await window.Clerk?.signOut();

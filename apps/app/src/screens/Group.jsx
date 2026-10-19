@@ -1,10 +1,11 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Bell, Check, Copy, Crown, Flame, Handshake, Inbox, LogOut, Medal, Send, UserPlus, Users, X } from "lucide-react";
-import { Button, Chip, Empty, Field, LevelBadge, Panel, SectionTitle, Skeleton, Tabs, useToast } from "../components/ui.jsx";
+import { Bell, Check, CheckCheck, Copy, Crown, Flame, Handshake, Inbox, LogOut, Medal, Send, UserPlus, Users, X } from "lucide-react";
+import { Button, Chip, Confirm, DeleteButton, Empty, Field, LevelBadge, Panel, SectionTitle, Skeleton, Tabs, useToast } from "../components/ui.jsx";
 import { dayKey, fmt12, fmtDay, relDay, todayKey } from "../lib/dates.js";
 import { Sprite } from "../components/Sprite.jsx";
 import { MAX_GROUPS, MAX_PARTNERS, NUDGE_TEMPLATES } from "../lib/groups.js";
 import { PATHS } from "../lib/catalog.js";
+import { normalizeLook } from "../lib/cosmetics.js";
 
 const timeAgo = (iso) => {
   const min = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
@@ -164,7 +165,7 @@ function Leaderboard({ g, loading }) {
                 )}
               </span>
               <span className="pedestal grid h-11 w-11 shrink-0 place-items-center rounded-xl">
-                <Sprite path={m.path || "sport"} stage={m.stage || "egg"} mood={m.mood || "idle"} size={32} still />
+                <Sprite path={m.path || "sport"} stage={m.stage || "egg"} mood={m.mood || "idle"} size={32} look={normalizeLook(m.look)} still />
               </span>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
@@ -234,6 +235,16 @@ function ChatPanel({ g, groups, loading }) {
     setBusy(false);
   }
   const unread = g.inbox.filter((n) => !n.read).length;
+  const [markingAll, setMarkingAll] = useState(false);
+  async function markAll() {
+    setMarkingAll(true);
+    try {
+      await groups.markAllRead(g.id);
+    } catch {
+      toast({ title: "Nu am putut marca mesajele", tone: "rose", icon: Bell });
+    }
+    setMarkingAll(false);
+  }
   const thread = useMemo(
     () =>
       [...g.inbox.map((n) => ({ ...n, mine: false })), ...g.sent.map((n) => ({ ...n, mine: true }))]
@@ -255,7 +266,16 @@ function ChatPanel({ g, groups, loading }) {
         icon={Inbox}
         tone="violet"
         sub="Încurajări între voi, ca într-un chat"
-        action={unread ? <Chip tone="violet">{unread} necitite</Chip> : null}
+        action={
+          unread ? (
+            <div className="flex flex-wrap items-center justify-end gap-2">
+              <Chip tone="violet">{unread} necitite</Chip>
+              <Button size="sm" variant="ghost" icon={CheckCheck} busy={markingAll} disabled={markingAll} onClick={markAll}>
+                Marchează toate citite
+              </Button>
+            </div>
+          ) : null
+        }
       >
         Chat-ul grupului
       </SectionTitle>
@@ -281,7 +301,7 @@ function ChatPanel({ g, groups, loading }) {
                   </div>
                 )}
                 <div className={`flex items-end gap-2 ${n.mine ? "justify-end" : "justify-start"}`}>
-                  {!n.mine && <Sprite path={who?.path || "sport"} stage={who?.stage || "egg"} mood="idle" size={36} still className="-mb-1 shrink-0" />}
+                  {!n.mine && <Sprite path={who?.path || "sport"} stage={who?.stage || "egg"} mood="idle" size={36} look={normalizeLook(who?.look)} still className="-mb-1 shrink-0" />}
                   <div className={`flex min-w-0 max-w-[82%] flex-col ${n.mine ? "items-end" : "items-start"}`}>
                     {!n.mine && <span className="mb-0.5 px-1 text-xs font-extrabold text-ink">{who?.name || "Un membru"}</span>}
                     <p
@@ -332,7 +352,7 @@ function ChatPanel({ g, groups, loading }) {
                   onClick={() => toggle(m.id)}
                   className={`focus-ring inline-flex items-center gap-1 rounded-full py-0.5 pl-0.5 pr-2.5 text-xs font-extrabold transition ${on ? "bg-mint text-on-mint" : "text-body ring-1 ring-edge hover:text-ink"}`}
                 >
-                  <Sprite path={m.path || "sport"} stage={m.stage || "egg"} mood="idle" size={24} still />
+                  <Sprite path={m.path || "sport"} stage={m.stage || "egg"} mood="idle" size={24} look={normalizeLook(m.look)} still />
                   {m.name}
                 </button>
               );
@@ -385,6 +405,7 @@ function ChatPanel({ g, groups, loading }) {
 
 function GroupView({ g, groups, loading }) {
   const toast = useToast();
+  const [leaving, setLeaving] = useState(false);
   const copy = async () => {
     try {
       await navigator.clipboard.writeText(g.info.code);
@@ -413,11 +434,21 @@ function GroupView({ g, groups, loading }) {
             <span className="font-pixel text-lg tracking-[0.25em] text-gold-hi">{g.info.code}</span>
             <Copy size={15} className="text-dim" aria-hidden="true" />
           </button>
-          <Button variant="ghost" size="sm" icon={LogOut} onClick={() => groups.leave(g.id)}>
-            Ieși
-          </Button>
+          <DeleteButton icon={LogOut} title="Ieși din grup" label={`Ieși din grupul ${g.info.name || ""}`.trim()} onClick={() => setLeaving(true)} />
         </div>
       </Panel>
+      <Confirm
+        open={leaving}
+        title="Ieși din grup?"
+        confirmLabel="Ieși din grup"
+        onClose={() => setLeaving(false)}
+        onConfirm={() => {
+          setLeaving(false);
+          groups.leave(g.id);
+        }}
+      >
+        Nu vei mai vedea clasamentul și mesajele grupului „{g.info.name || "Grup"}”. Poți reveni mai târziu cu codul de invitație ({g.info.code}).
+      </Confirm>
       <div className="grid gap-5 lg:grid-cols-5">
         <div className="min-w-0 lg:col-span-3">
           <ChatPanel g={g} groups={groups} loading={loading} />

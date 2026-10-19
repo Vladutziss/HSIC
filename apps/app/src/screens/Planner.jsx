@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { CalendarCheck, CalendarDays, CalendarPlus, CalendarRange, Check, ChevronLeft, ChevronRight, Clock, GripVertical, ListTodo, Timer, Plus, Repeat, Sparkles } from "lucide-react";
-import { Button, CheckButton, Chip, Panel, SectionTitle, Tabs } from "../components/ui.jsx";
+import { CalendarDays, CalendarPlus, CalendarRange, Check, ChevronLeft, ChevronRight, Clock, GripVertical, ListTodo, Timer, Plus, Repeat, Sparkles } from "lucide-react";
+import { Button, CheckButton, Choice, Chip, Panel, SectionTitle, Tabs } from "../components/ui.jsx";
 import { Shell, useCoach } from "../components/AiCoach.jsx";
 import { aiErrorCopy, dailyPlan, decomposeGoal, parseHomework } from "../lib/ai.js";
 import { hasOpenTodo } from "../lib/agentActions.js";
@@ -21,8 +21,6 @@ import {
   parseHM,
   relDay,
 } from "../lib/dates.js";
-import { GoalsCard } from "../components/Goals.jsx";
-import { Select } from "../components/Select.jsx";
 import { c } from "../lib/themes.js";
 import { firstOccurrence, occursOn, repeatLabel, todosByDay, viewOn } from "../lib/todos.js";
 import { nextAssignments, nextExams, normalizeAssignments, normalizeExams, normalizeSession, schoolPlanner, studiedMinutes } from "../lib/schoolPlanner.js";
@@ -470,7 +468,18 @@ function MonthView({ state, today, anchor, onPick }) {
 
 const CONFIDENCE = { high: "ridicată", medium: "medie", low: "scăzută", unknown: "necunoscută" };
 
-function DailyPlanPanel({ state, today, ai, agent }) {
+const TIME_OPTIONS = [
+  { value: 30, label: "30 min" },
+  { value: 60, label: "1 oră" },
+  { value: 120, label: "2 ore" },
+];
+const ENERGY_OPTIONS = [
+  { value: "low", label: "Scăzută" },
+  { value: "medium", label: "Medie" },
+  { value: "high", label: "Ridicată" },
+];
+
+export function DailyPlanPanel({ state, today, ai, agent }) {
   const [minutes, setMinutes] = useState(60);
   const [energy, setEnergy] = useState("medium");
   const [adding, setAdding] = useState(null); // title being saved
@@ -511,21 +520,19 @@ function DailyPlanPanel({ state, today, ai, agent }) {
   if (!ai?.server) return null;
   return (
     <Shell
-      icon={Sparkles}
-      title="Planul tău pentru azi"
-      sub="Pași mici, aleși din ce ai deja programat"
       state={s}
       run={run}
       label="Construiește planul"
+      idle="Aici apar 2–3 pași pentru azi, fiecare cu motivul lui."
       input={
-        <div className="mb-3 flex flex-wrap items-end gap-3">
-          <div className="w-40">
-            <span className="mb-1.5 block text-xs font-extrabold uppercase tracking-wider text-dim">Timp disponibil</span>
-            <Select id="plan-minutes" value={minutes} onChange={setMinutes} options={[{ value: 30, label: "30 minute" }, { value: 60, label: "1 oră" }, { value: 120, label: "2 ore" }]} />
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+          <div className="flex flex-wrap items-center gap-2.5">
+            <span className="text-sm font-extrabold text-body">Timp</span>
+            <Choice label="Timp disponibil" value={minutes} onChange={setMinutes} options={TIME_OPTIONS} />
           </div>
-          <div className="w-40">
-            <span className="mb-1.5 block text-xs font-extrabold uppercase tracking-wider text-dim">Energie</span>
-            <Select id="plan-energy" value={energy} onChange={setEnergy} options={[{ value: "low", label: "scăzută" }, { value: "medium", label: "medie" }, { value: "high", label: "ridicată" }]} />
+          <div className="flex flex-wrap items-center gap-2.5">
+            <span className="text-sm font-extrabold text-body">Energie</span>
+            <Choice label="Energie" value={energy} onChange={setEnergy} options={ENERGY_OPTIONS} />
           </div>
         </div>
       }
@@ -535,23 +542,23 @@ function DailyPlanPanel({ state, today, ai, agent }) {
         {s.data?.map((step, i) => {
           const added = hasOpenTodo(state, step.title, today);
           return (
-          <li key={`${step.title}-${i}`} className="inset flex gap-3 p-3">
-            <span className="font-pixel text-lg text-violet">{i + 1}</span>
-            <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                <p className="text-sm font-extrabold text-ink">{step.title}</p>
-                <Chip tone="dim">{step.minutes} min</Chip>
+            <li key={`${step.title}-${i}`} className="inset flex flex-wrap items-start gap-3 p-3">
+              <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-violet/15 font-pixel text-violet-hi">{i + 1}</span>
+              <div className="min-w-0 flex-1 basis-48">
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                  <p className="text-sm font-extrabold text-ink">{step.title}</p>
+                  <Chip tone="dim">{step.minutes} min</Chip>
+                </div>
+                <p className="mt-1 text-sm font-semibold text-body">{step.reason}</p>
+                <details className="mt-1 text-[11px] font-bold text-dim">
+                  <summary className="cursor-pointer">De ce?</summary>
+                  <p className="mt-1">Încredere {CONFIDENCE[step.confidence] || CONFIDENCE.unknown}{step.dataUsed.length ? ` · ${step.dataUsed.join(" · ")}` : ""}.</p>
+                </details>
               </div>
-              <p className="mt-1 text-xs font-semibold text-body">{step.reason}</p>
-              <details className="mt-1 text-[11px] font-bold text-dim">
-                <summary className="cursor-pointer">De ce?</summary>
-                <p className="mt-1">Încredere {CONFIDENCE[step.confidence] || CONFIDENCE.unknown}{step.dataUsed.length ? ` · ${step.dataUsed.join(" · ")}` : ""}.</p>
-              </details>
-            </div>
-            <Button size="sm" variant={added ? "ghost" : "mint"} icon={added ? Check : Plus} disabled={added || adding === step.title} busy={adding === step.title} onClick={() => addStep(step, step.focus)}>
-              {added ? "În planul de azi" : step.focus ? "Planifică Focus" : "Adaugă"}
-            </Button>
-          </li>
+              <Button size="sm" variant={added ? "ghost" : "mint"} icon={added ? Check : Plus} disabled={added || adding === step.title} busy={adding === step.title} onClick={() => addStep(step, step.focus)}>
+                {added ? "În planul de azi" : step.focus ? "Planifică Focus" : "Adaugă"}
+              </Button>
+            </li>
           );
         })}
       </ol>
@@ -559,7 +566,7 @@ function DailyPlanPanel({ state, today, ai, agent }) {
   );
 }
 
-function HomeworkPanel({ state, today, ai, onStateChange }) {
+export function HomeworkPanel({ state, today, ai, onStateChange }) {
   const [text, setText] = useState("");
   const [s, run] = useCoach((signal) => parseHomework(text, today, signal));
   const [minutes, setMinutes] = useState(25);
@@ -605,70 +612,62 @@ function HomeworkPanel({ state, today, ai, onStateChange }) {
   );
   const dayLabel = (n) => (n === 0 ? "azi" : n === 1 ? "mâine" : `în ${n} zile`);
   const studiedToday = studiedMinutes(state, today);
+  const upcoming = assignments.length > 0 || exams.length > 0;
   return (
     <Shell
-      icon={CalendarCheck}
-      title="Teme și examene"
-      sub="Scrie-le natural, iar AI-ul le transformă în pași planificabili"
       state={s}
       run={go}
       label="Interpretează"
       hint={hint}
-      input={
-        <div className="flex gap-2">
-          <input className="field min-w-0 flex-1" value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => e.key === "Enter" && go()} placeholder="Test la mate vineri, proiect luni…" aria-label="Teme și examene" />
-          <Button variant="mint" icon={Sparkles} onClick={go} busy={s.status === "busy"} aria-label="Interpretează temele" />
-        </div>
+      idle="Aici apar temele și examenele pe care le înțelege Molt, gata de salvat."
+      input={<input className="field" value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => e.key === "Enter" && go()} placeholder="Test la mate vineri, proiect luni…" aria-label="Teme și examene" />}
+      always={
+        upcoming && (
+          <div className="mt-5 border-t border-edge/60 pt-4">
+            <div className="mb-2 flex flex-wrap items-center gap-x-3 gap-y-2">
+              <p className="text-sm font-extrabold text-ink">Ce ai de făcut</p>
+              <span className="ml-auto text-[11px] font-bold text-dim">{studiedToday > 0 ? `Azi ai învățat ${studiedToday} min · ` : ""}o sesiune de studiu (min):</span>
+              <Choice label="Durata unei sesiuni de studiu, în minute" value={minutes} onChange={setMinutes} options={[15, 25, 45, 60].map((m) => ({ value: m, label: `${m}` }))} />
+            </div>
+            <ul className="space-y-1.5">
+              {exams.slice(0, 3).map((exam) => (
+                <li key={exam.id || exam.title} className="flex items-center gap-2 text-sm font-bold text-body">
+                  <Chip tone="gold">Examen</Chip>
+                  <span className="min-w-0 flex-1 truncate">{exam.title}{exam.subject ? ` · ${exam.subject}` : ""}</span>
+                  <span className="shrink-0 text-xs text-dim">{dayLabel(exam.daysLeft)}</span>
+                  {studyBtn(exam.subject, null)}
+                </li>
+              ))}
+              {assignments.slice(0, 5).map((assignment) => (
+                <li key={assignment.id || assignment.title} className="flex items-center gap-2 text-sm font-bold text-body">
+                  <span className="min-w-0 flex-1 truncate">{assignment.title}</span>
+                  <span className="shrink-0 text-xs text-dim">{assignment.due}</span>
+                  {studyBtn(assignment.subject, assignment.id)}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )
       }
     >
       {s.data?.length > 0 && (
-        <div className="mt-3 space-y-2">
-          <p className="text-xs font-extrabold uppercase tracking-wide text-dim">Propuneri de salvat</p>
+        <div className="space-y-2">
+          <p className="text-sm font-extrabold text-ink">Propuneri de salvat</p>
           {s.data.map((assignment, i) => (
             <div key={`${assignment.title}-${i}`} className="inset flex flex-wrap items-center gap-2 p-3">
               <span className="min-w-0 flex-1 text-sm font-extrabold text-ink">{assignment.title}</span>
               {assignment.type === "exam" && <Chip tone="gold">Examen</Chip>}
               <span className="text-xs font-bold text-dim">{assignment.due}{assignment.type === "exam" ? "" : ` · ${assignment.estimatedMinutes || 30} min`}</span>
-              <Button size="sm" variant="ghost" onClick={() => add(assignment)}>Adaugă</Button>
+              <Button size="sm" variant="mint" icon={Plus} onClick={() => add(assignment)}>Adaugă</Button>
             </div>
           ))}
-        </div>
-      )}
-      {exams.length > 0 && (
-        <ul className="mt-3 space-y-1.5">
-          {exams.slice(0, 3).map((exam) => (
-            <li key={exam.id || exam.title} className="flex items-center justify-between gap-2 text-xs font-bold text-body">
-              <span className="truncate">{exam.title}{exam.subject ? ` · ${exam.subject}` : ""}</span>
-              <span className="shrink-0 text-dim">{dayLabel(exam.daysLeft)}</span>
-              {studyBtn(exam.subject, null)}
-            </li>
-          ))}
-        </ul>
-      )}
-      {assignments.length > 0 && (
-        <ul className="mt-3 space-y-1.5">
-          {assignments.slice(0, 5).map((assignment) => (
-            <li key={assignment.id || assignment.title} className="flex items-center justify-between gap-2 text-xs font-bold text-body">
-              <span className="truncate">{assignment.title}</span><span className="ml-auto shrink-0 text-dim">{assignment.due}</span>
-              {studyBtn(assignment.subject, assignment.id)}
-            </li>
-          ))}
-        </ul>
-      )}
-      {(assignments.length > 0 || exams.length > 0) && (
-        <div className="mt-2 flex items-center gap-2 text-[11px] font-bold text-dim">
-          <label htmlFor="study-minutes">Sesiune de studiu</label>
-          <div className="w-28">
-            <Select id="study-minutes" value={minutes} onChange={setMinutes} options={[15, 25, 45, 60].map((m) => ({ value: m, label: `${m} min` }))} />
-          </div>
-          {studiedToday > 0 && <span>Azi: {studiedToday} min</span>}
         </div>
       )}
     </Shell>
   );
 }
 
-function GoalDecomposer({ today, ai, goals }) {
+export function GoalDecomposer({ today, ai, goals }) {
   const [text, setText] = useState("");
   const [s, run] = useCoach((signal) => decomposeGoal(text, signal));
   const [skip, setSkip] = useState([]);
@@ -690,31 +689,24 @@ function GoalDecomposer({ today, ai, goals }) {
   };
   return (
     <Shell
-      icon={Sparkles}
-      title="Din intenție în pași"
-      sub="Un obiectiv vag devine câteva acțiuni realizabile"
       state={s}
       run={go}
-      label="Descompune"
+      label="Împarte în pași"
       hint={hint}
-      input={
-        <div className="flex gap-2">
-          <input className="field min-w-0 flex-1" value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => e.key === "Enter" && go()} placeholder="Vreau să învăț programare…" aria-label="Obiectiv de descompus" />
-          <Button variant="violet" icon={Sparkles} onClick={go} busy={s.status === "busy"} aria-label="Descompune obiectivul" />
-        </div>
-      }
+      idle="Aici apar pașii în care Molt împarte scopul tău."
+      input={<input className="field" value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => e.key === "Enter" && go()} placeholder="Vreau să învăț programare…" aria-label="Obiectiv de împărțit în pași" />}
     >
       {s.data?.length > 0 && (
-        <div className="mt-3 space-y-2">
+        <div className="space-y-2">
           {s.data.map((goal, i) =>
             skip.includes(i) ? null : (
-              <div key={`${goal.text}-${i}`} className="inset flex items-center gap-2 p-3">
-                <span className="min-w-0 flex-1 text-sm font-extrabold text-ink">
+              <div key={`${goal.text}-${i}`} className="inset flex flex-wrap items-center gap-2 p-3">
+                <span className="min-w-0 flex-1 basis-48 text-sm font-extrabold text-ink">
                   {goal.text}
                   {(goal.due || goal.criteria) && <span className="block text-xs font-semibold text-dim">{[goal.due && `până la ${goal.due}`, goal.criteria].filter(Boolean).join(" · ")}</span>}
                 </span>
                 <Chip tone="violet">{goal.period === "month" ? "luna" : "săptămâna"}</Chip>
-                <Button size="sm" variant="ghost" onClick={() => save(goal)}>Salvează</Button>
+                <Button size="sm" variant="mint" onClick={() => save(goal)}>Salvează</Button>
                 <Button size="sm" variant="ghost" onClick={() => setSkip([...skip, i])} aria-label={`Renunță la: ${goal.text}`}>Scoate</Button>
               </div>
             ),
@@ -730,7 +722,9 @@ function GoalDecomposer({ today, ai, goals }) {
   );
 }
 
-export default function Planner({ state, today, todo, goals, ai, agent, onStateChange, onFocusTodo, onMoveHabit }) {
+// Calendar and to-dos. The AI helpers that used to sit above it (daily plan, homework, goal in steps) live on the Molt
+// page; the goals (Scopuri) are with the Obiective in the other tab of Plan.
+export default function Planner({ state, today, todo, ai, go, onFocusTodo, onMoveHabit }) {
   const [anchor, setAnchor] = useState(today);
   const [mode, setMode] = useState("week");
   const [tab, setTab] = useState("calendar");
@@ -807,31 +801,33 @@ export default function Planner({ state, today, todo, goals, ai, agent, onStateC
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="font-pixel text-3xl text-ink">Planificator</h1>
-          <p className="text-sm font-semibold text-dim">To-do-uri și programul tău, lângă obiceiurile de fiecare zi.</p>
-        </div>
-        <div className="lg:hidden">
-          <Tabs
-            value={tab}
-            onChange={setTab}
-            items={[
-              { value: "calendar", label: "Calendar", icon: CalendarDays },
-              { value: "list", label: "Listă", icon: ListTodo },
-            ]}
-          />
-        </div>
+      <div className="lg:hidden">
+        <Tabs
+          value={tab}
+          onChange={setTab}
+          items={[
+            { value: "calendar", label: "Calendar", icon: CalendarDays },
+            { value: "list", label: "Listă", icon: ListTodo },
+          ]}
+        />
       </div>
-      <DailyPlanPanel state={state} today={today} ai={ai} agent={agent} />
-      <HomeworkPanel state={state} today={today} ai={ai} onStateChange={onStateChange} />
-      <GoalDecomposer today={today} ai={ai} goals={goals} />
+      {ai?.server && (
+        <button
+          type="button"
+          onClick={() => go?.("molt", "ai")}
+          className="focus-ring flex w-full items-center gap-3 rounded-2xl bg-violet/10 p-3 text-left ring-1 ring-violet/30 transition hover:bg-violet/15"
+        >
+          <Sparkles size={18} className="shrink-0 text-violet-hi" aria-hidden="true" />
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm font-extrabold text-ink">Lasă-l pe Molt să-ți facă planul</span>
+            <span className="block text-xs font-semibold text-dim">Planul de azi, temele și examenele, pașii pentru un scop: alege din ce ai deja programat, în funcție de timp și energie.</span>
+          </span>
+          <span className="shrink-0 text-xs font-extrabold text-violet-hi">Cere un plan →</span>
+        </button>
+      )}
       <div className="grid gap-5 lg:grid-cols-[minmax(300px,360px),1fr]">
         <div className={tab === "list" ? "min-w-0" : "hidden min-w-0 lg:block"}>
-          <div className="space-y-5">
-            <TodoList state={state} today={today} todo={todo} onFocusTodo={onFocusTodo} />
-            <GoalsCard state={state} today={today} goals={goals} />
-          </div>
+          <TodoList state={state} today={today} todo={todo} onFocusTodo={onFocusTodo} />
         </div>
         <div className={tab === "calendar" ? "min-w-0" : "hidden min-w-0 lg:block"}>{calendar}</div>
       </div>

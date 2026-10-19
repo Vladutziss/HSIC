@@ -1,16 +1,15 @@
 import React, { useMemo, useState } from "react";
 import { Archive, ArrowLeft, CalendarDays, Clock, Flame, Info, LayoutGrid, List, Pencil, Plus, Rows3, RotateCcw, ScrollText, Sparkles, Target, Trophy } from "lucide-react";
-import { Button, Chip, Empty, Field, Gems, HoldToDelete, Panel, SectionTitle, Stat } from "../components/ui.jsx";
+import { Button, Chip, Empty, DeleteButton, Field, Gems, Panel, SectionTitle, Stat } from "../components/ui.jsx";
 import { Select } from "../components/Select.jsx";
 import { HabitArea, Heatmap, Sparkline } from "../components/Charts.jsx";
 import { iconFor } from "../components/icons.js";
 import { scheduleLabel } from "../components/HabitEditor.jsx";
-import { ExperimentsPanel, NotesPanel, PlanPanel } from "../components/CoachAgent.jsx";
-import { AgentLog } from "../components/AgentLog.jsx";
 import { MAX_HABITS, PATHS } from "../lib/catalog.js";
 import { DIFF, habitStats, isScheduled } from "../lib/engine.js";
 import { fmt12, fmtDay } from "../lib/dates.js";
 import { c } from "../lib/themes.js";
+import { usePref } from "../lib/prefs.js";
 
 function HabitCard({ h, stats, series, onOpen, onEdit, onDelete, code, today }) {
   const Icon = iconFor(h.icon);
@@ -63,7 +62,7 @@ function HabitCard({ h, stats, series, onOpen, onEdit, onDelete, code, today }) 
             Editează
           </Button>
         </div>
-        <HoldToDelete label={`Șterge obiceiul ${h.name}`} onConfirm={onDelete} />
+        <DeleteButton label={`Șterge obiceiul ${h.name}`} onClick={onDelete} />
       </div>
     </Panel>
   );
@@ -163,21 +162,13 @@ function HabitDetail({ h, state, d, today, onBack, onEdit, onArchive }) {
   );
 }
 
-// How the habit list is laid out. Chosen on this device only, so it is kept in localStorage.
+// How the habit list is laid out and sorted: the player's choice, kept with the account (see lib/prefs.js).
 const LAYOUTS = [
   { id: "compact", label: "Compact", icon: List },
   { id: "details", label: "Detalii", icon: Rows3 },
   { id: "large", label: "Mari", icon: LayoutGrid },
 ];
-const LAYOUT_KEY = "molted.habitsLayout";
-const loadLayout = () => {
-  try {
-    const v = localStorage.getItem(LAYOUT_KEY);
-    return LAYOUTS.some((l) => l.id === v) ? v : "large";
-  } catch {
-    return "large";
-  }
-};
+const DEFAULT_LAYOUT = "large";
 // Sorting for the habit list. `label` is the first direction, `rev` the opposite one: picking the same
 // sort again flips it, and the menu shows the direction that is active.
 const SORTS = [
@@ -188,23 +179,7 @@ const SORTS = [
   { value: "momentum", label: "Momentum (mare → mic)", rev: "Momentum (mic → mare)" },
   { value: "time", label: "Ora (devreme → târziu)", rev: "Ora (târziu → devreme)" },
 ];
-const SORT_KEY = "molted.habitsSort";
-const loadSort = () => {
-  try {
-    const v = JSON.parse(localStorage.getItem(SORT_KEY) || "null");
-    if (v && SORTS.some((x) => x.value === v.sort)) return { sort: v.sort, desc: !!v.desc };
-  } catch {
-    // unreadable: use the default
-  }
-  return { sort: "added", desc: false };
-};
-const saveSort = (v) => {
-  try {
-    localStorage.setItem(SORT_KEY, JSON.stringify(v));
-  } catch {
-    // nothing to keep
-  }
-};
+const DEFAULT_SORT = { sort: "added", desc: false };
 
 // ties always fall back to the name, so the order stays stable
 function sortAscending(list, sort, statsById) {
@@ -231,14 +206,6 @@ function sortHabits(list, sort, statsById, desc) {
   const sorted = sortAscending(list, sort, statsById);
   return desc ? sorted.reverse() : sorted;
 }
-
-const saveLayout = (v) => {
-  try {
-    localStorage.setItem(LAYOUT_KEY, v);
-  } catch {
-    // private window: the choice lasts until reload
-  }
-};
 
 // three buttons stuck together, like the view switch of a file manager
 function LayoutSwitch({ value, onChange }) {
@@ -320,28 +287,21 @@ function HabitRow({ h, stats, code, today, detailed, onOpen, onEdit, onDelete })
         <button type="button" onClick={onEdit} aria-label={`Editează: ${h.name}`} title="Editează" className="focus-ring grid h-9 w-9 place-items-center rounded-lg text-dim hover:bg-well hover:text-ink">
           <Pencil size={16} aria-hidden="true" />
         </button>
-        <HoldToDelete label={`Șterge obiceiul ${h.name}`} onConfirm={onDelete} />
+        <DeleteButton label={`Șterge obiceiul ${h.name}`} onClick={onDelete} />
       </div>
     </li>
   );
 }
 
-export default function Habits({ state, d, today, ai, agent, focus, setFocus, onAdd, onAddHabit, onEdit, onArchive, onDelete }) {
+export default function Habits({ state, d, today, go, ai, focus, setFocus, onAdd, onEdit, onArchive, onDelete }) {
   const [showArchived, setShowArchived] = useState(false);
-  const [layout, setLayoutState] = useState(loadLayout);
-  const [sortState, setSortState] = useState(loadSort);
-  const { sort, desc } = sortState;
+  const [savedLayout, setLayout] = usePref("habitsLayout", DEFAULT_LAYOUT);
+  const [savedSort, setSortState] = usePref("habitsSort", DEFAULT_SORT);
+  // a saved value that is not (or no longer) an option falls back to the default
+  const layout = LAYOUTS.some((l) => l.id === savedLayout) ? savedLayout : DEFAULT_LAYOUT;
+  const { sort, desc } = SORTS.some((x) => x.value === savedSort?.sort) ? { sort: savedSort.sort, desc: !!savedSort.desc } : DEFAULT_SORT;
   // another sort starts in its first direction; the same one again flips it
-  const pickSort = (v) => {
-    const next = v === sort ? { sort, desc: !desc } : { sort: v, desc: false };
-    setSortState(next);
-    saveSort(next);
-  };
-  const setLayout = (v) => {
-    setLayoutState(v);
-    saveLayout(v);
-  };
-  const [expKey, setExpKey] = useState(0);
+  const pickSort = (v) => setSortState(v === sort ? { sort, desc: !desc } : { sort: v, desc: false });
   const habits = state.habits || [];
   const active = habits.filter((h) => !h.archivedAt);
   const statsById = useMemo(() => Object.fromEntries(active.map((h) => [h.id, habitStats(h, state, d.timeline, today)])), [active, state, d.timeline, today]);
@@ -435,12 +395,20 @@ export default function Habits({ state, d, today, ai, agent, focus, setFocus, on
           </ul>
         )
       )}
-      {ai?.server && agent && (
-        <AgentLog actions={agent.log} state={state} busy={agent.busy} error={agent.error} onConfirm={agent.onConfirm} onReject={agent.onReject} onUndo={agent.onUndo} />
+      {ai?.server && (
+        <button
+          type="button"
+          onClick={() => go?.("molt", "ai")}
+          className="focus-ring flex w-full items-center gap-3 rounded-2xl bg-violet/10 p-3 text-left ring-1 ring-violet/30 transition hover:bg-violet/15"
+        >
+          <Sparkles size={18} className="shrink-0 text-violet-hi" aria-hidden="true" />
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm font-extrabold text-ink">Cere-i lui Molt un plan pentru obiceiurile tale</span>
+            <span className="block text-xs font-semibold text-dim">Analizează bifările, propune schimbări și experimente. Notele și propunerile lui sunt în pagina Molt.</span>
+          </span>
+          <span className="shrink-0 text-xs font-extrabold text-violet-hi">Deschide →</span>
+        </button>
       )}
-      <PlanPanel state={state} today={today} ai={ai} onAddHabit={onAddHabit} onEdit={onEdit} onExperiment={() => setExpKey((k) => k + 1)} />
-      <ExperimentsPanel state={state} today={today} ai={ai} refreshKey={expKey} />
-      <NotesPanel ai={ai} today={today} />
       {archived.length > 0 && (
         <div>
           <button type="button" className="focus-ring inline-flex items-center gap-2 text-sm font-extrabold text-dim hover:text-ink" onClick={() => setShowArchived((x) => !x)}>
