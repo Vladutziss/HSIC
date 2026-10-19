@@ -208,7 +208,7 @@ export function LevelBadge({ lvl, size = 44, tone = "gold", label }) {
       <polygon points="20,1.5 36.5,11 36.5,29 20,38.5 3.5,29 3.5,11" style={{ fill: edge }} />
       <polygon points="20,5 33,12.6 33,27.4 20,35 7,27.4 7,12.6" fill={`url(#${id})`} />
       <polygon points="20,5 33,12.6 20,13.5 7,12.6" fill="#ffffff" opacity="0.22" />
-      <text x="20" y="26" textAnchor="middle" fontFamily="'Pixelify Sans', Nunito, monospace" fontSize={lvl >= 10 ? 13 : 16} fontWeight="700" style={{ fill: ink }}>
+      <text x="20" y="26" textAnchor="middle" fontFamily="Nunito, monospace" fontSize={lvl >= 10 ? 13 : 16} fontWeight="700" style={{ fill: ink }}>
         {lvl}
       </text>
     </svg>
