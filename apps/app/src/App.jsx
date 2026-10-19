@@ -8,7 +8,7 @@ import { detectMoments } from "./lib/moments.js";
 import { milestoneSet, statusPatch, toggleLink } from "./lib/milestones.js";
 import { pickQuote } from "./lib/quotes.js";
 import { agentClient, aiErrorCopy, aiStatus, dailyReview } from "./lib/ai.js";
-import { hasOpenTodo, loadActions, markApplied, markRejected, markUndone, pendingAuto, pendingConfirm, planApply, planUndo, recordTodo } from "./lib/agentActions.js";
+import { hasOpenTodo, loadActions, markApplied, markRejected, markUndone, applyNote, undoNote, pendingAuto, pendingConfirm, planApply, planUndo, recordTodo } from "./lib/agentActions.js";
 import { permissionState } from "./lib/platform.js";
 import { useGroups } from "./lib/groups.js";
 import { uid } from "./lib/catalog.js";
@@ -200,6 +200,11 @@ function Game() {
     error: agentError,
     onConfirm: (a) =>
       decideAction(async () => {
+        if (a.kind === "add_note") {
+          const c = await agentClient();
+          await markApplied(c, a.id, await applyNote(c, a, today), { action: a });
+          return;
+        }
         const r = planApply(a, state, today);
         if (r.error) throw { code: "db_error" };
         update(r.patch);
@@ -207,6 +212,12 @@ function Game() {
       }),
     onUndo: (a) =>
       decideAction(async () => {
+        if (a.kind === "add_note") {
+          const c = await agentClient();
+          await undoNote(c, a);
+          await markUndone(c, a.id, a);
+          return;
+        }
         const r = planUndo(a, state, today);
         if (r.error) throw { code: "db_error" };
         update(r.patch);
