@@ -13,7 +13,8 @@ const TIMES = ["18:00", "18:30", "19:00", "19:30", "20:00", "20:30", "21:00", "2
 
 // Each card carries data-theme/data-mode, so it paints itself with that theme's real colours
 // even while another theme is active.
-function ThemePicker() {
+// `onPick` saves the choice with the account (settings.theme), so it follows the player to every device
+function ThemePicker({ onPick }) {
   const active = useTheme();
   return (
     <div role="radiogroup" aria-label="Temă de culori" className="grid grid-cols-3 gap-2 sm:grid-cols-5 lg:grid-cols-9">
@@ -28,7 +29,10 @@ function ThemePicker() {
             aria-checked={on}
             aria-label={`${t.name}, ${t.mode === "dark" ? "întunecat" : "luminos"}. ${t.blurb}`}
             title={t.blurb}
-            onClick={() => setTheme(t.id)}
+            onClick={() => {
+              setTheme(t.id);
+              onPick?.(t.id);
+            }}
             data-theme={t.id}
             data-mode={t.mode}
             className={`focus-ring flex flex-col rounded-xl bg-night p-1.5 text-left ring-2 transition ${on ? "ring-gold-deep" : "ring-edge hover:ring-edge-hi"}`}
@@ -159,6 +163,13 @@ export default function Settings({ state, d, ai, mode, env, onChange, onWipe, on
               Personajul tău e <span className="font-extrabold text-ink">{path.cls}</span>. Drumul se alege o singură dată, la ou.
             </span>
           </p>
+          <SwitchRow
+            id="set-share-look"
+            title="Arată ținuta lui Molt în grup"
+            hint="Colegii din grup văd pălăria și unealta pe care le porți. Oprită, ei îl văd pe Molt fără ele."
+            checked={settings.shareLook !== false}
+            onChange={(v) => set({ shareLook: v })}
+          />
         </Panel>
 
         {/* the evening report */}
@@ -179,8 +190,8 @@ export default function Settings({ state, d, ai, mode, env, onChange, onWipe, on
           {ai.server && (
             <SwitchRow
               id="set-weekly"
-              title="Coach săptămânal"
-              hint="Duminică seara coach-ul îți pregătește săptămâna: adaugă singur memento-uri (le poți anula) și îți propune schimbări, pe care le confirmi tu."
+              title="Planul săptămânal cu Molt"
+              hint="Duminică seara Molt îți pregătește săptămâna: adaugă singur memento-uri (le poți anula) și îți propune schimbări, pe care le confirmi tu."
               checked={!!settings.agentWeekly}
               onChange={(v) => set({ agentWeekly: v })}
             />
@@ -207,7 +218,7 @@ export default function Settings({ state, d, ai, mode, env, onChange, onWipe, on
           <SectionTitle icon={Palette} tone="violet" sub="Se păstrează pe acest dispozitiv." className="!mb-1">
             Aspect
           </SectionTitle>
-          <ThemePicker />
+          <ThemePicker onPick={(id) => set({ theme: id })} />
         </Panel>
 
         {/* the rules: the one setting up front, the explanations folded */}

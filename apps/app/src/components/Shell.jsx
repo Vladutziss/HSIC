@@ -1,6 +1,5 @@
-import React, { useState } from "react";
+import React from "react";
 import {
-  Bell,
   CalendarDays,
   ChartLine,
   ChevronsLeft,
@@ -9,14 +8,15 @@ import {
   Cloud,
   CloudOff,
   Egg,
-  MessageSquare,
   FlaskConical,
   Flame,
   HardDrive,
   House,
   Loader2,
+  Moon,
   ScrollText,
   Settings,
+  Sparkles,
   Timer,
   Users,
 } from "lucide-react";
@@ -26,17 +26,27 @@ import { PATHS } from "../lib/catalog.js";
 import { fmt12, parseHM } from "../lib/dates.js";
 import { REVIVES_PER_MONTH } from "../lib/derive.js";
 import { c as tc } from "../lib/themes.js";
+import { usePref } from "../lib/prefs.js";
 
+// Six places, grouped by what you do there. `also`: other views that belong to the same place
+// (Obiective is a tab of Plan). `ai`: the place where the AI features live, drawn to stand out.
 export const NAV = [
   { id: "home", label: "Acasă", icon: House },
+  { id: "molt", label: "Molt", icon: Egg, ai: true },
   { id: "habits", label: "Obiceiuri", icon: ScrollText },
-  { id: "chat", label: "Coach AI", icon: MessageSquare },
-  { id: "companion", label: "Molt", icon: Egg },
-  { id: "plan", label: "Plan", icon: CalendarDays },
+  { id: "plan", label: "Plan și obiective", short: "Plan", icon: CalendarDays, also: ["goals"] },
   { id: "group", label: "Grup", icon: Users },
   { id: "stats", label: "Statistici", icon: ChartLine },
   { id: "settings", label: "Setări", icon: Settings },
 ];
+const isHere = (n, view) => view === n.id || !!n.also?.includes(view);
+
+// the gradient behind the AI entry follows the finger or the mouse when it is pressed (the CSS reads --x and --y)
+const aim = (e) => {
+  const r = e.currentTarget.getBoundingClientRect();
+  e.currentTarget.style.setProperty("--x", `${e.clientX - r.left}px`);
+  e.currentTarget.style.setProperty("--y", `${e.clientY - r.top}px`);
+};
 
 export const MOOD_LABEL = {
   sleep: "doarme",
@@ -84,7 +94,7 @@ function SaveIndicator({ mode, saveStatus }) {
   );
 }
 
-function Hud({ d, state, setView, onReview, unread, mode, saveStatus, now }) {
+function Hud({ d, state, setView, onReview, mode, saveStatus, now }) {
   const { level, entry, streak, revive, scheduled, doneScheduled } = d;
   const reviewMin = parseHM(state.settings?.reviewTime || "21:00");
   const reviewed = !!state.reviews?.[d.today];
@@ -160,10 +170,6 @@ function Hud({ d, state, setView, onReview, unread, mode, saveStatus, now }) {
             <Clock size={14} className={reviewed ? "text-mint" : left <= 0 ? "text-gold" : "text-dim"} aria-hidden="true" />
             <span className={reviewed ? "text-mint" : left <= 0 ? "text-gold" : "text-body"}>{reviewText}</span>
           </button>
-          <button type="button" onClick={() => setView("group")} className="focus-ring relative grid h-9 w-9 place-items-center rounded-xl text-dim hover:bg-panel-hi hover:text-ink" aria-label={`Remindere${unread ? `: ${unread} necitite` : ""}`}>
-            <Bell size={18} aria-hidden="true" />
-            {unread > 0 && <span className="absolute -right-0.5 -top-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-rose px-1 text-[10px] font-black text-on-rose">{unread}</span>}
-          </button>
           <SaveIndicator mode={mode} saveStatus={saveStatus} />
           <button type="button" onClick={() => setView("settings")} className="focus-ring grid h-9 w-9 place-items-center rounded-xl text-dim hover:bg-panel-hi hover:text-ink lg:hidden" aria-label="Setări">
             <Settings size={18} aria-hidden="true" />
@@ -174,27 +180,30 @@ function Hud({ d, state, setView, onReview, unread, mode, saveStatus, now }) {
   );
 }
 
-const SIDE_KEY = "molted.sidebar"; // "closed" when the desktop side menu is folded to icons
-
-export function Shell({ view, setView, onReview, onFocus, d, state, unread, mode, saveStatus, now, children }) {
+export function Shell({ view, setView, onReview, onFocus, d, state, unread, goalsDue = 0, mode, saveStatus, now, children }) {
   const c = d.companion;
   const path = state.profile?.path || "sport";
-  const [folded, setFolded] = useState(() => {
-    try {
-      return localStorage.getItem(SIDE_KEY) === "closed";
-    } catch {
-      return false;
-    }
-  });
-  const toggleSide = () =>
-    setFolded((f) => {
-      try {
-        localStorage.setItem(SIDE_KEY, f ? "open" : "closed");
-      } catch {
-        /* the choice then lasts until the page closes */
-      }
-      return !f;
-    });
+  // the evening report is waiting: its time has come and today's is not written yet (Acasă shows a badge, like Grup)
+  const reviewDue = now >= parseHM(state.settings?.reviewTime || "21:00") && !state.reviews?.[d.today];
+  // the Acasă badge comes from the "Raportul zilei" card: opening Acasă while it is due takes you to that card and
+  // makes it flash once, so the badge and the card read as one thing
+  const openNav = (id) => {
+    setView(id);
+    if (id !== "home" || !reviewDue) return;
+    setTimeout(() => {
+      const card = document.getElementById("review-card");
+      if (!card) return;
+      card.scrollIntoView({ block: "center" });
+      card.classList.remove("review-ping");
+      void card.offsetWidth; // restart the animation when it was already played
+      card.classList.add("review-ping");
+      setTimeout(() => card.classList.remove("review-ping"), 2600);
+    }, 60);
+  };
+  // folded or not is the player's choice, kept with the account (see lib/prefs.js)
+  const [side, setSide] = usePref("sidebar", "open");
+  const folded = side === "closed";
+  const toggleSide = () => setSide(folded ? "open" : "closed");
   return (
     <div className="app-bg min-h-screen text-body">
       <aside className={`fixed inset-y-0 left-0 z-40 hidden flex-col border-r border-edge bg-deep/95 pb-4 pt-5 transition-[width] duration-200 lg:flex ${folded ? "w-[76px] px-3" : "w-64 px-4"}`}>
@@ -220,14 +229,22 @@ export function Shell({ view, setView, onReview, onFocus, d, state, unread, mode
               <button
                 key={n.id}
                 type="button"
-                onClick={() => setView(n.id)}
-                aria-current={view === n.id ? "page" : undefined}
+                onClick={() => openNav(n.id)}
+                aria-current={isHere(n, view) ? "page" : undefined}
                 aria-label={folded ? n.label : undefined}
                 title={folded ? n.label : undefined}
-                className={`nav-item focus-ring relative ${folded ? "justify-center px-0" : ""}`}
+                onPointerDown={n.ai ? aim : undefined}
+                className={`nav-item focus-ring relative ${folded ? "justify-center px-0" : ""} ${n.ai ? "nav-ai" : ""}`}
               >
                 <Icon size={19} strokeWidth={2.25} aria-hidden="true" />
                 {!folded && <span>{n.label}</span>}
+                {n.ai && !folded && (
+                  <span className="ml-auto inline-flex items-center gap-0.5 rounded-md bg-violet/30 px-1.5 py-0.5 text-[10px] font-black tracking-wider text-violet-hi">
+                    <Sparkles size={10} strokeWidth={3} aria-hidden="true" /> AI
+                  </span>
+                )}
+                {n.id === "plan" && goalsDue > 0 && (folded ? <span className="absolute right-2 top-1.5 h-2.5 w-2.5 rounded-full bg-ember" /> : <span className="ml-auto rounded-full bg-ember px-1.5 text-[11px] font-black text-night">{goalsDue}</span>)}
+                {n.id === "home" && reviewDue && (folded ? <span className="absolute right-2 top-1.5 h-2.5 w-2.5 rounded-full bg-rose" /> : <span className="ml-auto grid h-5 w-5 place-items-center rounded-full bg-rose text-on-rose" title="Raportul zilei te așteaptă" role="img" aria-label="Raportul zilei te așteaptă"><Moon size={11} strokeWidth={3} aria-hidden="true" /></span>)}
                 {n.id === "group" && unread > 0 && (folded ? <span className="absolute right-2 top-1.5 h-2.5 w-2.5 rounded-full bg-rose" /> : <span className="ml-auto rounded-full bg-rose px-1.5 text-[11px] font-black text-on-rose">{unread}</span>)}
               </button>
             );
@@ -245,13 +262,13 @@ export function Shell({ view, setView, onReview, onFocus, d, state, unread, mode
         </button>
         <button
           type="button"
-          onClick={() => setView("companion")}
+          onClick={() => setView("molt")}
           aria-label={folded ? c.name || "Oul tău" : undefined}
           title={folded ? c.name || "Oul tău" : undefined}
           className={`panel panel-violet focus-ring mt-auto flex items-center text-left transition hover:brightness-110 ${folded ? "justify-center p-1.5" : "gap-3 p-3"}`}
         >
           <span className={`pedestal grid shrink-0 place-items-center rounded-xl ${folded ? "h-12 w-12" : "h-16 w-16"}`}>
-            <Sprite path={path} stage={c.stage.id} mood={c.mood} size={folded ? 48 : 64} crack={eggCrack(c.ep)} />
+            <Sprite path={path} stage={c.stage.id} mood={c.mood} size={folded ? 48 : 64} crack={eggCrack(c.ep)} look={c.look} />
           </span>
           <span className={`min-w-0 ${folded ? "hidden" : ""}`}>
             <span className="block truncate font-pixel text-base text-ink">{c.name || "Oul tău"}</span>
@@ -264,12 +281,12 @@ export function Shell({ view, setView, onReview, onFocus, d, state, unread, mode
       </aside>
 
       <div className={`transition-[padding] duration-200 ${folded ? "lg:pl-[76px]" : "lg:pl-64"}`}>
-        <Hud d={d} state={state} setView={setView} onReview={onReview} unread={unread} mode={mode} saveStatus={saveStatus} now={now} />
+        <Hud d={d} state={state} setView={setView} onReview={onReview} mode={mode} saveStatus={saveStatus} now={now} />
         <main className="mx-auto max-w-[1240px] px-3 pb-28 pt-5 sm:px-4 lg:px-8 lg:pb-12 lg:pt-7">{children}</main>
       </div>
 
       <nav
-        className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-8 border-t border-edge bg-deep/95 backdrop-blur lg:hidden"
+        className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-7 border-t border-edge bg-deep/95 backdrop-blur lg:hidden"
         style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
         aria-label="Navigare"
       >
@@ -279,12 +296,15 @@ export function Shell({ view, setView, onReview, onFocus, d, state, unread, mode
             <button
               key={n.id}
               type="button"
-              onClick={() => setView(n.id)}
-              aria-current={view === n.id ? "page" : undefined}
-              className="tabbar-item focus-ring relative flex min-w-0 flex-col items-center gap-0.5 py-2 text-[10px] font-extrabold text-dim"
+              onClick={() => openNav(n.id)}
+              aria-current={isHere(n, view) ? "page" : undefined}
+              onPointerDown={n.ai ? aim : undefined}
+              className={`tabbar-item focus-ring relative flex min-w-0 flex-col items-center gap-0.5 py-2 text-[10px] font-extrabold ${n.ai ? "nav-ai mx-0.5 my-1 rounded-xl text-violet-hi" : "text-dim"}`}
             >
               <Icon size={20} strokeWidth={2.25} aria-hidden="true" />
-              {n.label}
+              <span className="max-w-full truncate px-0.5">{n.short || n.label}</span>
+              {n.id === "plan" && goalsDue > 0 && <span className="absolute right-[22%] top-1 h-2 w-2 rounded-full bg-ember" />}
+              {n.id === "home" && reviewDue && <span className="absolute right-[22%] top-1 h-2 w-2 rounded-full bg-rose" aria-label="Raportul zilei te așteaptă" />}
               {n.id === "group" && unread > 0 && <span className="absolute right-[22%] top-1 h-2 w-2 rounded-full bg-rose" />}
             </button>
           );

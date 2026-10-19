@@ -8,13 +8,14 @@ import { detectMoments } from "./lib/moments.js";
 import { milestoneSet, statusPatch, toggleLink } from "./lib/milestones.js";
 import { pickQuote } from "./lib/quotes.js";
 import { agentClient, aiErrorCopy, aiStatus, dailyReview } from "./lib/ai.js";
-import { hasOpenTodo, loadActions, markApplied, markRejected, markUndone, pendingAuto, planApply, planUndo, recordTodo } from "./lib/agentActions.js";
+import { hasOpenTodo, loadActions, markApplied, markRejected, markUndone, pendingAuto, pendingConfirm, planApply, planUndo, recordTodo } from "./lib/agentActions.js";
 import { permissionState } from "./lib/platform.js";
 import { useGroups } from "./lib/groups.js";
 import { uid } from "./lib/catalog.js";
 import { legacyTodos } from "./lib/legacy.js";
 import { toggleDone } from "./lib/todos.js";
 import { rescueInfo } from "./lib/rescue.js";
+import { retireHabit } from "./lib/retired.js";
 import { Confirm, ToastProvider, useToast } from "./components/ui.jsx";
 import { deleteAccount } from "./lib/account.js";
 import { Shell } from "./components/Shell.jsx";
@@ -22,16 +23,22 @@ import { FocusMode, FocusSetup } from "./components/Focus.jsx";
 import { carryCopies } from "./lib/goals.js";
 import { fmtSpan, loadSession, newSession, saveSession } from "./lib/focus.js";
 import { MomentModal } from "./components/MomentModal.jsx";
+import { UnlockModal } from "./components/UnlockModal.jsx";
+import { newItems, recordUnlocks } from "./lib/cosmetics.js";
+import { DEFAULT_THEME, getTheme, isTheme, setTheme } from "./lib/themes.js";
+import { allPrefs, bindPrefsSync, hydratePrefs } from "./lib/prefs.js";
 import { HabitEditor, scheduleLabel } from "./components/HabitEditor.jsx";
 import { TodoEditor } from "./components/TodoEditor.jsx";
 import Onboarding from "./screens/Onboarding.jsx";
 import Dashboard from "./screens/Dashboard.jsx";
 import Habits from "./screens/Habits.jsx";
-import Companion from "./screens/Companion.jsx";
-import Chat from "./screens/Chat.jsx";
+import Molt, { MOLT_TABS } from "./screens/Molt.jsx";
 import Group from "./screens/Group.jsx";
 import Planner from "./screens/Planner.jsx";
+import PlanHub from "./screens/PlanHub.jsx";
 import Stats from "./screens/Stats.jsx";
+import Objectives, { Celebration, ObjectiveEditor, ObjectivesMini, blankObjective, objectiveFromTemplate } from "./screens/Objectives.jsx";
+import { dueReminders, moveStep, newMarks, toggleStep, toggleSub } from "./lib/objectives.js";
 import SettingsScreen from "./screens/Settings.jsx";
 
 const STATE_VERSION = 2;
@@ -103,7 +110,11 @@ function Game() {
   const [confirm, setConfirm] = useState(null);
   const [focusSession, setFocusSession] = useState(loadSession); // the running Focus session, else null
   const [focusSetup, setFocusSetup] = useState(false);
+  const [goalEd, setGoalEd] = useState(null); // a draft goal for the editor
+  const [celebrate, setCelebrate] = useState(null); // { o, mark }
   const [focusPrefill, setFocusPrefill] = useState(null); // { work } from a planned to-do's Focus button
+  const [moltTab, setMoltTab] = useState("chat"); // the Molt ability that is open (see SKILLS in screens/Molt.jsx)
+  const [moltPrompt, setMoltPrompt] = useState(null); // a question for Molt sent from another screen
   const beginFocus = (pomodoro) => {
     const s = newSession(Date.now(), pomodoro);
     saveSession(s);
@@ -131,6 +142,7 @@ function Game() {
     });
   };
   const [queue, setQueue] = useState([]);
+  const [unlocks, setUnlocks] = useState([]); // ids of new cosmetic items, celebrated once (recorded in state.unlocked)
   const [review, setReview] = useState({ status: "idle", error: null });
   const autoTried = useRef(null);
 
@@ -224,11 +236,27 @@ function Game() {
     },
   };
 
-  const go = useCallback((v, habitId = null) => {
+  // "chat" and "companion" are parts of the Molt page now; `go("molt", "ai")` picks its tab
+  const go = useCallback((v, arg = null) => {
+    if (v === "chat" || v === "companion") {
+      setMoltTab(v === "chat" ? "chat" : "evolution");
+      v = "molt";
+      arg = null;
+    } else if (v === "molt") {
+      if (MOLT_TABS.includes(arg)) setMoltTab(arg);
+      arg = null;
+    }
     setView(v);
-    setFocusHabit(habitId);
+    setFocusHabit(arg);
     window.scrollTo(0, 0);
   }, []);
+  const askMolt = useCallback(
+    (text) => {
+      setMoltPrompt(text);
+      go("molt", "chat");
+    },
+    [go]
+  );
 
   // the month documents with stories and review texts for recent weeks
   const hasState = !!state;
@@ -255,6 +283,45 @@ function Game() {
     if (found.length) setQueue((q) => [...q, ...found]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [d]);
+
+  // the colour theme is the account's: it is applied when the account loads and when it changes on another device.
+  // An account without one yet takes this device's theme (so a choice made before this existed is not lost).
+  const accountTheme = state?.settings?.theme;
+  useEffect(() => {
+    if (!hasState) return;
+    if (isTheme(accountTheme)) {
+      if (accountTheme !== getTheme()) setTheme(accountTheme);
+    } else if (getTheme() !== DEFAULT_THEME) {
+      update((s) => ({ ...s, settings: { ...s.settings, theme: getTheme() } }));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasState, accountTheme]);
+
+  // the small interface choices (side menu, habit list layout and sort, Focus screen) are the account's too: they come
+  // from settings.prefs, and every change made on this device is saved there. An account without any yet takes this
+  // device's (so what was chosen before this existed is kept).
+  const accountPrefs = state?.settings?.prefs;
+  useEffect(() => {
+    if (!hasState) return undefined;
+    const save = (values) => update((s) => ({ ...s, settings: { ...s.settings, prefs: values } }));
+    const unbind = bindPrefsSync(save);
+    if (accountPrefs) hydratePrefs(accountPrefs);
+    else if (Object.keys(allPrefs()).length) save(allPrefs());
+    return unbind;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasState, accountPrefs]);
+
+  // new cosmetic items: recorded in the account and celebrated once each. A player who already has some when this appears gets them in one go.
+  useEffect(() => {
+    if (!d || !state) return;
+    const fresh = newItems(d.facts, state.unlocked);
+    if (!fresh.length) return;
+    const ids = fresh.map((i) => i.id);
+    update((s) => ({ ...s, unlocked: recordUnlocks(s.unlocked, ids, today) })); // saved with the account (wardrobe_items)
+    setUnlocks((u) => [...new Set([...u, ...ids])]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [d]);
+  const wear = (slot, id) => update((s) => ({ ...s, companion: { ...s.companion, look: { ...(s.companion?.look || {}), [slot]: id } } }));
 
   // ------------------------------------------------------------ actions
 
@@ -331,24 +398,22 @@ function Game() {
     toast({ title: "Obicei mutat", text: `${habit.name}: ${scheduleLabel(days)}${nextTime ? ` · ${fmt12(nextTime)}` : ""} (se repetă în fiecare săptămână)`, icon: CheckCircle2, tone: "mint", ms: 3200 });
   }
 
-  // deleting drops the habit for good: its check-ins go with it and to-dos linked to it stay as plain to-dos
+  // Deleting a habit keeps what it earned: its check-ins move into the history (see lib/retired.js), so momentum,
+  // the streak and Molt's stage stay as they were. To-dos linked to it stay as plain to-dos.
   function deleteHabit(habitId) {
     const name = state.habits.find((h) => h.id === habitId)?.name;
-    update((s) => {
-      const log = {};
-      for (const [day, entries] of Object.entries(s.log || {})) {
-        const { [habitId]: _gone, ...rest } = entries || {};
-        if (Object.keys(rest).length) log[day] = rest;
-      }
-      return {
-        ...s,
-        habits: s.habits.filter((h) => h.id !== habitId),
-        log,
-        todos: (s.todos || []).map((t) => (t.habitId === habitId ? { ...t, habitId: null } : t)),
-      };
-    });
+    update((s) => retireHabit(s, habitId, today));
     toast({ title: "Obicei șters", text: name, icon: CheckCircle2, tone: "mint", ms: 2200 });
   }
+  const askDeleteHabit = (habitId) => {
+    const name = state.habits.find((h) => h.id === habitId)?.name;
+    setConfirm({
+      title: "Ștergi obiceiul?",
+      text: `„${name}” dispare din lista ta. Progresul pe care ți l-a adus rămâne: momentum-ul, seria și evoluția lui Molt nu scad.`,
+      label: "Șterge obiceiul",
+      run: () => deleteHabit(habitId),
+    });
+  };
 
   function saveTodo(todo) {
     update((s) => {
@@ -377,10 +442,109 @@ function Game() {
     carry: (period, key, list) =>
       update((s) => ({ ...s, goals: [...(s.goals || []), ...carryCopies(list, period, key, today, () => uid("o"))].slice(-200) })),
   };
+  // ------------------------------------------------------------ goals (Obiective)
+  const editGoal = (id, fn) => update((s) => ({ ...s, objectives: (s.objectives || []).map((o) => (o.id === id ? fn(o) : o)) }));
+  const logEntry = (kind, text) => ({ id: uid("l"), day: today, kind, text });
+  // a goal step put in the plan is a to-do too; ticking either ticks both
+  const syncTodo = (s, o) => {
+    const step = o.steps.find((x) => x.todoId && !(s.todos || []).find((t) => t.id === x.todoId && !!t.done === !!x.done));
+    if (!step) return s;
+    return { ...s, todos: (s.todos || []).map((t) => (t.id === step.todoId ? { ...t, done: !!step.done, doneOn: step.done ? step.doneOn || today : null } : t)) };
+  };
+  const tickGoal = (id, fn) =>
+    update((s) => {
+      let next = s;
+      const objectives = (s.objectives || []).map((o) => {
+        if (o.id !== id) return o;
+        const n = fn(o);
+        next = syncTodo({ ...s }, n);
+        return n;
+      });
+      return { ...next, objectives };
+    });
+  const objectiveActions = {
+    toggleStep: (oid, sid) => tickGoal(oid, (o) => toggleStep(o, sid, today)),
+    toggleSub: (oid, sid, xid) => tickGoal(oid, (o) => toggleSub(o, sid, xid, today)),
+    addStep: (oid, title) => editGoal(oid, (o) => ({ ...o, steps: [...(o.steps || []), { id: uid("s"), title, done: false, doneOn: null, date: null, todoId: null, subs: [] }] })),
+    removeStep: (oid, sid) => editGoal(oid, (o) => ({ ...o, steps: o.steps.filter((x) => x.id !== sid) })),
+    moveStep: (oid, sid, dir) => editGoal(oid, (o) => moveStep(o, sid, dir)),
+    addSub: (oid, sid, title) =>
+      editGoal(oid, (o) => ({
+        ...o,
+        steps: o.steps.map((x) => (x.id === sid ? { ...x, done: false, doneOn: null, subs: [...(x.subs || []), { id: uid("x"), title, done: false, doneOn: null }] } : x)),
+      })),
+    removeSub: (oid, sid, xid) => editGoal(oid, (o) => ({ ...o, steps: o.steps.map((x) => (x.id === sid ? { ...x, subs: (x.subs || []).filter((y) => y.id !== xid) } : x)) })),
+    schedule: (oid, sid, date) =>
+      update((s) => {
+        const o = (s.objectives || []).find((x) => x.id === oid);
+        const step = o?.steps.find((x) => x.id === sid);
+        if (!step) return s;
+        let todos = s.todos || [];
+        let todoId = step.todoId && todos.some((t) => t.id === step.todoId) ? step.todoId : null;
+        if (!date) {
+          todos = todos.filter((t) => t.id !== todoId);
+          todoId = null;
+        } else if (todoId) todos = todos.map((t) => (t.id === todoId ? { ...t, date } : t));
+        else {
+          todoId = uid("t");
+          todos = [...todos, { id: todoId, title: `${o.title}: ${step.title}`.slice(0, 120), date, time: null, dur: 30, done: !!step.done, doneOn: step.doneOn || null, createdAt: today, goalRef: { oid, sid } }];
+        }
+        return { ...s, todos, objectives: s.objectives.map((x) => (x.id === oid ? { ...x, steps: x.steps.map((y) => (y.id === sid ? { ...y, date: date || null, todoId } : y)) } : x)) };
+      }),
+    setMetric: (oid, value) => editGoal(oid, (o) => ({ ...o, metric: { ...o.metric, value }, log: [...(o.log || []), logEntry("metric", `${value} ${o.metric.unit || ""}`.trim())].slice(-200) })),
+    addNote: (oid, text) => editGoal(oid, (o) => ({ ...o, log: [...(o.log || []), logEntry("note", text)].slice(-200) })),
+    finish: (oid) => editGoal(oid, (o) => ({ ...o, doneOn: today, log: [...(o.log || []), logEntry("done", "Obiectiv atins!")].slice(-200) })),
+    reopen: (oid) => editGoal(oid, (o) => ({ ...o, doneOn: null, seenMarks: (o.seenMarks || []).filter((m) => m < 100) })),
+    archive: (oid, archived) => editGoal(oid, (o) => ({ ...o, archived })),
+    remove: (oid) => {
+      update((s) => ({
+        ...s,
+        objectives: (s.objectives || []).filter((o) => o.id !== oid),
+        todos: (s.todos || []).map((t) => (t.goalRef?.oid === oid ? { ...t, goalRef: null } : t)),
+      }));
+      setFocusHabit(null);
+    },
+  };
+  function saveObjective(o, isNew) {
+    update((s) => {
+      const list = s.objectives || [];
+      // marks already passed when the goal is created are not celebrated
+      const seed = isNew ? { ...o, seenMarks: newMarks(o) } : o;
+      return { ...s, objectives: isNew ? [...list, seed] : list.map((x) => (x.id === o.id ? o : x)) };
+    });
+    setGoalEd(null);
+    if (isNew) go("goals", o.id);
+  }
+  // celebrate 25/50/75/100% once per goal
+  useEffect(() => {
+    if (!state?.objectives || celebrate) return;
+    for (const o of state.objectives) {
+      if (o.archived) continue;
+      const marks = newMarks(o);
+      if (!marks.length) continue;
+      const mark = marks[marks.length - 1];
+      editGoal(o.id, (x) => ({ ...x, seenMarks: [...new Set([...(x.seenMarks || []), ...marks])] }));
+      setCelebrate({ o, mark });
+      break;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state?.objectives]);
+  const goalReminders = useMemo(() => dueReminders(state?.objectives, today, now), [state?.objectives, today, now]);
+
   const todoActions = {
     add: (t) => saveTodo({ id: uid("t"), title: "", date: today, time: null, dur: 30, done: false, doneOn: null, createdAt: today, ...t }),
     // `day` is the occurrence of a repeating to-do (calendar and lists pass it); defaults to today
-    toggle: (id, day = today) => update((s) => ({ ...s, todos: s.todos.map((t) => (t.id === id ? toggleDone(t, day) : t)) })),
+    toggle: (id, day = today) =>
+      update((s) => {
+        const todos = s.todos.map((t) => (t.id === id ? toggleDone(t, day) : t));
+        const t = todos.find((x) => x.id === id);
+        if (!t?.goalRef || t.repeat) return { ...s, todos };
+        const { oid, sid } = t.goalRef;
+        const objectives = (s.objectives || []).map((o) =>
+          o.id !== oid ? o : { ...o, steps: o.steps.map((x) => (x.id === sid && !!x.done !== !!t.done ? toggleStep(o, sid, t.doneOn || today).steps.find((y) => y.id === sid) : x)) }
+        );
+        return { ...s, todos, objectives };
+      }),
     move: (id, date, time) => update((s) => ({ ...s, todos: s.todos.map((t) => (t.id === id ? { ...t, date, time: time === undefined ? t.time : time } : t)) })),
     remove: (id) => update((s) => ({ ...s, todos: s.todos.filter((t) => t.id !== id) })),
     rename: (id, title) => update((s) => ({ ...s, todos: s.todos.map((t) => (t.id === id ? { ...t, title } : t)) })),
@@ -474,18 +638,21 @@ function Game() {
   const reviewInfo = { ...review, run: runReview, reviewMin, now };
 
   return (
-    <Shell view={view} setView={go} onFocus={() => setFocusSetup(true)} onReview={() => !state.reviews?.[today] && runReview(today)} d={d} state={state} unread={groups.unread} mode={store.mode} saveStatus={store.saveStatus} now={now}>
+    <Shell view={view} setView={go} onFocus={() => setFocusSetup(true)} onReview={() => !state.reviews?.[today] && runReview(today)} d={d} state={state} unread={groups.unread} goalsDue={goalReminders.length} mode={store.mode} saveStatus={store.saveStatus} now={now}>
       {view === "home" && (
         <Dashboard
           {...common}
           groups={groups}
-          agent={agentActions}
           review={reviewInfo}
           onFocus={() => setFocusSetup(true)}
           onCheck={checkIn}
           onRevive={applyRevive}
           todo={todoActions}
           onAddHabit={() => setHabitEd({ tab: "catalog" })}
+          goalReminders={goalReminders}
+          goalActions={objectiveActions}
+          onAskMolt={askMolt}
+          moltWaiting={agentLog ? pendingConfirm(agentLog).length : 0}
           rescue={rescue}
           onRescue={async (step) => {
             try {
@@ -514,27 +681,53 @@ function Game() {
           agent={agentActions}
           onEdit={(habit) => setHabitEd({ habit, tab: "custom" })}
           onArchive={archiveHabit}
-          onDelete={deleteHabit}
+          onDelete={askDeleteHabit}
         />
       )}
-      {view === "companion" && (
-        <Companion
+      {view === "molt" && (
+        <Molt
           {...common}
+          tab={moltTab}
+          setTab={setMoltTab}
+          prompt={moltPrompt}
+          onPromptUsed={() => setMoltPrompt(null)}
           loadMonth={store.loadMonth}
           onRename={(name) => update((s) => ({ ...s, companion: { ...s.companion, name } }))}
-        />
-      )}
-      {view === "chat" && (
-        <Chat
-          {...common}
+          onLook={wear}
           goals={goalActions}
           todo={todoActions}
           agent={agentActions}
           onAddHabit={saveHabit}
+          onEdit={(habit) => setHabitEd({ habit, tab: "custom" })}
+          onStateChange={update}
         />
       )}
       {view === "group" && <Group {...common} groups={groups} />}
-      {view === "plan" && <Planner {...common} todo={todoActions} goals={goalActions} agent={agentActions} onFocusTodo={(t) => { setFocusPrefill({ work: t.dur || 25 }); setFocusSetup(true); }} onMoveHabit={moveHabit} />}
+      {(view === "plan" || view === "goals") && (
+        <PlanHub view={view} go={go} state={state} today={today} goalsDue={goalReminders.length}>
+          {view === "goals" ? (
+            <Objectives
+              {...common}
+              goals={goalActions}
+              focus={focusHabit}
+              setFocus={setFocusHabit}
+              act={objectiveActions}
+              onCreate={(t) => setGoalEd(t ? objectiveFromTemplate(t, today, state) : blankObjective(today, state))}
+              onEdit={(o) => setGoalEd(o)}
+            />
+          ) : (
+            <Planner
+              {...common}
+              todo={todoActions}
+              onFocusTodo={(t) => {
+                setFocusPrefill({ work: t.dur || 25 });
+                setFocusSetup(true);
+              }}
+              onMoveHabit={moveHabit}
+            />
+          )}
+        </PlanHub>
+      )}
       {view === "stats" && <Stats {...common} mode={store.mode} saveStatus={store.saveStatus} onFocus={() => setFocusSetup(true)} />}
       {view === "settings" && (
         <SettingsScreen
@@ -578,6 +771,7 @@ function Game() {
           onClose={() => setQueue((q) => q.slice(1))}
         />
       )}
+      {unlocks.length > 0 && !queue[0] && !celebrate && <UnlockModal ids={unlocks} state={state} d={d} onWear={wear} onOpen={() => go("molt", "wardrobe")} onClose={() => setUnlocks([])} />}
       {habitEd && (
         <HabitEditor
           open
@@ -590,6 +784,8 @@ function Game() {
           onClose={() => setHabitEd(null)}
         />
       )}
+      {goalEd && <ObjectiveEditor key={goalEd.id} initial={goalEd} state={state} onSave={saveObjective} onClose={() => setGoalEd(null)} />}
+      {celebrate && !queue[0] && <Celebration data={celebrate} state={state} onClose={() => setCelebrate(null)} />}
       {todoEd && <TodoEditor todo={todoEd} state={state} today={today} onSave={saveTodo} onDelete={(id) => (todoActions.remove(id), setTodoEd(null))} onClose={() => setTodoEd(null)} />}
       <Confirm
         open={!!confirm}

@@ -351,7 +351,7 @@ export function useAppStore() {
     if (!e) return;
     if (e.kind === "supabase") {
       await Promise.allSettled([e.stateWriter.flush(), ...Object.values(e.writers).map((w) => w.flush())]);
-      for (const t of ["chapters", "day_reviews", "streak_revives", "todos", "habits"]) await e.client.from(t).delete().eq("user_id", e.uid);
+      for (const t of ["chapters", "day_reviews", "streak_revives", "todos", "wardrobe_items", "habits"]) await e.client.from(t).delete().eq("user_id", e.uid);
       await e.client.from("profiles").update(remote.EMPTY_PROFILE).eq("id", e.uid);
       e.monthCache = {};
       e.monthSaved = {};
