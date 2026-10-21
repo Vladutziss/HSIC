@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
 import { DICTIONARIES, buildSite, buildSitemap } from "../scripts/generate.mjs";
+import RO_ONLY from "../src/i18n/ro-only.js";
 import {
   APP_URL,
   LEGACY_REDIRECTS,
@@ -21,17 +22,20 @@ import {
 
 const files = buildSite();
 const pages = files.filter((f) => f.route); // { file, html, route, locale }
+// the shared giveaway-detail shell has no URL of its own (one file serves every /ro/giveaways/<slug>/)
+const indexable = pages.filter((p) => !p.route.dynamic);
+const metaOf = (p) => DICTIONARIES[p.locale].meta[p.route.key] || RO_ONLY.meta[p.route.key];
 const attr = (html, re) => [...html.matchAll(re)].map((m) => m[1]);
 const canonical = (html) => attr(html, /<link rel="canonical" href="([^"]+)"/g);
 const hreflangs = (html) => Object.fromEntries([...html.matchAll(/<link rel="alternate" hreflang="([^"]+)" href="([^"]+)"/g)].map((m) => [m[1], m[2]]));
 const meta = (html, key) => attr(html, new RegExp(`<meta (?:property|name)="${key}" content="([^"]*)"`, "g"));
-const pageAt = (url) => pages.find((p) => absoluteUrl(p.route, p.locale) === url);
+const pageAt = (url) => indexable.find((p) => absoluteUrl(p.route, p.locale) === url);
 const unescape = (s) => s.replace(/&quot;/g, '"').replace(/&amp;/g, "&").replace(/&#39;/g, "'");
 
 // ------------------------------------------------------------ routing
 test("route resolution: every live page exists in ro and en under its own slug", () => {
-  for (const route of liveRoutes()) {
-    for (const locale of LOCALES) {
+  for (const route of liveRoutes().filter((r) => !r.dynamic)) {
+    for (const locale of LOCALES.filter((l) => isAvailable(route, l))) {
       const r = resolve(urlPath(route, locale));
       assert.equal(r.route?.key, route.key, `${locale}/${route.key}`);
       assert.equal(r.locale, locale);
@@ -100,8 +104,9 @@ test("language switch goes to the equivalent page in the other language", () => 
     const m = p.html.match(new RegExp(`<a [^>]*href="([^"]+)"[^>]*hreflang="${other}"`));
     assert.ok(m, `${p.file} has a switch to ${other}`);
     const target = resolve(m[1]);
-    assert.equal(target.route.key, p.route.key, `${p.file} -> ${m[1]}`);
     assert.equal(target.locale, other);
+    // the equivalent page when it exists in the other language, otherwise that language's home (never a 404)
+    assert.equal(target.route.key, isAvailable(p.route, other) ? p.route.key : "home", `${p.file} -> ${m[1]}`);
   }
 });
 
@@ -122,7 +127,7 @@ test("a page without an equivalent falls back to the localized home, and never a
 
 // ------------------------------------------------------------ metadata
 test("every page has exactly one h1, the right lang, its own canonical and og:url", () => {
-  for (const p of pages) {
+  for (const p of indexable) {
     assert.equal((p.html.match(/<h1[\s>]/g) || []).length, 1, `${p.file} h1`);
     assert.match(p.html, new RegExp(`<html lang="${p.locale}">`));
     const url = absoluteUrl(p.route, p.locale);
@@ -134,9 +139,9 @@ test("every page has exactly one h1, the right lang, its own canonical and og:ur
 });
 
 test("og:locale and robots are right; social image has alt text; public pages are indexable", () => {
-  for (const p of pages) {
+  for (const p of indexable) {
     assert.deepEqual(meta(p.html, "og:locale"), [p.locale === "ro" ? "ro_RO" : "en_US"], p.file);
-    assert.deepEqual(meta(p.html, "og:locale:alternate"), [p.locale === "ro" ? "en_US" : "ro_RO"], p.file);
+    assert.deepEqual(meta(p.html, "og:locale:alternate"), isAvailable(p.route, p.locale === "ro" ? "en" : "ro") ? [p.locale === "ro" ? "en_US" : "ro_RO"] : [], p.file);
     const robots = meta(p.html, "robots")[0];
     assert.match(robots, /^index, follow/);
     assert.ok(!/noindex/.test(robots));
@@ -152,9 +157,9 @@ test("titles, descriptions and Open Graph copy are localized and unique per page
   for (const p of pages) {
     const title = unescape(attr(p.html, /<title>([^<]*)<\/title>/g)[0]);
     const description = unescape(meta(p.html, "description")[0]);
-    assert.equal(title, DICTIONARIES[p.locale].meta[p.route.key].title);
-    assert.equal(unescape(meta(p.html, "og:title")[0]), DICTIONARIES[p.locale].meta[p.route.key].ogTitle);
-    assert.equal(unescape(meta(p.html, "og:description")[0]), DICTIONARIES[p.locale].meta[p.route.key].ogDescription);
+    assert.equal(title, metaOf(p).title);
+    assert.equal(unescape(meta(p.html, "og:title")[0]), metaOf(p).ogTitle);
+    assert.equal(unescape(meta(p.html, "og:description")[0]), metaOf(p).ogDescription);
     assert.ok(description.length >= 40 && description.length <= 200, `${p.file} description length ${description.length}`);
     assert.ok(!titles.has(title), `duplicate title: ${title}`);
     assert.ok(!descriptions.has(description), `duplicate description: ${description}`);
@@ -165,8 +170,12 @@ test("titles, descriptions and Open Graph copy are localized and unique per page
 });
 
 test("hreflang is reciprocal, self-referencing, complete and never invented", () => {
-  for (const p of pages) {
+  for (const p of indexable) {
     const links = hreflangs(p.html);
+    if (availableLocales(p.route).length < 2) {
+      assert.deepEqual(links, {}, `${p.file}: a single-language page must not invent an alternate`);
+      continue;
+    }
     assert.deepEqual(Object.keys(links).sort(), [...LOCALES].sort(), p.file);
     assert.ok(!("x-default" in links), "no x-default: / only redirects");
     assert.equal(links[p.locale], absoluteUrl(p.route, p.locale), "self reference");
@@ -225,22 +234,57 @@ test("English pages contain no Romanian chrome and Romanian pages no English chr
 });
 
 // ------------------------------------------------------------ giveaways (Romania only) and private routes
-test("Romanian-only giveaways: reserved for ro, built nowhere, advertised nowhere", () => {
-  const g = routeByKey("giveaways");
-  assert.deepEqual(Object.keys(g.paths), ["ro"]);
-  assert.ok(!isAvailable(g, "ro") && !isAvailable(g, "en"), "planned routes are not published");
-  assert.ok(!pages.some((p) => p.route.key === "giveaways"));
+test("Romanian-only giveaways: exist only under /ro, never built, linked, listed or resolved for /en", () => {
+  for (const key of ["giveaways", "giveaway"]) assert.deepEqual(Object.keys(routeByKey(key).paths), ["ro"], key);
+  assert.deepEqual(
+    pages.filter((p) => p.route.key.startsWith("giveaway")).map((p) => [p.route.key, p.locale]).sort(),
+    [["giveaway", "ro"], ["giveaways", "ro"]],
+  );
+  assert.ok(!files.some((f) => /^en\/giveaway/.test(f.file)), "no English giveaway file is generated");
+  for (const p of pages.filter((x) => x.locale === "en")) assert.ok(!/giveaway/i.test(p.html), `${p.file} advertises giveaways`);
+  assert.ok(!pageAt(`${SITE_URL}/en/giveaways/`));
   assert.equal(resolve("/en/giveaways/").status, 404);
   assert.equal(resolve("/en/giveaways/some-slug/").status, 404);
-  for (const p of pages) assert.ok(!/giveaway/i.test(p.html), `${p.file} mentions giveaways`);
-  assert.ok(!/giveaway/i.test(buildSitemap()));
-  assert.ok(!ROUTES.some((r) => r.paths.en && r.key === "giveaways"));
+  assert.equal(resolve("/ro/giveaways/").route.key, "giveaways");
+  const d = resolve("/ro/giveaways/molt-3d/");
+  assert.deepEqual([d.route.key, d.locale, d.params.slug], ["giveaway", "ro", "molt-3d"]);
+  for (const bad of ["/ro/giveaways/a/", "/ro/giveaways/Bad_Slug/", "/ro/giveaways/a/b/", "/ro/giveaways/_shell/", "/ro/giveaways/-x-/"]) assert.equal(resolve(bad).status, 404, bad);
+  assert.equal(resolve("/ro/giveaways/molt-3d").redirect, "/ro/giveaways/molt-3d/");
+  // the language switch from a giveaway page falls back to /en/ and the Romanian page offers no hreflang
+  assert.equal(switchHref(routeByKey("giveaways"), "en"), "/en/");
+  const list = pages.find((p) => p.route.key === "giveaways");
+  assert.deepEqual(hreflangs(list.html), {});
+  assert.match(list.html, /<link rel="canonical" href="https:\/\/www\.molted\.eu\/ro\/giveaways\/"/);
+  const home = pages.find((p) => p.route.key === "home" && p.locale === "ro");
+  assert.ok(home.html.includes('href="/ro/giveaways/"'), "the Romanian navigation offers the giveaways");
+});
+
+test("the shared campaign shell: generic metadata, canonical to the list, wired to its script", () => {
+  const shell = pages.find((p) => p.route.key === "giveaway");
+  assert.equal(shell.file, "ro/giveaways/_shell/index.html");
+  assert.match(shell.html, /<link rel="canonical" href="https:\/\/www\.molted\.eu\/ro\/giveaways\/" \/>/);
+  assert.ok(shell.html.includes('id="campanie"'));
+  assert.ok(shell.html.includes("/src/giveaway.js"));
+  assert.deepEqual(hreflangs(shell.html), {});
+});
+
+test("vercel.json serves every /ro/giveaways/<slug>/ from the shell and hides the shell itself", () => {
+  const v = JSON.parse(readFileSync(new URL("../vercel.json", import.meta.url), "utf8"));
+  // both spellings, so the rewrite matches whichever way the host normalizes the trailing slash
+  assert.deepEqual(v.rewrites, [
+    { source: "/ro/giveaways/:slug/", destination: "/ro/giveaways/_shell/" },
+    { source: "/ro/giveaways/:slug", destination: "/ro/giveaways/_shell/" },
+  ]);
+  assert.ok(v.redirects.some((r) => r.source === "/ro/giveaways/_shell/" && r.destination === "/ro/giveaways/"));
+  assert.ok(!JSON.stringify(v).includes("/en/giveaways"));
 });
 
 test("sitemap lists exactly the canonical public pages, each with reciprocal alternates", () => {
   const xml = buildSitemap();
   const locs = attr(xml, /<loc>([^<]+)<\/loc>/g);
-  assert.deepEqual([...locs].sort(), pages.map((p) => absoluteUrl(p.route, p.locale)).sort());
+  assert.deepEqual([...locs].sort(), indexable.map((p) => absoluteUrl(p.route, p.locale)).sort());
+  assert.ok(locs.includes(`${SITE_URL}/ro/giveaways/`), "the giveaway list is listed");
+  assert.ok(!locs.some((l) => /_shell|\[slug\]|\/en\/giveaway/.test(l)), "no shell, placeholder or English giveaway URL");
   assert.equal(new Set(locs).size, locs.length, "no duplicates");
   for (const loc of locs) {
     assert.ok(pageAt(loc), `${loc} is a generated page (no redirects or 404s)`);
@@ -250,8 +294,9 @@ test("sitemap lists exactly the canonical public pages, each with reciprocal alt
   for (const block of xml.split("<url>").slice(1)) {
     const own = block.match(/<loc>([^<]+)</)[1];
     const alts = [...block.matchAll(/hreflang="([^"]+)" href="([^"]+)"/g)].map((m) => m[2]);
-    assert.ok(alts.includes(own), `${own} references itself`);
-    assert.deepEqual(alts.length, LOCALES.length);
+    const page = pageAt(own);
+    assert.deepEqual(alts.length, availableLocales(page.route).length > 1 ? LOCALES.length : 0, own);
+    if (alts.length) assert.ok(alts.includes(own), `${own} references itself`);
   }
   assert.ok(!xml.includes("404"));
 });

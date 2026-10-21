@@ -10,7 +10,7 @@ Production host: `https://www.molted.eu` (the apex `molted.eu` redirects to it).
 | Team | `/ro/echipa/` | `/en/team/` |
 | Privacy | `/ro/confidentialitate/` | `/en/privacy/` |
 | Terms | `/ro/termeni/` | `/en/terms/` |
-| Giveaways (planned, Romania only) | `/ro/giveaways/` | does not exist |
+| Giveaways (Romania only) | `/ro/giveaways/`, `/ro/giveaways/<slug>/` | does not exist |
 
 - `/` redirects (307, temporary) to `/ro/`. Romanian is the default; there is no `x-default` hreflang because `/` is only a redirect.
 - Canonical form has a trailing slash (`trailingSlash: true` in `apps/web/vercel.json`).
@@ -32,7 +32,7 @@ Add a route to `ROUTES`, add its copy (`meta.<key>` in both dictionaries), a ren
 
 ## Romanian-only features (giveaways)
 
-`giveaways` is in `ROUTES` with a `ro` path only and `status: "planned"`, so nothing is built, linked or listed yet. To ship it: set `status: "live"`, add a renderer, and generate `/ro/giveaways/[slug]/` pages for `ro` only. Because the route has no `en` path, `/en/giveaways/...` is never generated (404), is absent from the English navigation, footer, sitemap and hreflang, and the language switch from a Romanian giveaway page falls back to `/en/`. Tests cover this.
+`giveaways` (the list, `/ro/giveaways/`) and `giveaway` (the campaign page, `/ro/giveaways/[slug]/`) are live in `ROUTES` with a `ro` path only; the system itself is described in `docs/GIVEAWAYS.md`. Because the routes have no `en` path, `/en/giveaways/...` is never generated (404), is absent from the English navigation, footer, sitemap and hreflang, and the language switch from a giveaway page falls back to `/en/`. Their copy lives in `src/i18n/ro-only.js`, outside the ro/en parity check. The campaign page is one static shell (`ro/giveaways/_shell/`) that `vercel.json` rewrites every `/ro/giveaways/<slug>/` to; `/ro/giveaways/_shell/` itself redirects to the list. Tests cover all of this.
 
 ## Deploy checklist
 

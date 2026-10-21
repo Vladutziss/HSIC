@@ -24,9 +24,9 @@ export function hreflangLinks(route) {
  * @param {{route:object, locale:string, t:object, styles?:"tailwind"|string, script?:string, jsonLd?:object, robots?:string}} p
  * `styles`: "tailwind" links the shared stylesheet; any other string is inlined as CSS.
  */
-export function renderHead({ route, locale, t, styles = "tailwind", script, jsonLd, robots = "index, follow, max-image-preview:large" }) {
+export function renderHead({ route, locale, t, styles = "tailwind", script, jsonLd, robots = "index, follow, max-image-preview:large", url: urlOverride }) {
   const m = t.meta[route.key];
-  const url = absoluteUrl(route, locale);
+  const url = urlOverride || absoluteUrl(route, locale);
   const otherLocales = availableLocales(route).filter((l) => l !== locale);
   const lines = [
     `    <meta charset="UTF-8" />`,

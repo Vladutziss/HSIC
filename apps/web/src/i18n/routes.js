@@ -15,21 +15,28 @@ export const ROUTES = [
   { key: "team", paths: { ro: "echipa", en: "team" }, page: "team", priority: "0.6" },
   { key: "privacy", paths: { ro: "confidentialitate", en: "privacy" }, page: "legal", priority: "0.3" },
   { key: "terms", paths: { ro: "termeni", en: "terms" }, page: "legal", priority: "0.3" },
-  // Romania-only giveaways (not built yet). Only `ro` has a path, so /en/giveaways can never exist or be advertised.
-  // When the feature ships: set status to "live", add a page renderer, and add dynamic pages (giveaways/[slug]) to
-  // `extraEntries` of the generator for the `ro` locale only.
-  { key: "giveaways", paths: { ro: "giveaways" }, page: "giveaways", status: "planned" },
+  // Romania-only giveaways. Only `ro` has a path, so /en/giveaways can never exist, be linked, or be listed (sitemap,
+  // hreflang, navigation) and the language switch from here falls back to /en/. The list page is a normal static page;
+  // the detail page is ONE static shell served for every /ro/giveaways/<slug>/ (see `shell` and vercel.json rewrites),
+  // filled in from the database in the browser, so a campaign opens or closes without a deploy.
+  { key: "giveaways", paths: { ro: "giveaways" }, page: "giveaways", priority: "0.7" },
+  { key: "giveaway", paths: { ro: "giveaways/[slug]" }, page: "giveaway", dynamic: true, shell: "giveaways/_shell", noSitemap: true },
 ];
 
 const live = (r) => r.status !== "planned";
 
 export const liveRoutes = () => ROUTES.filter(live);
+/** Routes that get a page of their own in the sitemap (a dynamic route has no fixed URL to list). */
+export const sitemapRoutes = () => liveRoutes().filter((r) => !r.dynamic && !r.noSitemap);
 export const routeByKey = (key) => ROUTES.find((r) => r.key === key);
 export const isAvailable = (route, locale) => live(route) && typeof route.paths[locale] === "string";
 export const availableLocales = (route) => LOCALES.filter((l) => isAvailable(route, l));
 
 /** "/ro/", "/ro/echipa/": always with a trailing slash (the canonical form; Vercel is set to trailingSlash). */
 export const urlPath = (route, locale) => `/${locale}/${route.paths[locale] ? `${route.paths[locale]}/` : ""}`;
+/** Where the generated file of a route lives, relative to the site root (dynamic routes use their shell). */
+export const filePath = (route, locale) => (route.dynamic ? `/${locale}/${route.shell}/` : urlPath(route, locale)).slice(1) + "index.html";
+export const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 export const absoluteUrl = (route, locale) => `${SITE_URL}${urlPath(route, locale)}`;
 
 /** Every available language of a page, for hreflang and the sitemap. Empty unless there is more than one. */
@@ -59,10 +66,23 @@ export function resolve(pathname) {
   if (!m || !LOCALES.includes(m[1])) return { status: 404 };
   const locale = m[1];
   const slug = m[2] || "";
-  const route = liveRoutes().find((r) => isAvailable(r, locale) && r.paths[locale] === slug);
+  let route = liveRoutes().find((r) => !r.dynamic && isAvailable(r, locale) && r.paths[locale] === slug);
+  let params;
+  if (!route) {
+    // dynamic routes: "giveaways/[slug]" matches one more path segment, only in locales that have the route
+    for (const r of liveRoutes().filter((x) => x.dynamic && isAvailable(x, locale))) {
+      const [prefix] = r.paths[locale].split("/[slug]");
+      const m = slug.startsWith(`${prefix}/`) ? slug.slice(prefix.length + 1) : null;
+      if (m && !m.includes("/") && SLUG_PATTERN.test(m) && m.length >= 3 && m.length <= 60) {
+        route = r;
+        params = { slug: m };
+        break;
+      }
+    }
+  }
   if (!route) return { status: 404 };
-  if (!clean.endsWith("/")) return { redirect: urlPath(route, locale), status: 308 };
-  return { route, locale };
+  if (!clean.endsWith("/")) return { redirect: route.dynamic ? `/${locale}/${route.paths[locale].replace("[slug]", params.slug)}/` : urlPath(route, locale), status: 308 };
+  return params ? { route, locale, params } : { route, locale };
 }
 
 // The pre-localization URLs. They were Romanian, so they move permanently to the Romanian equivalents.
