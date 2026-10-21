@@ -24,12 +24,13 @@ import { getClient } from "../lib/supabase.js";
 import { loadNotes } from "../lib/memory.js";
 import { aiErrorCopy } from "../lib/ai.js";
 import { uid } from "../lib/catalog.js";
+import { tr } from "../lib/i18n.js";
 
 const STARTERS = [
-  "Vreau să mă pregătesc pentru examenul de bacalaureat la matematică.",
-  "Ajută-mă să-mi fac un program zilnic de învățat și teme.",
-  "Vreau să încep un obicei sănătos de lectură de 20 de minute pe zi.",
-  "Cum pot să-mi împart un proiect mare de școală în pași mici?",
+  tr("Vreau să mă pregătesc pentru examenul de bacalaureat la matematică."),
+  tr("Ajută-mă să-mi fac un program zilnic de învățat și teme."),
+  tr("Vreau să încep un obicei sănătos de lectură de 20 de minute pe zi."),
+  tr("Cum pot să-mi împart un proiect mare de școală în pași mici?"),
 ];
 
 // `embedded`: inside the Molt page, which already has the header. `initialPrompt`: a question sent as soon as the
@@ -49,7 +50,7 @@ export default function Chat({ state, d, today, ai, goals, todo, agent, onAddHab
   const companion = d?.companion || state?.companion || {};
   const path = state?.profile?.path || "sport";
   const pInfo = PATHS[path] || PATHS.sport;
-  const moltName = companion.name || "Moltul tău";
+  const moltName = companion.name || tr("Moltul tău");
 
   // Initial load: from Supabase on web build, localStorage fallback on offline/artifact
   useEffect(() => {
@@ -144,7 +145,7 @@ export default function Chat({ state, d, today, ai, goals, todo, agent, onAddHab
         saveLocal(finalMessages);
       }
     } catch (e) {
-      setError(aiErrorCopy(e?.code) || "Moltul nu a putut răspunde. Încearcă din nou.");
+      setError(aiErrorCopy(e?.code) || tr("Moltul nu a putut răspunde. Încearcă din nou."));
     } finally {
       setBusy(false);
     }
@@ -194,9 +195,9 @@ export default function Chat({ state, d, today, ai, goals, todo, agent, onAddHab
             date: t.date,
             reason: plan.why || `Plan: ${plan.title}`,
             explanation: {
-              dataUsed: ["conversația cu Moltul"],
+              dataUsed: [tr("conversația cu Moltul")],
               confidence: "high",
-              expectedEffect: "pas din planul structurat",
+              expectedEffect: tr("pas din planul structurat"),
             },
           });
         } else if (todo?.add) {
@@ -206,15 +207,15 @@ export default function Chat({ state, d, today, ai, goals, todo, agent, onAddHab
 
       setAppliedPlans((prev) => new Set([...prev, msgId]));
       toast({
-        title: "Plan aplicat cu succes!",
+        title: tr("Plan aplicat cu succes!"),
         text: planSummary({ steps: stepCount, habits: habitsToAdd.length, todos: todosToAdd.length }),
         icon: Check,
         tone: "mint",
       });
     } catch (e) {
       toast({
-        title: "Eroare la aplicarea planului",
-        text: aiErrorCopy(e?.code) || "Unele elemente nu au putut fi salvate.",
+        title: tr("Eroare la aplicarea planului"),
+        text: aiErrorCopy(e?.code) || tr("Unele elemente nu au putut fi salvate."),
         icon: AlertCircle,
         tone: "rose",
       });
@@ -231,9 +232,9 @@ export default function Chat({ state, d, today, ai, goals, todo, agent, onAddHab
       saveLocal([]);
       setMessages([]);
       setAppliedPlans(new Set());
-      toast({ title: "Conversație ștearsă", icon: Trash2, tone: "mint" });
+      toast({ title: tr("Conversație ștearsă"), icon: Trash2, tone: "mint" });
     } catch {
-      toast({ title: "Nu am putut șterge conversația", icon: AlertCircle, tone: "rose" });
+      toast({ title: tr("Nu am putut șterge conversația"), icon: AlertCircle, tone: "rose" });
     }
   };
 
@@ -254,15 +255,11 @@ export default function Chat({ state, d, today, ai, goals, todo, agent, onAddHab
                   <h1 className="font-pixel text-lg sm:text-xl text-ink">{moltName}</h1>
                   <Chip tone="violet">{pInfo.cls}</Chip>
                 </div>
-                <p className="text-xs font-semibold text-dim">
-                  Asistentul tău personal AI · Întreabă orice despre școală, obiective și rutină
-                </p>
+                <p className="text-xs font-semibold text-dim">{tr("Asistentul tău personal AI · Întreabă orice despre școală, obiective și rutină")}</p>
               </div>
             </div>
             {messages.length > 0 && (
-              <Button size="sm" variant="ghost" icon={Trash2} onClick={() => setClearOpen(true)} className="text-dim hover:text-rose">
-                Șterge conversația
-              </Button>
+              <Button size="sm" variant="ghost" icon={Trash2} onClick={() => setClearOpen(true)} className="text-dim hover:text-rose">{tr("Șterge conversația")}</Button>
             )}
           </div>
         </Panel>
@@ -273,9 +270,7 @@ export default function Chat({ state, d, today, ai, goals, todo, agent, onAddHab
       {!ai?.server && (
         <div className="inset flex items-center gap-2.5 p-3 text-xs font-semibold text-dim">
           <AlertCircle size={16} className="text-ember shrink-0" aria-hidden="true" />
-          <span>
-            Chat-ul cu Moltul folosește inteligența artificială de pe server. În modul local/offline conversațiile anterioare sunt păstrate, dar generarea răspunsurilor noi necesită conexiune activă.
-          </span>
+          <span>{tr("Chat-ul cu Moltul folosește inteligența artificială de pe server. În modul local/offline conversațiile anterioare sunt păstrate, dar generarea răspunsurilor noi necesită conexiune activă.")}</span>
         </div>
       )}
 
@@ -290,17 +285,15 @@ export default function Chat({ state, d, today, ai, goals, todo, agent, onAddHab
                     <Sprite path={path} stage={companion.stage?.id || "egg"} mood={companion.mood || "idle"} size={64} crack={eggCrack(companion.ep || 0)} look={companion.look} />
                   </div>
                   <div className="max-w-md">
-                    <h2 className="font-pixel text-lg text-ink">Salut! Eu sunt {moltName}.</h2>
-                    <p className="mt-1 text-sm font-semibold text-dim">
-                      Sunt aici să te ajut să îți organizezi învățatul, să pregătești examenele sau să-ți construiești obiceiuri solide. Despre ce vrei să vorbim?
-                    </p>
+                    <h2 className="font-pixel text-lg text-ink">{tr("Salut! Eu sunt {moltName}.", { moltName })}</h2>
+                    <p className="mt-1 text-sm font-semibold text-dim">{tr("Sunt aici să te ajut să îți organizezi învățatul, să pregătești examenele sau să-ți construiești obiceiuri solide. Despre ce vrei să vorbim?")}</p>
                   </div>
                 </>
               )}
 
               {ai?.server && (
                 <div className="mt-2 w-full max-w-lg space-y-2">
-                  <p className="text-sm font-extrabold text-violet-hi">Cu ce începem?</p>
+                  <p className="text-sm font-extrabold text-violet-hi">{tr("Cu ce începem?")}</p>
                   <div className="flex flex-col gap-1.5 sm:grid sm:grid-cols-2">
                     {STARTERS.map((s, idx) => (
                       <button
@@ -326,7 +319,7 @@ export default function Chat({ state, d, today, ai, goals, todo, agent, onAddHab
                 <div key={m.id || idx} className={`flex flex-col ${isUser ? "items-end" : "items-start"}`}>
                   <div className="mb-1 flex items-center gap-1.5 px-1 text-[11px] font-bold text-dim">
                     {isUser ? (
-                      <span>Tu</span>
+                      <span>{tr("Tu")}</span>
                     ) : (
                       <>
                         <Sparkles size={11} className="text-violet-hi" aria-hidden="true" />
@@ -348,9 +341,7 @@ export default function Chat({ state, d, today, ai, goals, todo, agent, onAddHab
                     {m.plan && (
                       <div className="mt-3 space-y-3 rounded-xl border border-violet/30 bg-well/80 p-3 sm:p-4">
                         <div className="border-b border-edge/60 pb-2">
-                          <span className="text-[10px] font-black uppercase tracking-wider text-violet-hi">
-                            Plan structurat de Molt
-                          </span>
+                          <span className="text-[10px] font-black uppercase tracking-wider text-violet-hi">{tr("Plan structurat de Molt")}</span>
                           <h3 className="font-pixel text-base text-ink">{m.plan.title}</h3>
                           {m.plan.why && (
                             <p className="mt-0.5 text-xs font-medium text-dim italic">„{m.plan.why}”</p>
@@ -361,8 +352,7 @@ export default function Chat({ state, d, today, ai, goals, todo, agent, onAddHab
                         {m.plan.steps?.length > 0 && (
                           <div>
                             <div className="mb-1.5 flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wider text-violet-hi">
-                              <Target size={13} aria-hidden="true" /> Etape (Obiective): {m.plan.steps.length}
-                            </div>
+                              <Target size={13} aria-hidden="true" />{" "}{tr("Etape (Obiective): {length}", { length: m.plan.steps.length })}</div>
                             <ul className="space-y-1">
                               {m.plan.steps.map((st, sIdx) => (
                                 <li key={sIdx} className="inset flex items-baseline gap-2 p-2 text-xs">
@@ -370,9 +360,7 @@ export default function Chat({ state, d, today, ai, goals, todo, agent, onAddHab
                                   <div className="min-w-0 flex-1">
                                     <span className="font-bold text-ink">{st.text}</span>
                                     {st.criteria && (
-                                      <span className="block text-[11px] text-dim font-medium">
-                                        Criteriu: {st.criteria}
-                                      </span>
+                                      <span className="block text-[11px] text-dim font-medium">{tr("Criteriu: {criteria}", { criteria: st.criteria })}</span>
                                     )}
                                   </div>
                                   {st.due && <Chip tone="sky">{st.due}</Chip>}
@@ -386,14 +374,13 @@ export default function Chat({ state, d, today, ai, goals, todo, agent, onAddHab
                         {m.plan.habits?.length > 0 && (
                           <div>
                             <div className="mb-1.5 flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wider text-gold">
-                              <Flame size={13} aria-hidden="true" /> Obiceiuri propuse: {m.plan.habits.length}
-                            </div>
+                              <Flame size={13} aria-hidden="true" />{" "}{tr("Obiceiuri propuse: {length}", { length: m.plan.habits.length })}</div>
                             <div className="flex flex-wrap gap-2">
                               {m.plan.habits.map((h, hIdx) => (
                                 <div key={hIdx} className="inset flex items-center gap-2 px-2.5 py-1.5 text-xs">
                                   <span className="font-bold text-ink">{h.name}</span>
-                                  <Chip tone="gold">Dificultate {h.diff}</Chip>
-                                  <span className="text-[10px] text-dim">{h.days?.length} zile/săpt</span>
+                                  <Chip tone="gold">{tr("Dificultate {diff}", { diff: h.diff })}</Chip>
+                                  <span className="text-[10px] text-dim">{tr("{length} zile/săpt", { length: h.days?.length })}</span>
                                 </div>
                               ))}
                             </div>
@@ -404,8 +391,7 @@ export default function Chat({ state, d, today, ai, goals, todo, agent, onAddHab
                         {m.plan.todos?.length > 0 && (
                           <div>
                             <div className="mb-1.5 flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wider text-mint">
-                              <Clock size={13} aria-hidden="true" /> To-do-uri imediate: {m.plan.todos.length}
-                            </div>
+                              <Clock size={13} aria-hidden="true" />{" "}{tr("To-do-uri imediate: {length}", { length: m.plan.todos.length })}</div>
                             <ul className="space-y-1">
                               {m.plan.todos.map((t, tIdx) => (
                                 <li key={tIdx} className="inset flex items-center justify-between gap-2 p-2 text-xs">
@@ -430,7 +416,7 @@ export default function Chat({ state, d, today, ai, goals, todo, agent, onAddHab
                             onClick={() => handleApplyPlan(m.plan, m.id)}
                             className="w-full sm:w-auto"
                           >
-                            {isApplied ? "Plan aplicat în obiective și to-do-uri" : "Aplică planul în obiective, obiceiuri și to-do-uri"}
+                            {isApplied ? tr("Plan aplicat în obiective și to-do-uri") : tr("Aplică planul în obiective, obiceiuri și to-do-uri")}
                           </Button>
                         </div>
                       </div>
@@ -443,7 +429,7 @@ export default function Chat({ state, d, today, ai, goals, todo, agent, onAddHab
 
           {busy && (
             <div className="flex flex-col items-start gap-1">
-              <span className="text-[11px] font-bold text-violet-hi">{moltName} se gândește…</span>
+              <span className="text-[11px] font-bold text-violet-hi">{tr("{moltName} se gândește…", { moltName })}</span>
               <div className="rounded-2xl rounded-tl-xs bg-panel p-3.5 ring-1 ring-edge">
                 <Skeleton className="h-6 w-48" />
               </div>
@@ -467,12 +453,12 @@ export default function Chat({ state, d, today, ai, goals, todo, agent, onAddHab
           }}
           className="mt-4 flex items-center gap-2 border-t border-edge/60 pt-3"
         >
-          {messages.length > 0 && <IconButton icon={Trash2} label="Șterge conversația" onClick={() => setClearOpen(true)} className="shrink-0 hover:text-rose" />}
+          {messages.length > 0 && <IconButton icon={Trash2} label={tr("Șterge conversația")} onClick={() => setClearOpen(true)} className="shrink-0 hover:text-rose" />}
           <input
             className="field flex-1 text-sm"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder={`Scrie-i lui ${moltName}… (ex: „Vreau un plan de 2 săptămâni pentru simulare”)`}
+            placeholder={tr("Scrie-i lui {moltName}… (ex: „Vreau un plan de 2 săptămâni pentru simulare”)", { moltName })}
             disabled={busy || !ai?.server}
           />
           <Button
@@ -481,23 +467,19 @@ export default function Chat({ state, d, today, ai, goals, todo, agent, onAddHab
             icon={Send}
             disabled={!input.trim() || busy || !ai?.server}
             busy={busy}
-          >
-            Trimite
-          </Button>
+          >{tr("Trimite")}</Button>
         </form>
       </Wrap>
 
       <Confirm
         open={clearOpen}
-        title="Ștergi conversația?"
-        confirmLabel="Șterge definitiv"
+        title={tr("Ștergi conversația?")}
+        confirmLabel={tr("Șterge definitiv")}
         tone="rose"
         onConfirm={handleClear}
         onClose={() => setClearOpen(false)}
       >
-        <p className="text-sm font-semibold text-body">
-          Toate mesajele din conversația cu {moltName} vor fi șterse. Obiectivele, obiceiurile și to-do-urile deja aplicate vor rămâne salvate în aplicație.
-        </p>
+        <p className="text-sm font-semibold text-body">{tr("Toate mesajele din conversația cu {moltName} vor fi șterse. Obiectivele, obiceiurile și to-do-urile deja aplicate vor rămâne salvate în aplicație.", { moltName })}</p>
       </Confirm>
     </div>
   );

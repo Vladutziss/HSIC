@@ -6,15 +6,16 @@ import { HABIT_ICONS, iconFor } from "./icons.js";
 import { CATALOG, ICON_KEYS, MAX_HABITS, PATHS, PATH_LIST, habitFromCatalog, nextColor, uid } from "../lib/catalog.js";
 import { DIFF } from "../lib/engine.js";
 import { RO_DAYS_MIN } from "../lib/dates.js";
+import { tr } from "../lib/i18n.js";
 
 const WEEK_ORDER = [1, 2, 3, 4, 5, 6, 0];
 
 export function scheduleLabel(days) {
-  if (!days.length) return "Opțional"; // no scheduled days: an optional habit, always offered as a bonus
+  if (!days.length) return tr("Opțional"); // no scheduled days: an optional habit, always offered as a bonus
   const set = [...days].sort();
-  if (set.length === 7) return "Zilnic";
-  if (set.join() === "1,2,3,4,5") return "Zile lucrătoare";
-  if (set.join() === "0,6") return "Weekend";
+  if (set.length === 7) return tr("Zilnic");
+  if (set.join() === "1,2,3,4,5") return tr("Zile lucrătoare");
+  if (set.join() === "0,6") return tr("Weekend");
   return WEEK_ORDER.filter((d) => days.includes(d))
     .map((d) => RO_DAYS_MIN[d])
     .join(", ");
@@ -23,9 +24,9 @@ export function scheduleLabel(days) {
 export function DayPicker({ value, onChange, idPrefix = "day" }) {
   const toggle = (d) => onChange(value.includes(d) ? value.filter((x) => x !== d) : [...value, d]);
   const presets = [
-    ["Zilnic", [0, 1, 2, 3, 4, 5, 6]],
-    ["Lucrătoare", [1, 2, 3, 4, 5]],
-    ["Weekend", [0, 6]],
+    [tr("Zilnic"), [0, 1, 2, 3, 4, 5, 6]],
+    [tr("Lucrătoare"), [1, 2, 3, 4, 5]],
+    [tr("Weekend"), [0, 6]],
   ];
   return (
     <div className="space-y-2">
@@ -74,7 +75,7 @@ export function DifficultyPicker({ value, onChange }) {
         >
           <Gems n={n} size={13} />
           <span className="text-sm font-extrabold text-ink">{DIFF[n].label}</span>
-          <span className="text-[11px] font-bold text-gold-hi">+{DIFF[n].xp} momentum</span>
+          <span className="text-[11px] font-bold text-gold-hi">{tr("+{xp} momentum", { xp: DIFF[n].xp })}</span>
         </button>
       ))}
     </div>
@@ -90,7 +91,7 @@ function CatalogTab({ state, today, onAdd }) {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap gap-1.5">
-        {[{ id: "all", label: "Toate" }, ...PATH_LIST].map((p) => (
+        {[{ id: "all", label: tr("Toate") }, ...PATH_LIST].map((p) => (
           <button
             key={p.id}
             type="button"
@@ -102,7 +103,7 @@ function CatalogTab({ state, today, onAdd }) {
           </button>
         ))}
       </div>
-      {full && <p className="rounded-xl bg-ember/10 p-3 text-sm font-semibold text-ember ring-1 ring-ember/30">Ai deja {MAX_HABITS} obiceiuri active. Arhivează sau șterge unul ca să adaugi altul.</p>}
+      {full && <p className="rounded-xl bg-ember/10 p-3 text-sm font-semibold text-ember ring-1 ring-ember/30">{tr("Ai deja {MAX_HABITS} obiceiuri active. Arhivează sau șterge unul ca să adaugi altul.", { MAX_HABITS })}</p>}
       <div className="grid gap-2 sm:grid-cols-2">
         {list.map((c) => {
           const Icon = iconFor(c.icon);
@@ -125,9 +126,9 @@ function CatalogTab({ state, today, onAdd }) {
                 icon={has ? Check : Plus}
                 disabled={has || full}
                 onClick={() => onAdd(habitFromCatalog(c, state.habits || [], today))}
-                aria-label={has ? `${c.name} e deja adăugat` : `Adaugă ${c.name}`}
+                aria-label={has ? tr("{name} e deja adăugat", { name: c.name }) : tr("Adaugă {name}", { name: c.name })}
               >
-                {has ? "Adăugat" : "Adaugă"}
+                {has ? tr("Adăugat") : tr("Adaugă")}
               </Button>
             </div>
           );
@@ -151,11 +152,11 @@ export function HabitForm({ draft, setDraft }) {
   };
   return (
     <div className="space-y-4">
-      <Field label="Nume" htmlFor="habit-name">
-        <input id="habit-name" className="field" value={draft.name} maxLength={40} placeholder="ex.: Înot" onChange={(e) => set("name")(e.target.value)} />
+      <Field label={tr("Nume")} htmlFor="habit-name">
+        <input id="habit-name" className="field" value={draft.name} maxLength={40} placeholder={tr("ex.: Înot")} onChange={(e) => set("name")(e.target.value)} />
       </Field>
       <div>
-        <span className="mb-1.5 block text-xs font-extrabold uppercase tracking-wider text-dim">Iconiță</span>
+        <span className="mb-1.5 block text-xs font-extrabold uppercase tracking-wider text-dim">{tr("Iconiță")}</span>
         <div className="grid grid-cols-8 gap-1.5 sm:grid-cols-10">
           {ICON_KEYS.map((k) => {
             const Icon = HABIT_ICONS[k];
@@ -176,21 +177,21 @@ export function HabitForm({ draft, setDraft }) {
         </div>
       </div>
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Categorie" htmlFor="habit-cat">
+        <Field label={tr("Categorie")} htmlFor="habit-cat">
           <Select id="habit-cat" value={draft.cat} onChange={set("cat")} options={PATH_LIST.map((p) => ({ value: p.id, label: p.label }))} />
         </Field>
-        <Field label="Ora (opțional)" htmlFor="habit-time" hint="Apare în calendar.">
+        <Field label={tr("Ora (opțional)")} htmlFor="habit-time" hint={tr("Apare în calendar.")}>
           <TimeSelect id="habit-time" value={draft.time || null} onChange={set("time")} />
         </Field>
       </div>
       <div>
-        <span className="mb-1.5 block text-xs font-extrabold uppercase tracking-wider text-dim">Dificultate</span>
+        <span className="mb-1.5 block text-xs font-extrabold uppercase tracking-wider text-dim">{tr("Dificultate")}</span>
         <DifficultyPicker value={draft.diff} onChange={set("diff")} />
       </div>
       <div>
-        <span className="mb-1.5 block text-xs font-extrabold uppercase tracking-wider text-dim">Zile</span>
+        <span className="mb-1.5 block text-xs font-extrabold uppercase tracking-wider text-dim">{tr("Zile")}</span>
         {optional ? (
-          <p className="text-sm font-semibold text-dim">Fără zile fixe: apare zilnic la „Opționale” și îl bifezi când vrei.</p>
+          <p className="text-sm font-semibold text-dim">{tr("Fără zile fixe: apare zilnic la „Opționale” și îl bifezi când vrei.")}</p>
         ) : (
           <DayPicker value={draft.days} onChange={pickDays} />
         )}
@@ -203,13 +204,13 @@ export function HabitForm({ draft, setDraft }) {
             onChange={(e) => set("days")(e.target.checked ? [] : lastDays)}
           />
           <span>
-            <span className="block text-sm font-extrabold text-ink">Opțional</span>
-            <span className="block text-xs font-semibold text-dim">Bonus fără zile programate: nu e obligatoriu, deci nu strică seria dacă îl sari. Bifat, aduce momentum ca oricare altul.</span>
+            <span className="block text-sm font-extrabold text-ink">{tr("Opțional")}</span>
+            <span className="block text-xs font-semibold text-dim">{tr("Bonus fără zile programate: nu e obligatoriu, deci nu strică seria dacă îl sari. Bifat, aduce momentum ca oricare altul.")}</span>
           </span>
         </label>
       </div>
-      <Field label="Țintă" htmlFor="habit-target">
-        <input id="habit-target" className="field" value={draft.target} maxLength={60} placeholder="ex.: 30 de minute" onChange={(e) => set("target")(e.target.value)} />
+      <Field label={tr("Țintă")} htmlFor="habit-target">
+        <input id="habit-target" className="field" value={draft.target} maxLength={60} placeholder={tr("ex.: 30 de minute")} onChange={(e) => set("target")(e.target.value)} />
       </Field>
     </div>
   );
@@ -239,7 +240,7 @@ export function HabitEditor({ open, initial, tab: initialTab = "catalog", state,
   const full = !editing && active.length >= MAX_HABITS;
   const valid = draft.name.trim().length > 1 && !full;
 
-  const save = () => valid && onSave({ ...draft, name: draft.name.trim(), target: draft.target.trim() || "o dată pe zi" });
+  const save = () => valid && onSave({ ...draft, name: draft.name.trim(), target: draft.target.trim() || tr("o dată pe zi") });
 
   return (
     <Modal
@@ -248,20 +249,16 @@ export function HabitEditor({ open, initial, tab: initialTab = "catalog", state,
       wide
       tone="gold"
       icon={ScrollText}
-      title={editing ? "Editează obiceiul" : "Adaugă un obicei"}
+      title={editing ? tr("Editează obiceiul") : tr("Adaugă un obicei")}
       footer={
         tab === "custom" ? (
           <>
             {editing && (
-              <Button variant="ghost" icon={Archive} className="mr-auto" onClick={() => onArchive(initial.id, true)}>
-                Arhivează
-              </Button>
+              <Button variant="ghost" icon={Archive} className="mr-auto" onClick={() => onArchive(initial.id, true)}>{tr("Arhivează")}</Button>
             )}
-            <Button variant="ghost" onClick={onClose}>
-              Renunță
-            </Button>
+            <Button variant="ghost" onClick={onClose}>{tr("Renunță")}</Button>
             <Button id="habit-save" onClick={save} disabled={!valid} icon={Check}>
-              {editing ? "Salvează" : "Creează obiceiul"}
+              {editing ? tr("Salvează") : tr("Creează obiceiul")}
             </Button>
           </>
         ) : null
@@ -273,8 +270,8 @@ export function HabitEditor({ open, initial, tab: initialTab = "catalog", state,
           value={tab}
           onChange={setTab}
           items={[
-            { value: "catalog", label: "Recomandate", icon: ScrollText, id: "tab-catalog" },
-            { value: "custom", label: "Personalizat", icon: Wand2, id: "tab-custom" },
+            { value: "catalog", label: tr("Recomandate"), icon: ScrollText, id: "tab-catalog" },
+            { value: "custom", label: tr("Personalizat"), icon: Wand2, id: "tab-custom" },
           ]}
         />
       )}
@@ -282,11 +279,11 @@ export function HabitEditor({ open, initial, tab: initialTab = "catalog", state,
         <CatalogTab state={state} today={today} onAdd={(h) => onSave(h, { keepOpen: true })} />
       ) : (
         <>
-          {full && <p className="mb-4 rounded-xl bg-ember/10 p-3 text-sm font-semibold text-ember ring-1 ring-ember/30">Ai deja {MAX_HABITS} obiceiuri active. Arhivează sau șterge unul ca să adaugi altul.</p>}
+          {full && <p className="mb-4 rounded-xl bg-ember/10 p-3 text-sm font-semibold text-ember ring-1 ring-ember/30">{tr("Ai deja {MAX_HABITS} obiceiuri active. Arhivează sau șterge unul ca să adaugi altul.", { MAX_HABITS })}</p>}
           <HabitForm draft={draft} setDraft={setDraft} />
           <div className="mt-4 flex items-center gap-2 text-xs font-semibold text-dim">
-            <Chip tone="gold">+{DIFF[draft.diff].xp} momentum pe bifă</Chip>
-            <span>+{DIFF[draft.diff].ep} puncte de evoluție</span>
+            <Chip tone="gold">{tr("+{xp} momentum pe bifă", { xp: DIFF[draft.diff].xp })}</Chip>
+            <span>{tr("+{ep} puncte de evoluție", { ep: DIFF[draft.diff].ep })}</span>
           </div>
         </>
       )}

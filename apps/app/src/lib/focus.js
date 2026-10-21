@@ -18,14 +18,15 @@
 //   }
 
 import { getPref, setPref } from "./prefs.js";
+import { tr } from "./i18n.js";
 
 const KEY = "molted.focusSession";
 const MIN = 60000;
 
 export const PRESETS = [
-  { id: "free", label: "Fără pauze", sub: "Cronometru simplu", pomodoro: null },
-  { id: "p25", label: "Pomodoro", sub: "25 min lucru · 5 min pauză", pomodoro: { work: 25, brk: 5 } },
-  { id: "p50", label: "Sesiune lungă", sub: "50 min lucru · 10 min pauză", pomodoro: { work: 50, brk: 10 } },
+  { id: "free", label: tr("Fără pauze"), sub: tr("Cronometru simplu"), pomodoro: null },
+  { id: "p25", label: "Pomodoro", sub: tr("25 min lucru · 5 min pauză"), pomodoro: { work: 25, brk: 5 } },
+  { id: "p50", label: tr("Sesiune lungă"), sub: tr("50 min lucru · 10 min pauză"), pomodoro: { work: 50, brk: 10 } },
 ];
 export const WORK_CHOICES = [15, 20, 25, 30, 45, 50, 60, 90];
 export const BREAK_CHOICES = [3, 5, 10, 15, 20];

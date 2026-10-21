@@ -1,6 +1,7 @@
 // Public team page (team.html): reads the rows admin.html writes (team_members, team_photos), anon key only.
 import { SUPABASE_URL, SUPABASE_KEY, configured, photoUrl, PATHS, esc } from "./team-data.js";
 import { spriteSvg } from "./sprite.js";
+import { S } from "./i18n/client.js";
 
 const $ = (id) => document.getElementById(id);
 
@@ -26,7 +27,7 @@ const member = (m, i) => `
   </li>`;
 
 (async () => {
-  if (!configured) return ($("stare").textContent = "Pagina nu e configurată încă.");
+  if (!configured) return ($("stare").textContent = S.teamNotConfigured);
   try {
     const [members, photos] = await Promise.all([get("team_members"), get("team_photos")]);
     $("stare").hidden = true;
@@ -38,6 +39,6 @@ const member = (m, i) => `
       $("galerie-sectiune").hidden = false;
     }
   } catch {
-    $("stare").textContent = "Nu am putut încărca echipa. Încearcă din nou mai târziu.";
+    $("stare").textContent = S.teamLoadError;
   }
 })();

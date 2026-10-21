@@ -1,0 +1,98 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "cleanUrls": true,
+  "trailingSlash": true,
+  "redirects": [
+    {
+      "source": "/",
+      "destination": "/ro/",
+      "permanent": false
+    },
+    {
+      "source": "/index.html",
+      "destination": "/ro/",
+      "permanent": true
+    },
+    {
+      "source": "/index",
+      "destination": "/ro/",
+      "permanent": true
+    },
+    {
+      "source": "/index/",
+      "destination": "/ro/",
+      "permanent": true
+    },
+    {
+      "source": "/team.html",
+      "destination": "/ro/echipa/",
+      "permanent": true
+    },
+    {
+      "source": "/team",
+      "destination": "/ro/echipa/",
+      "permanent": true
+    },
+    {
+      "source": "/team/",
+      "destination": "/ro/echipa/",
+      "permanent": true
+    },
+    {
+      "source": "/privacy.html",
+      "destination": "/ro/confidentialitate/",
+      "permanent": true
+    },
+    {
+      "source": "/privacy",
+      "destination": "/ro/confidentialitate/",
+      "permanent": true
+    },
+    {
+      "source": "/privacy/",
+      "destination": "/ro/confidentialitate/",
+      "permanent": true
+    },
+    {
+      "source": "/terms.html",
+      "destination": "/ro/termeni/",
+      "permanent": true
+    },
+    {
+      "source": "/terms",
+      "destination": "/ro/termeni/",
+      "permanent": true
+    },
+    {
+      "source": "/terms/",
+      "destination": "/ro/termeni/",
+      "permanent": true
+    },
+    {
+      "source": "/ro/giveaways/_shell/",
+      "destination": "/ro/giveaways/",
+      "permanent": false
+    }
+  ],
+  "headers": [
+    {
+      "source": "/admin(.*)",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
+      ]
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/ro/giveaways/:slug([a-z0-9-]{3,60})/",
+      "destination": "/ro/giveaways/_shell/"
+    },
+    {
+      "source": "/ro/giveaways/:slug([a-z0-9-]{3,60})",
+      "destination": "/ro/giveaways/_shell/"
+    }
+  ]
+}

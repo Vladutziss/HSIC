@@ -8,6 +8,7 @@
 // ask for a "view" of each one (below), so they can keep reading `t.done` and `t.date`.
 
 import { RO_DAYS, RO_DAYS_MIN, addDays, fmtDay, weekday } from "./dates.js";
+import { tr } from "./i18n.js";
 
 const ALL_DAYS = [0, 1, 2, 3, 4, 5, 6];
 export const WEEK_ORDER = [1, 2, 3, 4, 5, 6, 0];
@@ -84,8 +85,8 @@ export function toggleDone(t, day) {
 export function repeatLabel(r) {
   if (!r) return "";
   let base;
-  if (r.kind === "daily" || r.days.length === 7) base = "Zilnic";
-  else if (r.kind === "weekly") base = `În fiecare ${RO_DAYS[r.days[0]]}`;
+  if (r.kind === "daily" || r.days.length === 7) base = tr("Zilnic");
+  else if (r.kind === "weekly") base = tr("În fiecare {v}", { v: RO_DAYS[r.days[0]] });
   else base = WEEK_ORDER.filter((d) => r.days.includes(d)).map((d) => RO_DAYS_MIN[d]).join(" ");
-  return r.until ? `${base} · până pe ${fmtDay(r.until)}` : base;
+  return r.until ? tr("{base} · până pe {fmtDay}", { base, fmtDay: fmtDay(r.until) }) : base;
 }

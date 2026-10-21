@@ -6,6 +6,7 @@ import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from
 import { createPortal } from "react-dom";
 import { CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight, Clock, X } from "lucide-react";
 import { RO_DAYS_MIN, RO_DAYS_SHORT, RO_MONTHS, addDays, dayKey, fmt12, fmtDay, fmtLong, mondayOf, parseDay, parseHM, todayKey } from "../lib/dates.js";
+import { tr } from "../lib/i18n.js";
 
 const pad = (n) => String(n).padStart(2, "0");
 
@@ -140,7 +141,7 @@ function useFocusOnOpen(pop, selector = '[aria-selected="true"]') {
 // ------------------------------------------------------------ Select
 
 /** options: [{ value, label }] */
-export function Select({ id, value, onChange, options, disabled, placeholder = "Alege…", className = "" }) {
+export function Select({ id, value, onChange, options, disabled, placeholder = tr("Alege…"), className = "" }) {
   const pop = usePopover();
   useFocusOnOpen(pop);
   const current = options.find((o) => o.value === value);
@@ -213,21 +214,19 @@ export function TimeSelect({ id, value, onChange, disabled, clearable = true, pl
       <Trigger pop={pop} id={id} disabled={disabled} icon={Clock} placeholder={placeholder}>
         {value ? fmt12(value) : null}
       </Trigger>
-      <Menu pop={pop} minWidth={236} aria-label="Alege ora">
+      <Menu pop={pop} minWidth={236} aria-label={tr("Alege ora")}>
         <div className="mb-1 grid grid-cols-3 px-1 text-center text-[10px] font-extrabold uppercase tracking-wider text-dim">
-          <span>Ora</span>
-          <span>Minut</span>
-          <span>AM / PM</span>
+          <span>{tr("Ora")}</span>
+          <span>{tr("Minut")}</span>
+          <span>{tr("AM / PM")}</span>
         </div>
         <div className="flex gap-1.5">
-          {col(HOURS, sel.h, (x) => pick({ h: x }), "Ora")}
-          {col(MINUTES, sel.m, (x) => pick({ m: x }), "Minut")}
-          {col(["AM", "PM"], sel.pm == null ? null : sel.pm ? "PM" : "AM", (x) => pick({ pm: x === "PM" }), "AM sau PM", "!max-h-none")}
+          {col(HOURS, sel.h, (x) => pick({ h: x }), tr("Ora"))}
+          {col(MINUTES, sel.m, (x) => pick({ m: x }), tr("Minut"))}
+          {col(["AM", "PM"], sel.pm == null ? null : sel.pm ? "PM" : "AM", (x) => pick({ pm: x === "PM" }), tr("AM sau PM"), "!max-h-none")}
         </div>
         <div className="mt-1.5 flex gap-1.5">
-          <button type="button" className="focus-ring flex-1 rounded-lg bg-gold py-1.5 text-xs font-extrabold text-on-gold" onClick={() => pop.close()}>
-            Gata
-          </button>
+          <button type="button" className="focus-ring flex-1 rounded-lg bg-gold py-1.5 text-xs font-extrabold text-on-gold" onClick={() => pop.close()}>{tr("Gata")}</button>
           {clearable && value && (
             <button
               type="button"
@@ -237,8 +236,7 @@ export function TimeSelect({ id, value, onChange, disabled, clearable = true, pl
                 pop.close();
               }}
             >
-              <X size={13} aria-hidden="true" /> Fără oră
-            </button>
+              <X size={13} aria-hidden="true" />{" "}{tr("Fără oră")}</button>
           )}
         </div>
       </Menu>
@@ -249,7 +247,7 @@ export function TimeSelect({ id, value, onChange, disabled, clearable = true, pl
 // ------------------------------------------------------------ DateSelect
 
 /** value: "YYYY-MM-DD" or null. A month grid starting on Monday. */
-export function DateSelect({ id, value, onChange, disabled, clearable = true, placeholder = "Fără dată" }) {
+export function DateSelect({ id, value, onChange, disabled, clearable = true, placeholder = tr("Fără dată") }) {
   const pop = usePopover();
   const today = todayKey();
   const [month, setMonth] = useState((value || today).slice(0, 7));
@@ -277,15 +275,15 @@ export function DateSelect({ id, value, onChange, disabled, clearable = true, pl
       <Trigger pop={pop} id={id} disabled={disabled} icon={CalendarDays} placeholder={placeholder}>
         {value ? `${RO_DAYS_SHORT[parseDay(value).getDay()]}, ${fmtDay(value)}` : null}
       </Trigger>
-      <Menu pop={pop} minWidth={272} aria-label="Alege ziua" className="p-2.5">
+      <Menu pop={pop} minWidth={272} aria-label={tr("Alege ziua")} className="p-2.5">
         <div className="mb-2 flex items-center gap-1">
-          <button type="button" aria-label="Luna trecută" className="focus-ring grid h-8 w-8 place-items-center rounded-lg text-dim hover:bg-violet/10 hover:text-ink" onClick={() => shift(-1)}>
+          <button type="button" aria-label={tr("Luna trecută")} className="focus-ring grid h-8 w-8 place-items-center rounded-lg text-dim hover:bg-violet/10 hover:text-ink" onClick={() => shift(-1)}>
             <ChevronLeft size={16} aria-hidden="true" />
           </button>
           <div className="flex-1 text-center font-pixel text-base capitalize text-ink">
             {RO_MONTHS[mo - 1]} {y}
           </div>
-          <button type="button" aria-label="Luna viitoare" className="focus-ring grid h-8 w-8 place-items-center rounded-lg text-dim hover:bg-violet/10 hover:text-ink" onClick={() => shift(1)}>
+          <button type="button" aria-label={tr("Luna viitoare")} className="focus-ring grid h-8 w-8 place-items-center rounded-lg text-dim hover:bg-violet/10 hover:text-ink" onClick={() => shift(1)}>
             <ChevronRight size={16} aria-hidden="true" />
           </button>
         </div>
@@ -322,17 +320,14 @@ export function DateSelect({ id, value, onChange, disabled, clearable = true, pl
           })}
         </div>
         <div className="mt-2 flex gap-1.5 border-t border-edge pt-2">
-          <button type="button" className="focus-ring flex-1 rounded-lg py-1.5 text-xs font-extrabold text-gold hover:bg-gold/10" onClick={() => choose(today)}>
-            Azi
-          </button>
+          <button type="button" className="focus-ring flex-1 rounded-lg py-1.5 text-xs font-extrabold text-gold hover:bg-gold/10" onClick={() => choose(today)}>{tr("Azi")}</button>
           {clearable && value && (
             <button
               type="button"
               className="focus-ring flex flex-1 items-center justify-center gap-1 rounded-lg py-1.5 text-xs font-extrabold text-dim hover:bg-violet/10 hover:text-ink"
               onClick={() => choose(null)}
             >
-              <X size={13} aria-hidden="true" /> Fără dată
-            </button>
+              <X size={13} aria-hidden="true" />{" "}{tr("Fără dată")}</button>
           )}
         </div>
       </Menu>

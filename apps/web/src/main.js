@@ -1,5 +1,6 @@
 // Renders Molt with the same pixel sprites as the app (shared via @molted/ui).
 import { spriteSvg as svg } from "./sprite.js";
+import { S } from "./i18n/client.js";
 
 const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -36,30 +37,28 @@ if (hero) {
   }
 }
 
-// the coach in numbers: one public, aggregate-only RPC (null until there is enough data); the section stays hidden otherwise
+// Molted in numbers: one public, aggregate-only RPC; the section stays hidden if the call fails
 const base = import.meta.env.VITE_SUPABASE_URL?.trim();
 const anon = import.meta.env.VITE_SUPABASE_ANON_KEY?.trim();
-const rpc = (name) => fetch(`${base}/rest/v1/rpc/${name}`, { method: "POST", headers: { apikey: anon, "Content-Type": "application/json" }, body: "{}" }).then((r) => (r.ok ? r.json() : null));
-
-// players: the row count of profiles (migration 0029); hidden if the request fails
-if (base && anon) {
-  rpc("player_count")
-    .then((n) => {
-      if (!n) return;
-      document.getElementById("jucatori-n").textContent = n;
-      document.getElementById("jucatori").hidden = false;
-    })
-    .catch(() => {});
-}
-
 const cifre = document.getElementById("cifre");
+const put = (id, v) => (document.getElementById(id).textContent = Number(v).toLocaleString(S.numberLocale));
 if (cifre && base && anon) {
-  rpc("agent_stats")
+  fetch(`${base}/rest/v1/rpc/public_stats`, { method: "POST", headers: { apikey: anon, "Content-Type": "application/json" }, body: "{}" })
+    .then((r) => (r.ok ? r.json() : null))
     .then((m) => {
-      if (!m || !m.decided) return;
-      document.getElementById("cifre-decided").textContent = m.decided;
-      document.getElementById("cifre-applied").textContent = `${Math.round((m.applied / m.decided) * 100)}%`;
-      document.getElementById("cifre-improved").textContent = m.measured ? `${m.improved} din ${m.measured}` : "în curs";
+      if (!m || !m.users) return;
+      put("c-users", m.users);
+      put("c-active7", m.active7);
+      put("c-checkins", m.checkins);
+      put("c-objectives", m.objectives);
+      put("c-todos", m.todosDone);
+      const a = m.agent; // null until there is enough data
+      if (a?.decided) {
+        put("c-decided", a.decided);
+        document.getElementById("c-applied").textContent = `${Math.round((a.applied / a.decided) * 100)}%`;
+        document.getElementById("c-improved").textContent = a.measured ? S.improvedOf(a.improved, a.measured) : S.improvedPending;
+        document.getElementById("c-agent").hidden = false;
+      }
       cifre.hidden = false;
     })
     .catch(() => {});

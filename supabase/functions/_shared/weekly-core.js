@@ -16,7 +16,7 @@
 //                           -> one 25-min "Recapitulare <subject>" tomorrow (one per subject, dedupe by title+date).
 //   4 data + cap            no action on a habit with < 14 scheduled days in the last 56 (recorded);
 //                           at most `maxActions` in total, 'auto' first, then 'confirm'.
-import { addDays, dayRange, RO_DAYS, weekday } from "./app/dates.js";
+import { addDays, dayRange, NAMES, weekday } from "./app/dates.js";
 import { isScheduled, streakInfo } from "./app/engine.js";
 import { withObservedStart } from "./app/history.js";
 import { nextExams, schoolPlanner } from "./app/schoolPlanner.js";
@@ -33,7 +33,11 @@ function baselineOf(h, state, today) {
   return { rate28: sched.length ? round(done / sched.length) : null, asOf: today };
 }
 
-export function planWeek({ state: raw, today, patterns, context, feedback, pastActions = [], maxActions = 3, maxTodos = 2 } = {}) {
+/** The texts the run writes for the player (to-do titles, reasons) are Romanian by default and English for `lang: "en"`. */
+export function planWeek({ state: raw, today, patterns, context, feedback, pastActions = [], maxActions = 3, maxTodos = 2, lang = "ro" } = {}) {
+  const en = lang === "en";
+  const L = (ro, eng) => (en ? eng : ro);
+  const DAYS = (NAMES[lang] || NAMES.ro).days;
   const state = withObservedStart(raw || {});
   const habits = new Map((state.habits || []).map((h) => [h.id, h]));
   const findings = patterns?.findings || [];
@@ -54,16 +58,16 @@ export function planWeek({ state: raw, today, patterns, context, feedback, pastA
     const h = habits.get(habitId);
     if (!h) return null;
     if ((rejected[kind] || 0) >= THRESHOLDS.rejectedLimit) {
-      skip(rule, `Jucătorul a respins de ${rejected[kind]} ori acțiuni de tip ${kind}; nu mai propun.`);
+      skip(rule, L(`Jucătorul a respins de ${rejected[kind]} ori acțiuni de tip ${kind}; nu mai propun.`, `The player rejected ${kind} actions ${rejected[kind]} times; not proposing any more.`));
       return null;
     }
     const name = String(h.name || "").toLowerCase();
     if (name && constraints.some((c) => c.includes(name))) {
-      skip(rule, `Există o constrângere activă care menționează „${h.name}"; nu ating obiceiul.`);
+      skip(rule, L(`Există o constrângere activă care menționează „${h.name}"; nu ating obiceiul.`, `An active constraint mentions "${h.name}"; leaving the habit alone.`));
       return null;
     }
     if (!histOk(h)) {
-      skip(rule, `„${h.name}" are sub ${THRESHOLDS.minScheduled} zile programate în ultimele ${THRESHOLDS.historyDays}; prea puține date.`);
+      skip(rule, L(`„${h.name}" are sub ${THRESHOLDS.minScheduled} zile programate în ultimele ${THRESHOLDS.historyDays}; prea puține date.`, `"${h.name}" has fewer than ${THRESHOLDS.minScheduled} scheduled days in the last ${THRESHOLDS.historyDays}; too little data.`));
       return null;
     }
     return h;
@@ -78,14 +82,14 @@ export function planWeek({ state: raw, today, patterns, context, feedback, pastA
       if (!target) continue; // not scheduled that weekday next week: nothing to prepare
       const date = addDays(target, -1);
       if (date < today) {
-        skip("weak_weekday_prompt", `Data ${date} e în trecut.`);
+        skip("weak_weekday_prompt", L(`Data ${date} e în trecut.`, `The date ${date} is in the past.`));
         continue;
       }
       if (!gate("weak_weekday_prompt", "create_todo", f.habitId)) continue;
-      const title = `Mâine: ${h.name} (ziua ta mai grea). Alege acum când o faci.`;
+      const title = L(`Mâine: ${h.name} (ziua ta mai grea). Alege acum când o faci.`, `Tomorrow: ${h.name} (your harder day). Pick now when you will do it.`);
       const key = `${date}|${title}`;
       if (taken.has(key)) {
-        skip("weak_weekday_prompt", `Există deja un to-do deschis „${title}" pe ${date}.`);
+        skip("weak_weekday_prompt", L(`Există deja un to-do deschis „${title}" pe ${date}.`, `There is already an open to-do "${title}" on ${date}.`));
         continue;
       }
       taken.add(key);
@@ -94,7 +98,7 @@ export function planWeek({ state: raw, today, patterns, context, feedback, pastA
         autonomy: "auto",
         habitId: h.id,
         payload: { title, date, dur: THRESHOLDS.promptDur },
-        reason: `${h.name} merge mai greu ${RO_DAYS[f.params.weekday]}: ${pct(f.rateA)} bifat (n=${f.n.a}) față de ${pct(f.rateB)} în rest (n=${f.n.b}); e o asociație, nu o cauză, așa că îți las un memento cu o zi înainte.`,
+        reason: L(`${h.name} merge mai greu ${DAYS[f.params.weekday]}: ${pct(f.rateA)} bifat (n=${f.n.a}) față de ${pct(f.rateB)} în rest (n=${f.n.b}); e o asociație, nu o cauză, așa că îți las un memento cu o zi înainte.`, `${h.name} is harder on ${DAYS[f.params.weekday]}s: ${pct(f.rateA)} checked off (n=${f.n.a}) versus ${pct(f.rateB)} the rest of the time (n=${f.n.b}); that is an association, not a cause, so I'm leaving you a reminder the day before.`),
         sources: ["gollwitzer-1999", "sheeran-2025"],
         baseline: baselineOf(h, state, today),
       });
@@ -107,7 +111,7 @@ export function planWeek({ state: raw, today, patterns, context, feedback, pastA
         autonomy: "confirm",
         habitId: h.id,
         payload: { habitId: h.id, diff: h.diff - 1, days: [...(h.days || [])] },
-        reason: `După o zi ratată, ${h.name} se ratează din nou în ${pct(f.rateA)} din cazuri (n=${f.n.a}) față de ${pct(f.rateB)} după o zi bifată (n=${f.n.b}); e o asociație, propun o dificultate mai mică (${h.diff} -> ${h.diff - 1}) cu aceleași zile.`,
+        reason: L(`După o zi ratată, ${h.name} se ratează din nou în ${pct(f.rateA)} din cazuri (n=${f.n.a}) față de ${pct(f.rateB)} după o zi bifată (n=${f.n.b}); e o asociație, propun o dificultate mai mică (${h.diff} -> ${h.diff - 1}) cu aceleași zile.`, `After a missed day, ${h.name} is missed again in ${pct(f.rateA)} of cases (n=${f.n.a}) versus ${pct(f.rateB)} after a day it was done (n=${f.n.b}); that is an association, so I suggest a lower difficulty (${h.diff} -> ${h.diff - 1}) on the same days.`),
         sources: ["fogg-2009", "lally-2010"],
         baseline: baselineOf(h, state, today),
       });
@@ -127,17 +131,17 @@ export function planWeek({ state: raw, today, patterns, context, feedback, pastA
     seen.add(key);
     if (sessions.some((s) => s.day >= studyFrom && s.day <= today && String(s.subject || "").trim().toLowerCase() === key && Number(s.minutes) > 0)) continue;
     if ((rejected.create_todo || 0) >= THRESHOLDS.rejectedLimit) {
-      skip("exam_recap", `Jucătorul a respins de ${rejected.create_todo} ori acțiuni de tip create_todo; nu mai propun.`);
+      skip("exam_recap", L(`Jucătorul a respins de ${rejected.create_todo} ori acțiuni de tip create_todo; nu mai propun.`, `The player rejected create_todo actions ${rejected.create_todo} times; not proposing any more.`));
       continue;
     }
     if (constraints.some((c) => c.includes(key))) {
-      skip("exam_recap", `Există o constrângere activă care menționează „${subject}"; nu propun.`);
+      skip("exam_recap", L(`Există o constrângere activă care menționează „${subject}"; nu propun.`, `An active constraint mentions "${subject}"; not proposing.`));
       continue;
     }
-    const title = `Recapitulare ${subject}`;
+    const title = L(`Recapitulare ${subject}`, `Review ${subject}`);
     const date = addDays(today, 1);
     if (taken.has(`${date}|${title}`)) {
-      skip("exam_recap", `Există deja un to-do deschis „${title}" pe ${date}.`);
+      skip("exam_recap", L(`Există deja un to-do deschis „${title}" pe ${date}.`, `There is already an open to-do "${title}" on ${date}.`));
       continue;
     }
     taken.add(`${date}|${title}`);
@@ -145,15 +149,15 @@ export function planWeek({ state: raw, today, patterns, context, feedback, pastA
       kind: "create_todo",
       autonomy: "confirm",
       payload: { title, date, dur: THRESHOLDS.recapDur },
-      reason: `Examen la ${subject} peste ${e.daysLeft} ${e.daysLeft === 1 ? "zi" : "zile"} (${e.date}) și 0 minute de studiu notate la ${subject} în ultimele 7 zile; îți propun o recapitulare scurtă.`,
+      reason: L(`Examen la ${subject} peste ${e.daysLeft} ${e.daysLeft === 1 ? "zi" : "zile"} (${e.date}) și 0 minute de studiu notate la ${subject} în ultimele 7 zile; îți propun o recapitulare scurtă.`, `Exam in ${subject} in ${e.daysLeft} ${e.daysLeft === 1 ? "day" : "days"} (${e.date}) and 0 minutes of study logged for ${subject} in the last 7 days; I suggest a short review.`),
       sources: [],
       baseline: null,
     });
   }
 
-  for (const t of todos.slice(maxTodos)) skip("weak_weekday_prompt", `Peste limita de ${maxTodos} to-do-uri pe săptămână: „${t.payload.title}".`);
+  for (const t of todos.slice(maxTodos)) skip("weak_weekday_prompt", L(`Peste limita de ${maxTodos} to-do-uri pe săptămână: „${t.payload.title}".`, `Over the limit of ${maxTodos} to-dos a week: "${t.payload.title}".`));
   const ordered = [...todos.slice(0, maxTodos), ...confirms, ...recaps];
-  for (const a of ordered.slice(maxActions)) skip(recaps.includes(a) ? "exam_recap" : a.kind === "create_todo" ? "weak_weekday_prompt" : "repeat_miss_downshift", `Peste limita de ${maxActions} acțiuni pe săptămână.`);
+  for (const a of ordered.slice(maxActions)) skip(recaps.includes(a) ? "exam_recap" : a.kind === "create_todo" ? "weak_weekday_prompt" : "repeat_miss_downshift", L(`Peste limita de ${maxActions} acțiuni pe săptămână.`, `Over the limit of ${maxActions} actions a week.`));
 
   return { runDay: today, actions: ordered.slice(0, maxActions), skipped };
 }

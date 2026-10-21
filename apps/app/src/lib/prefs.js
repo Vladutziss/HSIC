@@ -9,6 +9,7 @@
 //   focus          { setup, todosOpen, clock }
 
 import { useSyncExternalStore } from "react";
+import { LOCALES, getLocale, setLocale } from "./i18n.js";
 
 const KEY = "molted.prefs";
 // what earlier versions kept on the device, one key each; read once so nobody has to choose again
@@ -74,6 +75,8 @@ export function hydratePrefs(account) {
   values = next;
   keepLocal();
   notify();
+  // the account's language wins on every device: this page reloads once in it (setLocale saves it on this device first)
+  if (LOCALES.includes(account.lang) && account.lang !== getLocale()) setLocale(account.lang);
 }
 
 /** `fn(values)` is called with every change so App can save it in settings.prefs; returns the way to unbind. */
