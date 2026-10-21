@@ -1,7 +1,8 @@
 // Page bodies. Shared layout (header, footer, language switcher) plus one renderer per `route.page`.
 // Build-time only: nothing here ships to the browser.
 import { readFileSync } from "node:fs";
-import { APP_URL, LOCALES, availableLocales, isAvailable, routeByKey, switchHref, urlPath } from "./i18n/routes.js";
+import { APP_URL, LOCALES, absoluteUrl, availableLocales, isAvailable, routeByKey, switchHref, urlPath } from "./i18n/routes.js";
+import RO_ONLY from "./i18n/ro-only.js";
 import { esc, homeJsonLd, renderHead } from "./seo.js";
 
 const read = (f) => readFileSync(new URL(`../content/${f}`, import.meta.url), "utf8");
@@ -31,7 +32,8 @@ ${extraNav}        ${languageSwitch(route, locale, t)}
 }
 
 function footer(locale, t) {
-  const items = ["team", "privacy", "terms"].filter((k) => isAvailable(routeByKey(k), locale));
+  const items = ["team", "giveaways", "privacy", "terms"].filter((k) => isAvailable(routeByKey(k), locale));
+  const label = (k) => (k === "giveaways" ? RO_ONLY.common.giveaways : t.common[k]); // Romania-only: only offered when the route exists in this locale
   return `    <footer class="border-t border-edge">
       <div class="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-5 py-8 text-sm text-dim">
         <p><span class="font-pixel font-bold text-gold">MOLTED</span> · ${esc(t.common.footerTag)}</p>
@@ -74,7 +76,8 @@ ${header(
     `        <a href="#${h.ids.agent}" class="hidden text-dim hover:text-ink sm:inline">${esc(h.nav.agent)}</a>
         <a href="#${h.ids.faq}" class="hidden text-dim hover:text-ink sm:inline">${esc(h.nav.faq)}</a>
         <a href="${link("team", locale)}" class="hidden text-dim hover:text-ink sm:inline">${esc(t.common.team)}</a>
-`,
+${isAvailable(routeByKey("giveaways"), locale) ? `        <a href="${link("giveaways", locale)}" class="hidden text-dim hover:text-ink sm:inline">${esc(RO_ONLY.common.giveaways)}</a>
+` : ""}`,
   )}
 
     <main id="continut">
@@ -211,18 +214,57 @@ ${text}</section>
 </main></body>`;
 }
 
+// ------------------------------------------------------------------ giveaways (Romania only; filled in by src/giveaways.js and src/giveaway.js)
+function giveawaysBody(route, locale, t) {
+  const g = RO_ONLY.giveaways;
+  return `  <body class="app-bg min-h-screen font-sans text-body">
+    <a href="#continut" class="skip">${esc(t.common.skip)}</a>
+
+${header(route, locale, t)}
+
+    <main id="continut" class="mx-auto max-w-6xl px-5 pb-24">
+      <h1 class="font-pixel mt-4 text-4xl font-bold text-ink">${esc(g.h1)}</h1>
+      <p class="mt-2 max-w-2xl text-dim">${esc(g.lead)}</p>
+      <div id="lista" class="mt-8" aria-live="polite"><p class="text-dim" role="status">${esc(g.loading)}</p></div>
+    </main>
+
+${footer(locale, t)}
+  </body>`;
+}
+
+function giveawayBody(route, locale, t) {
+  return `  <body class="app-bg min-h-screen font-sans text-body">
+    <a href="#continut" class="skip">${esc(t.common.skip)}</a>
+
+${header(route, locale, t)}
+
+    <main id="continut" class="mx-auto max-w-4xl px-5 pb-24">
+      <p class="mt-2"><a href="${link("giveaways", locale)}" class="text-sm font-bold text-dim hover:text-ink">← ${esc(RO_ONLY.common.giveaways)}</a></p>
+      <div id="campanie" class="mt-4" aria-live="polite"><p class="text-dim" role="status">${esc(RO_ONLY.giveaway.loading)}</p></div>
+    </main>
+
+${footer(locale, t)}
+  </body>`;
+}
+
 // ------------------------------------------------------------------ public API
 export const PAGE_RENDERERS = {
   home: { body: homeBody, script: "/src/main.js", jsonLd: (t, l, r) => homeJsonLd(t, l, r) },
   team: { body: teamBody, script: "/src/team.js" },
   legal: { body: legalBody, styles: LEGAL_CSS + LEGAL_EXTRA_CSS },
+  giveaways: { body: giveawaysBody, script: "/src/giveaways.js", roOnly: true },
+  // one shell for every campaign: generic metadata here, the campaign's own is set in the browser (docs/GIVEAWAYS.md)
+  giveaway: { body: giveawayBody, script: "/src/giveaway.js", roOnly: true, shell: true },
 };
 
 export function renderPage(route, locale, t) {
   const r = PAGE_RENDERERS[route.page];
   if (!r) throw new Error(`No renderer for page "${route.page}" (route ${route.key})`);
-  const headHtml = renderHead({ route, locale, t, styles: r.styles, script: r.script, jsonLd: r.jsonLd?.(t, locale, route) });
-  return doc(locale, headHtml, r.body(route, locale, t));
+  // Romania-only pages carry their own copy; the shared shell canonicalizes to the list until the browser knows the campaign
+  const tt = r.roOnly ? { ...t, meta: { ...t.meta, [route.key]: RO_ONLY.meta[route.key] } } : t;
+  const url = r.shell ? absoluteUrl(routeByKey("giveaways"), locale) : undefined;
+  const headHtml = renderHead({ route, locale, t: tt, styles: r.styles, script: r.script, jsonLd: r.jsonLd?.(t, locale, route), url });
+  return doc(locale, headHtml, r.body(route, locale, tt));
 }
 
 /** 404.html: one file for the whole site (the host serves it for every unknown URL), so it speaks both languages. */
