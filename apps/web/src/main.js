@@ -39,10 +39,22 @@ if (hero) {
 // the coach in numbers: one public, aggregate-only RPC (null until there is enough data); the section stays hidden otherwise
 const base = import.meta.env.VITE_SUPABASE_URL?.trim();
 const anon = import.meta.env.VITE_SUPABASE_ANON_KEY?.trim();
+const rpc = (name) => fetch(`${base}/rest/v1/rpc/${name}`, { method: "POST", headers: { apikey: anon, "Content-Type": "application/json" }, body: "{}" }).then((r) => (r.ok ? r.json() : null));
+
+// players: the row count of profiles (migration 0029); hidden if the request fails
+if (base && anon) {
+  rpc("player_count")
+    .then((n) => {
+      if (!n) return;
+      document.getElementById("jucatori-n").textContent = n;
+      document.getElementById("jucatori").hidden = false;
+    })
+    .catch(() => {});
+}
+
 const cifre = document.getElementById("cifre");
 if (cifre && base && anon) {
-  fetch(`${base}/rest/v1/rpc/agent_stats`, { method: "POST", headers: { apikey: anon, "Content-Type": "application/json" }, body: "{}" })
-    .then((r) => (r.ok ? r.json() : null))
+  rpc("agent_stats")
     .then((m) => {
       if (!m || !m.decided) return;
       document.getElementById("cifre-decided").textContent = m.decided;
