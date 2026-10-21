@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { CalendarDays, CalendarPlus, CalendarRange, Check, ChevronLeft, ChevronRight, Clock, GripVertical, ListTodo, Timer, Plus, Repeat, Sparkles } from "lucide-react";
+import { CalendarDays, CalendarPlus, CalendarX, Target, X, CalendarRange, Check, ChevronLeft, ChevronRight, Clock, GripVertical, ListTodo, Timer, Plus, Repeat, Sparkles } from "lucide-react";
 import { Button, CheckButton, Choice, Chip, Panel, SectionTitle, Tabs } from "../components/ui.jsx";
 import { Shell, useCoach } from "../components/AiCoach.jsx";
 import { aiErrorCopy, dailyPlan, decomposeGoal, parseHomework } from "../lib/ai.js";
@@ -26,6 +26,13 @@ import { firstOccurrence, occursOn, repeatLabel, todosByDay, viewOn } from "../l
 import { nextAssignments, nextExams, normalizeAssignments, normalizeExams, normalizeSession, schoolPlanner, studiedMinutes } from "../lib/schoolPlanner.js";
 import { periodKey } from "../lib/goals.js";
 import { tr } from "../lib/i18n.js";
+import { goalTodoIndex } from "../lib/objectives.js";
+
+// the mark on to-dos that came from a goal (Scopuri or Obiective)
+function GoalMark({ g, size = 10 }) {
+  if (!g) return null;
+  return <Target size={size} className="shrink-0" style={{ color: g.color || c("gold") }} aria-label={tr("din scopul: {label}", { label: g.label })} />;
+}
 
 const START = 6 * 60;
 const END = 24 * 60;
@@ -61,7 +68,7 @@ function layout(items) {
   return out;
 }
 
-function TodoRow({ t, today, habits, todo, onFocusTodo }) {
+function TodoRow({ t, today, habits, todo, onFocusTodo, goal, onSkipDay }) {
   const h = habits.find((x) => x.id === t.habitId);
   return (
     <li
@@ -75,7 +82,10 @@ function TodoRow({ t, today, habits, todo, onFocusTodo }) {
       <GripVertical size={14} className={`hidden shrink-0 text-faint sm:block ${t.repeat ? "invisible" : "cursor-grab"}`} aria-hidden="true" />
       <CheckButton size="sm" checked={t.done} onClick={() => todo.toggle(t.id, t.viewDay || today)} label={t.done ? tr("Debifează {title}", { title: t.title }) : tr("Bifează {title}", { title: t.title })} />
       <button type="button" onClick={() => todo.edit(t)} className="min-w-0 flex-1 text-left">
-        <span className={`block truncate text-sm font-bold ${t.done ? "text-faint line-through" : "text-ink"}`}>{t.title}</span>
+        <span className={`flex items-center gap-1.5 text-sm font-bold ${t.done ? "text-faint line-through" : "text-ink"}`}>
+          <GoalMark g={goal} size={13} />
+          <span className="truncate">{t.title}</span>
+        </span>
         <span className="flex flex-wrap items-center gap-x-2 text-[11px] font-bold text-dim">
           {t.repeat ? (
             <span className="inline-flex items-center gap-0.5">
@@ -94,8 +104,20 @@ function TodoRow({ t, today, habits, todo, onFocusTodo }) {
             </span>
           )}
           {h && <span style={{ color: h.color }}>· {h.name}</span>}
+          {goal && <span className="truncate" style={{ color: goal.color || c("gold") }}>· {goal.label}</span>}
         </span>
       </button>
+      {t.repeat && onSkipDay && (
+        <button
+          type="button"
+          onClick={() => onSkipDay("todo", t.id, t.viewDay || today)}
+          className="focus-ring grid h-7 w-7 shrink-0 place-items-center rounded-lg text-faint hover:bg-panel-hi hover:text-rose"
+          aria-label={tr("Scoate doar din ziua asta: {title}", { title: t.title })}
+          title={tr("Scoate doar din ziua asta")}
+        >
+          <CalendarX size={14} aria-hidden="true" />
+        </button>
+      )}
       {t.focus && !t.done && onFocusTodo && (
         <Button size="sm" variant="violet" icon={Timer} onClick={() => onFocusTodo(t)} aria-label={tr("Începe Focus: {title}", { title: t.title })}>
           Focus
@@ -105,7 +127,8 @@ function TodoRow({ t, today, habits, todo, onFocusTodo }) {
   );
 }
 
-function TodoList({ state, today, todo, onFocusTodo }) {
+function TodoList({ state, today, todo, onFocusTodo, onSkipDay }) {
+  const gIdx = goalTodoIndex(state);
   const [filter, setFilter] = useState("today");
   const [text, setText] = useState("");
   const raw = state.todos || [];
@@ -174,7 +197,7 @@ function TodoList({ state, today, todo, onFocusTodo }) {
           <div className="mb-1.5 mt-2 text-[11px] font-extrabold uppercase tracking-wider text-ember">{tr("Rămase din zilele trecute")}</div>
           <ul className="space-y-1.5">
             {overdue.map((t) => (
-              <TodoRow key={t.id} t={t} today={today} habits={habits} todo={todo} onFocusTodo={onFocusTodo} />
+              <TodoRow key={t.id} t={t} today={today} habits={habits} todo={todo} onFocusTodo={onFocusTodo} goal={gIdx[t.id]} onSkipDay={onSkipDay} />
             ))}
           </ul>
         </>
@@ -182,7 +205,7 @@ function TodoList({ state, today, todo, onFocusTodo }) {
       {open.length > 0 && (
         <ul className="mt-2 space-y-1.5">
           {open.map((t) => (
-            <TodoRow key={t.id} t={t} today={today} habits={habits} todo={todo} onFocusTodo={onFocusTodo} />
+            <TodoRow key={t.id} t={t} today={today} habits={habits} todo={todo} onFocusTodo={onFocusTodo} goal={gIdx[t.id]} onSkipDay={onSkipDay} />
           ))}
         </ul>
       )}
@@ -192,7 +215,7 @@ function TodoList({ state, today, todo, onFocusTodo }) {
           <summary className="cursor-pointer text-[11px] font-extrabold uppercase tracking-wider text-dim hover:text-ink">{tr("Gata ({length})", { length: done.length })}</summary>
           <ul className="mt-2 space-y-1.5">
             {done.slice(0, 30).map((t) => (
-              <TodoRow key={t.id} t={t} today={today} habits={habits} todo={todo} onFocusTodo={onFocusTodo} />
+              <TodoRow key={t.id} t={t} today={today} habits={habits} todo={todo} onFocusTodo={onFocusTodo} goal={gIdx[t.id]} onSkipDay={onSkipDay} />
             ))}
           </ul>
         </details>
@@ -202,7 +225,8 @@ function TodoList({ state, today, todo, onFocusTodo }) {
   );
 }
 
-function WeekView({ state, today, anchor, todo, onMoveHabit }) {
+function WeekView({ state, today, anchor, todo, onMoveHabit, onSkipDay }) {
+  const gIdx = goalTodoIndex(state);
   const days = dayRange(mondayOf(anchor), addDays(mondayOf(anchor), 6));
   const habits = (state.habits || []).filter((h) => !h.archivedAt);
   const scroller = useRef(null);
@@ -286,8 +310,26 @@ function WeekView({ state, today, anchor, todo, onMoveHabit }) {
                     className={`flex w-full items-center gap-1 rounded-md px-1.5 py-1 text-left text-[11px] font-bold ${t.done ? "bg-ink/5 text-faint line-through" : "bg-violet/20 text-ink ring-1 ring-violet/40"}`}
                   >
                     {t.repeat && <Repeat size={10} className="shrink-0" aria-label={tr("se repetă")} />}
+                    <GoalMark g={gIdx[t.id]} />
                     <span className="truncate">{t.title}</span>
                   </button>
+                ))}
+              {habits
+                .filter((h) => !h.time && isScheduled(h, day))
+                .map((h) => (
+                  <span
+                    key={h.id}
+                    className="group flex w-full items-center gap-1 rounded-md px-1.5 py-1 text-[11px] font-bold text-ink"
+                    style={{ background: `${h.color}26`, boxShadow: `inset 3px 0 0 ${h.color}` }}
+                  >
+                    {state.log?.[day]?.[h.id] ? <Check size={10} className="shrink-0" aria-hidden="true" /> : null}
+                    <span className="min-w-0 flex-1 truncate">{h.name}</span>
+                    {onSkipDay && (
+                      <button type="button" onClick={() => onSkipDay("habit", h.id, day)} className="focus-ring shrink-0 rounded text-faint hover:text-rose" aria-label={tr("Scoate {name} doar din ziua asta", { name: h.name })}>
+                        <X size={11} aria-hidden="true" />
+                      </button>
+                    )}
+                  </span>
                 ))}
             </div>
           ))}
@@ -365,9 +407,20 @@ function WeekView({ state, today, anchor, todo, onMoveHabit }) {
                             boxShadow: `inset 3px 0 0 ${it.h.color}`,
                           }}
                         >
-                          <span className="flex items-center gap-1 truncate">
-                            {done ? <Check size={11} aria-hidden="true" /> : <Icon size={11} aria-hidden="true" />}
-                            {it.h.name}
+                          <span className="flex items-center gap-1">
+                            {done ? <Check size={11} className="shrink-0" aria-hidden="true" /> : <Icon size={11} className="shrink-0" aria-hidden="true" />}
+                            <span className="min-w-0 flex-1 truncate">{it.h.name}</span>
+                            {onSkipDay && (
+                              <button
+                                type="button"
+                                onClick={() => onSkipDay("habit", it.h.id, day)}
+                                className="focus-ring shrink-0 rounded text-faint hover:text-rose"
+                                aria-label={tr("Scoate {name} doar din ziua asta", { name: it.h.name })}
+                                title={tr("Scoate doar din ziua asta")}
+                              >
+                                <X size={11} aria-hidden="true" />
+                              </button>
+                            )}
                           </span>
                         </div>
                       );
@@ -387,6 +440,7 @@ function WeekView({ state, today, anchor, todo, onMoveHabit }) {
                       >
                         <span className="flex items-center gap-1">
                           {t.repeat && <Repeat size={10} className="shrink-0" aria-label={tr("se repetă")} />}
+                          <GoalMark g={gIdx[t.id]} />
                           <span className="truncate">{t.title}</span>
                         </span>
                         {height > 34 && <span className="block text-[10px] font-bold text-dim">{fmt12(t.time)}</span>}
@@ -728,7 +782,7 @@ export function GoalDecomposer({ today, ai, goals }) {
 
 // Calendar and to-dos. The AI helpers that used to sit above it (daily plan, homework, goal in steps) live on the Molt
 // page; the goals (Scopuri) are with the Obiective in the other tab of Plan.
-export default function Planner({ state, today, todo, ai, go, onFocusTodo, onMoveHabit }) {
+export default function Planner({ state, today, todo, ai, go, onFocusTodo, onMoveHabit, onSkipDay }) {
   const [anchor, setAnchor] = useState(today);
   const [mode, setMode] = useState("week");
   const [tab, setTab] = useState("calendar");
@@ -775,7 +829,7 @@ export default function Planner({ state, today, todo, ai, go, onFocusTodo, onMov
       </div>
       <div className="mb-3 font-pixel text-lg text-ink">{label}</div>
       {mode === "week" ? (
-        <WeekView state={state} today={today} anchor={anchor} todo={todo} onMoveHabit={onMoveHabit} />
+        <WeekView state={state} today={today} anchor={anchor} todo={todo} onMoveHabit={onMoveHabit} onSkipDay={onSkipDay} />
       ) : (
         <MonthView
           state={state}
@@ -825,7 +879,7 @@ export default function Planner({ state, today, todo, ai, go, onFocusTodo, onMov
       )}
       <div className="grid gap-5 lg:grid-cols-[minmax(300px,360px),1fr]">
         <div className={tab === "list" ? "min-w-0" : "hidden min-w-0 lg:block"}>
-          <TodoList state={state} today={today} todo={todo} onFocusTodo={onFocusTodo} />
+          <TodoList state={state} today={today} todo={todo} onFocusTodo={onFocusTodo} onSkipDay={onSkipDay} />
         </div>
         <div className={tab === "calendar" ? "min-w-0" : "hidden min-w-0 lg:block"}>{calendar}</div>
       </div>
