@@ -97,7 +97,7 @@ function SaveIndicator({ mode, saveStatus }) {
 }
 
 function Hud({ d, state, setView, onReview, mode, saveStatus, now }) {
-  const { level, entry, streak, revive, scheduled, doneScheduled } = d;
+  const { level, entry, streak, revive, missions } = d;
   const reviewMin = parseHM(state.settings?.reviewTime || "21:00");
   const reviewed = !!state.reviews?.[d.today];
   const left = reviewMin - now;
@@ -156,11 +156,11 @@ function Hud({ d, state, setView, onReview, mode, saveStatus, now }) {
             </span>
           </div>
           <button type="button" onClick={() => setView("home")} className="focus-ring hidden items-center gap-2 rounded-xl bg-well px-2 py-1 ring-1 ring-edge sm:flex" title={tr("Misiunile de azi")}>
-            <Ring value={scheduled.length ? doneScheduled / scheduled.length : 0} size={30} stroke={4}>
-              <span className="text-[9px] font-black text-ink">{doneScheduled}</span>
+            <Ring value={missions.total ? missions.done / missions.total : 0} size={30} stroke={4}>
+              <span className="text-[9px] font-black text-ink">{missions.done}</span>
             </Ring>
             <span className="pr-1 text-xs font-extrabold text-body">
-              {doneScheduled}/{scheduled.length}
+              {missions.done}/{missions.total}
             </span>
           </button>
           <button
