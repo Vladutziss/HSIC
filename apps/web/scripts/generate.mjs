@@ -6,7 +6,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import en from "../src/i18n/en.js";
 import ro from "../src/i18n/ro.js";
-import { LOCALES, SITE_URL, absoluteUrl, alternates, availableLocales, isAvailable, liveRoutes, urlPath } from "../src/i18n/routes.js";
+import { LOCALES, SITE_URL, absoluteUrl, alternates, availableLocales, filePath, isAvailable, liveRoutes, sitemapRoutes } from "../src/i18n/routes.js";
 import { renderNotFound, renderPage } from "../src/pages.js";
 
 export const DICTIONARIES = { ro, en };
@@ -15,7 +15,7 @@ const WEB_ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 /** sitemap.xml: only canonical, indexable, existing pages; both languages of a page reference each other. */
 export function buildSitemap() {
   const urls = [];
-  for (const route of liveRoutes()) {
+  for (const route of sitemapRoutes()) {
     const alts = alternates(route);
     for (const locale of availableLocales(route)) {
       const links = alts.map((a) => `<xhtml:link rel="alternate" hreflang="${a.locale}" href="${a.url}"/>`).join("");
@@ -31,7 +31,7 @@ export function buildSite() {
   for (const route of liveRoutes()) {
     for (const locale of LOCALES) {
       if (!isAvailable(route, locale)) continue; // e.g. /en/giveaways is never built
-      files.push({ file: `${urlPath(route, locale).slice(1)}index.html`, html: renderPage(route, locale, DICTIONARIES[locale]), route, locale });
+      files.push({ file: filePath(route, locale), html: renderPage(route, locale, DICTIONARIES[locale]), route, locale });
     }
   }
   files.push({ file: "404.html", html: renderNotFound(ro, en) });

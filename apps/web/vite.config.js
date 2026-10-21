@@ -6,7 +6,7 @@ import { writeSite } from "./scripts/generate.mjs";
 // the config loads (dev server and build), then Vite bundles them like hand-written pages.
 // envDir: the Supabase and Clerk keys come from the repo-root .env.local, like the app's.
 const generated = writeSite().filter((f) => f.file.endsWith(".html"));
-const input = { admin: "admin.html" };
+const input = { admin: "admin.html", admin_giveaways: "admin/giveaways/index.html" };
 for (const f of generated) input[f.file.replace(/\.html$/, "").replace(/\//g, "_")] = f.file;
 
 export default defineConfig({
