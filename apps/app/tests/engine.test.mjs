@@ -215,3 +215,18 @@ test("evolution points: days before 2026-10-22 keep one point per difficulty, la
   assert.equal(fresh.checkins, 10);
   assert.equal(evolutionPoints({ habits, log: { "2026-10-20": tick(10), "2026-10-23": tick(2) } }).ep, 24, "mixed: old 20 + new 4");
 });
+
+test("with more than 8 scheduled habits the day is measured against the 8 most valuable: 8 ticked is a full day with the chest", async () => {
+  const { RULES } = await import("../src/lib/engine.js");
+  const day = "2026-10-26";
+  const habits = Array.from({ length: 12 }, (_, i) => habit(`m${i}`));
+  const at = (n) => computeTimeline({ meta: { start: day }, habits, log: { [day]: Object.fromEntries(habits.slice(0, n).map((h) => [h.id, CODE.DONE])) }, reviews: {}, todos: [] }, day).byDay[day];
+  const eight = at(8);
+  assert.equal(eight.completion, 1);
+  assert.equal(eight.chest, true);
+  assert.equal(eight.schedCount, RULES.habitsPerDay);
+  assert.equal(eight.doneSched, RULES.habitsPerDay);
+  assert.equal(eight.gain, at(12).gain, "ticking all 12 adds nothing over 8");
+  assert.ok(at(7).gain < eight.gain, "7 of 12 is still short of a full day");
+  assert.equal(at(7).chest, false);
+});

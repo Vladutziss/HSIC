@@ -15,11 +15,12 @@ import {
   Trash2,
 } from "lucide-react";
 import { Button, Chip, Confirm, IconButton, Panel, Skeleton, useToast } from "../components/ui.jsx";
-import { idleAiJob, useCoach } from "../components/AiCoach.jsx";
+import { idleAiJob, trackAiJob, useCoach } from "../components/AiCoach.jsx";
 import { Sprite, eggCrack } from "../components/Sprite.jsx";
 import { PATHS } from "../lib/catalog.js";
 import { append as appendChat, clear as clearChat, load as loadChat, loadLocal, saveLocal } from "../lib/chatStore.js";
-import { askChat, chatContext } from "../lib/chat.js";
+import { chatContext, normalizePlan, startChat } from "../lib/chat.js";
+import { resumeChatRun, waitForReply } from "../lib/chatRun.js";
 import { goalSet, habitList, summary as planSummary, todoList } from "../lib/planApply.js";
 import { getClient } from "../lib/supabase.js";
 import { loadNotes } from "../lib/memory.js";
@@ -65,9 +66,10 @@ export default function Chat({ state, d, today, ai, goals, todo, agent, onAddHab
               loadNotes(c).catch(() => []),
             ]);
             if (alive) {
-              setMessages(loadedMsgs);
+              setMessages(loadedMsgs.map((m) => (m.plan ? { ...m, plan: normalizePlan(m.plan) } : m))); // the server stores the plan as the model wrote it
               setNotes(loadedNotes);
             }
+            resumeChatRun(c, trackAiJob).catch(() => {}); // a reply still being written: thinking state and all
           } catch {
             if (alive) setMessages(loadLocal());
           }
@@ -89,27 +91,17 @@ export default function Chat({ state, d, today, ai, goals, todo, agent, onAddHab
   }, [ai?.server]);
 
   // The reply is an AI job like the other abilities (see components/AiCoach.jsx): it belongs to the app, not to this screen,
-  // so it keeps running when you open another tab or page. The question is saved before asking and the reply when it
-  // arrives, so what you left is on the server when you come back; the Molt menu shows that Molt is thinking, and a toast
-  // tells you when the answer is ready.
+  // so it keeps going when you open another tab or page, and the Molt menu shows that Molt is thinking; a toast tells you
+  // when it is ready. The server writes the reply itself (lib/chatRun.js), so it also survives a refresh or a phone that
+  // slept: the question is saved before asking, and the app picks the reply up again when it reopens.
   const [job, run] = useCoach(
     async () => {
       const { text, nextMessages, latestPlan, context } = pending.current;
       const client = ai?.server ? await getClient() : null;
-      if (client) await appendChat(client, { role: "user", content: text }).catch(() => {});
-      else saveLocal(nextMessages);
-      const res = await askChat({
-        name: companion.name || pInfo.cls,
-        cls: pInfo.cls,
-        goal: state?.profile?.goal || "",
-        messages: nextMessages,
-        plan: latestPlan,
-        context,
-      });
-      const assistantMsg = { id: `local-${Date.now()}`, role: "assistant", content: res.reply, plan: res.plan, createdAt: new Date().toISOString() };
-      if (client) await appendChat(client, { role: "assistant", content: res.reply, plan: res.plan }).catch(() => {});
-      else saveLocal([...nextMessages, assistantMsg]);
-      return assistantMsg;
+      if (!client) throw { code: "unavailable" };
+      await appendChat(client, { role: "user", content: text }).catch(() => {});
+      await startChat({ name: companion.name || pInfo.cls, cls: pInfo.cls, goal: state?.profile?.goal || "", messages: nextMessages, plan: latestPlan, context });
+      return waitForReply(client); // the server writes the reply into the conversation; this only waits for it
     },
     { kind: "chat", persist: false }
   );

@@ -19,7 +19,7 @@ function greeting() {
 function Hero({ state, d, today, onFocus }) {
   const { level, entry, week, streak } = d;
   const nick = state.profile?.nick || "aventurierule";
-  const left = d.scheduled.length - d.doneScheduled;
+  const left = d.missions.left;
   const sub =
     d.scheduled.length === 0
       ? tr("Azi nu ai misiuni programate. Poți face oricare obicei ca bonus.")
@@ -126,7 +126,7 @@ export default function Dashboard({ state, d, today, go, ai, months, recentStori
   // the closest thing Molt can still earn, as one line on its card
   const next = nextReward(d.facts, state.unlocked);
   const reward = next ? { name: next.item.name, text: hintFor(next.item, d.facts).text, ratio: next.progress.ratio } : null;
-  const chestOpen = d.scheduled.length > 0 && d.doneScheduled === d.scheduled.length;
+  const chestOpen = d.missions.total > 0 && d.missions.done === d.missions.total;
   return (
     <div className="grid gap-5 lg:grid-cols-12">
       <div className="min-w-0 space-y-5 lg:col-span-8">
@@ -139,7 +139,7 @@ export default function Dashboard({ state, d, today, go, ai, months, recentStori
         <Panel className="p-4 sm:p-5">
           <SectionTitle
             icon={Swords}
-            sub={tr("{doneScheduled} din {length} misiuni programate azi", { doneScheduled: d.doneScheduled, length: d.scheduled.length })}
+            sub={tr("{doneScheduled} din {length} misiuni programate azi", { doneScheduled: d.missions.done, length: d.missions.total })}
             action={
               <Button variant="ghost" size="sm" icon={Plus} onClick={onAddHabit}>{tr("Obicei nou")}</Button>
             }
