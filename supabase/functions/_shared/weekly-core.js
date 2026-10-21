@@ -141,7 +141,7 @@ export function planWeek({ state: raw, today, patterns, context, feedback, pastA
     const title = L(`Recapitulare ${subject}`, `Review ${subject}`);
     const date = addDays(today, 1);
     if (taken.has(`${date}|${title}`)) {
-      skip("exam_recap", `Există deja un to-do deschis „${title}" pe ${date}.`);
+      skip("exam_recap", L(`Există deja un to-do deschis „${title}" pe ${date}.`, `There is already an open to-do "${title}" on ${date}.`));
       continue;
     }
     taken.add(`${date}|${title}`);
