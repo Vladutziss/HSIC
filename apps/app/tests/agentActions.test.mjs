@@ -134,3 +134,31 @@ test("agentImpact: counts proposals that needed a tap and their measured verdict
   assert.deepEqual(agentImpact(log), { proposals: 4, applied: 3, rejected: 1, measured: 2, improved: 1, same: 1, worse: 0 });
   assert.equal(agentImpact(null).proposals, 0);
 });
+
+test("add_goal: creates an objective with its steps once, refuses a full list, undo archives it", () => {
+  const action = { id: "x1", kind: "add_goal", payload: { title: "Python", why: "joc", deadline: "2026-12-01", steps: ["Lecția 1", "Lecția 2"] } };
+  const r = planApply(action, { objectives: [] }, "2026-10-21");
+  assert.equal(r.before.goalId, "gag-x1");
+  const s1 = r.patch({ objectives: [] });
+  assert.equal(s1.objectives.length, 1);
+  assert.equal(s1.objectives[0].steps.length, 2);
+  assert.equal(s1.objectives[0].deadline, "2026-12-01");
+  assert.equal(r.patch(s1).objectives.length, 1, "applying twice changes nothing");
+  const full = Array.from({ length: 6 }, (_, i) => ({ id: `g${i}`, title: `G${i}`, archived: false, doneOn: null }));
+  assert.equal(planApply(action, { objectives: full }, "2026-10-21").error, "full");
+  assert.equal(planApply({ ...action, payload: { title: "x", steps: [] } }, { objectives: [] }, "2026-10-21").error, "invalid");
+  const undone = planUndo({ ...action, before: r.before }, s1).patch(s1);
+  assert.equal(undone.objectives[0].archived, true);
+});
+
+test("add_habit at the limit of 20 is refused, so a proposal made earlier cannot push the list over", async () => {
+  const { MAX_HABITS } = await import("../src/lib/catalog.js");
+  assert.equal(MAX_HABITS, 20);
+  const full = Array.from({ length: 20 }, (_, i) => ({ id: `h${i}`, name: `H${i}`, diff: 2, days: [1], color: "#3987e5" }));
+  const action = act({ id: "z1", kind: "add_habit", payload: { name: "Nou", days: [1, 3], diff: 1 } });
+  assert.equal(planApply(action, { profile: { path: "sport" }, habits: full }, today).error, "full");
+  const room = planApply(action, { profile: { path: "sport" }, habits: full.slice(0, 19) }, today);
+  assert.ok(!room.error);
+  assert.equal(room.patch({ habits: full.slice(0, 19) }).habits.length, 20);
+  assert.equal(planApply(action, { profile: { path: "sport" }, habits: [...full.slice(0, 19), { ...full[19], archivedAt: today }] }, today).error, undefined, "archived habits do not count");
+});

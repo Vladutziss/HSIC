@@ -27,6 +27,8 @@ const stepText = (x) => {
       return tr("A verificat ce a făcut înainte și ce efect a avut ({count})", { count: x.count });
     case "experiments":
       return tr("A verificat experimentele tale ({count})", { count: x.count });
+    case "goals":
+      return tr("A verificat obiectivele tale active ({count})", { count: x.active });
     case "school":
       return tr("A citit planul tău de școală ({exams} examene, {assignments} teme)", { exams: x.exams, assignments: x.assignments });
     case "patterns":
@@ -108,7 +110,17 @@ export function PlanPanel({ state, today, ai, onAddHabit, onEdit, onExperiment, 
                 <li key={i} className="inset space-y-2 p-3">
                   <div className="flex flex-wrap items-start gap-3">
                     <div className="min-w-0 flex-1">
-                      {sg.action === "todo" ? (
+                      {sg.action === "goal" ? (
+                        <>
+                          <p className="text-sm font-extrabold text-ink">{tr("Obiectiv nou: {title}", { title: sg.title })}</p>
+                          <p className="text-xs font-bold text-dim">{tr("{n} pași{v} · îl găsești în „Ce a făcut Molt”, de unde îl aplici", { n: sg.steps.length, v: sg.deadline ? tr(" · până la {fmtDay}", { fmtDay: fmtDay(sg.deadline) }) : "" })}</p>
+                          <ul className="mt-1 list-disc pl-5 text-xs font-semibold text-body">
+                            {sg.steps.map((t) => (
+                              <li key={t}>{t}</li>
+                            ))}
+                          </ul>
+                        </>
+                      ) : sg.action === "todo" ? (
                         <>
                           <p className="text-sm font-extrabold text-ink">{tr("To-do: {title}", { title: sg.title })}</p>
                           <p className="text-xs font-bold text-dim">{tr("{fmtDay} · {dur} min · îl găsești în „Ce a făcut Molt”, de unde îl aplici", { fmtDay: fmtDay(sg.date), dur: sg.dur })}</p>
@@ -138,7 +150,7 @@ export function PlanPanel({ state, today, ai, onAddHabit, onEdit, onExperiment, 
                       )}
                       <Sources sources={sg.sources} />
                     </div>
-                    {!decided[i] && sg.action !== "todo" && (
+                    {!decided[i] && sg.action !== "todo" && sg.action !== "goal" && (
                       <div className="flex gap-2">
                         <Button size="sm" variant="mint" icon={Plus} onClick={() => accept(sg, i)}>
                           {sg.action === "experiment" ? tr("Începe") : sg.action === "add" ? tr("Adaugă") : tr("Aplică")}

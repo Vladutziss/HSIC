@@ -4,6 +4,7 @@ import { releasePush } from "./push.js";
 const TABLES = ["profiles", "habits", "completions", "day_reviews", "todos", "chapters", "streak_revives", "wardrobe_items", "ai_results"];
 
 export async function signOut() {
+  (await import("../components/AiCoach.jsx")).resetAiJobs();
   await releasePush(); // while the session still authorises removing this device's row
   await window.Clerk?.signOut();
 }
