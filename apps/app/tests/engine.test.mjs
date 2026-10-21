@@ -198,3 +198,20 @@ test("a day counts at most 8 ticked habits: the 8 most valuable add momentum, th
   assert.equal(checkInGain({ diff: 3 }, 1, Array(8).fill(b)), diffXp(3) - b, "a harder one still adds what it has over the weakest");
   assert.equal(checkInGain({ diff: 2 }, 1, Array(7).fill(b)), b, "under the limit it adds its full value");
 });
+
+test("evolution points: days before 2026-10-22 keep one point per difficulty, later days follow 2*sqrt of the ticked points (at most 8 habits)", async () => {
+  const { EVOLUTION_V2_FROM, dayEvolution, evolutionPoints } = await import("../src/lib/engine.js");
+  assert.equal(EVOLUTION_V2_FROM, "2026-10-22");
+  assert.equal(dayEvolution([2, 2]), 4, "two medium habits give 4");
+  assert.equal(dayEvolution(Array(8).fill(2)), 8);
+  assert.equal(dayEvolution(Array(20).fill(2)), 8, "habits past the eighth add nothing");
+  assert.ok(Math.abs(dayEvolution(Array(8).fill(3)) - 2 * Math.sqrt(24)) < 1e-9);
+  const habits = Array.from({ length: 10 }, (_, i) => habit(`e${i}`));
+  const tick = (n) => Object.fromEntries(habits.slice(0, n).map((h) => [h.id, CODE.DONE]));
+  const old = evolutionPoints({ habits, log: { "2026-10-20": tick(10) } });
+  assert.equal(old.ep, 20, "an old day keeps the old sum");
+  const fresh = evolutionPoints({ habits, log: { "2026-10-23": tick(10) } });
+  assert.equal(fresh.ep, 8, "the same day after the change gives 8");
+  assert.equal(fresh.checkins, 10);
+  assert.equal(evolutionPoints({ habits, log: { "2026-10-20": tick(10), "2026-10-23": tick(2) } }).ep, 24, "mixed: old 20 + new 4");
+});

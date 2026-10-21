@@ -15,6 +15,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { Button, Chip, Confirm, IconButton, Panel, Skeleton, useToast } from "../components/ui.jsx";
+import { idleAiJob, useCoach } from "../components/AiCoach.jsx";
 import { Sprite, eggCrack } from "../components/Sprite.jsx";
 import { PATHS } from "../lib/catalog.js";
 import { append as appendChat, clear as clearChat, load as loadChat, loadLocal, saveLocal } from "../lib/chatStore.js";
@@ -38,8 +39,7 @@ const STARTERS = [
 export default function Chat({ state, d, today, ai, goals, todo, agent, onAddHabit, embedded = false, initialPrompt = null, onPromptUsed }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
+  const pending = useRef(null); // what the request in flight is about (read when it starts)
   const [notes, setNotes] = useState([]);
   const [clearOpen, setClearOpen] = useState(false);
   const [loaded, setLoaded] = useState(false);
@@ -88,37 +88,16 @@ export default function Chat({ state, d, today, ai, goals, todo, agent, onAddHab
     };
   }, [ai?.server]);
 
-  // Scroll to bottom on new messages
-  useEffect(() => {
-    // follow the conversation inside the list only: scrollIntoView would also move the whole page, and opening the
-    // chat (nothing said yet) must not scroll anything
-    const list = listRef.current;
-    if (list && messages.length > 0) list.scrollTo({ top: list.scrollHeight, behavior: "smooth" });
-  }, [messages, busy]);
-
-  const handleSend = async (textToSend) => {
-    const text = (typeof textToSend === "string" ? textToSend : input).trim();
-    if (!text || busy) return;
-    setInput("");
-    setError("");
-
-    const userMsg = { id: `local-${Date.now()}`, role: "user", content: text, plan: null, createdAt: new Date().toISOString() };
-    const nextMessages = [...messages, userMsg];
-    setMessages(nextMessages);
-    setBusy(true);
-
-    try {
+  // The reply is an AI job like the other abilities (see components/AiCoach.jsx): it belongs to the app, not to this screen,
+  // so it keeps running when you open another tab or page. The question is saved before asking and the reply when it
+  // arrives, so what you left is on the server when you come back; the Molt menu shows that Molt is thinking, and a toast
+  // tells you when the answer is ready.
+  const [job, run] = useCoach(
+    async () => {
+      const { text, nextMessages, latestPlan, context } = pending.current;
       const client = ai?.server ? await getClient() : null;
-      if (client) {
-        appendChat(client, { role: "user", content: text }).catch(() => {});
-      } else {
-        saveLocal(nextMessages);
-      }
-
-      // Find current active plan from previous messages to allow iterative editing
-      const latestPlan = [...nextMessages].reverse().find((m) => m.plan)?.plan || null;
-
-      const context = chatContext(state, today, notes);
+      if (client) await appendChat(client, { role: "user", content: text }).catch(() => {});
+      else saveLocal(nextMessages);
       const res = await askChat({
         name: companion.name || pInfo.cls,
         cls: pInfo.cls,
@@ -127,28 +106,55 @@ export default function Chat({ state, d, today, ai, goals, todo, agent, onAddHab
         plan: latestPlan,
         context,
       });
+      const assistantMsg = { id: `local-${Date.now()}`, role: "assistant", content: res.reply, plan: res.plan, createdAt: new Date().toISOString() };
+      if (client) await appendChat(client, { role: "assistant", content: res.reply, plan: res.plan }).catch(() => {});
+      else saveLocal([...nextMessages, assistantMsg]);
+      return assistantMsg;
+    },
+    { kind: "chat", persist: false }
+  );
+  const busy = job.status === "busy";
+  const error = job.status === "error" ? job.error || tr("Moltul nu a putut răspunde. Încearcă din nou.") : "";
 
-      const assistantMsg = {
-        id: `local-${Date.now() + 1}`,
-        role: "assistant",
-        content: res.reply,
-        plan: res.plan,
-        createdAt: new Date().toISOString(),
-      };
+  // the reply arrived (here or while you were away): it goes into the list once, then the job is idle again
+  useEffect(() => {
+    if (!loaded || job.status !== "done" || !job.data) return;
+    const reply = job.data;
+    setMessages((list) => (list.some((m) => m.id === reply.id) || (list.at(-1)?.role === "assistant" && list.at(-1)?.content === reply.content) ? list : [...list, reply]));
+    idleAiJob("chat");
+  }, [loaded, job]);
+  // an error you have seen is not shown again the next time you open the chat
+  const statusRef = useRef(job.status);
+  statusRef.current = job.status;
+  useEffect(
+    () => () => {
+      if (statusRef.current === "error") idleAiJob("chat");
+    },
+    []
+  );
 
-      const finalMessages = [...nextMessages, assistantMsg];
-      setMessages(finalMessages);
+  // Scroll to bottom on new messages
+  useEffect(() => {
+    // follow the conversation inside the list only: scrollIntoView would also move the whole page, and opening the
+    // chat (nothing said yet) must not scroll anything
+    const list = listRef.current;
+    if (list && messages.length > 0) list.scrollTo({ top: list.scrollHeight, behavior: "smooth" });
+  }, [messages, busy]);
 
-      if (client) {
-        appendChat(client, { role: "assistant", content: res.reply, plan: res.plan }).catch(() => {});
-      } else {
-        saveLocal(finalMessages);
-      }
-    } catch (e) {
-      setError(aiErrorCopy(e?.code) || tr("Moltul nu a putut răspunde. Încearcă din nou."));
-    } finally {
-      setBusy(false);
-    }
+  const handleSend = (textToSend) => {
+    const text = (typeof textToSend === "string" ? textToSend : input).trim();
+    if (!text || busy) return;
+    setInput("");
+    const userMsg = { id: `local-${Date.now()}`, role: "user", content: text, plan: null, createdAt: new Date().toISOString() };
+    const nextMessages = [...messages, userMsg];
+    setMessages(nextMessages);
+    pending.current = {
+      text,
+      nextMessages,
+      latestPlan: [...nextMessages].reverse().find((m) => m.plan)?.plan || null, // lets the player edit the plan step by step
+      context: chatContext(state, today, notes),
+    };
+    run();
   };
 
   // a question asked from elsewhere in the app goes out once, after the old messages are in
