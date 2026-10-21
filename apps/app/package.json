@@ -16,6 +16,7 @@
     "@sentry/react": "^11.8.0",
     "@supabase/supabase-js": "^2.117.2",
     "lucide-react": "^1.52.0",
+    "posthog-js": "^1.438.13",
     "react": "18.3.1",
     "react-dom": "18.3.1",
     "recharts": "2.15.4"
