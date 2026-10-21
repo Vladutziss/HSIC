@@ -45,7 +45,7 @@ const stepText = (x) => {
  */
 export function PlanPanel({ state, today, ai, onAddHabit, onEdit, onExperiment, onNotes }) {
   const data = useMemo(() => coachData(state, today), [state, today]);
-  const [s, run] = useCoach((signal) => coachAgent(today, signal));
+  const [s, run, history] = useCoach((signal) => coachAgent(today, signal), { kind: "week" });
   const [decided, setDecided] = useState({}); // index -> "accepted" | "rejected"
   const [rejecting, setRejecting] = useState(null);
   const [problem, setProblem] = useState("");
@@ -88,7 +88,7 @@ export function PlanPanel({ state, today, ai, onAddHabit, onEdit, onExperiment, 
   const r = s.data;
   const habitName = (id) => (state.habits || []).find((h) => h.id === id)?.name;
   return (
-    <Shell state={s} run={run} label={tr("Cere un plan")} idle={tr("Aici apar schimbările propuse pentru săptămâna viitoare.")}>
+    <Shell state={s} run={run} label={tr("Cere un plan")} idle={tr("Aici apar schimbările propuse pentru săptămâna viitoare.")} history={history} summary={(d) => d?.summary || (d?.proposals || []).map((p) => p.name || p.title).filter(Boolean).join(" · ")}>
       {r && (
         <div className="space-y-3">
           {r.summary && <p className="text-[15px] font-semibold text-ink">{r.summary}</p>}

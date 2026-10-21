@@ -513,13 +513,18 @@ export function DailyPlanPanel({ state, today, ai, agent }) {
     }),
     [state, today, minutes, energy]
   );
-  const [s, run] = useCoach((signal) => dailyPlan(input, signal));
+  const [s, run, history] = useCoach((signal) => dailyPlan(input, signal), {
+    kind: "day",
+    label: () => `${TIME_OPTIONS.find((o) => o.value === minutes)?.label || `${minutes} min`} · ${ENERGY_OPTIONS.find((o) => o.value === energy)?.label || energy}`,
+  });
   if (!ai?.server) return null;
   return (
     <Shell
       state={s}
       run={run}
       label={tr("Construiește planul")}
+      history={history}
+      summary={(d) => (Array.isArray(d) ? d.map((x) => x.title).join(" · ") : "")}
       idle={tr("Aici apar 2–3 pași pentru azi, fiecare cu motivul lui.")}
       input={
         <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
@@ -565,7 +570,7 @@ export function DailyPlanPanel({ state, today, ai, agent }) {
 
 export function HomeworkPanel({ state, today, ai, onStateChange }) {
   const [text, setText] = useState("");
-  const [s, run] = useCoach((signal) => parseHomework(text, today, signal));
+  const [s, run, history] = useCoach((signal) => parseHomework(text, today, signal), { kind: "school", label: () => text.trim().slice(0, 80) });
   const [minutes, setMinutes] = useState(25);
   const [hint, setHint] = useState("");
   const go = () => {
@@ -615,6 +620,8 @@ export function HomeworkPanel({ state, today, ai, onStateChange }) {
       state={s}
       run={go}
       label={tr("Interpretează")}
+      history={history}
+      summary={(d) => (Array.isArray(d) ? d.map((x) => x.title).join(" · ") : "")}
       hint={hint}
       idle={tr("Aici apar temele și examenele pe care le înțelege Molt, gata de salvat.")}
       input={<input className="field" value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => e.key === "Enter" && go()} placeholder={tr("Test la mate vineri, proiect luni…")} aria-label={tr("Teme și examene")} />}
@@ -666,7 +673,7 @@ export function HomeworkPanel({ state, today, ai, onStateChange }) {
 
 export function GoalDecomposer({ today, ai, goals }) {
   const [text, setText] = useState("");
-  const [s, run] = useCoach((signal) => decomposeGoal(text, signal));
+  const [s, run, history] = useCoach((signal) => decomposeGoal(text, signal), { kind: "goal", label: () => text.trim().slice(0, 80) });
   const [skip, setSkip] = useState([]);
   const [hint, setHint] = useState("");
   if (!ai?.server) return null;
@@ -689,6 +696,8 @@ export function GoalDecomposer({ today, ai, goals }) {
       state={s}
       run={go}
       label={tr("Împarte în pași")}
+      history={history}
+      summary={(d) => (Array.isArray(d) ? d.map((x) => x.text).join(" · ") : "")}
       hint={hint}
       idle={tr("Aici apar pașii în care Molt împarte scopul tău.")}
       input={<input className="field" value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => e.key === "Enter" && go()} placeholder={tr("Vreau să învăț programare…")} aria-label={tr("Obiectiv de împărțit în pași")} />}
