@@ -267,13 +267,14 @@ function Game() {
   }, []);
   // a chat reply the server is still writing when the app opens (refresh, closed tab, a phone that slept): it becomes the
   // chat's AI job again, so the Molt menu spins and the toast comes when it is ready, wherever you are in the app
+  const loadedState = !!state; // (`hasState` is declared further down, after this point)
   useEffect(() => {
-    if (!hasState || !ai.server) return;
+    if (!loadedState || !ai.server) return;
     agentClient()
       .then((c) => resumeChatRun(c, trackAiJob))
       .catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasState, ai.server]);
+  }, [loadedState, ai.server]);
 
   // an AI ability that finished while its screen was closed: a toast you can tap to open it (the Molt menu item and the
   // ability's tab carry a dot until you look at it)
