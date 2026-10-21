@@ -4,24 +4,20 @@
 import React, { useEffect, useState } from "react";
 import { Bell } from "lucide-react";
 import { Button, Toggle } from "./ui.jsx";
-import { disablePush, enablePush, pushStatus, syncPush } from "../lib/push.js";
+import { disablePushEverywhere, enablePush, pushStatus } from "../lib/push.js";
 import { tr } from "../lib/i18n.js";
 
 export default function NotificationsPanel({ settings, set }) {
   const [status, setStatus] = useState(null); // null while checking
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
-  const prefs = { reviewTime: settings.reviewTime, report: settings.pushReport, nudges: settings.pushNudges };
+  // notifications are the account's (settings.pushOn, pushReport, pushNudges, reviewTime); the server reads them from the
+  // profile. Only the browser permission and this device's subscription are local.
+  const accountOn = !!settings.pushOn;
 
   useEffect(() => {
     pushStatus().then(setStatus);
   }, []);
-
-  // keep the server row in step with the report time and the toggles
-  useEffect(() => {
-    if (status === "on") syncPush(prefs).catch(() => {});
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [status, settings.reviewTime, settings.pushReport, settings.pushNudges]);
 
   if (!status || status === "unsupported") return null;
 
@@ -29,11 +25,14 @@ export default function NotificationsPanel({ settings, set }) {
     setBusy(true);
     setFailed(false);
     try {
-      if (status === "on") {
-        await disablePush();
+      if (accountOn && status === "on") {
+        await disablePushEverywhere();
+        set({ pushOn: false });
         setStatus("off");
       } else {
-        setStatus(await enablePush(prefs));
+        const next = await enablePush();
+        setStatus(next);
+        if (next === "on") set({ pushOn: true });
       }
     } catch (e) {
       setFailed(e?.step || true);
@@ -61,7 +60,13 @@ export default function NotificationsPanel({ settings, set }) {
       )}
       {(status === "off" || status === "on") && (
         <>
-          {status === "off" && !failed && <p className="text-xs font-semibold text-dim">{tr("Primește raportul zilei și impulsurile din grup și când aplicația e închisă.")}</p>}
+          {status === "off" && !failed && (
+            <p className="text-xs font-semibold text-dim">
+              {accountOn
+                ? tr("Notificările sunt pornite pe cont. Activează-le și pe acest device.")
+                : tr("Primește raportul zilei și impulsurile din grup și când aplicația e închisă.")}
+            </p>
+          )}
           {failed === "subscribe" && (
             <p className="text-xs font-semibold text-rose-ink">{tr("Browserul nu a putut crea abonarea la notificări. În Brave: Setări → Confidențialitate și securitate → activează „Use Google services for push messaging”, apoi repornește browserul.")}</p>
           )}
@@ -69,7 +74,7 @@ export default function NotificationsPanel({ settings, set }) {
           {failed === true && <p className="text-xs font-semibold text-rose-ink">{tr("Nu s-a putut. Încearcă din nou.")}</p>}
         </>
       )}
-      {status === "on" && (
+      {(status === "on" || (accountOn && status === "off")) && (
         <>
           <label className="flex items-center justify-between gap-4" htmlFor="set-push-report">
             <span>
