@@ -38,6 +38,9 @@ const globals = {
   setup(b) {
     b.onResolve({ filter: /^(react|react-dom|react-dom\/client|recharts)$/ }, (a) => ({ path: a.path, namespace: "global" }));
     b.onLoad({ filter: /.*/, namespace: "global" }, (a) => ({ contents: `module.exports = window.${GLOBALS[a.path]};`, loader: "js" }));
+    // Sentry is not bundled into the artifact (instrument.js only calls init when __SUPABASE__ is true).
+    b.onResolve({ filter: /^@sentry\/react$/ }, (a) => ({ path: a.path, namespace: "stub" }));
+    b.onLoad({ filter: /.*/, namespace: "stub" }, () => ({ contents: "module.exports = {};", loader: "js" }));
   },
 };
 const result = await build({
