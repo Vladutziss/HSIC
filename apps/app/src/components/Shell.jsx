@@ -21,6 +21,7 @@ import {
   Users,
 } from "lucide-react";
 import { Bar, LevelBadge, Ring } from "./ui.jsx";
+import { useAiJobs } from "./AiCoach.jsx";
 import { Sprite, eggCrack } from "./Sprite.jsx";
 import { PATHS } from "../lib/catalog.js";
 import { fmt12, parseHM } from "../lib/dates.js";
@@ -182,6 +183,9 @@ function Hud({ d, state, setView, onReview, mode, saveStatus, now }) {
 }
 
 export function Shell({ view, setView, onReview, onFocus, d, state, unread, goalsDue = 0, mode, saveStatus, now, children }) {
+  const jobs = useAiJobs(); // Molt is thinking / has an answer waiting (shown on its menu item)
+  const aiThinking = jobs.busy.length > 0;
+  const aiWaiting = !aiThinking && jobs.ready.length > 0;
   const c = d.companion;
   const path = state.profile?.path || "sport";
   // the evening report is waiting: its time has come and today's is not written yet (Acasă shows a badge, like Grup)
@@ -243,6 +247,8 @@ export function Shell({ view, setView, onReview, onFocus, d, state, unread, goal
                   <span className="ml-auto inline-flex items-center gap-0.5 rounded-md bg-violet/30 px-1.5 py-0.5 text-[10px] font-black tracking-wider text-violet-hi">
                     <Sparkles size={10} strokeWidth={3} aria-hidden="true" />{" "}{tr("AI")}</span>
                 )}
+                {n.id === "molt" && aiThinking && <Loader2 size={14} className="anim-spin text-violet-hi" role="img" aria-label={tr("Molt se gândește…")} />}
+                {n.id === "molt" && aiWaiting && <span className="h-2.5 w-2.5 rounded-full bg-mint" role="img" aria-label={tr("Molt are un răspuns pentru tine")} title={tr("Molt are un răspuns pentru tine")} />}
                 {n.id === "plan" && goalsDue > 0 && (folded ? <span className="absolute right-2 top-1.5 h-2.5 w-2.5 rounded-full bg-ember" /> : <span className="ml-auto rounded-full bg-ember px-1.5 text-[11px] font-black text-night">{goalsDue}</span>)}
                 {n.id === "home" && reviewDue && (folded ? <span className="absolute right-2 top-1.5 h-2.5 w-2.5 rounded-full bg-rose" /> : <span className="ml-auto grid h-5 w-5 place-items-center rounded-full bg-rose text-on-rose" title={tr("Raportul zilei te așteaptă")} role="img" aria-label={tr("Raportul zilei te așteaptă")}><Moon size={11} strokeWidth={3} aria-hidden="true" /></span>)}
                 {n.id === "group" && unread > 0 && (folded ? <span className="absolute right-2 top-1.5 h-2.5 w-2.5 rounded-full bg-rose" /> : <span className="ml-auto rounded-full bg-rose px-1.5 text-[11px] font-black text-on-rose">{unread}</span>)}
@@ -303,6 +309,7 @@ export function Shell({ view, setView, onReview, onFocus, d, state, unread, goal
             >
               <Icon size={20} strokeWidth={2.25} aria-hidden="true" />
               <span className="max-w-full truncate px-0.5">{n.short || n.label}</span>
+              {n.id === "molt" && (aiThinking || aiWaiting) && <span className={`absolute right-[22%] top-1 h-2 w-2 rounded-full ${aiThinking ? "animate-pulse bg-violet-hi" : "bg-mint"}`} aria-label={aiThinking ? tr("Molt se gândește…") : tr("Molt are un răspuns pentru tine")} />}
               {n.id === "plan" && goalsDue > 0 && <span className="absolute right-[22%] top-1 h-2 w-2 rounded-full bg-ember" />}
               {n.id === "home" && reviewDue && <span className="absolute right-[22%] top-1 h-2 w-2 rounded-full bg-rose" aria-label={tr("Raportul zilei te așteaptă")} />}
               {n.id === "group" && unread > 0 && <span className="absolute right-[22%] top-1 h-2 w-2 rounded-full bg-rose" />}

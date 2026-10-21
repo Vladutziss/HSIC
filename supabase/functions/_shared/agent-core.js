@@ -14,6 +14,23 @@ export const EXPERIMENT_FACTORS = ["if_then", "easier_version"];
 /** Kinds of note the agent may propose (lib/memory.js KINDS minus the free-form "note"). */
 export const NOTE_KINDS = ["constraint", "preference", "event"];
 
+/** The most goals (Obiective) a player can have at once: MAX_OBJECTIVES in src/lib/objectives.js. */
+export const GOAL_LIMIT = 6;
+
+/**
+ * What the agent may know about the player's goals (tool get_goals): the active ones with their progress in steps, how
+ * many slots are free, and the goal the player named in their profile. `free` 0 means it proposes no goal.
+ */
+export function goalsSnapshot(state, today) {
+  const active = (state?.objectives || [])
+    .filter((o) => !o.archived && !o.doneOn)
+    .map((o) => {
+      const steps = o.steps || [];
+      return { title: clip(o.title, 80), deadline: o.deadline || null, steps: steps.length, stepsDone: steps.filter((x) => x.done).length };
+    });
+  return { today, active, free: Math.max(0, GOAL_LIMIT - active.length), profileGoal: clip(state?.profile?.goal, 200) || null };
+}
+
 const CONFIDENCE = new Set(["low", "medium", "high"]);
 
 /** Normalizes optional recommendation evidence without making old proposals invalid. */
@@ -89,8 +106,10 @@ export function parseKnowledge(text) {
  * (which only names a habit and a factor: the days are drawn by the server, never by the model).
  * A "remember" is a note about the player (noteKind, body, optional startsOn/endsOn) for them to confirm.
  * A "todo" is a small study to-do (title, date YYYY-MM-DD, dur 10-60 min).
+ * A "goal" is one new goal (title, optional why and deadline, 1-5 first steps) and needs a free goal slot (`goalSlots`);
+ * at most one per run, never a title the player already has (`goalTitles`).
  */
-export function validateProposals(raw, habits, retrieved, max) {
+export function validateProposals(raw, habits, retrieved, max, goalSlots = 0, goalTitles = []) {
   const ids = new Set(habits.map((h) => h.id));
   let count = habits.length;
   const out = [];
@@ -113,6 +132,17 @@ export function validateProposals(raw, habits, retrieved, max) {
       const endsOn = isDay(p.endsOn) ? p.endsOn : null;
       if (body && NOTE_KINDS.includes(p.noteKind) && !(startsOn && endsOn && endsOn < startsOn) && !out.some((o) => o.action === "remember" && o.body === body)) {
         out.push({ action: "remember", noteKind: p.noteKind, body, startsOn, endsOn, reason, sources, ...explanationOf(p) });
+      }
+      continue;
+    }
+    if (p?.action === "goal") {
+      const title = clip(p.title, 80);
+      const why = clip(p.why, 200);
+      const deadline = /^\d{4}-\d{2}-\d{2}$/.test(p.deadline) ? p.deadline : null;
+      const steps = [...new Set((Array.isArray(p.steps) ? p.steps : []).map((x) => clip(x, 80)).filter(Boolean))].slice(0, 5);
+      const taken = goalTitles.some((t) => String(t).trim().toLowerCase() === title.toLowerCase());
+      if (goalSlots > 0 && title.length > 2 && steps.length && !taken && !out.some((o) => o.action === "goal")) {
+        out.push({ action: "goal", title, why, deadline, steps, reason, sources, ...explanationOf(p) });
       }
       continue;
     }

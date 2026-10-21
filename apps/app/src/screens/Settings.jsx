@@ -244,6 +244,7 @@ export default function Settings({ state, d, ai, mode, env, onChange, onWipe, on
               <li>{tr("· Bifă: +10 / +20 / +30 momentum după dificultate, plus 1 / 2 / 3 puncte de evoluție pentru personaj.")}</li>
               <li>{tr("· Zile active la rând: până la +40% la tot ce câștigi.")}</li>
               <li>{tr("· Toate misiunile programate bifate: cufărul zilei, +{chestXp}.", { chestXp: RULES.chestXp })}</li>
+              <li>{tr("· Poți avea mai multe obiceiuri active, dar într-o zi aduc momentum cel mult {habitsPerDay} obiceiuri bifate (cele mai valoroase).", { habitsPerDay: RULES.habitsPerDay })}</li>
               <li>{tr("· Raportul de seară: jumătate din scorul zilei devine momentum.")}</li>
               <li>{tr("· Focus: o sesiune încheiată de cel puțin {focusMinMinutes} minute aduce 1 momentum la 2 minute (+{focusCycleBonus} pentru fiecare pomodoro terminat), maximum {focusDayCap} pe zi.", { focusMinMinutes: RULES.focusMinMinutes, focusCycleBonus: RULES.focusCycleBonus, focusDayCap: RULES.focusDayCap })}</li>
               <li>{tr("· O zi fără nimic păstrează 85% din momentum; una incompletă, cel puțin 92%.")}</li>

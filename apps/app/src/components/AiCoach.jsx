@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { BookOpen, Clock, History, RefreshCw, Sparkles, Trash2 } from "lucide-react";
 import { Button, Skeleton } from "./ui.jsx";
 import { aiErrorCopy, habitInsights, weeklyReflection } from "../lib/ai.js";
@@ -8,79 +8,161 @@ import { isoWeek, load as loadReflections, save as saveReflection } from "../lib
 import { loadResults, removeResult, saveResult } from "../lib/aiHistory.js";
 import { getLocale, tr } from "../lib/i18n.js";
 
+// ---------------------------------------------------------------------------------------------------------------
+// The AI jobs live here, outside the screens: a request keeps running (and its answer is kept) when the player opens
+// another ability, another page or another browser tab, and the answer is waiting when they come back.
+// Per ability (`kind`): its current state, its history, the request in flight and how many screens show it.
+const kinds = new Map();
+const listeners = new Set();
+let version = 0;
+const emit = () => {
+  version++;
+  listeners.forEach((fn) => fn());
+};
+const subscribe = (fn) => {
+  listeners.add(fn);
+  return () => listeners.delete(fn);
+};
+const finishListeners = new Set();
+/** Called when an ability finishes while its screen is closed ({kind, failed}): the app tells the player with a toast. */
+export function onAiFinished(fn) {
+  finishListeners.add(fn);
+  return () => finishListeners.delete(fn);
+}
+const finished = (kind, failed) => finishListeners.forEach((fn) => fn({ kind, failed }));
+const IDLE = { status: "idle", data: null, error: "", at: null, id: null };
+const slot = (kind) => {
+  if (!kinds.has(kind)) kinds.set(kind, { s: IDLE, items: [], loaded: false, ctl: null, mounted: 0, unseen: false, asked: false });
+  return kinds.get(kind);
+};
+const put = (kind, patch) => {
+  Object.assign(slot(kind), patch);
+  emit();
+};
+
+/** Signing out: nothing of the account stays in memory (requests stop, answers and history are dropped). */
+export function resetAiJobs() {
+  kinds.forEach((v) => v.ctl?.abort());
+  kinds.clear();
+  emit();
+}
+
+/** Which abilities are thinking right now, and which finished while nobody was looking (for the badges). */
+export function useAiJobs() {
+  useSyncExternalStore(subscribe, () => version);
+  const busy = [];
+  const ready = [];
+  kinds.forEach((v, k) => {
+    if (v.s.status === "busy") busy.push(k);
+    else if (v.unseen) ready.push(k);
+  });
+  return { busy, ready };
+}
+
+function startJob(kind, ask, label, persist) {
+  const k = slot(kind);
+  k.ctl?.abort();
+  const ctl = new AbortController();
+  put(kind, { ctl, asked: true, unseen: false, s: { status: "busy", data: null, error: "", at: null, id: null } });
+  ask(ctl.signal)
+    .then(async (data) => {
+      if (slot(kind).ctl !== ctl) return; // a newer request replaced this one
+      let saved = null;
+      if (persist) {
+        try {
+          saved = await saveResult(await getClient(), kind, label?.() || "", data);
+        } catch {
+          // not saved (offline, old schema): the answer is still shown
+        }
+      }
+      if (slot(kind).ctl !== ctl) return;
+      const cur = slot(kind);
+      put(kind, {
+        items: saved ? [saved, ...cur.items].slice(0, 20) : cur.items,
+        unseen: cur.mounted === 0,
+        s: { status: "done", data, error: "", at: saved?.createdAt || new Date().toISOString(), id: saved?.id || null },
+      });
+      if (cur.mounted === 0) finished(kind, false);
+    })
+    .catch((e) => {
+      if (e?.code === "cancelled" || slot(kind).ctl !== ctl) return;
+      put(kind, { unseen: slot(kind).mounted === 0, s: { status: "error", data: null, error: aiErrorCopy(e?.code), at: null, id: null } });
+      if (slot(kind).mounted === 0) finished(kind, true);
+    });
+}
+
 /**
  * One AI call per click. Not run on mount: every call counts against the daily limit, and the player decides when the
  * numbers are worth asking about.
  *
- * With `opts` ({kind, label: () => string}) the answers are also kept per account (table ai_results): the newest one is
- * shown again after a refresh or a change of page, and the older ones are listed in the history (third value).
+ * `opts` = {kind, label: () => string, persist = true}. The request belongs to the ability (see above), not to the
+ * screen: it goes on when the screen closes. With `persist` the answers are also kept per account (table ai_results):
+ * the newest one is shown again after a refresh, and the older ones are listed in the history (third value).
  */
 export function useCoach(ask, opts) {
-  const [s, setS] = useState({ status: "idle", data: null, error: "", at: null });
-  const [items, setItems] = useState([]);
-  const ctl = useRef(null);
-  const asked = useRef(false);
-  const kind = opts?.kind;
-  const labelRef = useRef(opts?.label);
-  labelRef.current = opts?.label;
-  useEffect(() => () => ctl.current?.abort(), []);
+  const kind = opts?.kind || "";
+  const persist = !!kind && opts?.persist !== false;
+  useSyncExternalStore(subscribe, () => version);
+  const k = kind ? slot(kind) : null;
   useEffect(() => {
     if (!kind) return undefined;
-    let live = true;
+    const cur = slot(kind);
+    cur.mounted++;
+    if (cur.unseen) put(kind, { unseen: false });
+    return () => {
+      slot(kind).mounted--;
+    };
+  }, [kind]);
+  useEffect(() => {
+    if (!persist || slot(kind).loaded) return;
+    put(kind, { loaded: true });
     getClient()
       .then((c) => loadResults(c, kind))
       .then((list) => {
-        if (!live) return;
-        setItems(list);
-        // the last answer is back on screen, unless the player already asked again in the meantime
-        if (list[0] && !asked.current) setS({ status: "done", data: list[0].data, error: "", at: list[0].createdAt, id: list[0].id });
+        const cur = slot(kind);
+        // the last answer is back on screen, unless the player already asked in the meantime
+        put(kind, { items: list, ...(list[0] && !cur.asked ? { s: { status: "done", data: list[0].data, error: "", at: list[0].createdAt, id: list[0].id } } : {}) });
       })
-      .catch(() => {}); // the history is a bonus
-    return () => {
-      live = false;
+      .catch(() => put(kind, { loaded: false })); // the history is a bonus
+  }, [kind, persist]);
+
+  // without a kind the state stays in the screen (nothing to share)
+  const [local, setLocal] = useState(IDLE);
+  const ctl = useRef(null);
+  useEffect(() => () => ctl.current?.abort(), []);
+  const labelRef = useRef(opts?.label);
+  labelRef.current = opts?.label;
+
+  if (!kind) {
+    const run = () => {
+      ctl.current?.abort();
+      ctl.current = new AbortController();
+      setLocal({ ...IDLE, status: "busy" });
+      ask(ctl.current.signal)
+        .then((data) => setLocal({ ...IDLE, status: "done", data }))
+        .catch((e) => e?.code !== "cancelled" && setLocal({ ...IDLE, status: "error", error: aiErrorCopy(e?.code) }));
     };
-  }, [kind]);
-  const run = () => {
-    asked.current = true;
-    ctl.current?.abort();
-    ctl.current = new AbortController();
-    setS({ status: "busy", data: null, error: "", at: null });
-    ask(ctl.current.signal)
-      .then(async (data) => {
-        let saved = null;
-        if (kind) {
-          try {
-            saved = await saveResult(await getClient(), kind, labelRef.current?.() || "", data);
-          } catch {
-            // not saved (offline, old schema): the answer is still shown
-          }
-        }
-        if (saved) setItems((l) => [saved, ...l].slice(0, 20));
-        setS({ status: "done", data, error: "", at: saved?.createdAt || new Date().toISOString(), id: saved?.id });
-      })
-      .catch((e) => e?.code !== "cancelled" && setS({ status: "error", data: null, error: aiErrorCopy(e?.code), at: null }));
-  };
-  const history = kind
+    return [local, run, null];
+  }
+
+  const run = () => startJob(kind, ask, () => labelRef.current?.(), persist);
+  const history = persist
     ? {
-        items,
-        activeId: s.id,
-        pick: (it) => {
-          asked.current = true;
-          ctl.current?.abort();
-          setS({ status: "done", data: it.data, error: "", at: it.createdAt, id: it.id });
-        },
+        items: k.items,
+        activeId: k.s.id,
+        pick: (it) => put(kind, { asked: true, unseen: false, s: { status: "done", data: it.data, error: "", at: it.createdAt, id: it.id } }),
         remove: async (it) => {
           try {
             await removeResult(await getClient(), it.id);
           } catch {
             return;
           }
-          setItems((l) => l.filter((x) => x.id !== it.id));
-          setS((cur) => (cur.id === it.id ? { status: "idle", data: null, error: "", at: null } : cur));
+          const cur = slot(kind);
+          put(kind, { items: cur.items.filter((x) => x.id !== it.id), ...(cur.s.id === it.id ? { s: IDLE } : {}) });
         },
       }
     : null;
-  return [s, run, history];
+  return [k.s, run, history];
 }
 
 const stamp = (iso) => (iso ? new Date(iso).toLocaleString(getLocale(), { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "");
@@ -213,7 +295,7 @@ export function ReflectionPanel({ state, today, ai, onNotes }) {
       // not saved (offline, old schema): the answer is still shown
     }
     return r;
-  });
+  }, { kind: "mirror", persist: false }); // kept in memory while the app is open; the reflections table is its history
   if (!ai?.server) return null;
   if (!hasHistory(data)) return <NeedHistory data={data} onNotes={onNotes} />;
   const go = () => {

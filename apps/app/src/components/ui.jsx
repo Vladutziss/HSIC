@@ -538,7 +538,21 @@ export function ToastProvider({ children }) {
         {items.map((t) => {
           const Icon = t.icon;
           return (
-            <div key={t.id} className={`panel ${TOAST[t.tone] || ""} anim-slide pointer-events-auto flex items-start gap-3 px-4 py-3`}>
+            <div
+              key={t.id}
+              {...(t.onClick
+                ? {
+                    role: "button",
+                    tabIndex: 0,
+                    onClick: () => {
+                      t.onClick();
+                      setItems((x) => x.filter((y) => y.id !== t.id));
+                    },
+                    onKeyDown: (e) => e.key === "Enter" && e.currentTarget.click(),
+                  }
+                : {})}
+              className={`panel ${TOAST[t.tone] || ""} anim-slide pointer-events-auto flex items-start gap-3 px-4 py-3 ${t.onClick ? "focus-ring cursor-pointer hover:brightness-110" : ""}`}
+            >
               {Icon && <Icon size={18} className={t.tone === "mint" ? "text-mint" : t.tone === "violet" ? "text-violet-hi" : t.tone === "rose" ? "text-rose" : "text-gold"} aria-hidden="true" />}
               <div className="min-w-0 text-sm">
                 {t.title && <div className="font-extrabold text-ink">{t.title}</div>}

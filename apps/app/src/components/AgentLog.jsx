@@ -25,6 +25,8 @@ export function describe(a, state) {
       return tr("Schimbă „{name}”{v}{v2}", { name, v: p.diff ? tr(", dificultate {diff}", { diff: p.diff }) : "", v2: Array.isArray(p.days) ? `, ${scheduleLabel(p.days).toLowerCase()}` : "" });
     case "add_habit":
       return tr("Obicei nou: „{name}”{v}", { name, v: Array.isArray(p.days) ? `, ${scheduleLabel(p.days).toLowerCase()}` : "" });
+    case "add_goal":
+      return tr("Obiectiv nou: „{v}”", { v: p.title || tr("fără titlu") });
     case "set_reminder":
       return tr("Memento pentru „{name}”", { name });
     case "add_note":

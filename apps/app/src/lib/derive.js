@@ -79,14 +79,22 @@ export function derive(state, today) {
     resetAfter,
     level,
     runMult,
+    doneBases: entry?.doneBases || [],
     publicStats,
     facts,
     look,
   };
 }
 
-/** Momentum a check-in adds right now, before the evening review. */
-export const checkInGain = (h, runMult) => Math.round(diffXp(h.diff) * runMult);
+/**
+ * Momentum a check-in adds right now, before the evening review. `doneBases` are today's ticked habits (highest first,
+ * see engine.js RULES.habitsPerDay): once that many are ticked, a new one only counts for what it adds over the weakest.
+ */
+export const checkInGain = (h, runMult, doneBases = []) => {
+  const base = diffXp(h.diff);
+  const edge = doneBases.length >= RULES.habitsPerDay ? doneBases[RULES.habitsPerDay - 1] : 0;
+  return Math.round(Math.max(0, base - edge) * runMult);
+};
 
 export function reviewPayload(state, d, day) {
   const log = state.log?.[day] || {};
