@@ -292,6 +292,8 @@ function lifecycleButtons(c, phase) {
     c.status === "paused" ? btn("active", "Reia") : btn("paused", "Pune pe pauză"),
     btn("completed", "Încheie campania"),
     btn("cancelled", "Anulează"),
+    // only a draft can be removed (RLS: delete allowed while status is draft); a published campaign is cancelled instead
+    c.status === "draft" && !c.published_at ? `<button type="button" class="btn btn-sm btn-ghost" data-action="delete-draft">Șterge ciorna</button>` : "",
   ].join("");
 }
 
@@ -562,6 +564,14 @@ document.addEventListener("click", (ev) => {
       return renderPartners();
     }
     if (act === "preview") return preview();
+    if (act === "delete-draft") {
+      if (!confirm("Ștergi definitiv această ciornă (cu sursele ei)? Nu se poate anula.")) return;
+      check(await db.from("giveaway_campaigns").delete().eq("id", S.draft.id).eq("status", "draft"));
+      S.openId = null;
+      $("campanie").hidden = true;
+      await reload();
+      return flash("Ciorna a fost ștearsă.", true);
+    }
     if (act === "status") return changeStatus(el.dataset.to);
     if (act === "copy") {
       await navigator.clipboard.writeText(el.dataset.url);
