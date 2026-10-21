@@ -30,7 +30,7 @@ export function makeRepeat(kind, startDate, picked, until) {
 export function occursOn(t, day) {
   if (!t.date) return false;
   if (!t.repeat) return t.date === day;
-  return day >= t.date && (!t.repeat.until || day <= t.repeat.until) && t.repeat.days.includes(weekday(day));
+  return day >= t.date && (!t.repeat.until || day <= t.repeat.until) && t.repeat.days.includes(weekday(day)) && !(t.skipDays || []).includes(day);
 }
 
 export const isDoneOn = (t, day) => (t.repeat ? (t.doneDays || []).includes(day) : !!t.done);

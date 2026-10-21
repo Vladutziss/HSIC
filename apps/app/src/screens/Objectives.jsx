@@ -9,6 +9,7 @@ import {
   Archive,
   Bell,
   BellRing,
+  CalendarClock,
   CalendarPlus,
   CheckCircle2,
   ChevronDown,
@@ -490,6 +491,9 @@ function StepRow({ o, s, i, count, today, act }) {
               <Button size="sm" variant="ghost" icon={CalendarPlus} onClick={() => setScheduling(true)}>
                 {s.date ? tr("Mută în plan") : tr("Pune în plan")}
               </Button>
+            )}
+            {!s.done && s.date !== addDays(today, 1) && (
+              <Button size="sm" variant="ghost" icon={CalendarClock} onClick={() => act.schedule(o.id, s.id, addDays(today, 1))}>{tr("Pe mâine")}</Button>
             )}
             <IconButton icon={ArrowUp} label={tr("Mută mai sus")} disabled={i === 0} onClick={() => act.moveStep(o.id, s.id, -1)} />
             <IconButton icon={ArrowDown} label={tr("Mută mai jos")} disabled={i === count - 1} onClick={() => act.moveStep(o.id, s.id, 1)} />

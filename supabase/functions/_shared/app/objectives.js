@@ -256,3 +256,16 @@ export const TEMPLATES = [
     steps: [tr("Ideea într-o pagină"), tr("Prima versiune funcțională"), tr("Feedback de la 5 oameni"), tr("Lansare")],
   },
 ];
+
+/**
+ * To-dos that came from a goal, by to-do id: { label, color }. Built from the goals themselves
+ * (Obiective steps' todoId, Scopuri todoIds), so it survives storage that keeps no extra to-do fields.
+ */
+export function goalTodoIndex(state) {
+  const out = {};
+  for (const o of state?.objectives || []) {
+    for (const s of o.steps || []) if (s.todoId) out[s.todoId] = { label: o.title, color: o.color, oid: o.id, sid: s.id };
+  }
+  for (const g of state?.goals || []) for (const id of g.todoIds || []) if (!out[id]) out[id] = { label: g.text, color: null, gid: g.id };
+  return out;
+}
