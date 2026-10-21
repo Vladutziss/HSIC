@@ -146,7 +146,7 @@ export default function Dashboard({ state, d, today, go, ai, months, recentStori
           >{tr("Misiunile zilei")}</SectionTitle>
           <div className="space-y-2.5">
             {d.scheduled.map(({ h, code, scheduled }) => (
-              <QuestCard key={h.id} h={h} code={code} scheduled={scheduled} runMult={d.runMult} onCheck={onCheck} onOpen={() => go("habits", h.id)} />
+              <QuestCard key={h.id} h={h} code={code} scheduled={scheduled} runMult={d.runMult} doneBases={d.doneBases} onCheck={onCheck} onOpen={() => go("habits", h.id)} />
             ))}
             {d.scheduled.length === 0 && <p className="inset p-4 text-center text-sm font-semibold text-dim">{tr("Nicio misiune programată azi. Zi de odihnă sau de bonusuri!")}</p>}
           </div>
@@ -169,7 +169,7 @@ export default function Dashboard({ state, d, today, go, ai, months, recentStori
               </summary>
               <div className="space-y-2.5 px-2.5 pb-2.5 pt-1">
                 {d.optional.map(({ h, code, scheduled }) => (
-                  <QuestCard key={h.id} h={h} code={code} scheduled={scheduled} runMult={d.runMult} onCheck={onCheck} onOpen={() => go("habits", h.id)} />
+                  <QuestCard key={h.id} h={h} code={code} scheduled={scheduled} runMult={d.runMult} doneBases={d.doneBases} onCheck={onCheck} onOpen={() => go("habits", h.id)} />
                 ))}
               </div>
             </details>

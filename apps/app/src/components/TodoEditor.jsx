@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { Check, ListTodo, Repeat, Trash2 } from "lucide-react";
-import { Button, Field, Modal } from "./ui.jsx";
+import { Check, ListTodo, Repeat, Timer, Trash2 } from "lucide-react";
+import { Button, Field, Modal, Toggle } from "./ui.jsx";
 import { DateSelect, Select, TimeSelect } from "./Select.jsx";
 import { DayPicker } from "./HabitEditor.jsx";
 import { fmtDuration } from "../lib/dates.js";
@@ -26,7 +26,7 @@ export function TodoEditor({ todo, state, today, onSave, onDelete, onClose }) {
     const repeat = makeRepeat(kind, rest.date, picked, until);
     // a series keeps its ticked days; a single to-do keeps done / doneOn
     const done = repeat ? { done: false, doneOn: null, doneDays: rest.doneDays || [] } : { doneDays: undefined };
-    onSave({ ...rest, ...done, repeat, title: rest.title.trim(), time: rest.date ? rest.time : null });
+    onSave({ ...rest, focus: rest.focus ? true : undefined, ...done, repeat, title: rest.title.trim(), time: rest.date ? rest.time : null });
   };
   return (
     <Modal
@@ -117,6 +117,13 @@ export function TodoEditor({ todo, state, today, onSave, onDelete, onClose }) {
             options={[{ value: null, label: tr("Niciunul") }, ...habits.map((h) => ({ value: h.id, label: h.name }))]}
           />
         </Field>
+        <label className="flex items-center justify-between gap-4 rounded-xl bg-well p-3 ring-1 ring-edge" htmlFor="todo-focus">
+          <span>
+            <span className="flex items-center gap-1.5 font-extrabold text-ink"><Timer size={14} aria-hidden="true" />{" "}{tr("Cu sesiune Focus")}</span>
+            <span className="block text-xs font-semibold text-dim">{tr("To-do-ul primește butonul Focus, care pornește cronometrul pe el.")}</span>
+          </span>
+          <Toggle id="todo-focus" checked={!!draft.focus} onChange={set("focus")} label={tr("Cu sesiune Focus")} />
+        </label>
         <button type="submit" className="hidden" aria-hidden="true" tabIndex={-1} />
       </form>
     </Modal>

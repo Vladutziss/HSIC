@@ -1,6 +1,6 @@
 import { ensurePush } from "./lib/push.js";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { CalendarCheck, CalendarX, CheckCircle2, FlaskConical, Leaf, Timer, Zap } from "lucide-react";
+import { CalendarCheck, CalendarX, CheckCircle2, FlaskConical, Leaf, Sparkles, Timer, TriangleAlert, Zap } from "lucide-react";
 import { useAppStore } from "./lib/store.js";
 import { checkInGain, derive, reviewPayload } from "./lib/derive.js";
 import { CODE, focusXpByDay } from "./lib/engine.js";
@@ -33,7 +33,8 @@ import { TodoEditor } from "./components/TodoEditor.jsx";
 import Onboarding from "./screens/Onboarding.jsx";
 import Dashboard from "./screens/Dashboard.jsx";
 import Habits from "./screens/Habits.jsx";
-import Molt, { MOLT_TABS } from "./screens/Molt.jsx";
+import Molt, { MOLT_TABS, skillLabel } from "./screens/Molt.jsx";
+import { onAiFinished } from "./components/AiCoach.jsx";
 import Group from "./screens/Group.jsx";
 import Planner from "./screens/Planner.jsx";
 import PlanHub from "./screens/PlanHub.jsx";
@@ -208,7 +209,7 @@ function Game() {
           return;
         }
         const r = planApply(a, state, today);
-        if (r.error) throw { code: "db_error" };
+        if (r.error) throw { code: r.error === "full" ? (a.kind === "add_goal" ? "goal_limit" : "habit_limit") : "db_error" };
         update(r.patch);
         await markApplied(await agentClient(), a.id, r.before, { outcomeDue: addDays(today, 14), action: a });
       }),
@@ -263,6 +264,23 @@ function Game() {
     setFocusHabit(arg);
     window.scrollTo(0, 0);
   }, []);
+  // an AI ability that finished while its screen was closed: a toast you can tap to open it (the Molt menu item and the
+  // ability's tab carry a dot until you look at it)
+  useEffect(
+    () =>
+      onAiFinished(({ kind, failed }) => {
+        const name = skillLabel(kind);
+        toast({
+          title: failed ? tr("{name}: nu a mers", { name }) : tr("Molt a terminat: {name}", { name }),
+          text: failed ? tr("Apasă ca să vezi ce s-a întâmplat.") : tr("Apasă ca să vezi răspunsul."),
+          icon: failed ? TriangleAlert : Sparkles,
+          tone: failed ? "rose" : "violet",
+          ms: 9000,
+          onClick: () => go("molt", kind),
+        });
+      }),
+    [toast, go]
+  );
   const askMolt = useCallback(
     (text) => {
       setMoltPrompt(text);
@@ -360,7 +378,7 @@ function Game() {
       const h = state.habits.find((x) => x.id === habitId);
       const code = state.log?.[today]?.[habitId] || 0;
       setCode(habitId, code ? 0 : CODE.DONE);
-      if (!code) toast({ title: tr("+{checkInGain} momentum", { checkInGain: checkInGain(h, d.runMult) }), text: h.name, icon: Zap, tone: "gold", ms: 2200 });
+      if (!code) toast({ title: tr("+{checkInGain} momentum", { checkInGain: checkInGain(h, d.runMult, d.doneBases) }), text: h.name, icon: Zap, tone: "gold", ms: 2200 });
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [state, today, d]

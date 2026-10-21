@@ -20,7 +20,11 @@ export const diffXp = (d) => (DIFF[d] || DIFF[2]).xp;
 // also holds 2-5 from the time check-ins could carry a proof, and they are read as 1.
 export const CODE = { DONE: 1 };
 
+/** Momentum base of the ticked habits that count today: the `habitsPerDay` most valuable ones. */
+export const countedXp = (bases) => [...bases].sort((a, b) => b - a).slice(0, RULES.habitsPerDay).reduce((a, b) => a + b, 0);
+
 export const RULES = {
+  habitsPerDay: 8, // ticked habits that earn momentum in one day: a player can keep more, only the 8 most valuable count
   todoXp: 5,
   todoCap: 6,
   chestXp: 25, // every scheduled habit done
@@ -143,7 +147,7 @@ export function computeTimeline(state, today) {
     let schedCount = 0;
     let doneSched = 0;
     let doneCount = 0;
-    let habitXp = 0;
+    const doneBases = [];
     for (const h of habits) {
       if (!habitExists(h, d)) continue;
       const base = diffXp(h.diff);
@@ -159,9 +163,10 @@ export function computeTimeline(state, today) {
           doneSchedBase += base;
           doneSched++;
         }
-        habitXp += base;
+        doneBases.push(base);
       }
     }
+    const habitXp = countedXp(doneBases); // more than habitsPerDay ticked: only the most valuable ones add momentum
     const todos = todosByDay[d] || 0;
     const focusXp = focusByDay[d] || 0;
     const active = doneCount > 0 || todos > 0 || focusXp > 0;
@@ -229,6 +234,7 @@ export function computeTimeline(state, today) {
       doneCount,
       todos,
       habitXp: Math.round(habitXp),
+      doneBases: doneBases.sort((a, b) => b - a), // every ticked habit's base, highest first (what a new tick adds depends on it)
       todoXp,
       focusXp,
       reviewXp,
