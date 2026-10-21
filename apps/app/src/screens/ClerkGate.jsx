@@ -10,6 +10,7 @@ import { Button } from "../components/ui.jsx";
 import { useTheme } from "../lib/themes.js";
 import { LEGAL_VERSION, LegalChecks, clearTicked, legalOk, rememberTicked, wasTicked } from "../components/LegalChecks.jsx";
 import { tr, legalUrl } from "../lib/i18n.js";
+import { identify, resetIfIdentified } from "../lib/analytics.js";
 
 // Clerk wants real colours, not CSS variables, so the card is painted from the theme that is active right now
 // (read off the page) and rebuilt when the theme changes: a light theme gets a light card, a dark one a dark card.
@@ -110,6 +111,11 @@ function Gate({ children }) {
   const [mode, setMode] = useState("in"); // in | up
   const [signupChecks, setSignupChecks] = useState({ terms: false, age: false });
   const { isLoaded, isSignedIn, userId } = useAuth();
+  useEffect(() => {
+    if (!isLoaded) return;
+    if (isSignedIn) identify(userId);
+    else resetIfIdentified();
+  }, [isLoaded, isSignedIn, userId]);
   if (!isLoaded) return <Splash text={tr("Se încarcă aventura…")} />;
   if (!isSignedIn) {
     return (
