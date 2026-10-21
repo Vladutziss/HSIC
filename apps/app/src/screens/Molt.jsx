@@ -35,7 +35,7 @@ const SKILLS = [
   { id: "wardrobe", label: tr("Garderobă"), icon: Shirt, group: tr("Molt"), title: () => tr("Garderoba mea"), say: tr("Ce port arată ce ai făcut. Alege ce îți place și vezi ce mai pot câștiga.") },
   { id: "memory", label: tr("Ce știe Molt"), icon: NotebookPen, group: tr("Molt"), title: () => tr("Ce știu despre tine"), say: tr("Ce-mi spui aici rămâne la mine și îmi ghidează sfaturile: examene, restricții, preferințe.") },
   { id: "log", label: tr("Ce a făcut Molt"), icon: History, group: tr("Molt"), ai: true, title: () => tr("Ce am făcut"), say: tr("Tot ce ți-am propus sau am făcut, cu efectul măsurat și opțiunea de a anula.") },
-  { id: "evolution", label: tr("Evoluție"), icon: Egg, group: tr("Molt"), title: () => tr("Evoluția mea"), say: tr("Cresc odată cu obiceiurile pe care le bifezi: fiecare bifă aduce 1, 2 sau 3 puncte de evoluție, după dificultate.") },
+  { id: "evolution", label: tr("Evoluție"), icon: Egg, group: tr("Molt"), title: () => tr("Evoluția mea"), say: tr("Cresc odată cu obiceiurile pe care le bifezi: fiecare bifă aduce puncte de evoluție după dificultate, dar în aceeași zi fiecare nouă bifă adaugă tot mai puțin.") },
 ];
 
 /** The name of an ability, for messages elsewhere in the app. */
@@ -67,10 +67,10 @@ function MoltCard({ state, d, ai, wide, waiting, onWaiting, onRename }) {
   return (
     <Panel tone="violet" corners className="overflow-hidden">
       <div className="flex items-center gap-3 p-3 lg:flex-col lg:items-stretch lg:gap-0 lg:p-0">
-        <div className="pedestal flex h-[84px] w-[84px] shrink-0 items-end justify-center rounded-xl lg:h-auto lg:w-auto lg:rounded-none lg:px-6 lg:pt-4">
-          <Sprite path={path} stage={c.stage.id} mood={c.mood} size={wide ? 128 : 64} crack={eggCrack(c.ep)} look={c.look} label={`${label}, ${c.stage.name}`} />
+        <div className="pedestal flex h-[84px] w-[84px] shrink-0 items-end justify-center rounded-xl lg:h-auto lg:w-auto lg:rounded-none lg:px-4 lg:pt-2">
+          <Sprite path={path} stage={c.stage.id} mood={c.mood} size={wide ? 92 : 64} crack={eggCrack(c.ep)} look={c.look} label={`${label}, ${c.stage.name}`} />
         </div>
-        <div className="min-w-0 flex-1 space-y-2 lg:p-4 lg:pt-3">
+        <div className="min-w-0 flex-1 space-y-1.5 lg:p-3 lg:pt-2">
           {renaming ? (
             <form
               className="flex gap-2"
@@ -86,7 +86,7 @@ function MoltCard({ state, d, ai, wide, waiting, onWaiting, onRename }) {
           ) : (
             <div>
               <div className="flex items-center gap-1.5">
-                <h1 className="truncate font-pixel text-2xl leading-tight text-ink lg:text-3xl">{label}</h1>
+                <h1 className="truncate font-pixel text-2xl leading-tight text-ink lg:text-2xl">{label}</h1>
                 {c.stage.id !== "egg" && (
                   <button type="button" onClick={() => setRenaming(true)} className="focus-ring shrink-0 rounded-lg p-1.5 text-dim hover:bg-panel-hi hover:text-ink" aria-label={tr("Redenumește")}>
                     <Pencil size={15} aria-hidden="true" />
