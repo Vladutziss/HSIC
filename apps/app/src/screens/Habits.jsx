@@ -6,7 +6,7 @@ import { HabitArea, Heatmap, Sparkline } from "../components/Charts.jsx";
 import { iconFor } from "../components/icons.js";
 import { scheduleLabel } from "../components/HabitEditor.jsx";
 import { MAX_HABITS, PATHS } from "../lib/catalog.js";
-import { DIFF, habitStats, isScheduled } from "../lib/engine.js";
+import { DIFF, RULES, habitStats, isScheduled } from "../lib/engine.js";
 import { fmt12, fmtDay } from "../lib/dates.js";
 import { c } from "../lib/themes.js";
 import { usePref } from "../lib/prefs.js";
@@ -314,6 +314,12 @@ export default function Habits({ state, d, today, go, ai, focus, setFocus, onAdd
         <div>
           <h1 className="font-pixel text-3xl text-ink">{tr("Obiceiuri")}</h1>
           <p className="text-sm font-semibold text-dim">{tr("{length} din {MAX_HABITS} active · fiecare obicei are propriul momentum", { length: active.length, MAX_HABITS })}</p>
+          {active.length > RULES.habitsPerDay && (
+            <p role="note" className="mt-2 inline-flex max-w-prose items-start gap-2 rounded-xl bg-gold/10 px-3 py-2 text-xs font-bold text-body ring-1 ring-gold/30">
+              <Info size={14} className="mt-px shrink-0 text-gold-ink" aria-hidden="true" />
+              {tr("Într-o zi, doar cele mai valoroase {habitsPerDay} obiceiuri bifate aduc momentum și evoluție. Restul rămân în listă, dar nu mai adaugă puncte.", { habitsPerDay: RULES.habitsPerDay })}
+            </p>
+          )}
         </div>
       </div>
       <div className="flex flex-wrap items-end justify-between gap-3">

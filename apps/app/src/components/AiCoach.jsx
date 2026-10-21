@@ -47,6 +47,13 @@ export function resetAiJobs() {
   emit();
 }
 
+/** Starts a job that does not come from a screen's button (a reply still being written when the app was reopened); false when that ability is already busy. */
+export function trackAiJob(kind, ask) {
+  if (slot(kind).s.status === "busy") return false;
+  startJob(kind, ask, null, false);
+  return true;
+}
+
 /** A job whose answer was taken in by its screen: back to idle (the chat uses it once the reply is in its list). */
 export function idleAiJob(kind) {
   if (kinds.has(kind)) put(kind, { s: IDLE, unseen: false });
