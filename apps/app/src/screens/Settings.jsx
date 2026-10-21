@@ -8,6 +8,7 @@ import { exportData, signOut } from "../lib/account.js";
 import { THEMES, setTheme, useTheme } from "../lib/themes.js";
 import { fmt12 } from "../lib/dates.js";
 import NotificationsPanel from "../components/NotificationsPanel.jsx";
+import EmailsPanel from "../components/EmailsPanel.jsx";
 import LanguageSwitch from "../components/LanguageSwitch.jsx";
 import { tr, legalUrl } from "../lib/i18n.js";
 
@@ -267,6 +268,7 @@ export default function Settings({ state, d, ai, mode, env, onChange, onWipe, on
             {(mode === "cloud" || mode === "supabase") && tr(" Grupurile văd doar nivelul, seria, momentum-ul și personajul.")}
           </p>
           <NotificationsPanel settings={settings} set={set} />
+          {mode === "supabase" && <EmailsPanel />}
           {mode === "supabase" && (
             <div className="flex flex-wrap gap-2">
               <Button variant="ghost" size="sm" icon={Download} busy={exporting} onClick={download}>{tr("Descarcă datele mele")}</Button>

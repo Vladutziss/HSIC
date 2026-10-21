@@ -1525,4 +1525,8 @@ export default {
   "Zilnic": "Daily",
   "Ziua de azi e închisă": "Today is closed",
   "Zona periculoasă": "Danger zone",
+  "Emailuri": "Emails",
+  "Emailuri de la Molted": "Emails from Molted",
+  "Rare și scurte, despre progresul tău. Cel mult unul pe săptămână; te poți dezabona oricând.": "Rare and short, about your progress. At most one a week; you can unsubscribe at any time.",
+  "Vreau emailuri de la Molted despre progresul meu (cel mult unul pe săptămână). Mă pot dezabona oricând, dintr-un click.": "I want emails from Molted about my progress (at most one a week). I can unsubscribe at any time, in one click.",
 };

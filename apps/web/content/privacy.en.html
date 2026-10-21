@@ -1,8 +1,8 @@
 <h1>Privacy Policy</h1>
-<p class="updated">Last updated: October 18, 2026</p>
+<p class="updated">Last updated: October 21, 2026</p>
 
 <h2>1. Who we are</h2>
-<p>Molted is a gamified self-improvement app. The Molted team is responsible for your personal data; you can write to us at <a href="mailto:hsicmomentum@proton.me">hsicmomentum@proton.me</a>.</p>
+<p>Molted is a gamified self-improvement app. The Molted team is responsible for your personal data; you can write to us at <a href="mailto:molted.app@gmail.com">molted.app@gmail.com</a>.</p>
 
 <h2>2. What data we keep</h2>
 <ul>
@@ -11,11 +11,15 @@
 <li><b>What you enter in the app:</b> your goal, your habits and their check-ins, your to-dos and planner, the scores and texts of the evening reports, your character's story and name, your settings (report time, theme), your Focus sessions and the groups you belong to.</li>
 <li><b>Public data in groups:</b> your display name, character, level, streak, momentum and the day's progress are visible to the other members of your groups; the messages ("reminders") sent in a group are visible to their recipients.</li>
 <li><b>Push notifications (only if you turn them on):</b> the technical address of your browser or device assigned by the notification service and the associated encryption keys, your time zone and report time, plus your choices (daily report, group reminders). We do not use them for anything else.</li>
-<li><b>Technical data:</b> the daily counter of requests to the AI, needed for the usage limit. Only what is needed for the app to work is kept locally on your device (in the browser); see the section "Cookies and local storage".</li>
+<li><b>Emails from Molted:</b> we also use your email address to send you messages from Molted (see section 6). We keep your subscribe or unsubscribe choice (and when and how you made it), the date of your last activity in the app, a secret identifier for the unsubscribe link and a log of the emails sent (their type, date and status: sent, delivered, bounced).</li>
+<li><b>Usage statistics (PostHog):</b> which pages and features you use, from what kind of device and browser, and when. Events are tied to your account's technical identifier, not to your email address or your name.</li>
+<li><b>Errors and performance (Sentry):</b> when the app throws an error or runs slowly, a technical report is sent: the type of error, the page, the app version, the browser and device type, your IP address and a short record of the steps before the error. For performance, only a share of visits is measured.</li>
+<li><b>Technical data:</b> the daily counter of requests to the AI, needed for the usage limit. What the app needs to work is kept locally on your device (in the browser); see the section "Cookies and local storage".</li>
 </ul>
 
 <h2>3. Why we use it</h2>
-<p>Only to make the app work: sign-in, saving and syncing between devices, statistics, groups and leaderboards, reports and stories written with AI, and the notifications you asked for. The legal basis is performing the service you request (these terms) and, for push notifications, your consent. <b>We do not sell your data and we do not show ads.</b></p>
+<p>To make the app work: sign-in, saving and syncing between devices, statistics, groups and leaderboards, reports and stories written with AI, and the notifications you asked for. The legal basis is performing the service you request (these terms) and, for push notifications, your consent.</p>
+<p>We also use data to send you emails about the app (a start, tips, an introduction to the features, a request for your opinion and a message if you have been away for a long time), to understand how the app is used (PostHog) and to find and fix errors (Sentry). The legal basis is our legitimate interest in keeping users informed about the service they chose and in improving and securing it; you have the right to object at any time (see sections 6 and 7). If you tick the email box when creating your account, your consent is a basis too, and you can withdraw it at any time. <b>We do not sell your data and we do not show ads.</b></p>
 
 <h2>4. Who processes it</h2>
 <p>We use providers that process data on our behalf:</p>
@@ -23,28 +27,41 @@
 <li><b>Clerk</b> – authentication and account management (email, password or Google sign-in, sessions, anti-abuse protection at sign-up). Your password does not reach us.</li>
 <li><b>Supabase</b> – the database where the app's data is saved, with per-user access restrictions, and the functions that run on the server.</li>
 <li><b>OpenRouter</b> and the AI models used through it – they generate the evening reports, the story chapters, the personalized lines, the analyses in Stats and the plan proposed by the coach. They receive only the text needed (for example your goal, the names of your habits, the days they are scheduled, how many you ticked on each weekday, your level and streak), not your email or other account data. The models are run by third-party providers; if the AI does not answer, the app does not generate text in its place.</li>
+<li><b>Resend</b> – sends the emails from Molted. It receives your email address, your first name (if we have it) and the text of the message; it tracks whether the email was delivered or bounced. We use no open-tracking pixels and no click-tracking links.</li>
+<li><b>PostHog</b> (hosted in the EU) – usage statistics for the app, tied to the account identifier, without email or name.</li>
+<li><b>Sentry</b> – error reporting and performance measurement for the app. It may also process data outside the European Economic Area.</li>
 <li><b>Browser notification services</b> (for example those of Google, Apple or Mozilla) – they carry push notifications to your device, if you turn them on.</li>
-<li><b>Google</b> – sign-in, if you choose to sign in with your Google account.</li>
-<li><b>The hosting providers</b> of the app and of the landing page.</li>
+<li><b>Google</b> – sign-in, if you choose to sign in with your Google account, and the Nunito font, loaded from Google Fonts (Google's servers receive your IP address when you download it).</li>
+<li><b>Vercel</b> – hosting of the app and of the landing page (it receives the IP address and technical data of requests).</li>
 </ul>
 <p>Some of these providers may also process data outside the European Economic Area; in that case we rely on the safeguards provided by law (for example standard contractual clauses).</p>
 
 <h2>5. How long we keep it</h2>
 <p>As long as you have an account. If you delete your account, we delete the data associated with it, including notification subscriptions. The providers' backup copies may persist for a short time before they disappear. If you turn notifications off or the browser invalidates them, we delete the subscription.</p>
 
-<h2>6. Push notifications</h2>
-<p>They are <b>optional</b>: they appear only if you turn them on in the app and accept the browser's request. You can choose what you receive (the daily report at your time, reminders from group members) and you can turn them off at any time from the app or from your browser or device settings. The messages contain only a short text such as "It's report time" or the text of the reminder sent by a member of your group.</p>
+<h2>6. Emails and push notifications</h2>
+<p><b>Emails from Molted.</b> We may send you, at your account address, in your first weeks: a starter message if you created your account but have not checked anything off yet; a short tip on keeping your habits going; an introduction to the AI coach and groups; and a request for your opinion on the app, which you can answer directly. If you have been away from the app for a long time, you get <b>a single</b> come-back message; after it we do not contact you this way again unless you come back. We send no more than one email every 7 days and no more than 3 in 30 days. They are all emails about the app you use, with no third-party advertising.</p>
+<p><b>How to unsubscribe.</b> Every email has an "Unsubscribe" link that works in a single click, with no account and no password. You can also turn emails off or on at any time in the app, under Settings → Emails, or by writing to us at the contact address. It applies immediately. If the email bounces or is marked as spam, you are unsubscribed automatically. Emails strictly about your account (for example address confirmation or security), sent by Clerk, are not marketing messages and cannot be turned off while you have an account.</p>
+<p><b>Push notifications</b> are <b>optional</b>: they appear only if you turn them on in the app and accept the browser's request. You can choose what you receive (the daily report at your time, reminders from group members) and you can turn them off at any time from the app or from your browser or device settings. The messages contain only a short text such as "It's report time" or the text of the reminder sent by a member of your group.</p>
 
 <h2>7. Your rights</h2>
 <p>You have the right of access, rectification, erasure, restriction, portability and objection, as well as the right to withdraw your consent at any time (for example for notifications). From the app you can <b>download your data</b>, <b>delete all your data</b> or <b>delete your account</b> (Settings → Your data). For any other request you can write to us at the address above; we reply within 30 days at most. You have the right to lodge a complaint with the Romanian National Supervisory Authority for Personal Data Processing (ANSPDCP), <a href="https://www.dataprotection.ro" rel="noopener">dataprotection.ro</a>.</p>
 
 <h2>8. Cookies and local storage</h2>
-<p>Molted <b>does not use advertising, tracking or analytics cookies</b>, has no pixels and does not send data to statistics tools. We use only what is strictly necessary for the app to work:</p>
+<p>Molted <b>does not use advertising cookies</b> and has no advertising pixels. We use cookies and local storage (localStorage and sessionStorage) for two purposes. You can delete everything the site has saved from your browser settings at any time; some features (for example staying signed in) will stop working until you sign in again.</p>
+<p><b>1. Strictly necessary for the app to work</b> (no consent needed, Article 5(3) of Directive 2002/58/EC, transposed in Romania by Law 506/2004):</p>
 <ul>
-<li><b>Authentication cookies</b> (Clerk's): they keep your session signed in. Without them you cannot enter your account. They are strictly necessary and do not require consent.</li>
-<li><b>Local storage in the browser</b> (localStorage): a copy of the theme and interface preferences (so it looks right before your account loads), the Focus session in progress and the history of the conversation with Molt when you are not signed in. Your preferences are saved in your account; you can delete the local copy from your browser settings at any time.</li>
+<li><b>Clerk – authentication</b> (Clerk's cookies, for example <code>__session</code>, <code>__client_uat</code>, <code>__client</code>, <code>__clerk_db_jwt</code>, and entries in Clerk's local/session storage): they keep your session signed in and protect sign-up against abuse. Without them you cannot enter your account. Duration: session or until you sign out (<code>__client</code> up to one year).</li>
+<li><b>Preferences in localStorage</b> (<code>molted.theme</code>, <code>molted.prefs</code>, <code>molted.chat</code> and similar keys): the theme and interface preferences (so it looks right before your account loads), language, the Focus session in progress and the history of the conversation with Molt when you are not signed in. They stay on the device until you delete them.</li>
+<li><b>Confirmation of the terms at sign-up</b> (<code>molted.legalTicked</code>, sessionStorage): deleted when you close the tab.</li>
+<li><b>Landing page, campaigns</b> (localStorage/sessionStorage): the campaign link you came from, so we know where a visit or sign-up started; kept for 7 days at most.</li>
 </ul>
-<p>We do not need your consent for these, because they are strictly necessary for the service you request (Article 5(3) of Directive 2002/58/EC, transposed in Romania by Law 506/2004). If we ever add non-essential cookies, we will ask for your agreement before they are set, through a banner, and this section will be updated.</p>
+<p><b>2. Statistics and errors</b> (not strictly necessary; they help us improve the app):</p>
+<ul>
+<li><b>PostHog</b> (usage statistics): sets a cookie and a localStorage entry named <code>ph_&lt;key&gt;_posthog</code>, holding an anonymous identifier, then the account identifier after you sign in, and session data. Duration: up to one year. It does not contain your email or name.</li>
+<li><b>Sentry</b> (errors and performance): sets no advertising cookies; it sends technical reports about errors (see section 2). It may use session storage to link the events of one visit.</li>
+</ul>
+<p>We do not use Google Analytics and have no advertising pixels. If we add other tools in the future that use non-essential cookies, we will update this section before turning them on.</p>
 
 <h2>9. Security</h2>
 <p>Access to data is restricted per user, communication is encrypted (HTTPS) and secret keys stay on the server. No method is perfect; if you notice a security problem, let us know.</p>
