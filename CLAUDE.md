@@ -26,3 +26,11 @@
 - Deploy: din dashboard-ul Supabase ca fișier unic bundle-uit (`esbuild --bundle --external:jsr:*`) sau cu CLI.
 - Secrete: `OPENROUTER_API_KEY`, `AI_MODEL`, `AGENT_MODEL`, `AGENT_CRON_SECRET` (niciodată în repo).
 - Regulă: textul AI e generat de AI sau deloc (fără fallback-uri scrise de mână).
+
+## Limbi (RO / EN)
+
+- Interfața aplicației e în română și engleză. Textul sursă e în română: orice text vizibil e `tr("text românesc {var}", { var })` din `apps/app/src/lib/i18n.js`; engleza se caută după același text în `apps/app/src/i18n/en.js`. Fără intrare în `en.js` textul rămâne românesc, iar `tests/i18n.test.mjs` pică (acoperire, placeholdere identice, chei rămase fără folosire, text românesc scăpat în afara `tr()`).
+- `"cuvânt§context"`: sufixul după `§` nu se afișează, dar face cheia diferită când același cuvânt românesc cere două traduceri.
+- Limba se alege o dată la încărcarea paginii (`?lang=` → alegerea salvată în `molted.prefs.lang` → limba browserului, `ro-*` = română, altfel engleză); comutatorul din Setări (`LanguageSwitch`) salvează și reîncarcă. Contul păstrează alegerea în `settings.prefs.lang`.
+- Nu compara niciodată în cod șiruri traduse (ex. „azi”); folosește valori (`diffDays`) sau ID-uri.
+- AI: clientul trimite `lang` către `ai`/`agent`; `weekly` și `push` citesc `profiles.settings.prefs.lang`. Funcțiile Edge folosesc copii ale bibliotecilor aplicației (`_shared/app`) cu un `i18n.js` fără React (`scripts/server-i18n.js`, copiat de `npm run sync:functions`), deci acolo rămâne româna.

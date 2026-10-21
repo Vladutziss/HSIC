@@ -22,5 +22,19 @@
       <p>Molted are nevoie de internet ca să-ți încarce obiceiurile. Verifică conexiunea și încearcă din nou.</p>
       <button onclick="location.reload()">Reîncearcă</button>
     </main>
+    <script>
+      // English unless the saved choice (or, without one, the browser language) is Romanian; same order as src/lib/i18n.js
+      try {
+        var saved = (JSON.parse(localStorage.getItem("molted.prefs") || "{}") || {}).lang;
+        var ro = saved ? saved === "ro" : String(navigator.language || "ro").toLowerCase().indexOf("ro") === 0;
+        if (!ro) {
+          document.documentElement.lang = "en";
+          document.title = "Molted · offline";
+          document.querySelector("h1").textContent = "You're offline";
+          document.querySelector("p").textContent = "Molted needs the internet to load your habits. Check your connection and try again.";
+          document.querySelector("button").textContent = "Try again";
+        }
+      } catch (e) {}
+    </script>
   </body>
 </html>

@@ -8,6 +8,11 @@
 export const KINDS = ["review", "moment", "chapter", "insights", "daily_plan", "homework_parse", "goal_decompose", "reflection", "chat"] as const;
 export type Kind = (typeof KINDS)[number];
 
+// The player's language. buildPrompt sets it once per call (synchronously, before any builder runs).
+let LANG = "Romanian";
+let TU = ' as "tu"'; // Romanian has a familiar "you"; English does not need one
+export const langName = (lang: unknown) => (lang === "en" ? "English" : "Romanian");
+
 const clip = (s: unknown, n: number) => {
   const t = String(s ?? "").trim();
   return t.length > n ? t.slice(0, n - 1).trimEnd() + "…" : t;
@@ -33,7 +38,7 @@ ${habits || "- nothing scheduled"}
 To-dos done: ${Number(todos.done) || 0} of ${Number(todos.total) || 0}${titles.length ? ` (${titles.join("; ")})` : ""}.
 Momentum: level ${Number(level.lvl) || 1} (${clip(level.name, 30)}), ${Number(p.momentum) || 0} points. Streak: ${Number(p.streak) || 0} days.
 
-Score the day from 0 to 100 for effort and consistency against the plan: 100 = everything scheduled done; about 60 = most of it done; about 30 = a small start; 0 = nothing. Then write, in Romanian, addressing the player as "tu":
+Score the day from 0 to 100 for effort and consistency against the plan: 100 = everything scheduled done; about 60 = most of it done; about 30 = a small start; 0 = nothing. Then write, in ${LANG}, addressing the player${TU}:
 - summary: 2 sentences, specific to what was done today, honest and encouraging, without guilt or pressure.
 - highlight: the best thing today, at most 8 words.
 - tip: one concrete suggestion for tomorrow, at most 18 words.
@@ -43,7 +48,7 @@ Reply with only JSON: {"score": <integer 0-100>, "summary": "...", "highlight": 
 
 function moment(p: any): string {
   const quote = p.quote ?? {};
-  return `In one sentence in Romanian (at most 170 characters), connect this quote to the player's situation in a self-improvement game. Address the player as "tu", be warm and concrete, and do not repeat the quote.
+  return `In one sentence in ${LANG} (at most 170 characters), connect this quote to the player's situation in a self-improvement game. Address the player${TU}, be warm and concrete, and do not repeat the quote.
 Situation: ${clip(p.situation, 300)}.
 Quote: "${clip(quote.text, 300)}" (${clip(quote.author, 60)}).
 Reply with only JSON: {"line":"..."}`;
@@ -54,11 +59,12 @@ function chapter(p: any): string {
   return `In "Molted", a self-improvement RPG, the player's companion ${clip(p.name, 30) || "the Molt"} (a ${clip(p.cls, 30) || "hero"}) just evolved from "${clip(p.from, 30)}" to "${clip(p.to, 30)}" thanks to the player's daily check-ins.
 Recent story (newest last):
 ${recent.map((s) => `- ${s}`).join("\n") || "- (none yet)"}
-Write a short celebratory chapter: 3 sentences, at most 380 characters, in Romanian, third person, present tense, describing the transformation and what the companion can do now. Give it a title of 2-4 words.
+Write a short celebratory chapter: 3 sentences, at most 380 characters, in ${LANG}, third person, present tense, describing the transformation and what the companion can do now. Give it a title of 2-4 words.
 Reply with only JSON: {"title":"...","story":"..."}`;
 }
 
-const WD = ["dum", "lun", "mar", "mie", "joi", "vin", "sâm"]; // index = Date.getDay()
+const WD_RO = ["dum", "lun", "mar", "mie", "joi", "vin", "sâm"]; // index = Date.getDay()
+const WD_EN = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
 
 /** The last 4 weeks per habit, for `insights` (the planning is done by the `agent` function). */
 function habitsBlock(p: any): string {
@@ -68,7 +74,7 @@ function habitsBlock(p: any): string {
       .map((h: any) => {
         const wd = (Array.isArray(h.wd) ? h.wd : [])
           .slice(0, 7)
-          .map((c: any, i: number) => `${WD[i]} ${Number(c?.[1]) || 0}/${Number(c?.[0]) || 0}`)
+          .map((c: any, i: number) => `${(LANG === "English" ? WD_EN : WD_RO)[i]} ${Number(c?.[1]) || 0}/${Number(c?.[0]) || 0}`)
           .join(", ");
         return `- id=${clip(h.id, 40)} "${clip(h.name, 60)}" difficulty ${Number(h.diff) || 2}/3, scheduled on [${list(h.days, 7, 2).join(",")}] (0=Sunday): done ${Number(h.done) || 0} of ${Number(h.sched) || 0}. Per weekday done/scheduled: ${wd}`;
       })
@@ -82,7 +88,7 @@ function insights(p: any): string {
 Goal: "${clip(p.goal, 200) || "-"}".
 ${habitsBlock(p)}
 
-Write in Romanian, addressing the player as "tu", warm and specific, no guilt. Each insight: title at most 6 words, text at most 200 characters with the numbers it is based on and the fix.
+Write in ${LANG}, addressing the player${TU}, warm and specific, no guilt. Each insight: title at most 6 words, text at most 200 characters with the numbers it is based on and the fix.
 Reply with only JSON: {"insights":[{"title":"...","text":"..."}]}`;
 }
 
@@ -103,12 +109,12 @@ ${goals.map((g: any) => `- ${clip(g.text, 100)}${g.done ? " (done)" : ""}`).join
 School assignments:
 ${assignments.map((a: any) => `- ${clip(a.title, 90)}${a.subject ? ` [${clip(a.subject, 40)}]` : ""} due ${clip(a.due, 20)}${a.done ? " (done)" : ""}`).join("\n") || "- none"}
 
-Return at most 3 steps, ordered by usefulness. Each step must be small enough for the available time, concrete, and possible today. Do not invent assignments, deadlines or habits. Prefer one important task, then one scheduled habit, then a short easy win. Set "focus": true only for a step that is deep, uninterrupted work of at least 15 minutes (studying, writing, practice); otherwise false. Address the player as "tu" in Romanian, without guilt.
+Return at most 3 steps, ordered by usefulness. Each step must be small enough for the available time, concrete, and possible today. Do not invent assignments, deadlines or habits. Prefer one important task, then one scheduled habit, then a short easy win. Set "focus": true only for a step that is deep, uninterrupted work of at least 15 minutes (studying, writing, practice); otherwise false. Address the player${TU} in ${LANG}, without guilt.
 Reply with only JSON: {"steps":[{"title":"...","minutes":15,"focus":false,"reason":"...","dataUsed":["..."],"confidence":"low|medium|high"}]}`;
 }
 
 function homeworkParse(p: any): string {
-  return `You extract school assignments from a Romanian student's text. Do not invent a deadline when it is not present: use ${clip(p.today, 20)} only as a fallback. Return only tasks that are explicit or strongly implied.
+  return `You extract school assignments from a student's text. Do not invent a deadline when it is not present: use ${clip(p.today, 20)} only as a fallback. Return only tasks that are explicit or strongly implied.
 Text: "${clip(p.text, 1200)}"
 Today: ${clip(p.today, 20)}
 Set "type" to "exam" for a test, exam, quiz or oral (a fixed date to be examined on) and to "assignment" for homework or a project to hand in. For an exam, "due" is the exam day.
@@ -116,14 +122,14 @@ Reply with only JSON: {"assignments":[{"type":"assignment|exam","title":"...","s
 }
 
 function goalDecompose(p: any): string {
-  return `You help a Romanian teenager turn one vague goal into three small goals for the next month. Do not promise outcomes and do not invent a schedule. Keep every step concrete and possible in less than one week. Write every "text" and "criteria" in Romanian, addressing the student as "tu" where needed.
+  return `You help a teenager turn one vague goal into three small goals for the next month. Do not promise outcomes and do not invent a schedule. Keep every step concrete and possible in less than one week. Write every "text" and "criteria" in ${LANG}, addressing the student${TU} where needed.
 Goal: "${clip(p.goal, 300)}"
 Optionally add "due" (YYYY-MM-DD, only when a date is clearly implied) and "criteria" (one short sentence: how the student will know the step is done).
 Reply with only JSON: {"goals":[{"text":"...","period":"week|month","due":"YYYY-MM-DD","criteria":"..."}]}`;
 }
 
 function reflection(p: any): string {
-  return `You are a gentle weekly reflection coach for a Romanian teenager. Use only the supplied numbers and the student's own answer. Do not diagnose, shame or invent causes. Return one observation and one small change for next week. Refer to habits by their name, never by an id, and make every "dataUsed" entry a short human-readable phrase (for example "alergare 2/2"). Write both in Romanian, addressing the student as "tu", warm and specific, no guilt (observation at most 300 characters, nextStep at most 240).
+  return `You are a gentle weekly reflection coach for a teenager. Use only the supplied numbers and the student's own answer. Do not diagnose, shame or invent causes. Return one observation and one small change for next week. Refer to habits by their name, never by an id, and make every "dataUsed" entry a short human-readable phrase (for example "alergare 2/2"). Write both in ${LANG}, addressing the student${TU}, warm and specific, no guilt (observation at most 300 characters, nextStep at most 240).
 Data: ${JSON.stringify(p.data || {})}
 Student answer: "${clip(p.answer, 800)}"
 Reply with only JSON: {"observation":"...","nextStep":"...","dataUsed":["..."],"confidence":"low|medium|high"}`;
@@ -137,7 +143,7 @@ function chatPrompt(p: any): string {
   const rows = (a: unknown, n: number, f: (x: any) => string) =>
     (Array.isArray(a) ? a.slice(0, n).map(f).join("\n") : "") || "- none";
   const days = (d: any) => (Array.isArray(d) ? d.slice(0, 7).join(",") : "");
-  return `You are ${clip(p.name, 40) || "the Molt"}, the player's Molt companion in "Molted", a self-improvement RPG (class: ${clip(p.cls, 40) || "-"}). You are a teen self-improvement and school coach. Talk in Romanian, warm, concise, addressing the player as "tu". The player's main goal: "${clip(p.goal, 200) || "-"}". Today: ${clip(c.today, 20)}.
+  return `You are ${clip(p.name, 40) || "the Molt"}, the player's Molt companion in "Molted", a self-improvement RPG (class: ${clip(p.cls, 40) || "-"}). You are a teen self-improvement and school coach. Talk in ${LANG}, warm, concise, addressing the player${TU}. The player's main goal: "${clip(p.goal, 200) || "-"}". Today: ${clip(c.today, 20)}.
 
 Context (the only facts you know about the player):
 Streak: ${Number(c.streak) || 0} days. Focus today: ${Number(c.focusMinutesToday) || 0} min.
@@ -165,8 +171,10 @@ Rules: if the goal is vague, ask at most 2 short clarifying questions and set "p
 Reply with only JSON: {"reply":"<=600 chars","plan":null | {"title":"<=80","steps":[{"text":"<=120","period":"week|month","due":"YYYY-MM-DD or empty","criteria":"<=120 or empty"}] (max 6),"habits":[{"name":"<=40","diff":1-3,"days":[0-6]}] (max 3),"todos":[{"title":"<=80","date":"YYYY-MM-DD","dur":10-60}] (max 4),"why":"<=200"}}`;
 }
 
-export function buildPrompt(kind: Kind, params: any): string {
+export function buildPrompt(kind: Kind, params: any, lang?: unknown): string {
   const p = params && typeof params === "object" ? params : {};
+  LANG = langName(lang);
+  TU = lang === "en" ? "" : ' as "tu"';
   switch (kind) {
     case "insights":
       return insights(p);

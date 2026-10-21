@@ -1,4 +1,5 @@
-const RESCUE_PREFIX = "Revenire: ";
+import { tr } from "./i18n.js";
+const RESCUE_PREFIX = tr("Revenire: ");
 
 /** Returns one small, deterministic recovery step when momentum is at risk or just returned. */
 export function rescueInfo(d, state, today) {
@@ -7,7 +8,7 @@ export function rescueInfo(d, state, today) {
   if (!resetRisk && !returning) return null;
 
   const habit = (d?.scheduled || []).find(({ code }) => !code)?.h;
-  const title = habit ? `${RESCUE_PREFIX}${habit.name} - versiunea usoara` : `${RESCUE_PREFIX}un pas de 5 minute`;
+  const title = habit ? tr("{RESCUE_PREFIX}{name} - versiunea usoara", { RESCUE_PREFIX, name: habit.name }) : tr("{RESCUE_PREFIX}un pas de 5 minute", { RESCUE_PREFIX });
   const exists = (state?.todos || []).some((todo) => todo.date === today && !todo.done && todo.title === title);
   if (exists) return null;
 
@@ -15,7 +16,7 @@ export function rescueInfo(d, state, today) {
     title,
     date: today,
     dur: habit ? 10 : 5,
-    reason: resetRisk ? "Un pas mic azi poate opri seria de zile fara activitate." : "Ai revenit dupa o pauza. Pastreaza ritmul cu un pas usor.",
+    reason: resetRisk ? tr("Un pas mic azi poate opri seria de zile fara activitate.") : tr("Ai revenit dupa o pauza. Pastreaza ritmul cu un pas usor."),
     source: resetRisk ? "reset-risk" : "return",
   };
 }

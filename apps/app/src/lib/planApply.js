@@ -4,6 +4,7 @@
 import { MAX_TEXT, periodKey } from "./goals.js";
 import { hasOpenTodo } from "./agentActions.js";
 import { MAX_HABITS } from "./catalog.js";
+import { tr } from "./i18n.js";
 
 export const LIMITS = { steps: 7, todos: 7, habits: 3 };
 const DAY = /^\d{4}-\d{2}-\d{2}$/;
@@ -16,7 +17,7 @@ export function goalSet(plan, today) {
   if (!steps.length) return null;
   const key = periodKey("month", today);
   return {
-    parent: { text: str(plan.title, MAX_TEXT) || "Plan", period: "month", key },
+    parent: { text: str(plan.title, MAX_TEXT) || tr("Plan"), period: "month", key },
     children: steps.map((s) => ({
       text: str(s.text, MAX_TEXT),
       period: "month",
@@ -63,8 +64,8 @@ export function habitList(plan, state) {
 /** "3 pași, 2 to-do-uri, 1 obicei" from what was actually added. */
 export function summary({ steps = 0, todos = 0, habits = 0 }) {
   const p = [];
-  if (steps) p.push(`${steps} ${steps === 1 ? "pas" : "pași"}`);
-  if (todos) p.push(`${todos} ${todos === 1 ? "to-do" : "to-do-uri"}`);
-  if (habits) p.push(`${habits} ${habits === 1 ? "obicei" : "obiceiuri"}`);
-  return p.length ? `Adăugat: ${p.join(", ")}.` : "Nu era nimic nou de adăugat: totul exista deja.";
+  if (steps) p.push(`${steps} ${steps === 1 ? tr("pas") : tr("pași")}`);
+  if (todos) p.push(`${todos} ${todos === 1 ? tr("to-do") : tr("to-do-uri")}`);
+  if (habits) p.push(`${habits} ${habits === 1 ? tr("obicei") : tr("obiceiuri")}`);
+  return p.length ? tr("Adăugat: {join}.", { join: p.join(", ") }) : tr("Nu era nimic nou de adăugat: totul exista deja.");
 }
