@@ -26,7 +26,7 @@ import { MomentModal } from "./components/MomentModal.jsx";
 import { UnlockModal } from "./components/UnlockModal.jsx";
 import { newItems, recordUnlocks } from "./lib/cosmetics.js";
 import { DEFAULT_THEME, getTheme, isTheme, setTheme } from "./lib/themes.js";
-import { allPrefs, bindPrefsSync, hydratePrefs } from "./lib/prefs.js";
+import { allPrefs, bindPrefsSync, hydratePrefs, setPref } from "./lib/prefs.js";
 import { HabitEditor, scheduleLabel } from "./components/HabitEditor.jsx";
 import { TodoEditor } from "./components/TodoEditor.jsx";
 import Onboarding from "./screens/Onboarding.jsx";
@@ -40,6 +40,7 @@ import Stats from "./screens/Stats.jsx";
 import Objectives, { Celebration, ObjectiveEditor, ObjectivesMini, blankObjective, objectiveFromTemplate } from "./screens/Objectives.jsx";
 import { dueReminders, moveStep, newMarks, toggleStep, toggleSub } from "./lib/objectives.js";
 import SettingsScreen from "./screens/Settings.jsx";
+import { getLocale, tr } from "./lib/i18n.js";
 
 const STATE_VERSION = 2;
 const uniq = (arr) => [...new Set(arr)];
@@ -79,7 +80,7 @@ function Loading() {
     <div className="app-bg grid min-h-screen place-items-center">
       <div className="flex flex-col items-center gap-3 text-dim">
         <Leaf className="anim-flicker text-gold" size={28} aria-hidden="true" />
-        <span className="font-pixel text-lg text-ink">Se încarcă aventura…</span>
+        <span className="font-pixel text-lg text-ink">{tr("Se încarcă aventura…")}</span>
       </div>
     </div>
   );
@@ -135,8 +136,8 @@ function Game() {
     update((s) => ({ ...s, focusSessions: [...(s.focusSessions || []), record].slice(-300) }));
     const xp = after - before;
     toast({
-      title: "Sesiune de Focus salvată",
-      text: `${fmtSpan(record.work)} de concentrare${xp > 0 ? ` · +${xp} momentum` : record.work < 300 ? " · sub 5 minute, fără momentum" : " · limita zilnică de momentum din Focus e atinsă"}`,
+      title: tr("Sesiune de Focus salvată"),
+      text: tr("{fmtSpan} de concentrare{v}", { fmtSpan: fmtSpan(record.work), v: xp > 0 ? tr(" · +{xp} momentum", { xp }) : record.work < 300 ? tr(" · sub 5 minute, fără momentum") : tr(" · limita zilnică de momentum din Focus e atinsă") }),
       icon: Timer,
       tone: "mint",
     });
@@ -177,7 +178,7 @@ function Game() {
         .then((c) => markApplied(c, a.id, r.before, { outcomeDue: addDays(today, 14), action: a }))
         .then(reloadAgentLog)
         .catch(() => {});
-      toast({ title: "Coach-ul ți-a pregătit ceva", text: a.reason, icon: CheckCircle2, tone: "mint", ms: 4500 });
+      toast({ title: tr("Coach-ul ți-a pregătit ceva"), text: a.reason, icon: CheckCircle2, tone: "mint", ms: 4500 });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [agentLog, !!state, ai.server]);
@@ -318,6 +319,8 @@ function Game() {
     const unbind = bindPrefsSync(save);
     if (accountPrefs) hydratePrefs(accountPrefs);
     else if (Object.keys(allPrefs()).length) save(allPrefs());
+    // the account always knows the language of the page, so the coach's server-side texts (weekly plan, nudges) match it
+    if (!accountPrefs?.lang) setPref("lang", getLocale());
     return unbind;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasState, accountPrefs]);
@@ -349,7 +352,7 @@ function Game() {
       const h = state.habits.find((x) => x.id === habitId);
       const code = state.log?.[today]?.[habitId] || 0;
       setCode(habitId, code ? 0 : CODE.DONE);
-      if (!code) toast({ title: `+${checkInGain(h, d.runMult)} momentum`, text: h.name, icon: Zap, tone: "gold", ms: 2200 });
+      if (!code) toast({ title: tr("+{checkInGain} momentum", { checkInGain: checkInGain(h, d.runMult) }), text: h.name, icon: Zap, tone: "gold", ms: 2200 });
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [state, today, d]
@@ -378,7 +381,7 @@ function Game() {
       const exists = s.habits.some((h) => h.id === habit.id);
       return { ...s, habits: exists ? s.habits.map((h) => (h.id === habit.id ? habit : h)) : [...s.habits, habit] };
     });
-    toast({ title: habitEd?.habit ? "Obicei actualizat" : "Obicei nou adăugat", text: habit.name, icon: CheckCircle2, tone: "mint", ms: 2200 });
+    toast({ title: habitEd?.habit ? tr("Obicei actualizat") : tr("Obicei nou adăugat"), text: habit.name, icon: CheckCircle2, tone: "mint", ms: 2200 });
     if (!keepOpen) setHabitEd(null);
   }
 
@@ -399,14 +402,14 @@ function Game() {
     const to = weekday(toDay);
     // a day that already has the habit would swallow the one dragged from: leave everything as it is instead
     if (to !== from && habit.days.includes(to)) {
-      toast({ title: "Nu s-a mutat", text: `${habit.name} e deja programat în ziua aceea`, icon: CalendarX, tone: "rose", ms: 2600 });
+      toast({ title: tr("Nu s-a mutat"), text: tr("{name} e deja programat în ziua aceea", { name: habit.name }), icon: CalendarX, tone: "rose", ms: 2600 });
       return;
     }
     const days = [...new Set([...habit.days.filter((x) => x !== from), to])].sort();
     const nextTime = time || habit.time;
     if (from === to && nextTime === habit.time) return;
     update((s) => ({ ...s, habits: s.habits.map((h) => (h.id === habitId ? { ...h, days, time: nextTime } : h)) }));
-    toast({ title: "Obicei mutat", text: `${habit.name}: ${scheduleLabel(days)}${nextTime ? ` · ${fmt12(nextTime)}` : ""} (se repetă în fiecare săptămână)`, icon: CheckCircle2, tone: "mint", ms: 3200 });
+    toast({ title: tr("Obicei mutat"), text: tr("{name}: {scheduleLabel}{v} (se repetă în fiecare săptămână)", { name: habit.name, scheduleLabel: scheduleLabel(days), v: nextTime ? ` · ${fmt12(nextTime)}` : "" }), icon: CheckCircle2, tone: "mint", ms: 3200 });
   }
 
   // Deleting a habit keeps what it earned: its check-ins move into the history (see lib/retired.js), so momentum,
@@ -414,14 +417,14 @@ function Game() {
   function deleteHabit(habitId) {
     const name = state.habits.find((h) => h.id === habitId)?.name;
     update((s) => retireHabit(s, habitId, today));
-    toast({ title: "Obicei șters", text: name, icon: CheckCircle2, tone: "mint", ms: 2200 });
+    toast({ title: tr("Obicei șters"), text: name, icon: CheckCircle2, tone: "mint", ms: 2200 });
   }
   const askDeleteHabit = (habitId) => {
     const name = state.habits.find((h) => h.id === habitId)?.name;
     setConfirm({
-      title: "Ștergi obiceiul?",
-      text: `„${name}” dispare din lista ta. Progresul pe care ți l-a adus rămâne: momentum-ul, seria și evoluția lui Molt nu scad.`,
-      label: "Șterge obiceiul",
+      title: tr("Ștergi obiceiul?"),
+      text: tr("„{name}” dispare din lista ta. Progresul pe care ți l-a adus rămâne: momentum-ul, seria și evoluția lui Molt nu scad.", { name }),
+      label: tr("Șterge obiceiul"),
       run: () => deleteHabit(habitId),
     });
   };
@@ -504,7 +507,7 @@ function Game() {
       }),
     setMetric: (oid, value) => editGoal(oid, (o) => ({ ...o, metric: { ...o.metric, value }, log: [...(o.log || []), logEntry("metric", `${value} ${o.metric.unit || ""}`.trim())].slice(-200) })),
     addNote: (oid, text) => editGoal(oid, (o) => ({ ...o, log: [...(o.log || []), logEntry("note", text)].slice(-200) })),
-    finish: (oid) => editGoal(oid, (o) => ({ ...o, doneOn: today, log: [...(o.log || []), logEntry("done", "Obiectiv atins!")].slice(-200) })),
+    finish: (oid) => editGoal(oid, (o) => ({ ...o, doneOn: today, log: [...(o.log || []), logEntry("done", tr("Obiectiv atins!"))].slice(-200) })),
     reopen: (oid) => editGoal(oid, (o) => ({ ...o, doneOn: null, seenMarks: (o.seenMarks || []).filter((m) => m < 100) })),
     archive: (oid, archived) => editGoal(oid, (o) => ({ ...o, archived })),
     remove: (oid) => {
@@ -568,7 +571,7 @@ function Game() {
     const offer = d.revive.offer;
     if (!offer?.affordable) return;
     update((s) => ({ ...s, streak: { ...(s.streak || {}), revived: { ...(s.streak?.revived || {}), ...Object.fromEntries(offer.days.map((day) => [day, today])) } } }));
-    toast({ title: "Serie salvată!", text: `Ai folosit ${offer.days.length === 1 ? "un revive" : "două revive-uri"}. Seria continuă.`, icon: FlaskConical, tone: "mint" });
+    toast({ title: tr("Serie salvată!"), text: tr("Ai folosit {v}. Seria continuă.", { v: offer.days.length === 1 ? tr("un revive") : tr("două revive-uri") }), icon: FlaskConical, tone: "mint" });
   }
 
   // The report is written by the AI or not at all: when it fails the card says so and the day stays open.
@@ -583,7 +586,7 @@ function Game() {
     try {
       result = await dailyReview(reviewPayload(state, d, day));
     } catch (e) {
-      setReview({ status: "error", error: aiErrorCopy(e?.code || "upstream_error") || "AI-ul nu a răspuns de data asta." });
+      setReview({ status: "error", error: aiErrorCopy(e?.code || "upstream_error") || tr("AI-ul nu a răspuns de data asta.") });
       return;
     }
     const ym = monthKey(day);
@@ -672,11 +675,11 @@ function Game() {
                 date: step.date,
                 dur: step.dur,
                 reason: step.reason,
-                explanation: { dataUsed: [step.source === "reset-risk" ? "risc de resetare a seriei" : "revenire după pauză"], confidence: "high", expectedEffect: "un pas mic ca să reiei ritmul" },
+                explanation: { dataUsed: [step.source === "reset-risk" ? tr("risc de resetare a seriei") : tr("revenire după pauză")], confidence: "high", expectedEffect: tr("un pas mic ca să reiei ritmul") },
               });
-              toast({ title: "Pasul de revenire este gata", text: step.title, icon: CalendarCheck, tone: "mint" });
+              toast({ title: tr("Pasul de revenire este gata"), text: step.title, icon: CalendarCheck, tone: "mint" });
             } catch (e) {
-              toast({ title: "Nu am putut salva pasul", text: aiErrorCopy(e?.code), icon: CalendarCheck, tone: "rose" });
+              toast({ title: tr("Nu am putut salva pasul"), text: aiErrorCopy(e?.code), icon: CalendarCheck, tone: "rose" });
             }
           }}
         />
@@ -748,19 +751,19 @@ function Game() {
           onChange={(fn) => update(fn)}
           onDeleteAccount={() =>
             setConfirm({
-              title: "Ștergi contul?",
-              text: "Se șterg contul și toate datele tale, definitiv. Nu se poate anula.",
-              label: "Șterge contul",
-              phrase: "Elimin contul definitiv",
+              title: tr("Ștergi contul?"),
+              text: tr("Se șterg contul și toate datele tale, definitiv. Nu se poate anula."),
+              label: tr("Șterge contul"),
+              phrase: tr("Elimin contul definitiv"),
               run: () => deleteAccount(store.env),
             })
           }
           onWipe={() =>
             setConfirm({
-              title: "Ștergi toate datele?",
-              text: "Se șterg obiceiurile, istoricul, to-do-urile și personajul. Nu se poate anula.",
-              label: "Șterge tot",
-              phrase: "Resetez toate datele",
+              title: tr("Ștergi toate datele?"),
+              text: tr("Se șterg obiceiurile, istoricul, to-do-urile și personajul. Nu se poate anula."),
+              label: tr("Șterge tot"),
+              phrase: tr("Resetez toate datele"),
               run: wipeAll,
             })
           }

@@ -9,6 +9,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { mondayOf } from "./dates.js";
 import { notifyNudge } from "./push.js";
+import { tr } from "./i18n.js";
 
 const CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 const newCode = () => Array.from({ length: 6 }, () => CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)]).join("");
@@ -22,10 +23,10 @@ export const PARTNER_SIZE = 2;
 const LIMIT = { group: MAX_GROUPS, partner: MAX_PARTNERS };
 
 export const NUDGE_TEMPLATES = [
-  "Hai că poți! Fă azi măcar misiunea cea mai ușoară.",
-  "Ne vedem diseară la raport. Nu-ți lăsa personajul să adoarmă!",
-  "Am terminat ce aveam azi. Rândul tău!",
-  "Mâine dimineață facem împreună?",
+  tr("Hai că poți! Fă azi măcar misiunea cea mai ușoară."),
+  tr("Ne vedem diseară la raport. Nu-ți lăsa personajul să adoarmă!"),
+  tr("Am terminat ce aveam azi. Rândul tău!"),
+  tr("Mâine dimineață facem împreună?"),
 ];
 
 // ------------------------------------------------------------ hook
@@ -188,10 +189,10 @@ export function useGroups({ store, state, update, myStats }) {
         const list = (members[gid] || []).map((m) => ({
           ...m,
           isMe: m.id === myId,
-          name: profiles[m.id]?.name || m.nick || "Membru",
+          name: profiles[m.id]?.name || m.nick || tr("Membru"),
           avatarUrl: profiles[m.id]?.avatarUrl || null,
         }));
-        if (!list.some((m) => m.isMe) && myStats) list.push({ id: myId, ...myStats, isMe: true, name: myStats.nick || "Tu" });
+        if (!list.some((m) => m.isMe) && myStats) list.push({ id: myId, ...myStats, isMe: true, name: myStats.nick || tr("Tu") });
         return {
           id: gid,
           info: infos[gid] || {},

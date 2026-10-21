@@ -20,21 +20,22 @@ import { PATHS } from "../lib/catalog.js";
 import Chat from "./Chat.jsx";
 import Companion from "./Companion.jsx";
 import Wardrobe from "./Wardrobe.jsx";
+import { tr } from "../lib/i18n.js";
 
 // `group` heads a run of abilities in the list; `say` is the line Molt speaks at the top of the workbench.
 // `ai`: needs the server (signed-in). The order here is the order in the list.
 const SKILLS = [
-  { id: "chat", label: "Vorbește", icon: MessageSquare, ai: true, title: (n) => `Vorbește cu ${n}`, say: "Întreabă-mă orice despre școală, obiective și rutină. Îți fac planuri pe care le aplici dintr-un click." },
-  { id: "day", label: "Planul zilei", icon: Sparkles, group: "Planifică", ai: true, title: () => "Planul zilei", say: "Spune-mi cât timp și câtă energie ai, iar eu aleg pașii potriviți din ce ai deja programat." },
-  { id: "school", label: "Teme și examene", icon: CalendarCheck, group: "Planifică", ai: true, title: () => "Teme și examene", say: "Scrie-mi ce ai de făcut, de exemplu „Test la mate vineri”, și le fac pași pe care îi poți planifica." },
-  { id: "week", label: "Planul săptămânii", icon: CalendarRange, group: "Planifică", ai: true, title: () => "Planul săptămânii", say: "Citesc bifările tale, notele și cercetarea, apoi îți propun pașii pentru săptămâna viitoare." },
-  { id: "goal", label: "Scop în pași", icon: Target, group: "Planifică", ai: true, title: () => "Scop în pași", say: "Dă-mi un scop mare și îl tai în pași mici, cu termene. Îi salvezi în Plan, la Obiective." },
-  { id: "mirror", label: "Reflecție", icon: BookOpen, group: "Înțelege", ai: true, title: () => "Reflecția săptămânii", say: "Cum a fost săptămâna? Spune-mi ce te-a ajutat sau ce te-a blocat și îți propun un singur pas." },
-  { id: "patterns", label: "Tipare", icon: Wand2, group: "Înțelege", ai: true, title: () => "Ce observ la tine", say: "Mă uit la ultimele 4 săptămâni de bifări și îți spun ce tipare văd." },
-  { id: "wardrobe", label: "Garderobă", icon: Shirt, group: "Molt", title: () => "Garderoba mea", say: "Ce port arată ce ai făcut. Alege ce îți place și vezi ce mai pot câștiga." },
-  { id: "memory", label: "Ce știe Molt", icon: NotebookPen, group: "Molt", title: () => "Ce știu despre tine", say: "Ce-mi spui aici rămâne la mine și îmi ghidează sfaturile: examene, restricții, preferințe." },
-  { id: "log", label: "Ce a făcut Molt", icon: History, group: "Molt", ai: true, title: () => "Ce am făcut", say: "Tot ce ți-am propus sau am făcut, cu efectul măsurat și opțiunea de a anula." },
-  { id: "evolution", label: "Evoluție", icon: Egg, group: "Molt", title: () => "Evoluția mea", say: "Cresc odată cu obiceiurile pe care le bifezi: fiecare bifă aduce 1, 2 sau 3 puncte de evoluție, după dificultate." },
+  { id: "chat", label: tr("Vorbește"), icon: MessageSquare, ai: true, title: (n) => tr("Vorbește cu {n}", { n }), say: tr("Întreabă-mă orice despre școală, obiective și rutină. Îți fac planuri pe care le aplici dintr-un click.") },
+  { id: "day", label: tr("Planul zilei"), icon: Sparkles, group: tr("Planifică"), ai: true, title: () => tr("Planul zilei"), say: tr("Spune-mi cât timp și câtă energie ai, iar eu aleg pașii potriviți din ce ai deja programat.") },
+  { id: "school", label: tr("Teme și examene"), icon: CalendarCheck, group: tr("Planifică"), ai: true, title: () => tr("Teme și examene"), say: tr("Scrie-mi ce ai de făcut, de exemplu „Test la mate vineri”, și le fac pași pe care îi poți planifica.") },
+  { id: "week", label: tr("Planul săptămânii"), icon: CalendarRange, group: tr("Planifică"), ai: true, title: () => tr("Planul săptămânii"), say: tr("Citesc bifările tale, notele și cercetarea, apoi îți propun pașii pentru săptămâna viitoare.") },
+  { id: "goal", label: tr("Scop în pași"), icon: Target, group: tr("Planifică"), ai: true, title: () => tr("Scop în pași"), say: tr("Dă-mi un scop mare și îl tai în pași mici, cu termene. Îi salvezi în Plan, la Obiective.") },
+  { id: "mirror", label: tr("Reflecție"), icon: BookOpen, group: tr("Înțelege"), ai: true, title: () => tr("Reflecția săptămânii"), say: tr("Cum a fost săptămâna? Spune-mi ce te-a ajutat sau ce te-a blocat și îți propun un singur pas.") },
+  { id: "patterns", label: tr("Tipare"), icon: Wand2, group: tr("Înțelege"), ai: true, title: () => tr("Ce observ la tine"), say: tr("Mă uit la ultimele 4 săptămâni de bifări și îți spun ce tipare văd.") },
+  { id: "wardrobe", label: tr("Garderobă"), icon: Shirt, group: tr("Molt"), title: () => tr("Garderoba mea"), say: tr("Ce port arată ce ai făcut. Alege ce îți place și vezi ce mai pot câștiga.") },
+  { id: "memory", label: tr("Ce știe Molt"), icon: NotebookPen, group: tr("Molt"), title: () => tr("Ce știu despre tine"), say: tr("Ce-mi spui aici rămâne la mine și îmi ghidează sfaturile: examene, restricții, preferințe.") },
+  { id: "log", label: tr("Ce a făcut Molt"), icon: History, group: tr("Molt"), ai: true, title: () => tr("Ce am făcut"), say: tr("Tot ce ți-am propus sau am făcut, cu efectul măsurat și opțiunea de a anula.") },
+  { id: "evolution", label: tr("Evoluție"), icon: Egg, group: tr("Molt"), title: () => tr("Evoluția mea"), say: tr("Cresc odată cu obiceiurile pe care le bifezi: fiecare bifă aduce 1, 2 sau 3 puncte de evoluție, după dificultate.") },
 ];
 
 const ALIAS = { ai: "day" }; // the old "Ajutor AI" tab, still reachable from other screens
@@ -59,7 +60,7 @@ function MoltCard({ state, d, ai, wide, waiting, onWaiting, onRename }) {
   const p = PATHS[path];
   const [renaming, setRenaming] = useState(false);
   const [name, setName] = useState(c.name || "");
-  const label = c.name || "Moltul tău";
+  const label = c.name || tr("Moltul tău");
   return (
     <Panel tone="violet" corners className="overflow-hidden">
       <div className="flex items-center gap-3 p-3 lg:flex-col lg:items-stretch lg:gap-0 lg:p-0">
@@ -76,15 +77,15 @@ function MoltCard({ state, d, ai, wide, waiting, onWaiting, onRename }) {
                 setRenaming(false);
               }}
             >
-              <input className="field" value={name} maxLength={20} onChange={(e) => setName(e.target.value)} aria-label="Numele personajului" autoFocus />
-              <Button type="submit" size="sm" icon={Check} aria-label="Salvează numele" />
+              <input className="field" value={name} maxLength={20} onChange={(e) => setName(e.target.value)} aria-label={tr("Numele personajului")} autoFocus />
+              <Button type="submit" size="sm" icon={Check} aria-label={tr("Salvează numele")} />
             </form>
           ) : (
             <div>
               <div className="flex items-center gap-1.5">
                 <h1 className="truncate font-pixel text-2xl leading-tight text-ink lg:text-3xl">{label}</h1>
                 {c.stage.id !== "egg" && (
-                  <button type="button" onClick={() => setRenaming(true)} className="focus-ring shrink-0 rounded-lg p-1.5 text-dim hover:bg-panel-hi hover:text-ink" aria-label="Redenumește">
+                  <button type="button" onClick={() => setRenaming(true)} className="focus-ring shrink-0 rounded-lg p-1.5 text-dim hover:bg-panel-hi hover:text-ink" aria-label={tr("Redenumește")}>
                     <Pencil size={15} aria-hidden="true" />
                   </button>
                 )}
@@ -97,29 +98,21 @@ function MoltCard({ state, d, ai, wide, waiting, onWaiting, onRename }) {
           <p className="hidden text-sm font-semibold leading-snug text-body lg:block">{moodLine(c, c.name)}</p>
           {c.next ? (
             <div>
-              <Bar value={c.progress} tone="violet" label="Progres spre evoluția următoare" />
+              <Bar value={c.progress} tone="violet" label={tr("Progres spre evoluția următoare")} />
               <p className="mt-1 flex justify-between gap-2 text-[11px] font-extrabold text-dim">
-                <span className="truncate">Spre {c.next.name}</span>
-                <span className="tabular shrink-0">
-                  {c.ep} / {c.next.min} PE
-                </span>
+                <span className="truncate">{tr("Spre {name}", { name: c.next.name })}</span>
+                <span className="tabular shrink-0">{tr("{ep} / {min} PE", { ep: c.ep, min: c.next.min })}</span>
               </p>
             </div>
           ) : (
-            <Chip tone="gold" icon={Sparkles}>
-              Evoluție completă
-            </Chip>
+            <Chip tone="gold" icon={Sparkles}>{tr("Evoluție completă")}</Chip>
           )}
           {!ai?.server && (
-            <Chip tone="dim" icon={Bot}>
-              AI indisponibil aici
-            </Chip>
+            <Chip tone="dim" icon={Bot}>{tr("AI indisponibil aici")}</Chip>
           )}
           {waiting > 0 && (
             <button type="button" onClick={onWaiting} className="focus-ring flex w-full items-center gap-2 rounded-xl bg-gold/15 px-2.5 py-1.5 text-left text-xs font-extrabold text-ink ring-1 ring-gold/40 hover:bg-gold/20">
-              <Sparkles size={14} className="shrink-0 text-gold-ink" aria-hidden="true" />
-              Molt așteaptă {waiting} {waiting === 1 ? "propunere" : "propuneri"}
-            </button>
+              <Sparkles size={14} className="shrink-0 text-gold-ink" aria-hidden="true" />{tr("Molt așteaptă {waiting} {v}", { waiting, v: waiting === 1 ? tr("propunere") : tr("propuneri") })}</button>
           )}
         </div>
       </div>
@@ -148,7 +141,7 @@ function SkillNav({ active, setTab, wide, waiting, locked }) {
 
   let prev;
   return (
-    <nav aria-label="Ce poate face Molt">
+    <nav aria-label={tr("Ce poate face Molt")}>
       <div
         role="tablist"
         aria-orientation={wide ? "vertical" : "horizontal"}
@@ -188,7 +181,7 @@ function SkillNav({ active, setTab, wide, waiting, locked }) {
                 </span>
                 <span className="whitespace-nowrap lg:flex-1 lg:truncate">{sk.label}</span>
                 {count > 0 && <span className="rounded-full bg-rose px-1.5 text-[10px] text-on-rose">{count}</span>}
-                {locked && sk.ai && <Lock size={12} className="hidden shrink-0 text-faint lg:block" aria-label="cere un cont" />}
+                {locked && sk.ai && <Lock size={12} className="hidden shrink-0 text-faint lg:block" aria-label={tr("cere un cont")} />}
               </button>
             </React.Fragment>
           );
@@ -202,7 +195,7 @@ function Locked() {
   return (
     <div className="inset flex items-start gap-3 p-4">
       <Lock size={18} className="mt-0.5 shrink-0 text-violet-hi" aria-hidden="true" />
-      <p className="text-sm font-semibold text-body">Funcția asta folosește inteligența artificială de pe server și e disponibilă când ești în cont. Intră în cont și Molt îți poate face planuri, analize și reflecții.</p>
+      <p className="text-sm font-semibold text-body">{tr("Funcția asta folosește inteligența artificială de pe server și e disponibilă când ești în cont. Intră în cont și Molt îți poate face planuri, analize și reflecții.")}</p>
     </div>
   );
 }
@@ -210,16 +203,16 @@ function Locked() {
 function MemoryBody({ props }) {
   const { state, ai, today } = props;
   const reads = [
-    "bifările și obiceiurile tale",
-    "to-do-urile și calendarul",
-    "obiectivele și pașii lor",
-    "scorurile și rapoartele de seară",
-    state.profile?.goal ? `obiectivul tău: „${state.profile.goal}”` : "obiectivul din profil",
+    tr("bifările și obiceiurile tale"),
+    tr("to-do-urile și calendarul"),
+    tr("obiectivele și pașii lor"),
+    tr("scorurile și rapoartele de seară"),
+    state.profile?.goal ? tr("obiectivul tău: „{goal}”", { goal: state.profile.goal }) : tr("obiectivul din profil"),
   ];
   return (
     <div className="space-y-5">
       <div>
-        <p className="mb-2 text-sm font-extrabold text-ink">Ce citesc din aplicație</p>
+        <p className="mb-2 text-sm font-extrabold text-ink">{tr("Ce citesc din aplicație")}</p>
         <ul className="flex flex-wrap gap-2">
           {reads.map((r) => (
             <li key={r} className="inline-flex items-center gap-1.5 rounded-full bg-well px-3 py-1 text-xs font-bold text-body ring-1 ring-edge">
@@ -229,7 +222,7 @@ function MemoryBody({ props }) {
         </ul>
       </div>
       <div className="border-t border-edge/60 pt-5">
-        <p className="mb-3 text-sm font-extrabold text-ink">Spune-mi ce nu se vede în bifări</p>
+        <p className="mb-3 text-sm font-extrabold text-ink">{tr("Spune-mi ce nu se vede în bifări")}</p>
         {ai?.server ? <NotesPanel ai={ai} today={today} /> : <Locked />}
       </div>
     </div>
@@ -244,7 +237,7 @@ export default function Molt(props) {
   const wanted = ALIAS[tab] || tab;
   const active = SKILLS.some((s) => s.id === wanted) ? wanted : "chat";
   const skill = SKILLS.find((s) => s.id === active);
-  const name = d.companion.name || "Moltul";
+  const name = d.companion.name || tr("Moltul");
   const server = !!ai?.server;
   const toNotes = () => setTab("memory");
 

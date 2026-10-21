@@ -11,27 +11,28 @@ import { habitFromCatalog } from "../lib/catalog.js";
 import { activeContext, addNote, loadNotes, removeNote } from "../lib/memory.js";
 import { FACTORS } from "../lib/experiments.js";
 import { fmtDay } from "../lib/dates.js";
+import { tr } from "../lib/i18n.js";
 
-const REJECT_REASONS = ["Nu am timp", "E prea greu", "Nu mi se potrivește"];
+const REJECT_REASONS = [tr("Nu am timp"), tr("E prea greu"), tr("Nu mi se potrivește")];
 
 const stepText = (x) => {
   switch (x.kind) {
     case "stats":
-      return "A citit bifările tale din ultimele 4 săptămâni";
+      return tr("A citit bifările tale din ultimele 4 săptămâni");
     case "context":
-      return `A citit ce i-ai spus (${x.notes} ${x.notes === 1 ? "notă activă" : "note active"})`;
+      return tr("A citit ce i-ai spus ({notes} {v})", { notes: x.notes, v: x.notes === 1 ? tr("notă activă") : tr("note active") });
     case "feedback":
-      return "A verificat cum ai reacționat la propunerile anterioare";
+      return tr("A verificat cum ai reacționat la propunerile anterioare");
     case "history":
-      return `A verificat ce a făcut înainte și ce efect a avut (${x.count})`;
+      return tr("A verificat ce a făcut înainte și ce efect a avut ({count})", { count: x.count });
     case "experiments":
-      return `A verificat experimentele tale (${x.count})`;
+      return tr("A verificat experimentele tale ({count})", { count: x.count });
     case "school":
-      return `A citit planul tău de școală (${x.exams} examene, ${x.assignments} teme)`;
+      return tr("A citit planul tău de școală ({exams} examene, {assignments} teme)", { exams: x.exams, assignments: x.assignments });
     case "patterns":
-      return `A rulat testele statistice: ${x.findings} ${x.findings === 1 ? "tipar a trecut" : "tipare au trecut"} din ${x.tested} verificări`;
+      return tr("A rulat testele statistice: {findings} {v} din {tested} verificări", { findings: x.findings, v: x.findings === 1 ? tr("tipar a trecut") : tr("tipare au trecut"), tested: x.tested });
     case "search":
-      return `A căutat în cercetare: „${x.query}” (${x.sources?.length || 0} surse)`;
+      return tr("A căutat în cercetare: „{query}” ({v} surse)", { query: x.query, v: x.sources?.length || 0 });
     default:
       return null;
   }
@@ -87,14 +88,12 @@ export function PlanPanel({ state, today, ai, onAddHabit, onEdit, onExperiment, 
   const r = s.data;
   const habitName = (id) => (state.habits || []).find((h) => h.id === id)?.name;
   return (
-    <Shell state={s} run={run} label="Cere un plan" idle="Aici apar schimbările propuse pentru săptămâna viitoare.">
+    <Shell state={s} run={run} label={tr("Cere un plan")} idle={tr("Aici apar schimbările propuse pentru săptămâna viitoare.")}>
       {r && (
         <div className="space-y-3">
           {r.summary && <p className="text-[15px] font-semibold text-ink">{r.summary}</p>}
           {r.notEnoughData && (
-            <p className="text-sm font-semibold text-dim">
-              Încă prea puține zile ca să spun ceva despre progresul tău: cel mai lung obicei are {r.notEnoughData.longest} din {r.notEnoughData.needed} zile programate necesare.
-            </p>
+            <p className="text-sm font-semibold text-dim">{tr("Încă prea puține zile ca să spun ceva despre progresul tău: cel mai lung obicei are {longest} din {needed} zile programate necesare.", { longest: r.notEnoughData.longest, needed: r.notEnoughData.needed })}</p>
           )}
           {problem && (
             <p role="alert" className="rounded-xl bg-rose/10 p-3 text-sm font-semibold text-rose ring-1 ring-rose/30">
@@ -102,7 +101,7 @@ export function PlanPanel({ state, today, ai, onAddHabit, onEdit, onExperiment, 
             </p>
           )}
           {r.proposals.length === 0 ? (
-            !r.notEnoughData && <p className="text-sm font-semibold text-dim">Nicio schimbare propusă acum.</p>
+            !r.notEnoughData && <p className="text-sm font-semibold text-dim">{tr("Nicio schimbare propusă acum.")}</p>
           ) : (
             <ul className="space-y-2">
               {r.proposals.map((sg, i) => (
@@ -111,65 +110,53 @@ export function PlanPanel({ state, today, ai, onAddHabit, onEdit, onExperiment, 
                     <div className="min-w-0 flex-1">
                       {sg.action === "todo" ? (
                         <>
-                          <p className="text-sm font-extrabold text-ink">To-do: {sg.title}</p>
-                          <p className="text-xs font-bold text-dim">
-                            {fmtDay(sg.date)} · {sg.dur} min · îl găsești în „Ce a făcut Molt”, de unde îl aplici
-                          </p>
+                          <p className="text-sm font-extrabold text-ink">{tr("To-do: {title}", { title: sg.title })}</p>
+                          <p className="text-xs font-bold text-dim">{tr("{fmtDay} · {dur} min · îl găsești în „Ce a făcut Molt”, de unde îl aplici", { fmtDay: fmtDay(sg.date), dur: sg.dur })}</p>
                         </>
                       ) : sg.action === "experiment" ? (
                         <>
                           <p className="text-sm font-extrabold text-ink">
-                            <FlaskConical size={14} className="mr-1 inline text-violet-hi" aria-hidden="true" />
-                            Experiment de 2 săptămâni: {habitName(sg.habitId)}
-                          </p>
+                            <FlaskConical size={14} className="mr-1 inline text-violet-hi" aria-hidden="true" />{tr("Experiment de 2 săptămâni: {habitName}", { habitName: habitName(sg.habitId) })}</p>
                           {sg.experiment ? (
-                            <p className="text-xs font-bold text-dim">
-                              {sg.experiment.label} · {fmtDay(sg.experiment.startDay)} – {fmtDay(sg.experiment.endDay)} · {Object.keys(sg.experiment.assignments).length} zile
-                            </p>
+                            <p className="text-xs font-bold text-dim">{tr("{label} · {fmtDay} – {fmtDay2} · {length} zile", { label: sg.experiment.label, fmtDay: fmtDay(sg.experiment.startDay), fmtDay2: fmtDay(sg.experiment.endDay), length: Object.keys(sg.experiment.assignments).length })}</p>
                           ) : null}
                         </>
                       ) : (
                         <>
                           <p className="text-sm font-extrabold text-ink">
-                            {sg.action === "add" ? "Obicei nou: " : "Schimbă: "}
+                            {sg.action === "add" ? tr("Obicei nou: ") : tr("Schimbă: ")}
                             {sg.action === "add" ? sg.name : habitName(sg.habitId)}
                           </p>
                           <p className="text-xs font-bold text-dim">
-                            {["Ușor", "Mediu", "Greu"][sg.diff - 1]} · {scheduleLabel(sg.days)}
+                            {[tr("Ușor"), tr("Mediu"), tr("Greu")][sg.diff - 1]} · {scheduleLabel(sg.days)}
                           </p>
                         </>
                       )}
                       <p className="mt-1 text-sm font-semibold text-body">{sg.reason}</p>
                       {sg.experiment && (
-                        <p className="mt-1 text-xs font-semibold text-dim">
-                          Zilele sunt trase la sorți. În zilele B: {sg.experiment.instruction.replace(/^În zilele B, /, "")}
-                        </p>
+                        <p className="mt-1 text-xs font-semibold text-dim">{tr("Zilele sunt trase la sorți. În zilele B: {replace}", { replace: sg.experiment.instruction.replace(/^În zilele B, /, "") })}</p>
                       )}
                       <Sources sources={sg.sources} />
                     </div>
                     {!decided[i] && sg.action !== "todo" && (
                       <div className="flex gap-2">
                         <Button size="sm" variant="mint" icon={Plus} onClick={() => accept(sg, i)}>
-                          {sg.action === "experiment" ? "Începe" : sg.action === "add" ? "Adaugă" : "Aplică"}
+                          {sg.action === "experiment" ? tr("Începe") : sg.action === "add" ? tr("Adaugă") : tr("Aplică")}
                         </Button>
-                        <Button size="sm" variant="ghost" icon={X} onClick={() => setRejecting(rejecting === i ? null : i)}>
-                          Nu
-                        </Button>
+                        <Button size="sm" variant="ghost" icon={X} onClick={() => setRejecting(rejecting === i ? null : i)}>{tr("Nu")}</Button>
                       </div>
                     )}
-                    {decided[i] && <span className="text-xs font-extrabold text-dim">{decided[i] === "accepted" ? "Acceptat" : "Respins"}</span>}
+                    {decided[i] && <span className="text-xs font-extrabold text-dim">{decided[i] === "accepted" ? tr("Acceptat") : tr("Respins")}</span>}
                   </div>
                   {rejecting === i && !decided[i] && (
                     <div className="flex flex-wrap items-center gap-1.5">
-                      <span className="text-xs font-bold text-dim">De ce?</span>
+                      <span className="text-xs font-bold text-dim">{tr("De ce?")}</span>
                       {REJECT_REASONS.map((t) => (
                         <button key={t} type="button" onClick={() => record(sg, i, "rejected", t)} className="rounded-full bg-well px-2.5 py-1 text-xs font-extrabold text-ink ring-1 ring-edge hover:ring-edge-hi">
                           {t}
                         </button>
                       ))}
-                      <button type="button" onClick={() => record(sg, i, "rejected")} className="text-xs font-bold text-dim underline">
-                        fără motiv
-                      </button>
+                      <button type="button" onClick={() => record(sg, i, "rejected")} className="text-xs font-bold text-dim underline">{tr("fără motiv")}</button>
                     </div>
                   )}
                 </li>
@@ -178,7 +165,7 @@ export function PlanPanel({ state, today, ai, onAddHabit, onEdit, onExperiment, 
           )}
           {r.steps.some((x) => stepText(x)) && (
             <details className="text-xs font-bold text-dim">
-              <summary className="cursor-pointer font-extrabold hover:text-ink">Ce a verificat Molt ca să ajungă aici</summary>
+              <summary className="cursor-pointer font-extrabold hover:text-ink">{tr("Ce a verificat Molt ca să ajungă aici")}</summary>
               <ol className="mt-2 space-y-1">
                 {r.steps
                   .map((x) => [x, stepText(x)])
@@ -247,10 +234,10 @@ export function NotesPanel({ ai, today }) {
 }
 
 const VERDICT = {
-  B_better: (r) => `Varianta B a mers mai bine: ${pct(r.rateB)} față de ${pct(r.rateA)} (diferență ${signed(r.diff)}). E un singur test mic pe tine, deci tratează-l ca pe un indiciu, nu ca pe o dovadă.`,
-  A_better: (r) => `Varianta A a mers mai bine: ${pct(r.rateA)} față de ${pct(r.rateB)} (diferență ${signed(r.diff)}). E un singur test mic pe tine, deci tratează-l ca pe un indiciu, nu ca pe o dovadă.`,
-  no_clear_difference: (r) => `Datele nu pot spune care variantă e mai bună: ${pct(r.rateA)} (A) față de ${pct(r.rateB)} (B), cu un interval de la ${signed(r.ci?.[0])} la ${signed(r.ci?.[1])}. Două săptămâni sunt prea puține ca să decidă.`,
-  insufficient: () => "Prea puține zile observate ca să se poată spune ceva.",
+  B_better: (r) => tr("Varianta B a mers mai bine: {pct} față de {pct2} (diferență {signed}). E un singur test mic pe tine, deci tratează-l ca pe un indiciu, nu ca pe o dovadă.", { pct: pct(r.rateB), pct2: pct(r.rateA), signed: signed(r.diff) }),
+  A_better: (r) => tr("Varianta A a mers mai bine: {pct} față de {pct2} (diferență {signed}). E un singur test mic pe tine, deci tratează-l ca pe un indiciu, nu ca pe o dovadă.", { pct: pct(r.rateA), pct2: pct(r.rateB), signed: signed(r.diff) }),
+  no_clear_difference: (r) => tr("Datele nu pot spune care variantă e mai bună: {pct} (A) față de {pct2} (B), cu un interval de la {signed} la {signed2}. Două săptămâni sunt prea puține ca să decidă.", { pct: pct(r.rateA), pct2: pct(r.rateB), signed: signed(r.ci?.[0]), signed2: signed(r.ci?.[1]) }),
+  insufficient: () => tr("Prea puține zile observate ca să se poată spune ceva."),
 };
 const pct = (v) => (v == null ? "–" : `${Math.round(v * 100)}%`);
 const signed = (v) => (v == null ? "–" : `${v >= 0 ? "+" : ""}${Math.round(v * 100)} p.p.`);
@@ -271,20 +258,18 @@ export function ExperimentsPanel({ state, today, ai, refreshKey = 0 }) {
   }, [ai?.server, reload, refreshKey]);
 
   if (!ai?.server || !list || list.length === 0) return null;
-  const habitName = (id) => (state.habits || []).find((h) => h.id === id)?.name || "obicei";
+  const habitName = (id) => (state.habits || []).find((h) => h.id === id)?.name || tr("obicei");
   const running = list.find((e) => e.status === "running");
   const done = list.filter((e) => e.status === "done").slice(0, 3);
   const arm = running?.assignments?.[today];
   const f = running ? FACTORS[running.factor] : null;
 
   return (
-    <section className="mt-6 space-y-3 border-t border-edge/60 pt-5" aria-label="Experimente">
+    <section className="mt-6 space-y-3 border-t border-edge/60 pt-5" aria-label={tr("Experimente")}>
       <div>
         <h3 className="flex items-center gap-2 font-pixel text-lg text-ink">
-          <FlaskConical size={16} className="text-violet-hi" aria-hidden="true" />
-          Experimentele tale
-        </h3>
-        <p className="text-xs font-semibold text-dim">Teste pe tine însuți: zilele sunt trase la sorți, iar rezultatul e raportat cu incertitudine.</p>
+          <FlaskConical size={16} className="text-violet-hi" aria-hidden="true" />{tr("Experimentele tale")}</h3>
+        <p className="text-xs font-semibold text-dim">{tr("Teste pe tine însuți: zilele sunt trase la sorți, iar rezultatul e raportat cu incertitudine.")}</p>
       </div>
       {running && (
         <div className="inset space-y-1 p-3">
@@ -295,7 +280,7 @@ export function ExperimentsPanel({ state, today, ai, refreshKey = 0 }) {
             {fmtDay(running.startDay)} – {fmtDay(running.endDay)}
           </p>
           <p className="text-sm font-semibold text-body">
-            {arm === "B" ? `Azi e zi B: ${f?.instruction.replace(/^În zilele B, /, "")}` : arm === "A" ? "Azi e zi A: fă obiceiul ca de obicei." : "Azi nu e zi de test pentru acest obicei."}
+            {arm === "B" ? tr("Azi e zi B: {replace}", { replace: f?.instruction.replace(/^În zilele B, /, "") }) : arm === "A" ? tr("Azi e zi A: fă obiceiul ca de obicei.") : tr("Azi nu e zi de test pentru acest obicei.")}
           </p>
           <Button
             size="sm"
@@ -304,9 +289,7 @@ export function ExperimentsPanel({ state, today, ai, refreshKey = 0 }) {
               await cancelExperiment(await agentClient(), running.id);
               reload();
             }}
-          >
-            Anulează experimentul
-          </Button>
+          >{tr("Anulează experimentul")}</Button>
         </div>
       )}
       {done.map((e) => (

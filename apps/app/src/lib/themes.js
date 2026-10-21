@@ -4,17 +4,18 @@
 // To add a theme: add a block in styles.css and an entry below.
 
 import { useSyncExternalStore } from "react";
+import { tr } from "./i18n.js";
 
 export const THEMES = [
-  { id: "noapte", name: "Noapte", mode: "dark", blurb: "Violet închis, cu accente aurii. Tema originală." },
-  { id: "padure", name: "Pădure", mode: "dark", blurb: "Verde-închis, cu accente de salvie. Calm și contrastat." },
-  { id: "grafit", name: "Grafit", mode: "dark", blurb: "Gri închis neutru, fără stele. Simplu și sobru." },
-  { id: "cod", name: "Cod", mode: "dark", blurb: "Pentru programatori: gri cărbune, albastru și turcoaz." },
-  { id: "nord", name: "Nord", mode: "dark", blurb: "Gri-albastru arctic, culori pastelate." },
-  { id: "ceata", name: "Ceață", mode: "light", blurb: "Gri deschis și alb, accente discrete." },
-  { id: "lavanda", name: "Lavandă", mode: "light", blurb: "Pastel luminos, lavandă și liliac, text violet-închis." },
-  { id: "piersica", name: "Piersică", mode: "light", blurb: "Unt, piersică și roz pal, text roșu-brun." },
-  { id: "pergament", name: "Pergament", mode: "light", blurb: "Crem cald, salvie și miere, text maro închis." },
+  { id: "noapte", name: tr("Noapte"), mode: "dark", blurb: tr("Violet închis, cu accente aurii. Tema originală.") },
+  { id: "padure", name: tr("Pădure"), mode: "dark", blurb: tr("Verde-închis, cu accente de salvie. Calm și contrastat.") },
+  { id: "grafit", name: tr("Grafit"), mode: "dark", blurb: tr("Gri închis neutru, fără stele. Simplu și sobru.") },
+  { id: "cod", name: tr("Cod"), mode: "dark", blurb: tr("Pentru programatori: gri cărbune, albastru și turcoaz.") },
+  { id: "nord", name: "Nord", mode: "dark", blurb: tr("Gri-albastru arctic, culori pastelate.") },
+  { id: "ceata", name: tr("Ceață"), mode: "light", blurb: tr("Gri deschis și alb, accente discrete.") },
+  { id: "lavanda", name: tr("Lavandă"), mode: "light", blurb: tr("Pastel luminos, lavandă și liliac, text violet-închis.") },
+  { id: "piersica", name: tr("Piersică"), mode: "light", blurb: tr("Unt, piersică și roz pal, text roșu-brun.") },
+  { id: "pergament", name: tr("Pergament"), mode: "light", blurb: tr("Crem cald, salvie și miere, text maro închis.") },
 ];
 
 export const DEFAULT_THEME = "noapte";

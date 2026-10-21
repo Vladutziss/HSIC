@@ -6,6 +6,7 @@
 import { CATALOG, habitFromCatalog } from "./catalog.js";
 import { addNote, recordFeedback, removeNote } from "./memory.js";
 import { summarizeOutcomes } from "./outcomes.js";
+import { tr } from "./i18n.js";
 
 export const SUPPORTED = ["create_todo", "plan_focus", "change_habit", "add_habit", "add_note"];
 
@@ -198,7 +199,7 @@ export async function markApplied(client, id, before, { outcomeDue = null, actio
 export async function markUndone(client, id, action = null) {
   const c = need(client);
   must(await c.from("agent_actions").update({ status: "undone", decided_at: now() }).eq("id", id));
-  if (action) await recordFeedback(c, { proposal: proposalOf(action), decision: "rejected", reason: "Anulat după aplicare" });
+  if (action) await recordFeedback(c, { proposal: proposalOf(action), decision: "rejected", reason: tr("Anulat după aplicare") });
 }
 
 export async function markRejected(client, id, reason, action = null) {
@@ -208,14 +209,14 @@ export async function markRejected(client, id, reason, action = null) {
 }
 
 const STEP = {
-  stats: () => "a citit statisticile obiceiurilor tale",
-  context: (s) => `a citit ${s.notes} ${s.notes === 1 ? "notiță" : "notițe"} despre tine`,
-  feedback: () => "a verificat ce ai acceptat sau respins înainte",
-  history: (s) => `a verificat ${s.count} ${s.count === 1 ? "acțiune trecută" : "acțiuni trecute"}`,
-  experiments: (s) => `a verificat ${s.count} ${s.count === 1 ? "experiment" : "experimente"}`,
-  school: (s) => `a citit ${s.exams} ${s.exams === 1 ? "examen" : "examene"} și ${s.assignments} teme`,
-  patterns: (s) => `a testat tipare în istoric: ${s.findings} ${s.findings === 1 ? "găsit" : "găsite"} din ${s.tested} testate`,
-  search: (s) => `a căutat în sursele lui${s.query ? `: „${s.query}”` : ""}${s.sources?.length ? ` (${s.sources.length} ${s.sources.length === 1 ? "sursă citată" : "surse citate"})` : ""}`,
+  stats: () => tr("a citit statisticile obiceiurilor tale"),
+  context: (s) => tr("a citit {notes} {v} despre tine", { notes: s.notes, v: s.notes === 1 ? tr("notiță") : tr("notițe") }),
+  feedback: () => tr("a verificat ce ai acceptat sau respins înainte"),
+  history: (s) => tr("a verificat {count} {v}", { count: s.count, v: s.count === 1 ? tr("acțiune trecută") : tr("acțiuni trecute") }),
+  experiments: (s) => tr("a verificat {count} {v}", { count: s.count, v: s.count === 1 ? tr("experiment") : tr("experimente") }),
+  school: (s) => tr("a citit {exams} {v} și {assignments} teme", { exams: s.exams, v: s.exams === 1 ? tr("examen") : tr("examene"), assignments: s.assignments }),
+  patterns: (s) => tr("a testat tipare în istoric: {findings} {v} din {tested} testate", { findings: s.findings, v: s.findings === 1 ? tr("găsit") : tr("găsite"), tested: s.tested }),
+  search: (s) => tr("a căutat în sursele lui{v}{v2}", { v: s.query ? `: „${s.query}”` : "", v2: s.sources?.length ? ` (${s.sources.length} ${s.sources.length === 1 ? tr("sursă citată") : tr("surse citate")})` : "" }),
 };
 
 /** The tools the agent called for a proposal, one plain line each (propose steps are the proposals themselves). */

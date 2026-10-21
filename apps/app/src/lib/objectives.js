@@ -16,6 +16,7 @@
 // (engine.js reads stepDoneDays). Everything here is pure, so it is tested in tests/objectives.test.mjs.
 
 import { addDays, diffDays, weekday } from "./dates.js";
+import { tr } from "./i18n.js";
 
 export const MAX_OBJECTIVES = 6;
 export const MAX_STEPS = 30;
@@ -206,52 +207,52 @@ export function moveStep(o, stepId, dir) {
 }
 
 export const statusLabel = {
-  done: "Atins",
-  none: "Fără termen",
-  ahead: "Înaintea planului",
-  ontrack: "Pe drumul bun",
-  behind: "Puțin în urmă",
-  late: "Termen depășit",
+  done: tr("Atins"),
+  none: tr("Fără termen"),
+  ahead: tr("Înaintea planului"),
+  ontrack: tr("Pe drumul bun"),
+  behind: tr("Puțin în urmă"),
+  late: tr("Termen depășit"),
 };
 
 /** Ideas to start from, per path. */
 export const TEMPLATES = [
   {
     id: "olimpiada",
-    title: "Medalie la olimpiadă",
+    title: tr("Medalie la olimpiadă"),
     icon: "sigma",
-    why: "Vreau să văd cât de departe pot ajunge când muncesc constant.",
-    steps: ["Programa și subiectele din ultimii 5 ani", "Câte o problemă grea pe zi", "Simulări cu cronometru", "Recapitularea greșelilor"],
+    why: tr("Vreau să văd cât de departe pot ajunge când muncesc constant."),
+    steps: [tr("Programa și subiectele din ultimii 5 ani"), tr("Câte o problemă grea pe zi"), tr("Simulări cu cronometru"), tr("Recapitularea greșelilor")],
   },
   {
     id: "carte",
-    title: "Citesc 12 cărți anul acesta",
+    title: tr("Citesc 12 cărți anul acesta"),
     icon: "book",
-    why: "Vreau să gândesc mai limpede și să am din ce să învăț.",
-    metric: { unit: "cărți", start: 0, target: 12 },
-    steps: ["Lista celor 12 cărți", "20 de pagini pe zi"],
+    why: tr("Vreau să gândesc mai limpede și să am din ce să învăț."),
+    metric: { unit: tr("cărți"), start: 0, target: 12 },
+    steps: [tr("Lista celor 12 cărți"), tr("20 de pagini pe zi")],
   },
   {
     id: "alergare",
-    title: "Alerg primii 10 km",
+    title: tr("Alerg primii 10 km"),
     icon: "footprints",
-    why: "Vreau să am energie și să-mi demonstrez că pot.",
+    why: tr("Vreau să am energie și să-mi demonstrez că pot."),
     metric: { unit: "km", start: 0, target: 10 },
-    steps: ["3 ieșiri pe săptămână", "Creștem distanța cu 10% pe săptămână", "Cursa de test"],
+    steps: [tr("3 ieșiri pe săptămână"), tr("Creștem distanța cu 10% pe săptămână"), tr("Cursa de test")],
   },
   {
     id: "economii",
-    title: "Fond de urgență",
+    title: tr("Fond de urgență"),
     icon: "coins",
-    why: "Liniște: să nu mă sperie o cheltuială neprevăzută.",
-    metric: { unit: "lei", start: 0, target: 5000 },
-    steps: ["Bugetul lunii", "Transfer automat la salariu", "Taie 2 abonamente inutile"],
+    why: tr("Liniște: să nu mă sperie o cheltuială neprevăzută."),
+    metric: { unit: tr("lei"), start: 0, target: 5000 },
+    steps: [tr("Bugetul lunii"), tr("Transfer automat la salariu"), tr("Taie 2 abonamente inutile")],
   },
   {
     id: "proiect",
-    title: "Lansez un proiect personal",
+    title: tr("Lansez un proiect personal"),
     icon: "rocket",
-    why: "Vreau ceva construit de mine, pe care să-l arăt.",
-    steps: ["Ideea într-o pagină", "Prima versiune funcțională", "Feedback de la 5 oameni", "Lansare"],
+    why: tr("Vreau ceva construit de mine, pe care să-l arăt."),
+    steps: [tr("Ideea într-o pagină"), tr("Prima versiune funcțională"), tr("Feedback de la 5 oameni"), tr("Lansare")],
   },
 ];

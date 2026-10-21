@@ -3,6 +3,7 @@
 // The old check-in history is not imported: it was mostly sample data.
 
 import { CATALOG, habitFromCatalog, nextColor, uid } from "./catalog.js";
+import { tr } from "./i18n.js";
 
 const HABIT_MAP = {
   gym: "gym",
@@ -29,7 +30,7 @@ export function legacyHabits(legacy, today) {
         diff: 3,
         days: [1, 2, 3, 4, 5],
         time: null,
-        target: "90 de minute de lucru concentrat",
+        target: tr("90 de minute de lucru concentrat"),
         color: nextColor(out),
         createdAt: today,
       });

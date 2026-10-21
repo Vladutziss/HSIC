@@ -25,6 +25,7 @@ import { c } from "../lib/themes.js";
 import { firstOccurrence, occursOn, repeatLabel, todosByDay, viewOn } from "../lib/todos.js";
 import { nextAssignments, nextExams, normalizeAssignments, normalizeExams, normalizeSession, schoolPlanner, studiedMinutes } from "../lib/schoolPlanner.js";
 import { periodKey } from "../lib/goals.js";
+import { tr } from "../lib/i18n.js";
 
 const START = 6 * 60;
 const END = 24 * 60;
@@ -72,7 +73,7 @@ function TodoRow({ t, today, habits, todo, onFocusTodo }) {
       className="group flex items-center gap-2.5 rounded-xl bg-well px-2.5 py-2 ring-1 ring-edge"
     >
       <GripVertical size={14} className={`hidden shrink-0 text-faint sm:block ${t.repeat ? "invisible" : "cursor-grab"}`} aria-hidden="true" />
-      <CheckButton size="sm" checked={t.done} onClick={() => todo.toggle(t.id, t.viewDay || today)} label={t.done ? `Debifează ${t.title}` : `Bifează ${t.title}`} />
+      <CheckButton size="sm" checked={t.done} onClick={() => todo.toggle(t.id, t.viewDay || today)} label={t.done ? tr("Debifează {title}", { title: t.title }) : tr("Bifează {title}", { title: t.title })} />
       <button type="button" onClick={() => todo.edit(t)} className="min-w-0 flex-1 text-left">
         <span className={`block truncate text-sm font-bold ${t.done ? "text-faint line-through" : "text-ink"}`}>{t.title}</span>
         <span className="flex flex-wrap items-center gap-x-2 text-[11px] font-bold text-dim">
@@ -84,7 +85,7 @@ function TodoRow({ t, today, habits, todo, onFocusTodo }) {
           ) : t.date ? (
             relDay(t.date, today)
           ) : (
-            "fără dată"
+            tr("fără dată")
           )}
           {t.time && (
             <span className="inline-flex items-center gap-0.5">
@@ -96,7 +97,7 @@ function TodoRow({ t, today, habits, todo, onFocusTodo }) {
         </span>
       </button>
       {t.focus && !t.done && onFocusTodo && (
-        <Button size="sm" variant="violet" icon={Timer} onClick={() => onFocusTodo(t)} aria-label={`Începe Focus: ${t.title}`}>
+        <Button size="sm" variant="violet" icon={Timer} onClick={() => onFocusTodo(t)} aria-label={tr("Începe Focus: {title}", { title: t.title })}>
           Focus
         </Button>
       )}
@@ -141,9 +142,7 @@ function TodoList({ state, today, todo, onFocusTodo }) {
 
   return (
     <Panel className="p-4 sm:p-5">
-      <SectionTitle icon={ListTodo} tone="mint" sub="+5 momentum pentru fiecare to-do terminat">
-        To-do
-      </SectionTitle>
+      <SectionTitle icon={ListTodo} tone="mint" sub={tr("+5 momentum pentru fiecare to-do terminat")}>{tr("To-do")}</SectionTitle>
       <form
         className="mb-3 flex gap-2"
         onSubmit={(e) => {
@@ -154,27 +153,25 @@ function TodoList({ state, today, todo, onFocusTodo }) {
           setText("");
         }}
       >
-        <input id="planner-todo" className="field" value={text} onChange={(e) => setText(e.target.value)} placeholder={filter === "nodate" ? "Idee fără dată…" : "To-do pentru azi…"} aria-label="To-do nou" />
-        <Button type="submit" variant="mint" icon={Plus} aria-label="Adaugă" />
+        <input id="planner-todo" className="field" value={text} onChange={(e) => setText(e.target.value)} placeholder={filter === "nodate" ? tr("Idee fără dată…") : tr("To-do pentru azi…")} aria-label={tr("To-do nou")} />
+        <Button type="submit" variant="mint" icon={Plus} aria-label={tr("Adaugă")} />
       </form>
-      <Button variant="ghost" size="sm" icon={CalendarPlus} className="mb-3 w-full" onClick={() => todo.create({ date: today, title: text.trim().slice(0, 80) })}>
-        Programează: dată, oră, repetare
-      </Button>
+      <Button variant="ghost" size="sm" icon={CalendarPlus} className="mb-3 w-full" onClick={() => todo.create({ date: today, title: text.trim().slice(0, 80) })}>{tr("Programează: dată, oră, repetare")}</Button>
       <Tabs
         className="mb-3"
         size="sm"
         value={filter}
         onChange={setFilter}
         items={[
-          { value: "today", label: "Azi", count: counts.today },
-          { value: "week", label: "Săpt." },
-          { value: "nodate", label: "Fără dată", count: counts.nodate },
-          { value: "all", label: "Toate" },
+          { value: "today", label: tr("Azi"), count: counts.today },
+          { value: "week", label: tr("Săpt.") },
+          { value: "nodate", label: tr("Fără dată"), count: counts.nodate },
+          { value: "all", label: tr("Toate") },
         ]}
       />
       {overdue.length > 0 && (
         <>
-          <div className="mb-1.5 mt-2 text-[11px] font-extrabold uppercase tracking-wider text-ember">Rămase din zilele trecute</div>
+          <div className="mb-1.5 mt-2 text-[11px] font-extrabold uppercase tracking-wider text-ember">{tr("Rămase din zilele trecute")}</div>
           <ul className="space-y-1.5">
             {overdue.map((t) => (
               <TodoRow key={t.id} t={t} today={today} habits={habits} todo={todo} onFocusTodo={onFocusTodo} />
@@ -189,10 +186,10 @@ function TodoList({ state, today, todo, onFocusTodo }) {
           ))}
         </ul>
       )}
-      {!overdue.length && !open.length && <p className="py-4 text-center text-sm font-semibold text-dim">Nimic aici.</p>}
+      {!overdue.length && !open.length && <p className="py-4 text-center text-sm font-semibold text-dim">{tr("Nimic aici.")}</p>}
       {done.length > 0 && (
         <details className="mt-3">
-          <summary className="cursor-pointer text-[11px] font-extrabold uppercase tracking-wider text-dim hover:text-ink">Gata ({done.length})</summary>
+          <summary className="cursor-pointer text-[11px] font-extrabold uppercase tracking-wider text-dim hover:text-ink">{tr("Gata ({length})", { length: done.length })}</summary>
           <ul className="mt-2 space-y-1.5">
             {done.slice(0, 30).map((t) => (
               <TodoRow key={t.id} t={t} today={today} habits={habits} todo={todo} onFocusTodo={onFocusTodo} />
@@ -200,7 +197,7 @@ function TodoList({ state, today, todo, onFocusTodo }) {
           </ul>
         </details>
       )}
-      <p className="mt-3 hidden text-[11px] font-semibold text-faint sm:block">Trage un to-do în calendar ca să-i dai o zi și o oră.</p>
+      <p className="mt-3 hidden text-[11px] font-semibold text-faint sm:block">{tr("Trage un to-do în calendar ca să-i dai o zi și o oră.")}</p>
     </Panel>
   );
 }
@@ -250,7 +247,7 @@ function WeekView({ state, today, anchor, todo, onMoveHabit }) {
                 <div className={`text-[11px] font-extrabold uppercase tracking-wider ${isToday ? "text-gold" : "text-dim"}`}>{RO_DAYS_SHORT[d.getDay()]}</div>
                 <div className={`mx-auto mt-0.5 grid h-8 w-8 place-items-center rounded-lg font-pixel text-lg ${isToday ? "bg-gold text-on-gold" : "text-ink"}`}>{d.getDate()}</div>
                 {sched > 0 && day <= today && (
-                  <div className="mx-auto mt-1 h-1 w-10 overflow-hidden rounded-full bg-edge" title={`${done}/${sched} obiceiuri bifate`}>
+                  <div className="mx-auto mt-1 h-1 w-10 overflow-hidden rounded-full bg-edge" title={tr("{done}/{sched} obiceiuri bifate", { done, sched })}>
                     <div className="h-full bg-mint" style={{ width: `${Math.min(100, (done / sched) * 100)}%` }} />
                   </div>
                 )}
@@ -261,7 +258,7 @@ function WeekView({ state, today, anchor, todo, onMoveHabit }) {
 
         {/* untimed to-dos */}
         <div className="grid border-y border-edge" style={{ gridTemplateColumns: "48px repeat(7, 1fr)" }}>
-          <span className="py-2 pr-2 text-right text-[10px] font-extrabold uppercase leading-tight text-faint">fără oră</span>
+          <span className="py-2 pr-2 text-right text-[10px] font-extrabold uppercase leading-tight text-faint">{tr("fără oră")}</span>
           {days.map((day) => (
             <div
               key={day}
@@ -288,7 +285,7 @@ function WeekView({ state, today, anchor, todo, onMoveHabit }) {
                     onClick={() => todo.edit(t)}
                     className={`flex w-full items-center gap-1 rounded-md px-1.5 py-1 text-left text-[11px] font-bold ${t.done ? "bg-ink/5 text-faint line-through" : "bg-violet/20 text-ink ring-1 ring-violet/40"}`}
                   >
-                    {t.repeat && <Repeat size={10} className="shrink-0" aria-label="se repetă" />}
+                    {t.repeat && <Repeat size={10} className="shrink-0" aria-label={tr("se repetă")} />}
                     <span className="truncate">{t.title}</span>
                   </button>
                 ))}
@@ -351,7 +348,7 @@ function WeekView({ state, today, anchor, todo, onMoveHabit }) {
                       return (
                         <div
                           key={it.id}
-                          title={`${it.h.name} · ${fmt12(it.h.time)} · trage-l ca să-l muți`}
+                          title={tr("{name} · {fmt12} · trage-l ca să-l muți", { name: it.h.name, fmt12: fmt12(it.h.time) })}
                           draggable
                           onDragStart={(e) => {
                             e.dataTransfer.setData("text/plain", `habit:${it.h.id}:${day}`);
@@ -389,7 +386,7 @@ function WeekView({ state, today, anchor, todo, onMoveHabit }) {
                         style={{ top, height, width, left }}
                       >
                         <span className="flex items-center gap-1">
-                          {t.repeat && <Repeat size={10} className="shrink-0" aria-label="se repetă" />}
+                          {t.repeat && <Repeat size={10} className="shrink-0" aria-label={tr("se repetă")} />}
                           <span className="truncate">{t.title}</span>
                         </span>
                         {height > 34 && <span className="block text-[10px] font-bold text-dim">{fmt12(t.time)}</span>}
@@ -466,17 +463,17 @@ function MonthView({ state, today, anchor, onPick }) {
   );
 }
 
-const CONFIDENCE = { high: "ridicată", medium: "medie", low: "scăzută", unknown: "necunoscută" };
+const CONFIDENCE = { high: tr("ridicată"), medium: tr("medie"), low: tr("scăzută"), unknown: tr("necunoscută") };
 
 const TIME_OPTIONS = [
-  { value: 30, label: "30 min" },
-  { value: 60, label: "1 oră" },
-  { value: 120, label: "2 ore" },
+  { value: 30, label: tr("30 min") },
+  { value: 60, label: tr("1 oră") },
+  { value: 120, label: tr("2 ore") },
 ];
 const ENERGY_OPTIONS = [
-  { value: "low", label: "Scăzută" },
-  { value: "medium", label: "Medie" },
-  { value: "high", label: "Ridicată" },
+  { value: "low", label: tr("Scăzută") },
+  { value: "medium", label: tr("Medie") },
+  { value: "high", label: tr("Ridicată") },
 ];
 
 export function DailyPlanPanel({ state, today, ai, agent }) {
@@ -522,17 +519,17 @@ export function DailyPlanPanel({ state, today, ai, agent }) {
     <Shell
       state={s}
       run={run}
-      label="Construiește planul"
-      idle="Aici apar 2–3 pași pentru azi, fiecare cu motivul lui."
+      label={tr("Construiește planul")}
+      idle={tr("Aici apar 2–3 pași pentru azi, fiecare cu motivul lui.")}
       input={
         <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
           <div className="flex flex-wrap items-center gap-2.5">
-            <span className="text-sm font-extrabold text-body">Timp</span>
-            <Choice label="Timp disponibil" value={minutes} onChange={setMinutes} options={TIME_OPTIONS} />
+            <span className="text-sm font-extrabold text-body">{tr("Timp")}</span>
+            <Choice label={tr("Timp disponibil")} value={minutes} onChange={setMinutes} options={TIME_OPTIONS} />
           </div>
           <div className="flex flex-wrap items-center gap-2.5">
-            <span className="text-sm font-extrabold text-body">Energie</span>
-            <Choice label="Energie" value={energy} onChange={setEnergy} options={ENERGY_OPTIONS} />
+            <span className="text-sm font-extrabold text-body">{tr("Energie")}</span>
+            <Choice label={tr("Energie")} value={energy} onChange={setEnergy} options={ENERGY_OPTIONS} />
           </div>
         </div>
       }
@@ -551,12 +548,12 @@ export function DailyPlanPanel({ state, today, ai, agent }) {
                 </div>
                 <p className="mt-1 text-sm font-semibold text-body">{step.reason}</p>
                 <details className="mt-1 text-[11px] font-bold text-dim">
-                  <summary className="cursor-pointer">De ce?</summary>
-                  <p className="mt-1">Încredere {CONFIDENCE[step.confidence] || CONFIDENCE.unknown}{step.dataUsed.length ? ` · ${step.dataUsed.join(" · ")}` : ""}.</p>
+                  <summary className="cursor-pointer">{tr("De ce?")}</summary>
+                  <p className="mt-1">{tr("Încredere {v}{v2}.", { v: CONFIDENCE[step.confidence] || CONFIDENCE.unknown, v2: step.dataUsed.length ? ` · ${step.dataUsed.join(" · ")}` : "" })}</p>
                 </details>
               </div>
               <Button size="sm" variant={added ? "ghost" : "mint"} icon={added ? Check : Plus} disabled={added || adding === step.title} busy={adding === step.title} onClick={() => addStep(step, step.focus)}>
-                {added ? "În planul de azi" : step.focus ? "Planifică Focus" : "Adaugă"}
+                {added ? tr("În planul de azi") : step.focus ? tr("Planifică Focus") : tr("Adaugă")}
               </Button>
             </li>
           );
@@ -572,7 +569,7 @@ export function HomeworkPanel({ state, today, ai, onStateChange }) {
   const [minutes, setMinutes] = useState(25);
   const [hint, setHint] = useState("");
   const go = () => {
-    if (!text.trim()) return setHint("Scrie mai întâi ce ai de făcut, de exemplu: „Test la mate vineri”.");
+    if (!text.trim()) return setHint(tr("Scrie mai întâi ce ai de făcut, de exemplu: „Test la mate vineri”."));
     setHint("");
     run();
   };
@@ -606,33 +603,33 @@ export function HomeworkPanel({ state, today, ai, onStateChange }) {
     }));
   };
   const studyBtn = (subject, assignmentId) => (
-    <button type="button" className="focus-ring shrink-0 rounded-lg px-2 py-0.5 text-[11px] font-extrabold text-dim ring-1 ring-edge hover:text-ink" onClick={() => study(subject, assignmentId)} aria-label={`Am învățat ${minutes} minute${subject ? ` la ${subject}` : ""}`}>
+    <button type="button" className="focus-ring shrink-0 rounded-lg px-2 py-0.5 text-[11px] font-extrabold text-dim ring-1 ring-edge hover:text-ink" onClick={() => study(subject, assignmentId)} aria-label={tr("Am învățat {minutes} minute{v}", { minutes, v: subject ? ` la ${subject}` : "" })}>
       +{minutes} min
     </button>
   );
-  const dayLabel = (n) => (n === 0 ? "azi" : n === 1 ? "mâine" : `în ${n} zile`);
+  const dayLabel = (n) => (n === 0 ? tr("azi") : n === 1 ? tr("mâine") : tr("în {n} zile", { n }));
   const studiedToday = studiedMinutes(state, today);
   const upcoming = assignments.length > 0 || exams.length > 0;
   return (
     <Shell
       state={s}
       run={go}
-      label="Interpretează"
+      label={tr("Interpretează")}
       hint={hint}
-      idle="Aici apar temele și examenele pe care le înțelege Molt, gata de salvat."
-      input={<input className="field" value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => e.key === "Enter" && go()} placeholder="Test la mate vineri, proiect luni…" aria-label="Teme și examene" />}
+      idle={tr("Aici apar temele și examenele pe care le înțelege Molt, gata de salvat.")}
+      input={<input className="field" value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => e.key === "Enter" && go()} placeholder={tr("Test la mate vineri, proiect luni…")} aria-label={tr("Teme și examene")} />}
       always={
         upcoming && (
           <div className="mt-5 border-t border-edge/60 pt-4">
             <div className="mb-2 flex flex-wrap items-center gap-x-3 gap-y-2">
-              <p className="text-sm font-extrabold text-ink">Ce ai de făcut</p>
-              <span className="ml-auto text-[11px] font-bold text-dim">{studiedToday > 0 ? `Azi ai învățat ${studiedToday} min · ` : ""}o sesiune de studiu (min):</span>
-              <Choice label="Durata unei sesiuni de studiu, în minute" value={minutes} onChange={setMinutes} options={[15, 25, 45, 60].map((m) => ({ value: m, label: `${m}` }))} />
+              <p className="text-sm font-extrabold text-ink">{tr("Ce ai de făcut")}</p>
+              <span className="ml-auto text-[11px] font-bold text-dim">{tr("{v}o sesiune de studiu (min):", { v: studiedToday > 0 ? tr("Azi ai învățat {studiedToday} min · ", { studiedToday }) : "" })}</span>
+              <Choice label={tr("Durata unei sesiuni de studiu, în minute")} value={minutes} onChange={setMinutes} options={[15, 25, 45, 60].map((m) => ({ value: m, label: `${m}` }))} />
             </div>
             <ul className="space-y-1.5">
               {exams.slice(0, 3).map((exam) => (
                 <li key={exam.id || exam.title} className="flex items-center gap-2 text-sm font-bold text-body">
-                  <Chip tone="gold">Examen</Chip>
+                  <Chip tone="gold">{tr("Examen")}</Chip>
                   <span className="min-w-0 flex-1 truncate">{exam.title}{exam.subject ? ` · ${exam.subject}` : ""}</span>
                   <span className="shrink-0 text-xs text-dim">{dayLabel(exam.daysLeft)}</span>
                   {studyBtn(exam.subject, null)}
@@ -652,13 +649,13 @@ export function HomeworkPanel({ state, today, ai, onStateChange }) {
     >
       {s.data?.length > 0 && (
         <div className="space-y-2">
-          <p className="text-sm font-extrabold text-ink">Propuneri de salvat</p>
+          <p className="text-sm font-extrabold text-ink">{tr("Propuneri de salvat")}</p>
           {s.data.map((assignment, i) => (
             <div key={`${assignment.title}-${i}`} className="inset flex flex-wrap items-center gap-2 p-3">
               <span className="min-w-0 flex-1 text-sm font-extrabold text-ink">{assignment.title}</span>
-              {assignment.type === "exam" && <Chip tone="gold">Examen</Chip>}
+              {assignment.type === "exam" && <Chip tone="gold">{tr("Examen")}</Chip>}
               <span className="text-xs font-bold text-dim">{assignment.due}{assignment.type === "exam" ? "" : ` · ${assignment.estimatedMinutes || 30} min`}</span>
-              <Button size="sm" variant="mint" icon={Plus} onClick={() => add(assignment)}>Adaugă</Button>
+              <Button size="sm" variant="mint" icon={Plus} onClick={() => add(assignment)}>{tr("Adaugă")}</Button>
             </div>
           ))}
         </div>
@@ -674,7 +671,7 @@ export function GoalDecomposer({ today, ai, goals }) {
   const [hint, setHint] = useState("");
   if (!ai?.server) return null;
   const go = () => {
-    if (!text.trim()) return setHint("Scrie mai întâi un obiectiv, de exemplu: „Vreau să învăț programare”.");
+    if (!text.trim()) return setHint(tr("Scrie mai întâi un obiectiv, de exemplu: „Vreau să învăț programare”."));
     setHint("");
     setSkip([]);
     run();
@@ -691,10 +688,10 @@ export function GoalDecomposer({ today, ai, goals }) {
     <Shell
       state={s}
       run={go}
-      label="Împarte în pași"
+      label={tr("Împarte în pași")}
       hint={hint}
-      idle="Aici apar pașii în care Molt împarte scopul tău."
-      input={<input className="field" value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => e.key === "Enter" && go()} placeholder="Vreau să învăț programare…" aria-label="Obiectiv de împărțit în pași" />}
+      idle={tr("Aici apar pașii în care Molt împarte scopul tău.")}
+      input={<input className="field" value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => e.key === "Enter" && go()} placeholder={tr("Vreau să învăț programare…")} aria-label={tr("Obiectiv de împărțit în pași")} />}
     >
       {s.data?.length > 0 && (
         <div className="space-y-2">
@@ -703,18 +700,16 @@ export function GoalDecomposer({ today, ai, goals }) {
               <div key={`${goal.text}-${i}`} className="inset flex flex-wrap items-center gap-2 p-3">
                 <span className="min-w-0 flex-1 basis-48 text-sm font-extrabold text-ink">
                   {goal.text}
-                  {(goal.due || goal.criteria) && <span className="block text-xs font-semibold text-dim">{[goal.due && `până la ${goal.due}`, goal.criteria].filter(Boolean).join(" · ")}</span>}
+                  {(goal.due || goal.criteria) && <span className="block text-xs font-semibold text-dim">{[goal.due && tr("până la {due}", { due: goal.due }), goal.criteria].filter(Boolean).join(" · ")}</span>}
                 </span>
-                <Chip tone="violet">{goal.period === "month" ? "luna" : "săptămâna"}</Chip>
-                <Button size="sm" variant="mint" onClick={() => save(goal)}>Salvează</Button>
-                <Button size="sm" variant="ghost" onClick={() => setSkip([...skip, i])} aria-label={`Renunță la: ${goal.text}`}>Scoate</Button>
+                <Chip tone="violet">{goal.period === "month" ? tr("luna") : tr("săptămâna")}</Chip>
+                <Button size="sm" variant="mint" onClick={() => save(goal)}>{tr("Salvează")}</Button>
+                <Button size="sm" variant="ghost" onClick={() => setSkip([...skip, i])} aria-label={tr("Renunță la: {text}", { text: goal.text })}>{tr("Scoate")}</Button>
               </div>
             ),
           )}
           {keep.length > 1 && (
-            <Button size="sm" variant="violet" onClick={saveSet}>
-              Salvează tot ca obiectiv cu etape
-            </Button>
+            <Button size="sm" variant="violet" onClick={saveSet}>{tr("Salvează tot ca obiectiv cu etape")}</Button>
           )}
         </div>
       )}
@@ -747,27 +742,23 @@ export default function Planner({ state, today, todo, ai, go, onFocusTodo, onMov
   const calendar = (
     <Panel className="p-4 sm:p-5">
       <div className="mb-4 flex flex-wrap items-center gap-3">
-        <SectionTitle icon={CalendarDays} tone="gold" className="mb-0" sub="Obiceiurile cu oră apar automat">
-          Calendar
-        </SectionTitle>
+        <SectionTitle icon={CalendarDays} tone="gold" className="mb-0" sub={tr("Obiceiurile cu oră apar automat")}>{tr("Calendar")}</SectionTitle>
         <div className="ml-auto flex flex-wrap items-center gap-2">
           <Tabs
             size="sm"
             value={mode}
             onChange={setMode}
             items={[
-              { value: "week", label: "Săptămână", icon: CalendarRange },
-              { value: "month", label: "Lună", icon: CalendarDays },
+              { value: "week", label: tr("Săptămână"), icon: CalendarRange },
+              { value: "month", label: tr("Lună"), icon: CalendarDays },
             ]}
           />
           <div className="flex items-center gap-1">
-            <button type="button" onClick={() => shift(-1)} className="focus-ring grid h-8 w-8 place-items-center rounded-lg text-dim ring-1 ring-edge hover:text-ink" aria-label="Înapoi">
+            <button type="button" onClick={() => shift(-1)} className="focus-ring grid h-8 w-8 place-items-center rounded-lg text-dim ring-1 ring-edge hover:text-ink" aria-label={tr("Înapoi")}>
               <ChevronLeft size={16} aria-hidden="true" />
             </button>
-            <button type="button" onClick={() => setAnchor(today)} className="focus-ring h-8 rounded-lg px-2.5 text-xs font-extrabold text-dim ring-1 ring-edge hover:text-ink">
-              Azi
-            </button>
-            <button type="button" onClick={() => shift(1)} className="focus-ring grid h-8 w-8 place-items-center rounded-lg text-dim ring-1 ring-edge hover:text-ink" aria-label="Înainte">
+            <button type="button" onClick={() => setAnchor(today)} className="focus-ring h-8 rounded-lg px-2.5 text-xs font-extrabold text-dim ring-1 ring-edge hover:text-ink">{tr("Azi")}</button>
+            <button type="button" onClick={() => shift(1)} className="focus-ring grid h-8 w-8 place-items-center rounded-lg text-dim ring-1 ring-edge hover:text-ink" aria-label={tr("Înainte")}>
               <ChevronRight size={16} aria-hidden="true" />
             </button>
           </div>
@@ -789,12 +780,10 @@ export default function Planner({ state, today, todo, ai, go, onFocusTodo, onMov
       )}
       <div className="mt-3 flex flex-wrap items-center gap-3 text-[11px] font-bold text-dim">
         <span className="inline-flex items-center gap-1.5">
-          <span className="h-3 w-3 rounded bg-violet/40 ring-1 ring-violet/60" /> to-do
-        </span>
+          <span className="h-3 w-3 rounded bg-violet/40 ring-1 ring-violet/60" />{" "}{tr("to-do")}</span>
         <span className="inline-flex items-center gap-1.5">
-          <span className="h-3 w-3 rounded" style={{ background: `repeating-linear-gradient(135deg, ${c("gold", 0.4)} 0 3px, ${c("gold", 0.2)} 3px 6px)` }} /> obicei programat
-        </span>
-        <span>Apasă pe un loc liber ca să adaugi un to-do la ora aceea.</span>
+          <span className="h-3 w-3 rounded" style={{ background: `repeating-linear-gradient(135deg, ${c("gold", 0.4)} 0 3px, ${c("gold", 0.2)} 3px 6px)` }} />{" "}{tr("obicei programat")}</span>
+        <span>{tr("Apasă pe un loc liber ca să adaugi un to-do la ora aceea.")}</span>
       </div>
     </Panel>
   );
@@ -806,8 +795,8 @@ export default function Planner({ state, today, todo, ai, go, onFocusTodo, onMov
           value={tab}
           onChange={setTab}
           items={[
-            { value: "calendar", label: "Calendar", icon: CalendarDays },
-            { value: "list", label: "Listă", icon: ListTodo },
+            { value: "calendar", label: tr("Calendar"), icon: CalendarDays },
+            { value: "list", label: tr("Listă"), icon: ListTodo },
           ]}
         />
       </div>
@@ -819,10 +808,10 @@ export default function Planner({ state, today, todo, ai, go, onFocusTodo, onMov
         >
           <Sparkles size={18} className="shrink-0 text-violet-hi" aria-hidden="true" />
           <span className="min-w-0 flex-1">
-            <span className="block text-sm font-extrabold text-ink">Lasă-l pe Molt să-ți facă planul</span>
-            <span className="block text-xs font-semibold text-dim">Planul de azi, temele și examenele, pașii pentru un scop: alege din ce ai deja programat, în funcție de timp și energie.</span>
+            <span className="block text-sm font-extrabold text-ink">{tr("Lasă-l pe Molt să-ți facă planul")}</span>
+            <span className="block text-xs font-semibold text-dim">{tr("Planul de azi, temele și examenele, pașii pentru un scop: alege din ce ai deja programat, în funcție de timp și energie.")}</span>
           </span>
-          <span className="shrink-0 text-xs font-extrabold text-violet-hi">Cere un plan →</span>
+          <span className="shrink-0 text-xs font-extrabold text-violet-hi">{tr("Cere un plan →")}</span>
         </button>
       )}
       <div className="grid gap-5 lg:grid-cols-[minmax(300px,360px),1fr]">

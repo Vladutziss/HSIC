@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Bot, Check, ChevronDown, Database, Download, FlaskConical, LogOut, Moon, Palette, Shield, Sun, Trash2, User, UserX } from "lucide-react";
+import { Bot, Check, ChevronDown, Database, Download, FlaskConical, Globe, LogOut, Moon, Palette, Shield, Sun, Trash2, User, UserX } from "lucide-react";
 import { Button, Chip, Field, LevelBadge, Panel, SectionTitle, Toggle } from "../components/ui.jsx";
 import { Select } from "../components/Select.jsx";
 import { PATHS } from "../lib/catalog.js";
@@ -8,6 +8,8 @@ import { exportData, signOut } from "../lib/account.js";
 import { THEMES, setTheme, useTheme } from "../lib/themes.js";
 import { fmt12 } from "../lib/dates.js";
 import NotificationsPanel from "../components/NotificationsPanel.jsx";
+import LanguageSwitch from "../components/LanguageSwitch.jsx";
+import { tr, legalUrl } from "../lib/i18n.js";
 
 const TIMES = ["18:00", "18:30", "19:00", "19:30", "20:00", "20:30", "21:00", "21:30", "22:00", "22:30", "23:00", "23:30"];
 
@@ -17,7 +19,7 @@ const TIMES = ["18:00", "18:30", "19:00", "19:30", "20:00", "20:30", "21:00", "2
 function ThemePicker({ onPick }) {
   const active = useTheme();
   return (
-    <div role="radiogroup" aria-label="Temă de culori" className="grid grid-cols-3 gap-2 sm:grid-cols-5 lg:grid-cols-9">
+    <div role="radiogroup" aria-label={tr("Temă de culori")} className="grid grid-cols-3 gap-2 sm:grid-cols-5 lg:grid-cols-9">
       {THEMES.map((t) => {
         const on = t.id === active;
         const ModeIcon = t.mode === "dark" ? Moon : Sun;
@@ -27,7 +29,7 @@ function ThemePicker({ onPick }) {
             type="button"
             role="radio"
             aria-checked={on}
-            aria-label={`${t.name}, ${t.mode === "dark" ? "întunecat" : "luminos"}. ${t.blurb}`}
+            aria-label={`${t.name}, ${t.mode === "dark" ? tr("întunecat") : tr("luminos")}. ${t.blurb}`}
             title={t.blurb}
             onClick={() => {
               setTheme(t.id);
@@ -116,27 +118,25 @@ export default function Settings({ state, d, ai, mode, env, onChange, onWipe, on
 
   const storage =
     mode === "cloud"
-      ? "Datele se salvează în contul tău de claude.ai, într-o zonă privată a aplicației pe care nu o vede nimeni altcineva."
+      ? tr("Datele se salvează în contul tău de claude.ai, într-o zonă privată a aplicației pe care nu o vede nimeni altcineva.")
       : mode === "supabase"
-        ? "Datele se salvează în contul tău și se sincronizează pe toate dispozitivele."
+        ? tr("Datele se salvează în contul tău și se sincronizează pe toate dispozitivele.")
         : mode === "local"
-          ? "Datele se salvează în browserul acestui dispozitiv."
-          : "Stocarea nu e disponibilă: datele se pierd când închizi pagina.";
+          ? tr("Datele se salvează în browserul acestui dispozitiv.")
+          : tr("Stocarea nu e disponibilă: datele se pierd când închizi pagina.");
 
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="font-pixel text-3xl text-ink">Setări</h1>
-        <p className="text-sm font-semibold text-dim">Profilul, raportul de seară, aspectul, notificările și datele tale.</p>
+        <h1 className="font-pixel text-3xl text-ink">{tr("Setări")}</h1>
+        <p className="text-sm font-semibold text-dim">{tr("Profilul, raportul de seară, aspectul, notificările și datele tale.")}</p>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2 [&>*]:min-w-0">
         {/* who you are */}
         <Panel className="space-y-3 p-4">
-          <SectionTitle icon={User} tone="gold" className="!mb-1">
-            Profil
-          </SectionTitle>
-          <Field label="Nume" htmlFor="set-nick" hint="Apare în grup, lângă personajul tău.">
+          <SectionTitle icon={User} tone="gold" className="!mb-1">{tr("Profil")}</SectionTitle>
+          <Field label={tr("Nume")} htmlFor="set-nick" hint={tr("Apare în grup, lângă personajul tău.")}>
             <input
               id="set-nick"
               className="field"
@@ -146,7 +146,7 @@ export default function Settings({ state, d, ai, mode, env, onChange, onWipe, on
               onBlur={() => nick.trim() && onChange((s) => ({ ...s, profile: { ...s.profile, nick: nick.trim() } }))}
             />
           </Field>
-          <Field label="Obiectiv" htmlFor="set-goal" hint="AI-ul îl folosește în rapoarte și în poveste.">
+          <Field label={tr("Obiectiv")} htmlFor="set-goal" hint={tr("AI-ul îl folosește în rapoarte și în poveste.")}>
             <textarea
               id="set-goal"
               className="field min-h-[64px]"
@@ -159,14 +159,12 @@ export default function Settings({ state, d, ai, mode, env, onChange, onWipe, on
           </Field>
           <p className="flex flex-wrap items-center gap-2 text-xs font-semibold text-dim">
             <Chip tone="gold">{path.label}</Chip>
-            <span>
-              Personajul tău e <span className="font-extrabold text-ink">{path.cls}</span>. Drumul se alege o singură dată, la ou.
-            </span>
+            <span>{tr("Personajul tău e {span}. Drumul se alege o singură dată, la ou.", { span: <span className="font-extrabold text-ink">{path.cls}</span> })}</span>
           </p>
           <SwitchRow
             id="set-share-look"
-            title="Arată ținuta lui Molt în grup"
-            hint="Colegii din grup văd pălăria și unealta pe care le porți. Oprită, ei îl văd pe Molt fără ele."
+            title={tr("Arată ținuta lui Molt în grup")}
+            hint={tr("Colegii din grup văd pălăria și unealta pe care le porți. Oprită, ei îl văd pe Molt fără ele.")}
             checked={settings.shareLook !== false}
             onChange={(v) => set({ shareLook: v })}
           />
@@ -174,24 +172,22 @@ export default function Settings({ state, d, ai, mode, env, onChange, onWipe, on
 
         {/* the evening report */}
         <Panel className="space-y-3 p-4">
-          <SectionTitle icon={Moon} tone="violet" className="!mb-1">
-            Raportul de seară
-          </SectionTitle>
-          <Field label="Ora raportului" htmlFor="set-time">
+          <SectionTitle icon={Moon} tone="violet" className="!mb-1">{tr("Raportul de seară")}</SectionTitle>
+          <Field label={tr("Ora raportului")} htmlFor="set-time">
             <Select id="set-time" value={settings.reviewTime || "21:00"} onChange={(v) => set({ reviewTime: v })} options={TIMES.map((t) => ({ value: t, label: fmt12(t) }))} />
           </Field>
           <SwitchRow
             id="set-auto"
-            title="Generează automat"
-            hint="Dacă AI-ul are deja permisiune și aplicația e deschisă la ora raportului."
+            title={tr("Generează automat")}
+            hint={tr("Dacă AI-ul are deja permisiune și aplicația e deschisă la ora raportului.")}
             checked={settings.autoReview !== false}
             onChange={(v) => set({ autoReview: v })}
           />
           {ai.server && (
             <SwitchRow
               id="set-weekly"
-              title="Planul săptămânal cu Molt"
-              hint="Duminică seara Molt îți pregătește săptămâna: adaugă singur memento-uri (le poți anula) și îți propune schimbări, pe care le confirmi tu."
+              title={tr("Planul săptămânal cu Molt")}
+              hint={tr("Duminică seara Molt îți pregătește săptămâna: adaugă singur memento-uri (le poți anula) și îți propune schimbări, pe care le confirmi tu.")}
               checked={!!settings.agentWeekly}
               onChange={(v) => set({ agentWeekly: v })}
             />
@@ -199,8 +195,8 @@ export default function Settings({ state, d, ai, mode, env, onChange, onWipe, on
           {ai.server && (
             <SwitchRow
               id="set-nudge"
-              title="Molt îți ține seria"
-              hint="Seara, dacă o serie de 3+ zile e pe cale să se rupă, Molt îți trimite o notificare cu un mesaj scurt. Cel mult una pe zi."
+              title={tr("Molt îți ține seria")}
+              hint={tr("Seara, dacă o serie de 3+ zile e pe cale să se rupă, Molt îți trimite o notificare cu un mesaj scurt. Cel mult una pe zi.")}
               checked={!!settings.agentNudge}
               onChange={(v) => set({ agentNudge: v })}
             />
@@ -209,57 +205,50 @@ export default function Settings({ state, d, ai, mode, env, onChange, onWipe, on
             <Bot size={15} className={`shrink-0 ${ai.available ? "text-mint" : "text-faint"}`} aria-hidden="true" />
             <span>
               {ai.available ? (
-                <>
-                  <span className="font-extrabold text-mint">AI disponibil.</span> Scrie rapoartele de seară, citatele personalizate și capitolele poveștii.
-                </>
+                <>{tr("{span} Scrie rapoartele de seară, citatele personalizate și capitolele poveștii.", { span: <span className="font-extrabold text-mint">{tr("AI disponibil.")}</span> })}</>
               ) : (
-                <>
-                  <span className="font-extrabold text-ink">AI indisponibil aici.</span> Rapoartele, citatele personalizate și capitolele nu se
-                  generează fără AI, iar aplicația nu le înlocuiește cu text scris.
-                </>
+                <>{tr("{span} Rapoartele, citatele personalizate și capitolele nu se generează fără AI, iar aplicația nu le înlocuiește cu text scris.", { span: <span className="font-extrabold text-ink">{tr("AI indisponibil aici.")}</span> })}</>
               )}
             </span>
           </p>
         </Panel>
 
+        {/* language */}
+        <Panel className="space-y-3 p-4 lg:col-span-2">
+          <SectionTitle icon={Globe} tone="violet" sub={tr("Interfața aplicației. Textele scrise de AI (rapoarte, povești) urmează aceeași limbă.")} className="!mb-1">{tr("Limbă")}</SectionTitle>
+          <LanguageSwitch account />
+        </Panel>
+
         {/* how it looks */}
         <Panel className="space-y-3 p-4 lg:col-span-2">
-          <SectionTitle icon={Palette} tone="violet" sub="Se păstrează pe acest dispozitiv." className="!mb-1">
-            Aspect
-          </SectionTitle>
+          <SectionTitle icon={Palette} tone="violet" sub={tr("Se păstrează pe acest dispozitiv.")} className="!mb-1">{tr("Aspect")}</SectionTitle>
           <ThemePicker onPick={(id) => set({ theme: id })} />
         </Panel>
 
         {/* the rules: the one setting up front, the explanations folded */}
         <Panel className="space-y-3 p-4">
-          <SectionTitle icon={Shield} tone="ember" className="!mb-1">
-            Regulile jocului
-          </SectionTitle>
-          <Field label="Momentum-ul se resetează după" htmlFor="set-reset">
+          <SectionTitle icon={Shield} tone="ember" className="!mb-1">{tr("Regulile jocului")}</SectionTitle>
+          <Field label={tr("Momentum-ul se resetează după")} htmlFor="set-reset">
             <Select
               id="set-reset"
               value={settings.resetAfter || RULES.resetAfter}
               onChange={(v) => set({ resetAfter: v })}
-              options={[2, 3, 4, 5].map((n) => ({ value: n, label: `${n} zile la rând fără activitate` }))}
+              options={[2, 3, 4, 5].map((n) => ({ value: n, label: tr("{n} zile la rând fără activitate", { n }) }))}
             />
           </Field>
           <p className="flex items-center gap-1.5 text-xs font-semibold text-dim">
-            <FlaskConical size={14} className="text-mint" aria-hidden="true" /> Seria: {RULES.revivesPerMonth} revive-uri pe lună (ai folosit {d.revive.used} luna aceasta).
-          </p>
-          <Fold title="Cum câștigi momentum">
+            <FlaskConical size={14} className="text-mint" aria-hidden="true" />{" "}{tr("Seria: {revivesPerMonth} revive-uri pe lună (ai folosit {used} luna aceasta).", { revivesPerMonth: RULES.revivesPerMonth, used: d.revive.used })}</p>
+          <Fold title={tr("Cum câștigi momentum")}>
             <ul className="space-y-1 text-xs font-semibold leading-relaxed text-body">
-              <li>· Bifă: +10 / +20 / +30 momentum după dificultate, plus 1 / 2 / 3 puncte de evoluție pentru personaj.</li>
-              <li>· Zile active la rând: până la +40% la tot ce câștigi.</li>
-              <li>· Toate misiunile programate bifate: cufărul zilei, +{RULES.chestXp}.</li>
-              <li>· Raportul de seară: jumătate din scorul zilei devine momentum.</li>
-              <li>
-                · Focus: o sesiune încheiată de cel puțin {RULES.focusMinMinutes} minute aduce 1 momentum la 2 minute (+{RULES.focusCycleBonus} pentru fiecare pomodoro
-                terminat), maximum {RULES.focusDayCap} pe zi.
-              </li>
-              <li>· O zi fără nimic păstrează 85% din momentum; una incompletă, cel puțin 92%.</li>
+              <li>{tr("· Bifă: +10 / +20 / +30 momentum după dificultate, plus 1 / 2 / 3 puncte de evoluție pentru personaj.")}</li>
+              <li>{tr("· Zile active la rând: până la +40% la tot ce câștigi.")}</li>
+              <li>{tr("· Toate misiunile programate bifate: cufărul zilei, +{chestXp}.", { chestXp: RULES.chestXp })}</li>
+              <li>{tr("· Raportul de seară: jumătate din scorul zilei devine momentum.")}</li>
+              <li>{tr("· Focus: o sesiune încheiată de cel puțin {focusMinMinutes} minute aduce 1 momentum la 2 minute (+{focusCycleBonus} pentru fiecare pomodoro terminat), maximum {focusDayCap} pe zi.", { focusMinMinutes: RULES.focusMinMinutes, focusCycleBonus: RULES.focusCycleBonus, focusDayCap: RULES.focusDayCap })}</li>
+              <li>{tr("· O zi fără nimic păstrează 85% din momentum; una incompletă, cel puțin 92%.")}</li>
             </ul>
           </Fold>
-          <Fold title="Nivelurile">
+          <Fold title={tr("Nivelurile")}>
             <div className="flex flex-wrap gap-1.5">
               {LEVELS.map((l) => (
                 <span key={l.lvl} className="inline-flex items-center gap-1 rounded-full bg-panel py-0.5 pl-0.5 pr-2 text-[11px] font-bold text-dim ring-1 ring-edge">
@@ -272,42 +261,28 @@ export default function Settings({ state, d, ai, mode, env, onChange, onWipe, on
 
         {/* account, notifications and data, with the destructive actions folded away */}
         <Panel className="space-y-3 p-4">
-          <SectionTitle icon={Database} tone="sky" className="!mb-1">
-            Cont, notificări și date
-          </SectionTitle>
+          <SectionTitle icon={Database} tone="sky" className="!mb-1">{tr("Cont, notificări și date")}</SectionTitle>
           <p className="text-sm text-body">
             {storage}
-            {(mode === "cloud" || mode === "supabase") && " Grupurile văd doar nivelul, seria, momentum-ul și personajul."}
+            {(mode === "cloud" || mode === "supabase") && tr(" Grupurile văd doar nivelul, seria, momentum-ul și personajul.")}
           </p>
           <NotificationsPanel settings={settings} set={set} />
           {mode === "supabase" && (
             <div className="flex flex-wrap gap-2">
-              <Button variant="ghost" size="sm" icon={Download} busy={exporting} onClick={download}>
-                Descarcă datele mele
-              </Button>
-              <Button variant="ghost" size="sm" icon={LogOut} onClick={signOut}>
-                Deconectare
-              </Button>
+              <Button variant="ghost" size="sm" icon={Download} busy={exporting} onClick={download}>{tr("Descarcă datele mele")}</Button>
+              <Button variant="ghost" size="sm" icon={LogOut} onClick={signOut}>{tr("Deconectare")}</Button>
             </div>
           )}
           <p className="flex flex-wrap gap-x-4 gap-y-1 text-xs font-bold text-dim">
-            <a className="focus-ring underline hover:text-ink" href="https://molted.eu/terms.html" target="_blank" rel="noopener">
-              Termeni și condiții
-            </a>
-            <a className="focus-ring underline hover:text-ink" href="https://molted.eu/privacy.html" target="_blank" rel="noopener">
-              Politica de confidențialitate
-            </a>
+            <a className="focus-ring underline hover:text-ink" href={legalUrl("terms")} target="_blank" rel="noopener">{tr("Termeni și condiții")}</a>
+            <a className="focus-ring underline hover:text-ink" href={legalUrl("privacy")} target="_blank" rel="noopener">{tr("Politica de confidențialitate")}</a>
           </p>
-          <Fold title="Zona periculoasă" tone="text-rose">
-            <p className="mb-2 text-xs font-semibold text-dim">Ștergerea nu se poate anula.</p>
+          <Fold title={tr("Zona periculoasă")} tone="text-rose">
+            <p className="mb-2 text-xs font-semibold text-dim">{tr("Ștergerea nu se poate anula.")}</p>
             <div className="flex flex-wrap gap-2">
-              <Button id="wipe-all" variant="rose" size="sm" icon={Trash2} onClick={onWipe}>
-                Șterge toate datele
-              </Button>
+              <Button id="wipe-all" variant="rose" size="sm" icon={Trash2} onClick={onWipe}>{tr("Șterge toate datele")}</Button>
               {mode === "supabase" && (
-                <Button id="delete-account" variant="rose" size="sm" icon={UserX} onClick={onDeleteAccount}>
-                  Șterge contul
-                </Button>
+                <Button id="delete-account" variant="rose" size="sm" icon={UserX} onClick={onDeleteAccount}>{tr("Șterge contul")}</Button>
               )}
             </div>
           </Fold>

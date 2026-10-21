@@ -2,6 +2,7 @@ import React, { createContext, useCallback, useContext, useEffect, useId, useRef
 import { Check, Gem, Loader2, Trash2, X } from "lucide-react";
 import { DIFF } from "../lib/engine.js";
 import { c, mix } from "../lib/themes.js";
+import { tr } from "../lib/i18n.js";
 
 // ------------------------------------------------------------ panels
 
@@ -198,7 +199,7 @@ export function LevelBadge({ lvl, size = 44, tone = "gold", label }) {
   const id = "lb" + raw.replace(/[^a-zA-Z0-9]/g, "");
   const [a, b, edge, ink] = BADGE[tone] || BADGE.gold;
   return (
-    <svg width={size} height={size} viewBox="0 0 40 40" role="img" aria-label={label || `Nivel ${lvl}`} className="shrink-0">
+    <svg width={size} height={size} viewBox="0 0 40 40" role="img" aria-label={label || tr("Nivel {lvl}", { lvl })} className="shrink-0">
       <defs>
         <linearGradient id={id} x1="0" y1="0" x2="0" y2="1">
           <stop offset="0" style={{ stopColor: a }} />
@@ -217,7 +218,7 @@ export function LevelBadge({ lvl, size = 44, tone = "gold", label }) {
 
 export function Gems({ n, size = 12 }) {
   return (
-    <span className="inline-flex items-center gap-0.5" title={`Dificultate: ${DIFF[n]?.label}`} aria-label={`Dificultate ${DIFF[n]?.label}`}>
+    <span className="inline-flex items-center gap-0.5" title={tr("Dificultate: {label}", { label: DIFF[n]?.label })} aria-label={tr("Dificultate {label}", { label: DIFF[n]?.label })}>
       {[1, 2, 3].map((i) => (
         <Gem
           key={i}
@@ -286,7 +287,7 @@ export function Stat({ icon: Icon, label, value, sub, tone = "gold" }) {
       <div className="min-w-0">
         <div className="text-[11px] font-extrabold uppercase tracking-wider text-dim">{label}</div>
         <div className="font-pixel tabular text-2xl leading-tight text-ink">{value}</div>
-        {sub && <div className="truncate text-xs font-semibold text-faint">{sub}</div>}
+        {sub && <div className="text-xs font-semibold text-faint">{sub}</div>}
       </div>
     </div>
   );
@@ -333,7 +334,7 @@ export function CheckButton({ checked, onClick, label, size = "md", tone = "mint
 }
 
 // Round red outline button for deleting (or leaving) something: a plain click (the caller asks "are you sure?" in a modal).
-export function DeleteButton({ label, onClick, icon: Icon = Trash2, title = "Șterge" }) {
+export function DeleteButton({ label, onClick, icon: Icon = Trash2, title = tr("Șterge") }) {
   return (
     <button
       type="button"
@@ -370,8 +371,8 @@ export function HoldToDelete({ label, onConfirm, ms = 900 }) {
   return (
     <button
       type="button"
-      aria-label={`${label}. Ține apăsat ca să ștergi.`}
-      title="Ține apăsat ca să ștergi"
+      aria-label={tr("{label}. Ține apăsat ca să ștergi.", { label })}
+      title={tr("Ține apăsat ca să ștergi")}
       onPointerDown={(e) => {
         if (e.button !== 0) return;
         try {
@@ -449,7 +450,7 @@ export function Modal({ open, onClose, title, icon: Icon, tone = "violet", wide 
               )}
               <h2 className="font-pixel text-xl text-ink">{title}</h2>
               {dismissable && (
-                <button type="button" onClick={onClose} aria-label="Închide" className="focus-ring ml-auto rounded-lg p-1.5 text-dim hover:bg-panel-hi hover:text-ink">
+                <button type="button" onClick={onClose} aria-label={tr("Închide")} className="focus-ring ml-auto rounded-lg p-1.5 text-dim hover:bg-panel-hi hover:text-ink">
                   <X size={18} aria-hidden="true" />
                 </button>
               )}
@@ -467,7 +468,7 @@ export function Modal({ open, onClose, title, icon: Icon, tone = "violet", wide 
 const plain = (t) => t.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase().replace(/\s+/g, " ").trim();
 
 // `phrase`: the player has to type this sentence before the button works (for things that cannot be undone)
-export function Confirm({ open, title, children, confirmLabel = "Confirmă", tone = "rose", phrase, onConfirm, onClose }) {
+export function Confirm({ open, title, children, confirmLabel = tr("Confirmă"), tone = "rose", phrase, onConfirm, onClose }) {
   const [typed, setTyped] = useState("");
   useEffect(() => {
     if (open) setTyped("");
@@ -481,9 +482,7 @@ export function Confirm({ open, title, children, confirmLabel = "Confirmă", ton
       tone={tone === "rose" ? "violet" : tone}
       footer={
         <>
-          <Button variant="ghost" onClick={onClose}>
-            Renunță
-          </Button>
+          <Button variant="ghost" onClick={onClose}>{tr("Renunță")}</Button>
           <Button variant={tone} onClick={onConfirm} disabled={!ready} data-autofocus={phrase ? undefined : true}>
             {confirmLabel}
           </Button>
@@ -493,9 +492,7 @@ export function Confirm({ open, title, children, confirmLabel = "Confirmă", ton
       <div className="text-sm leading-relaxed text-body">{children}</div>
       {phrase && (
         <div className="mt-4">
-          <label htmlFor="confirm-phrase" className="mb-1.5 block text-sm font-semibold text-body">
-            Ca să continui, scrie: <span className="font-extrabold text-ink">{phrase}</span>
-          </label>
+          <label htmlFor="confirm-phrase" className="mb-1.5 block text-sm font-semibold text-body">{tr("Ca să continui, scrie: {span}", { span: <span className="font-extrabold text-ink">{phrase}</span> })}</label>
           <input
             id="confirm-phrase"
             className="field"

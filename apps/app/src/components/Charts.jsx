@@ -18,6 +18,7 @@ import {
 import { RO_DAYS_MIN, RO_MONTHS_SHORT, addDays, fmtDay, mondayOf, parseDay } from "../lib/dates.js";
 import { LEVELS } from "../lib/engine.js";
 import { c as tc, mix } from "../lib/themes.js";
+import { tr } from "../lib/i18n.js";
 
 export const AXIS = { fill: tc("dim"), fontSize: 11, fontWeight: 700, fontFamily: "Nunito, system-ui, sans-serif" };
 export const GRID = tc("edge", 0.7);
@@ -69,7 +70,7 @@ export function MomentumChart({ days, height = 280 }) {
   const levels = LEVELS.filter((l) => l.min > 0 && l.min <= top);
   const resets = data.filter((d) => d.reset);
   return (
-    <div style={{ height }} role="img" aria-label={`Momentum în ultimele ${data.length} zile, acum ${data[data.length - 1]?.momentum ?? 0}`}>
+    <div style={{ height }} role="img" aria-label={tr("Momentum în ultimele {length} zile, acum {v}", { length: data.length, v: data[data.length - 1]?.momentum ?? 0 })}>
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={data} margin={{ top: 12, right: 44, bottom: 0, left: -6 }}>
           <defs>
@@ -94,17 +95,15 @@ export function MomentumChart({ days, height = 280 }) {
             cursor={{ stroke: tc("dim"), strokeDasharray: "3 3" }}
             content={
               <ChartTip
-                format={{ momentum: (v, p) => `${v} (nivel ${p.level})` }}
+                format={{ momentum: (v, p) => tr("{v} (nivel {level})", { v, level: p.level }) }}
                 extra={(p) => (
-                  <div className="mt-1 text-[11px] font-semibold text-dim">
-                    +{p.gain} în ziua aceea{p.closed ? ` · scor ${p.score}` : " · provizoriu"}
-                    {p.reset && <span className="ml-1 font-extrabold text-rose">· resetat</span>}
+                  <div className="mt-1 text-[11px] font-semibold text-dim">{tr("+{gain} în ziua aceea{v}", { gain: p.gain, v: p.closed ? tr(" · scor {score}", { score: p.score }) : tr(" · provizoriu") })}{p.reset && <span className="ml-1 font-extrabold text-rose">{tr("· resetat")}</span>}
                   </div>
                 )}
               />
             }
           />
-          <Area type="monotone" dataKey="momentum" name="Momentum" stroke={tc("gold-ink")} strokeWidth={2.5} fill="url(#momFill)" activeDot={{ r: 5, stroke: tc("panel"), strokeWidth: 2 }} />
+          <Area type="monotone" dataKey="momentum" name={tr("Momentum")} stroke={tc("gold-ink")} strokeWidth={2.5} fill="url(#momFill)" activeDot={{ r: 5, stroke: tc("panel"), strokeWidth: 2 }} />
           {resets.map((r) => (
             <ReferenceDot key={r.day} x={r.day} y={0} r={6} fill={tc("rose")} stroke={tc("panel")} strokeWidth={2} label={{ value: "reset", position: "top", fill: tc("rose-ink"), fontSize: 10, fontWeight: 800 }} />
           ))}
@@ -125,7 +124,7 @@ export function HabitLines({ habits, series, days, height = 260 }) {
     }
   }
   return (
-    <div style={{ height }} role="img" aria-label="Momentum pe fiecare obicei">
+    <div style={{ height }} role="img" aria-label={tr("Momentum pe fiecare obicei")}>
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={data} margin={{ top: 10, right: 12, bottom: 0, left: -6 }}>
           <CartesianGrid stroke={GRID} vertical={false} />
@@ -144,7 +143,7 @@ export function HabitLines({ habits, series, days, height = 260 }) {
 export function HabitArea({ points, color, height = 200 }) {
   const data = points.filter((p) => p.m !== null);
   return (
-    <div style={{ height }} role="img" aria-label="Momentum-ul obiceiului în timp">
+    <div style={{ height }} role="img" aria-label={tr("Momentum-ul obiceiului în timp")}>
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={data} margin={{ top: 10, right: 10, bottom: 0, left: -10 }}>
           <defs>
@@ -157,7 +156,7 @@ export function HabitArea({ points, color, height = 200 }) {
           <XAxis dataKey="day" tick={AXIS} tickFormatter={tickDay} minTickGap={28} axisLine={{ stroke: GRID }} tickLine={false} />
           <YAxis tick={AXIS} axisLine={false} tickLine={false} width={40} />
           <Tooltip content={<ChartTip />} cursor={{ stroke: tc("dim"), strokeDasharray: "3 3" }} />
-          <Area type="monotone" dataKey="m" name="Momentum" stroke={color} strokeWidth={2.5} fill="url(#habFill)" />
+          <Area type="monotone" dataKey="m" name={tr("Momentum")} stroke={color} strokeWidth={2.5} fill="url(#habFill)" />
         </AreaChart>
       </ResponsiveContainer>
     </div>
@@ -168,7 +167,7 @@ export function HabitArea({ points, color, height = 200 }) {
 export function ScoreBars({ days, height = 200 }) {
   const data = days.filter((d) => d.closed).map((d) => ({ day: d.day, score: d.score, ai: d.ai, reviewed: d.reviewed }));
   return (
-    <div style={{ height }} role="img" aria-label="Scorul fiecărei zile">
+    <div style={{ height }} role="img" aria-label={tr("Scorul fiecărei zile")}>
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data} margin={{ top: 10, right: 10, bottom: 0, left: -12 }} barCategoryGap={2}>
           <CartesianGrid stroke={GRID} vertical={false} />
@@ -176,9 +175,9 @@ export function ScoreBars({ days, height = 200 }) {
           <YAxis tick={AXIS} domain={[0, 100]} ticks={[0, 50, 100]} axisLine={false} tickLine={false} width={40} />
           <Tooltip
             cursor={{ fill: tc("violet", 0.1) }}
-            content={<ChartTip format={{ score: (v, p) => `${v}${p.ai !== null ? ` · AI: ${p.ai}` : p.reviewed ? " · fără AI" : " · închisă automat"}` }} />}
+            content={<ChartTip format={{ score: (v, p) => `${v}${p.ai !== null ? tr(" · AI: {ai}", { ai: p.ai }) : p.reviewed ? tr(" · fără AI") : tr(" · închisă automat")}` }} />}
           />
-          <RBar dataKey="score" name="Scor" radius={[4, 4, 0, 0]}>
+          <RBar dataKey="score" name={tr("Scor")} radius={[4, 4, 0, 0]}>
             {data.map((d) => (
               <Cell key={d.day} fill={d.ai !== null ? tc("violet-ink") : tc("mark")} />
             ))}
@@ -246,13 +245,9 @@ export function Heatmap({ today, weeks = 20, size = 14, cell, legend = true, lab
         ))}
       </div>
       {legend && (
-        <div className="mt-2 flex items-center gap-1.5 text-[11px] font-bold text-dim">
-          Mai puțin
-          {HEAT.map((c) => (
+        <div className="mt-2 flex items-center gap-1.5 text-[11px] font-bold text-dim">{tr("Mai puțin")}{HEAT.map((c) => (
             <span key={c} className="h-3 w-3 rounded-[3px]" style={{ background: c }} />
-          ))}
-          Mai mult
-        </div>
+          ))}{tr("Mai mult")}</div>
       )}
     </div>
   );

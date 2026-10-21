@@ -8,6 +8,7 @@ import { evolutionChapter, momentLineAI } from "../lib/ai.js";
 import { DEFAULT_NAMES, uid } from "../lib/catalog.js";
 import { STAGES } from "../lib/engine.js";
 import { c as tc } from "../lib/themes.js";
+import { tr } from "../lib/i18n.js";
 
 export function MomentModal({ moment, state, d, ai, recentStories, onName, onChapter, onClose }) {
   const meta = MOMENT_META[moment.type] || MOMENT_META.levelup;
@@ -16,7 +17,7 @@ export function MomentModal({ moment, state, d, ai, recentStories, onName, onCha
   const c = d.companion;
   const needsName = moment.type === "hatch" && !state.companion?.name;
   const [name, setName] = useState(state.companion?.name || DEFAULT_NAMES[path]?.[0] || "");
-  const displayName = needsName ? name || "Molt-ul tău" : c.name || "Molt-ul tău";
+  const displayName = needsName ? name || tr("Molt-ul tău") : c.name || tr("Molt-ul tău");
   const ctx = { name: displayName, resetAfter: d.resetAfter };
   // What the AI writes: nothing is shown in its place when it fails, only that it did not answer.
   const [line, setLine] = useState({ status: ai.available && quote ? "busy" : "off", text: "" });
@@ -58,7 +59,7 @@ export function MomentModal({ moment, state, d, ai, recentStories, onName, onCha
   }, [moment.id]);
 
   const finish = () => {
-    if (needsName) onName(name.trim().slice(0, 20) || DEFAULT_NAMES[path]?.[0] || "Ecou");
+    if (needsName) onName(name.trim().slice(0, 20) || DEFAULT_NAMES[path]?.[0] || tr("Ecou"));
     onClose();
   };
 
@@ -76,7 +77,7 @@ export function MomentModal({ moment, state, d, ai, recentStories, onName, onCha
     hero = (
       <div className="flex flex-col items-center gap-1">
         <Flame size={84} className="anim-flicker text-ember" fill={tc("ember")} aria-hidden="true" />
-        <div className="font-pixel text-4xl text-ink">{moment.n} zile</div>
+        <div className="font-pixel text-4xl text-ink">{tr("{n} zile", { n: moment.n })}</div>
       </div>
     );
   } else {
@@ -103,27 +104,25 @@ export function MomentModal({ moment, state, d, ai, recentStories, onName, onCha
       labelledBy="moment-title"
       footer={
         <Button id="moment-continue" onClick={finish} disabled={needsName && !name.trim()} data-autofocus={needsName ? undefined : true}>
-          {needsName ? "Botează și continuă" : "Continuă"}
+          {needsName ? tr("Botează și continuă") : tr("Continuă")}
         </Button>
       }
     >
       <div className="flex flex-col items-center gap-4 text-center">
-        <span className="text-xs font-extrabold uppercase tracking-[0.25em] text-gold">Moment-cheie</span>
+        <span className="text-xs font-extrabold uppercase tracking-[0.25em] text-gold">{tr("Moment-cheie")}</span>
         <h2 id="moment-title" className="font-pixel text-3xl leading-tight text-ink">
           {meta.title}
         </h2>
         {hero}
         {line.status !== "off" && (
           <p className="max-w-md text-[15px] font-semibold leading-relaxed text-body" aria-live="polite">
-            {line.status === "ok" ? line.text : line.status === "busy" ? "AI-ul scrie…" : "AI-ul nu a răspuns de data asta."}
+            {line.status === "ok" ? line.text : line.status === "busy" ? tr("AI-ul scrie…") : tr("AI-ul nu a răspuns de data asta.")}
           </p>
         )}
 
         {needsName && (
           <div className="w-full max-w-sm text-left">
-            <label htmlFor="companion-name" className="mb-1.5 block text-xs font-extrabold uppercase tracking-wider text-dim">
-              Cum îl cheamă?
-            </label>
+            <label htmlFor="companion-name" className="mb-1.5 block text-xs font-extrabold uppercase tracking-wider text-dim">{tr("Cum îl cheamă?")}</label>
             <input id="companion-name" className="field" value={name} maxLength={20} onChange={(e) => setName(e.target.value)} />
             <div className="mt-2 flex flex-wrap gap-1.5">
               {(DEFAULT_NAMES[path] || []).map((n) => (
@@ -135,15 +134,14 @@ export function MomentModal({ moment, state, d, ai, recentStories, onName, onCha
           </div>
         )}
 
-        {chapterState === "busy" && <p className="text-sm font-semibold text-dim">AI-ul scrie capitolul nou…</p>}
+        {chapterState === "busy" && <p className="text-sm font-semibold text-dim">{tr("AI-ul scrie capitolul nou…")}</p>}
         {(chapterState === "error" || chapterState === "off") && (
-          <p className="text-sm font-semibold text-dim">Capitolul nou nu a putut fi scris acum: AI-ul nu a răspuns.</p>
+          <p className="text-sm font-semibold text-dim">{tr("Capitolul nou nu a putut fi scris acum: AI-ul nu a răspuns.")}</p>
         )}
         {chapter && (
           <div className="inset w-full p-4 text-left">
             <div className="mb-1 flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-wider text-violet-hi">
-              <Sparkles size={13} aria-hidden="true" /> Capitol nou · {chapter.title}
-            </div>
+              <Sparkles size={13} aria-hidden="true" />{" "}{tr("Capitol nou · {title}", { title: chapter.title })}</div>
             <p className="text-sm leading-relaxed text-ink">{chapter.story}</p>
           </div>
         )}

@@ -162,3 +162,11 @@ test("streakAlert: a 3+ day streak with nothing done today is at risk", () => {
   assert.equal(streakAlert({ state: { ...st, log: { ...log, [TODAY]: { a: 1 } } }, today: TODAY }), null); // done today
   assert.equal(streakAlert({ state: { ...st, log: { "2026-10-10": { a: 1 } } }, today: TODAY }), null); // streak too short
 });
+
+test("lang en: the to-do title and the reason are written in English; the default stays Romanian", () => {
+  const r = plan({ patterns: { findings: [wk("a", 3)] }, lang: "en" });
+  const a = r.actions[0];
+  assert.equal(a.payload.title, "Tomorrow: Obicei a (your harder day). Pick now when you will do it.");
+  assert.match(a.reason, /harder on Wednesdays/);
+  assert.equal(plan({ patterns: { findings: [wk("a", 3)] } }).actions[0].payload.title, TITLE);
+});
