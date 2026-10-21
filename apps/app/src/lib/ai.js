@@ -185,6 +185,14 @@ export async function askCoach(kind, params, signal) {
   return askServer(server, kind, params, signal);
 }
 
+/** Starts an answer the server writes by itself (only the chat uses it, see supabase/functions/ai); resolves when it has started. */
+export async function askCoachBackground(kind, params, signal) {
+  const server = await serverClient();
+  if (!server) throw { code: "unavailable" };
+  const data = await invoke(server, "ai", { kind, params, background: true }, signal);
+  if (!data?.started) throw { code: "invalid_json" };
+}
+
 /** [{title, text}] patterns found in the last 4 weeks (see coach.js for `data`). */
 export async function habitInsights(data, signal) {
   const r = await askCoach("insights", data, signal);

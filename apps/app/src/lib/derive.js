@@ -38,6 +38,9 @@ export function derive(state, today) {
   const scheduled = plan.filter((p) => p.scheduled);
   const optional = plan.filter((p) => !p.scheduled);
   const doneScheduled = scheduled.filter((p) => p.code).length;
+  // the day is measured against at most RULES.habitsPerDay scheduled habits (engine.js): what the missions counters show
+  const missions = { total: Math.min(scheduled.length, RULES.habitsPerDay), done: Math.min(doneScheduled, RULES.habitsPerDay) };
+  missions.left = missions.total - missions.done;
   const week = weekGain(timeline, today);
   const resetAfter = timeline.resetAfter;
   const quiet = yesterday ? yesterday.inactiveRun : 0;
@@ -55,8 +58,8 @@ export function derive(state, today) {
     momentum: entry?.momentum || 0,
     weekGain: week,
     streak: streak.current,
-    todayDone: doneScheduled,
-    todayTotal: scheduled.length,
+    todayDone: missions.done,
+    todayTotal: missions.total,
     // what the others in a group see Molt wearing: only the choices, and only when the player allows it (Setări)
     look: state.settings?.shareLook === false ? {} : compactLook(look),
   };
@@ -72,6 +75,7 @@ export function derive(state, today) {
     scheduled,
     optional,
     doneScheduled,
+    missions,
     week,
     pending: pendingReviewGain(entry),
     resetRisk,

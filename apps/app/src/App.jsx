@@ -34,7 +34,8 @@ import Onboarding from "./screens/Onboarding.jsx";
 import Dashboard from "./screens/Dashboard.jsx";
 import Habits from "./screens/Habits.jsx";
 import Molt, { MOLT_TABS, skillLabel } from "./screens/Molt.jsx";
-import { onAiFinished } from "./components/AiCoach.jsx";
+import { onAiFinished, trackAiJob } from "./components/AiCoach.jsx";
+import { resumeChatRun } from "./lib/chatRun.js";
 import Group from "./screens/Group.jsx";
 import Planner from "./screens/Planner.jsx";
 import PlanHub from "./screens/PlanHub.jsx";
@@ -264,6 +265,16 @@ function Game() {
     setFocusHabit(arg);
     window.scrollTo(0, 0);
   }, []);
+  // a chat reply the server is still writing when the app opens (refresh, closed tab, a phone that slept): it becomes the
+  // chat's AI job again, so the Molt menu spins and the toast comes when it is ready, wherever you are in the app
+  useEffect(() => {
+    if (!hasState || !ai.server) return;
+    agentClient()
+      .then((c) => resumeChatRun(c, trackAiJob))
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasState, ai.server]);
+
   // an AI ability that finished while its screen was closed: a toast you can tap to open it (the Molt menu item and the
   // ability's tab carry a dot until you look at it)
   useEffect(
