@@ -67,6 +67,11 @@
       "source": "/terms/",
       "destination": "/ro/termeni/",
       "permanent": true
+    },
+    {
+      "source": "/ro/giveaways/_shell/",
+      "destination": "/ro/giveaways/",
+      "permanent": false
     }
   ],
   "headers": [
@@ -78,6 +83,16 @@
           "value": "noindex, nofollow"
         }
       ]
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/ro/giveaways/:slug/",
+      "destination": "/ro/giveaways/_shell/"
+    },
+    {
+      "source": "/ro/giveaways/:slug",
+      "destination": "/ro/giveaways/_shell/"
     }
   ]
 }
