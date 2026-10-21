@@ -5,22 +5,23 @@
 
 import { addDays, dayRange } from "./dates.js";
 import { isScheduled } from "./engine.js";
+import { tr } from "./i18n.js";
 
 /** Catalog of testable factors. Arm B is always the "treatment". Labels are shown in the UI (Romanian). */
 export const FACTORS = {
   if_then: {
     id: "if_then",
-    label: "Plan dacă-atunci",
-    armA: "Fără plan explicit",
-    armB: "Cu plan dacă-atunci",
-    instruction: "În zilele B, scrie dimineața un plan „Dacă [situație], atunci [fac obiceiul]”.",
+    label: tr("Plan dacă-atunci"),
+    armA: tr("Fără plan explicit"),
+    armB: tr("Cu plan dacă-atunci"),
+    instruction: tr("În zilele B, scrie dimineața un plan „Dacă [situație], atunci [fac obiceiul]”."),
   },
   easier_version: {
     id: "easier_version",
-    label: "Versiune mai ușoară",
-    armA: "Versiunea obișnuită",
-    armB: "Versiune mai mică",
-    instruction: "În zilele B, fă doar o versiune mai mică a obiceiului (câteva minute sau o repetare).",
+    label: tr("Versiune mai ușoară"),
+    armA: tr("Versiunea obișnuită"),
+    armB: tr("Versiune mai mică"),
+    instruction: tr("În zilele B, fă doar o versiune mai mică a obiceiului (câteva minute sau o repetare)."),
   },
 };
 

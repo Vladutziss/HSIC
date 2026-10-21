@@ -11,6 +11,7 @@ import { todosForToday } from "../lib/todos.js";
 import { RULES } from "../lib/engine.js";
 import { pickQuote } from "../lib/quotes.js";
 import { BREAK_CHOICES, PRESETS, WORK_CHOICES, advance, continueWork, finish, fmtClock, fmtMinSec, fmtSpan, loadPrefs, newSession, pause, resume, savePrefs, view } from "../lib/focus.js";
+import { tr } from "../lib/i18n.js";
 
 const pad = (n) => String(n).padStart(2, "0");
 const C = 200; // centre of the 400 x 400 face
@@ -50,7 +51,7 @@ export function FocusSetup({ open, onStart, onClose, initial }) {
   const [preset, setPreset] = useState(snap ? "custom" : saved.preset || "p25");
   const [work, setWork] = useState(snap || saved.work || 25);
   const [brk, setBrk] = useState(saved.brk || 5);
-  const options = [...PRESETS, { id: "custom", label: "Personalizat", sub: "Alegi tu cât lucrezi și cât te odihnești" }];
+  const options = [...PRESETS, { id: "custom", label: tr("Personalizat"), sub: tr("Alegi tu cât lucrezi și cât te odihnești") }];
   const pomodoro = preset === "custom" ? { work, brk } : PRESETS.find((p) => p.id === preset)?.pomodoro ?? null;
   const go = () => {
     savePrefs({ setup: { preset, work, brk } });
@@ -60,23 +61,19 @@ export function FocusSetup({ open, onStart, onClose, initial }) {
     <Modal
       open={open}
       onClose={onClose}
-      title="Începe Focus"
+      title={tr("Începe Focus")}
       icon={Timer}
       tone="violet"
       footer={
         <>
-          <Button variant="ghost" onClick={onClose}>
-            Renunță
-          </Button>
-          <Button icon={Play} onClick={go} data-autofocus>
-            Începe
-          </Button>
+          <Button variant="ghost" onClick={onClose}>{tr("Renunță")}</Button>
+          <Button icon={Play} onClick={go} data-autofocus>{tr("Începe")}</Button>
         </>
       }
     >
-      <p className="mb-3 text-sm text-body">Cronometrul numără doar timpul în care te concentrezi. Alege dacă vrei pauze automate.</p>
-      <p className="mb-3 rounded-xl bg-gold/10 p-2.5 text-xs font-bold text-gold-hi ring-1 ring-gold/30">Termină sesiunea (minim {RULES.focusMinMinutes} minute) și primești momentum: 1 la fiecare 2 minute, +{RULES.focusCycleBonus} pentru fiecare pomodoro terminat, maximum {RULES.focusDayCap} pe zi.</p>
-      <div role="radiogroup" aria-label="Tipul sesiunii" className="space-y-2">
+      <p className="mb-3 text-sm text-body">{tr("Cronometrul numără doar timpul în care te concentrezi. Alege dacă vrei pauze automate.")}</p>
+      <p className="mb-3 rounded-xl bg-gold/10 p-2.5 text-xs font-bold text-gold-hi ring-1 ring-gold/30">{tr("Termină sesiunea (minim {focusMinMinutes} minute) și primești momentum: 1 la fiecare 2 minute, +{focusCycleBonus} pentru fiecare pomodoro terminat, maximum {focusDayCap} pe zi.", { focusMinMinutes: RULES.focusMinMinutes, focusCycleBonus: RULES.focusCycleBonus, focusDayCap: RULES.focusDayCap })}</p>
+      <div role="radiogroup" aria-label={tr("Tipul sesiunii")} className="space-y-2">
         {options.map((o) => {
           const on = preset === o.id;
           return (
@@ -100,16 +97,16 @@ export function FocusSetup({ open, onStart, onClose, initial }) {
       {preset === "custom" && (
         <div className="mt-3 grid grid-cols-2 gap-3">
           <label className="block">
-            <span className="mb-1.5 block text-xs font-extrabold uppercase tracking-wider text-dim">Lucru</span>
+            <span className="mb-1.5 block text-xs font-extrabold uppercase tracking-wider text-dim">{tr("Lucru")}</span>
             <Select id="focus-work" value={work} onChange={setWork} options={WORK_CHOICES.map((m) => ({ value: m, label: `${m} min` }))} />
           </label>
           <label className="block">
-            <span className="mb-1.5 block text-xs font-extrabold uppercase tracking-wider text-dim">Pauză</span>
+            <span className="mb-1.5 block text-xs font-extrabold uppercase tracking-wider text-dim">{tr("Pauză")}</span>
             <Select id="focus-break" value={brk} onChange={setBrk} options={BREAK_CHOICES.map((m) => ({ value: m, label: `${m} min` }))} />
           </label>
         </div>
       )}
-      {pomodoro && <p className="mt-3 text-xs font-semibold text-faint">După fiecare a 4-a pauză, următoarea e de 3 ori mai lungă. După pauză, Focus așteaptă să-i dai tu Continuă.</p>}
+      {pomodoro && <p className="mt-3 text-xs font-semibold text-faint">{tr("După fiecare a 4-a pauză, următoarea e de 3 ori mai lungă. După pauză, Focus așteaptă să-i dai tu Continuă.")}</p>}
     </Modal>
   );
 }
@@ -205,7 +202,7 @@ function DigitalClock({ ms, dim }) {
 
 // ------------------------------------------------------------ breaks
 
-const TIPS = ["Bea un pahar cu apă.", "Privește pe fereastră, departe, 20 de secunde.", "Întinde-ți spatele și umerii.", "Ridică-te și fă câțiva pași.", "Respiră adânc de cinci ori.", "Lasă ochii să se odihnească de ecran."];
+const TIPS = [tr("Bea un pahar cu apă."), tr("Privește pe fereastră, departe, 20 de secunde."), tr("Întinde-ți spatele și umerii."), tr("Ridică-te și fă câțiva pași."), tr("Respiră adânc de cinci ori."), tr("Lasă ochii să se odihnească de ecran.")];
 
 function BreakScreen({ v, quoteSeed, onSkip, onEnd }) {
   const waiting = v.phase === "wait";
@@ -236,13 +233,13 @@ function BreakScreen({ v, quoteSeed, onSkip, onEnd }) {
               <span className="grid h-16 w-16 place-items-center rounded-full bg-mint text-on-mint">
                 <Check size={34} strokeWidth={3.5} aria-hidden="true" />
               </span>
-              <span className="text-3xl font-black text-ink">Pauza s-a terminat</span>
-              <span className="text-sm font-semibold text-dim">Când ești gata, continui de unde ai rămas.</span>
+              <span className="text-3xl font-black text-ink">{tr("Pauza s-a terminat")}</span>
+              <span className="text-sm font-semibold text-dim">{tr("Când ești gata, continui de unde ai rămas.")}</span>
             </>
           ) : (
             <>
               <span className="inline-flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-[0.25em] text-mint-ink">
-                <Coffee size={14} aria-hidden="true" /> {v.longBreak ? "Pauză lungă" : "Pauză"}
+                <Coffee size={14} aria-hidden="true" /> {v.longBreak ? tr("Pauză lungă") : tr("Pauză")}
               </span>
               <span className="tabular text-[clamp(44px,11vmin,104px)] font-black leading-none text-ink">{fmtMinSec(v.remaining)}</span>
               <span className="max-w-[16rem] text-sm font-semibold text-dim">{TIPS[(v.cycle - 1) % TIPS.length]}</span>
@@ -252,8 +249,7 @@ function BreakScreen({ v, quoteSeed, onSkip, onEnd }) {
       </div>
       <figure className="anim-pop relative w-full max-w-xl rounded-3xl border border-gold/30 bg-gradient-to-b from-gold/10 to-transparent px-6 pb-5 pt-6 shadow-[0_18px_44px_-24px_rgb(var(--c-gold)/0.55)]">
         <span className="absolute -top-3 left-1/2 inline-flex -translate-x-1/2 items-center gap-1.5 whitespace-nowrap rounded-full bg-night px-3 py-0.5 text-[11px] font-extrabold uppercase tracking-[0.2em] text-gold-ink ring-1 ring-gold/40">
-          <Sparkles size={12} aria-hidden="true" /> Ai ajuns până aici
-        </span>
+          <Sparkles size={12} aria-hidden="true" />{" "}{tr("Ai ajuns până aici")}</span>
         <blockquote className="text-[clamp(1.2rem,3vmin,1.65rem)] font-bold italic leading-snug text-ink">
           <span className="text-gold" aria-hidden="true">„</span>
           {quote.text}
@@ -264,23 +260,15 @@ function BreakScreen({ v, quoteSeed, onSkip, onEnd }) {
           <span className="text-sm font-extrabold text-gold-ink">{quote.author}</span>
           <span className="text-xs font-semibold text-dim">{quote.source}</span>
         </figcaption>
-        <p className="mt-3 text-xs font-bold text-dim">
-          Ciclul {v.cycle} încheiat · {fmtSpan(v.work / 1000)} de concentrare. Ai tot dreptul să fii mândru de tine.
-        </p>
+        <p className="mt-3 text-xs font-bold text-dim">{tr("Ciclul {cycle} încheiat · {fmtSpan} de concentrare. Ai tot dreptul să fii mândru de tine.", { cycle: v.cycle, fmtSpan: fmtSpan(v.work / 1000) })}</p>
       </figure>
       <div className="flex flex-col items-center gap-2">
         {waiting ? (
-          <Button size="lg" icon={Play} onClick={onSkip} data-autofocus>
-            Continuă Focus
-          </Button>
+          <Button size="lg" icon={Play} onClick={onSkip} data-autofocus>{tr("Continuă Focus")}</Button>
         ) : (
-          <Button variant="ghost" size="md" icon={SkipForward} onClick={onSkip}>
-            Sari peste pauză
-          </Button>
+          <Button variant="ghost" size="md" icon={SkipForward} onClick={onSkip}>{tr("Sari peste pauză")}</Button>
         )}
-        <button type="button" onClick={onEnd} className="focus-ring rounded-lg px-3 py-1.5 text-xs font-extrabold text-dim hover:text-ink">
-          Termină sesiunea
-        </button>
+        <button type="button" onClick={onEnd} className="focus-ring rounded-lg px-3 py-1.5 text-xs font-extrabold text-dim hover:text-ink">{tr("Termină sesiunea")}</button>
       </div>
     </div>
   );
@@ -314,20 +302,18 @@ function FocusTodos({ todos, today, actions }) {
         onClick={toggle}
         className="focus-ring fixed left-4 top-4 z-10 inline-flex items-center gap-2 rounded-xl bg-panel-hi px-3 py-2 text-sm font-extrabold text-body ring-1 ring-edge transition hover:text-ink sm:left-6 sm:top-5"
         aria-expanded="false"
-        aria-label={`Deschide to-do-urile${left ? `, ${left} rămase` : ""}`}
+        aria-label={tr("Deschide to-do-urile{v}", { v: left ? tr(", {left} rămase", { left }) : "" })}
       >
-        <ListTodo size={16} aria-hidden="true" /> To-do
-        {left > 0 && <span className="rounded-full bg-gold px-1.5 text-[11px] font-black text-on-gold">{left}</span>}
+        <ListTodo size={16} aria-hidden="true" />{" "}{tr("To-do")}{left > 0 && <span className="rounded-full bg-gold px-1.5 text-[11px] font-black text-on-gold">{left}</span>}
       </button>
     );
   }
   return (
-    <div style={{ position: "fixed" }} className="panel left-4 top-4 z-10 flex max-h-[min(70vh,28rem)] w-[min(22rem,calc(100vw-5.5rem))] flex-col p-3 sm:left-6 sm:top-5" role="region" aria-label="To-do-uri">
+    <div style={{ position: "fixed" }} className="panel left-4 top-4 z-10 flex max-h-[min(70vh,28rem)] w-[min(22rem,calc(100vw-5.5rem))] flex-col p-3 sm:left-6 sm:top-5" role="region" aria-label={tr("To-do-uri")}>
       <div className="mb-2 flex items-center gap-2">
         <span className="inline-flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-wider text-dim">
-          <ListTodo size={14} aria-hidden="true" /> To-do azi {list.length > 0 && `· ${list.length - left}/${list.length}`}
-        </span>
-        <button type="button" onClick={toggle} className="focus-ring ml-auto grid h-7 w-7 place-items-center rounded-lg text-dim hover:bg-panel-hi hover:text-ink" aria-label="Închide to-do-urile" aria-expanded="true">
+          <ListTodo size={14} aria-hidden="true" />{" "}{tr("To-do azi {v}", { v: list.length > 0 && `· ${list.length - left}/${list.length}` })}</span>
+        <button type="button" onClick={toggle} className="focus-ring ml-auto grid h-7 w-7 place-items-center rounded-lg text-dim hover:bg-panel-hi hover:text-ink" aria-label={tr("Închide to-do-urile")} aria-expanded="true">
           <ChevronDown size={16} className="rotate-180" aria-hidden="true" />
         </button>
       </div>
@@ -341,17 +327,17 @@ function FocusTodos({ todos, today, actions }) {
           setText("");
         }}
       >
-        <input className="field !py-1.5 text-sm" value={text} maxLength={80} placeholder="Adaugă un to-do…" onChange={(e) => setText(e.target.value)} aria-label="To-do nou" />
-        <Button type="submit" variant="mint" size="sm" icon={Plus} disabled={!text.trim()} aria-label="Adaugă" />
+        <input className="field !py-1.5 text-sm" value={text} maxLength={80} placeholder={tr("Adaugă un to-do…")} onChange={(e) => setText(e.target.value)} aria-label={tr("To-do nou")} />
+        <Button type="submit" variant="mint" size="sm" icon={Plus} disabled={!text.trim()} aria-label={tr("Adaugă")} />
       </form>
       <ul className="min-h-0 flex-1 space-y-1 overflow-y-auto pr-0.5">
-        {list.length === 0 && <li className="py-2 text-center text-xs font-semibold text-dim">Nimic pe lista de azi.</li>}
+        {list.length === 0 && <li className="py-2 text-center text-xs font-semibold text-dim">{tr("Nimic pe lista de azi.")}</li>}
         {list.map((t) => (
           <li key={t.id} className="group flex items-center gap-2 rounded-lg bg-well px-2 py-1.5 ring-1 ring-edge">
             <button
               type="button"
               aria-pressed={t.done}
-              aria-label={t.done ? `Debifează ${t.title}` : `Bifează ${t.title}`}
+              aria-label={t.done ? tr("Debifează {title}", { title: t.title }) : tr("Bifează {title}", { title: t.title })}
               onClick={() => actions.toggle(t.id, t.viewDay || today)}
               className={`focus-ring grid h-5 w-5 shrink-0 place-items-center rounded-md border-2 transition ${t.done ? "border-mint bg-mint text-on-mint" : "border-edge-hi text-transparent hover:border-mint/70"}`}
             >
@@ -369,17 +355,17 @@ function FocusTodos({ todos, today, actions }) {
                   if (e.key === "Enter") save();
                   if (e.key === "Escape") setEditing(null);
                 }}
-                aria-label="Redenumește to-do-ul"
+                aria-label={tr("Redenumește to-do-ul")}
               />
             ) : (
               <>
-                <button type="button" onClick={() => setEditing({ id: t.id, title: t.title })} className={`min-w-0 flex-1 truncate text-left text-sm font-bold ${t.done ? "text-faint line-through" : "text-ink"}`} title="Apasă ca să-l modifici">
+                <button type="button" onClick={() => setEditing({ id: t.id, title: t.title })} className={`min-w-0 flex-1 truncate text-left text-sm font-bold ${t.done ? "text-faint line-through" : "text-ink"}`} title={tr("Apasă ca să-l modifici")}>
                   {t.title}
                 </button>
-                <button type="button" onClick={() => setEditing({ id: t.id, title: t.title })} className="focus-ring grid h-6 w-6 shrink-0 place-items-center rounded-md text-faint hover:text-ink sm:opacity-0 sm:group-hover:opacity-100 sm:focus:opacity-100" aria-label={`Modifică ${t.title}`}>
+                <button type="button" onClick={() => setEditing({ id: t.id, title: t.title })} className="focus-ring grid h-6 w-6 shrink-0 place-items-center rounded-md text-faint hover:text-ink sm:opacity-0 sm:group-hover:opacity-100 sm:focus:opacity-100" aria-label={tr("Modifică {title}", { title: t.title })}>
                   <Pencil size={12} aria-hidden="true" />
                 </button>
-                <button type="button" onClick={() => actions.remove(t.id)} className="focus-ring grid h-6 w-6 shrink-0 place-items-center rounded-md text-faint hover:text-rose" aria-label={`Șterge ${t.title}`}>
+                <button type="button" onClick={() => actions.remove(t.id)} className="focus-ring grid h-6 w-6 shrink-0 place-items-center rounded-md text-faint hover:text-rose" aria-label={tr("Șterge {title}", { title: t.title })}>
                   <Trash2 size={12} aria-hidden="true" />
                 </button>
               </>
@@ -467,27 +453,25 @@ export function FocusMode({ session, onChange, onFinish, todos = [], today, todo
   const details = (
     <>
       <span className="inline-flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-[0.25em] text-dim">
-        {v.paused ? <Pause size={14} aria-hidden="true" /> : <Timer size={14} aria-hidden="true" />} {v.paused ? "În pauză" : "Focus"}
-        {session.pomodoro && ` · ciclul ${v.cycle}`}
+        {v.paused ? <Pause size={14} aria-hidden="true" /> : <Timer size={14} aria-hidden="true" />} {v.paused ? tr("În pauză") : "Focus"}
+        {session.pomodoro && tr(" · ciclul {cycle}", { cycle: v.cycle })}
       </span>
       {session.pomodoro && (
         <div className="w-full">
           <div className="mb-1 flex justify-between text-xs font-bold text-dim">
-            <span>Pauză în</span>
+            <span>{tr("Pauză în")}</span>
             <span className="tabular">{fmtMinSec(v.remaining)}</span>
           </div>
-          <Bar value={v.limitMs ? v.inPhase / v.limitMs : 0} tone="mint" segmented={false} height={8} label="Timp până la pauza următoare" />
+          <Bar value={v.limitMs ? v.inPhase / v.limitMs : 0} tone="mint" segmented={false} height={8} label={tr("Timp până la pauza următoare")} />
         </div>
       )}
       <div className="flex gap-2">
         <Button size="lg" variant={v.paused ? "gold" : "ghost"} icon={v.paused ? Play : Pause} onClick={primary}>
-          {v.paused ? "Continuă" : "Pauză"}
+          {v.paused ? tr("Continuă") : tr("Pauză")}
         </Button>
-        <Button size="lg" variant="ghost" onClick={() => setConfirming(true)}>
-          Termină
-        </Button>
+        <Button size="lg" variant="ghost" onClick={() => setConfirming(true)}>{tr("Termină")}</Button>
       </div>
-      <span className="text-[11px] font-semibold text-faint">Spațiu = pauză · Esc = termină · atinge ceasul ca să-l schimbi</span>
+      <span className="text-[11px] font-semibold text-faint">{tr("Spațiu = pauză · Esc = termină · atinge ceasul ca să-l schimbi")}</span>
     </>
   );
 
@@ -497,16 +481,16 @@ export function FocusMode({ session, onChange, onFinish, todos = [], today, todo
       className={`app-bg fixed inset-0 z-[60] flex flex-col items-center justify-center overflow-y-auto transition-[padding] duration-300 ${inBreak ? "" : detailsOpen ? "pb-52" : "pb-12"}`}
       role="dialog"
       aria-modal="true"
-      aria-label="Mod Focus"
+      aria-label={tr("Mod Focus")}
     >
       {todoActions && <FocusTodos todos={todos} today={today} actions={todoActions} />}
       <div className="fixed right-4 top-4 z-10 flex items-center gap-3 sm:right-6 sm:top-5">
         {(mode === "analog" || inBreak) && (
-          <span className="tabular text-xl font-extrabold text-dim" title="Timp de concentrare (ore:minute)" aria-label={`Timp de concentrare: ${Math.floor(sessionMin / 60)} ore și ${sessionMin % 60} minute`}>
+          <span className="tabular text-xl font-extrabold text-dim" title={tr("Timp de concentrare (ore:minute)")} aria-label={tr("Timp de concentrare: {floor} ore și {v} minute", { floor: Math.floor(sessionMin / 60), v: sessionMin % 60 })}>
             {pad(Math.floor(sessionMin / 60))}:{pad(sessionMin % 60)}
           </span>
         )}
-        <button type="button" onClick={() => setConfirming(true)} className="focus-ring grid h-9 w-9 place-items-center rounded-xl text-dim hover:bg-panel-hi hover:text-ink" aria-label="Încheie sesiunea de Focus">
+        <button type="button" onClick={() => setConfirming(true)} className="focus-ring grid h-9 w-9 place-items-center rounded-xl text-dim hover:bg-panel-hi hover:text-ink" aria-label={tr("Încheie sesiunea de Focus")}>
           <X size={18} aria-hidden="true" />
         </button>
       </div>
@@ -519,8 +503,8 @@ export function FocusMode({ session, onChange, onFinish, todos = [], today, todo
             type="button"
             onClick={toggleMode}
             className={`focus-ring rounded-[2rem] p-2 transition ${v.paused ? "opacity-60" : ""}`}
-            aria-label={`Ceas de Focus: ${fmtClock(v.work)}. Apasă ca să schimbi între ceasul mecanic și cel digital.`}
-            title="Apasă ca să schimbi ceasul"
+            aria-label={tr("Ceas de Focus: {fmtClock}. Apasă ca să schimbi între ceasul mecanic și cel digital.", { fmtClock: fmtClock(v.work) })}
+            title={tr("Apasă ca să schimbi ceasul")}
           >
             {/* a new key replays the pop-in each time the clock is switched */}
             <div key={mode} className="anim-pop">
@@ -536,8 +520,8 @@ export function FocusMode({ session, onChange, onFinish, todos = [], today, todo
               onClick={() => setDetailsOpen((v) => !v)}
               aria-expanded={detailsOpen}
               aria-controls="focus-details"
-              aria-label={detailsOpen ? "Ascunde detaliile" : "Arată detaliile"}
-              title={detailsOpen ? "Ascunde detaliile" : "Arată detaliile"}
+              aria-label={detailsOpen ? tr("Ascunde detaliile") : tr("Arată detaliile")}
+              title={detailsOpen ? tr("Ascunde detaliile") : tr("Arată detaliile")}
               className="focus-ring grid h-9 w-12 place-items-center rounded-xl text-dim transition hover:bg-panel-hi hover:text-ink"
             >
               <ChevronDown size={20} className={`transition-transform duration-300 ${detailsOpen ? "" : "rotate-180"}`} aria-hidden="true" />
@@ -554,24 +538,22 @@ export function FocusMode({ session, onChange, onFinish, todos = [], today, todo
       <Modal
         open={confirming}
         onClose={() => setConfirming(false)}
-        title="Încheii sesiunea?"
+        title={tr("Încheii sesiunea?")}
         icon={Timer}
         tone="violet"
         footer={
           <>
-            <Button variant="ghost" onClick={() => setConfirming(false)}>
-              Continuă Focus
-            </Button>
+            <Button variant="ghost" onClick={() => setConfirming(false)}>{tr("Continuă Focus")}</Button>
             <Button icon={Check} onClick={end} data-autofocus>
-              {v.work >= 60000 ? "Termină și salvează" : "Termină"}
+              {v.work >= 60000 ? tr("Termină și salvează") : tr("Termină")}
             </Button>
           </>
         }
       >
         <p className="text-sm text-body">
           {v.work >= 60000
-            ? `${fmtSpan(v.work / 1000)} de concentrare se salvează în statistici.`
-            : "Sesiunea are sub un minut, așa că nu se salvează în statistici."}
+            ? tr("{fmtSpan} de concentrare se salvează în statistici.", { fmtSpan: fmtSpan(v.work / 1000) })
+            : tr("Sesiunea are sub un minut, așa că nu se salvează în statistici.")}
         </p>
       </Modal>
     </div>

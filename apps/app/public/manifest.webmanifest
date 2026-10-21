@@ -1,8 +1,8 @@
 {
   "name": "Molted",
   "short_name": "Molted",
-  "description": "Obiceiuri care cresc un personaj.",
-  "lang": "ro",
+  "description": "Habits that grow a character.",
+  "lang": "en",
   "start_url": "/",
   "scope": "/",
   "id": "/",

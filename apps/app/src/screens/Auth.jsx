@@ -4,6 +4,7 @@
 import React, { Suspense } from "react";
 import { inViewer } from "../lib/platform.js";
 import Splash from "./Splash.jsx";
+import { tr } from "../lib/i18n.js";
 
 // the condition is a literal after bundling, so the artifact build drops the import (and Clerk with it)
 const ClerkGate = __SUPABASE__ ? React.lazy(() => import("./ClerkGate.jsx")) : null;
@@ -11,7 +12,7 @@ const ClerkGate = __SUPABASE__ ? React.lazy(() => import("./ClerkGate.jsx")) : n
 export default function AuthGate({ children }) {
   if (!ClerkGate || inViewer() || !import.meta.env.VITE_CLERK_PUBLISHABLE_KEY) return children;
   return (
-    <Suspense fallback={<Splash text="Se încarcă aventura…" />}>
+    <Suspense fallback={<Splash text={tr("Se încarcă aventura…")} />}>
       <ClerkGate>{children}</ClerkGate>
     </Suspense>
   );

@@ -16,6 +16,7 @@ import {
 import { addDays } from "./dates.js";
 import { collectFacts, compactLook, currentLook } from "./cosmetics.js";
 import { occursOn, viewOn } from "./todos.js";
+import { tr } from "./i18n.js";
 
 export function activeHabits(state, day) {
   return (state.habits || []).filter((h) => habitExists(h, day));
@@ -92,7 +93,7 @@ export function reviewPayload(state, d, day) {
   const habits = activeHabits(state, day).map((h) => ({
     name: h.name,
     diff: h.diff,
-    diffLabel: DIFF[h.diff]?.label || "Mediu",
+    diffLabel: DIFF[h.diff]?.label || tr("Mediu"),
     scheduled: isScheduled(h, day),
     done: !!log[h.id],
   }));

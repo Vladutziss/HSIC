@@ -28,10 +28,11 @@ const MAX_USERS = 500;
 const reply = (status: number, body: unknown) => new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
 const dayIn = (tz: string) => new Intl.DateTimeFormat("en-CA", { timeZone: tz }).format(new Date());
 
-const NUDGE_SYSTEM = `You write one push notification for "Molted", a habit app used by teenagers. The player has a streak that breaks if they do nothing today. Write ONE sentence in Romanian, at most 120 characters, addressing the player as "tu", warm, no guilt, no emojis, naming the habit as given and the streak length. Use only the numbers given. Answer with the sentence only.`;
+const nudgeSystem = (en: boolean) =>
+  `You write one push notification for "Molted", a habit app used by teenagers. The player has a streak that breaks if they do nothing today. Write ONE sentence in ${en ? "English" : "Romanian"}, at most 120 characters,${en ? "" : ' addressing the player as "tu",'} warm, no guilt, no emojis, naming the habit as given and the streak length. Use only the numbers given. Answer with the sentence only.`;
 
 /** One short message from the model, or null (no key, no answer, nonsense): then nothing is sent. */
-async function nudgeText(facts: { nick: string; streak: number; habit: string }): Promise<string | null> {
+async function nudgeText(facts: { nick: string; streak: number; habit: string }, en: boolean): Promise<string | null> {
   const key = Deno.env.get("OPENROUTER_API_KEY");
   const models = (Deno.env.get("AGENT_MODEL") ?? Deno.env.get("AI_MODEL") ?? "").split(",").map((m) => m.trim()).filter(Boolean);
   if (!key || !models.length) return null;
@@ -40,7 +41,7 @@ async function nudgeText(facts: { nick: string; streak: number; habit: string })
       const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
         method: "POST",
         headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json", "X-Title": "Molted" },
-        body: JSON.stringify({ model, messages: [{ role: "system", content: NUDGE_SYSTEM }, { role: "user", content: JSON.stringify(facts) }], max_tokens: 200, temperature: 0.7 }),
+        body: JSON.stringify({ model, messages: [{ role: "system", content: nudgeSystem(en) }, { role: "user", content: JSON.stringify(facts) }], max_tokens: 200, temperature: 0.7 }),
         signal: AbortSignal.timeout(30_000),
       });
       if (!res.ok) continue;
@@ -65,13 +66,13 @@ Deno.serve(async (req) => {
 
   const mode = (await req.json().catch(() => ({})))?.mode;
   if (mode === "streak") {
-    const { data: nudgees, error: nErr } = await admin.from("profiles").select("id, name").eq("settings->>agentNudge", "true").limit(MAX_USERS);
+    const { data: nudgees, error: nErr } = await admin.from("profiles").select("id, name, settings").eq("settings->>agentNudge", "true").limit(MAX_USERS);
     if (nErr) {
       console.error("nudge users", nErr);
       return reply(500, { code: "upstream_error" });
     }
     const out = { players: nudgees?.length ?? 0, sent: 0, skipped: 0, failed: 0 };
-    for (const { id, name } of nudgees ?? []) {
+    for (const { id, name, settings } of nudgees ?? []) {
       try {
         const nudgeRun = `nudge-${today}`; // one per player per day
         const { data: done } = await admin.from("agent_actions").select("id").eq("user_id", id).eq("run_id", nudgeRun).limit(1);
@@ -81,7 +82,7 @@ Deno.serve(async (req) => {
           out.skipped++;
           continue;
         }
-        const text = await nudgeText({ nick: state.profile?.nick || name || "", streak: alert.streak, habit: alert.habit.name });
+        const text = await nudgeText({ nick: state.profile?.nick || name || "", streak: alert.streak, habit: alert.habit.name }, settings?.prefs?.lang === "en");
         if (!text) {
           out.skipped++;
           continue;
@@ -113,14 +114,14 @@ Deno.serve(async (req) => {
     return reply(200, out);
   }
 
-  const { data: users, error } = await admin.from("profiles").select("id").eq("settings->>agentWeekly", "true").limit(MAX_USERS);
+  const { data: users, error } = await admin.from("profiles").select("id, settings").eq("settings->>agentWeekly", "true").limit(MAX_USERS);
   if (error) {
     console.error("weekly users", error);
     return reply(500, { code: "upstream_error" });
   }
 
   const summary = { players: users?.length ?? 0, planned: 0, logged: 0, skipped: 0, failed: 0, measured: 0 };
-  for (const { id } of users ?? []) {
+  for (const { id, settings } of users ?? []) {
     try {
       // one run per player per day
       const { data: done } = await admin.from("agent_actions").select("id").eq("user_id", id).eq("run_id", runId).limit(1);
@@ -158,6 +159,7 @@ Deno.serve(async (req) => {
         context: activeContext(notes ?? [], today),
         feedback: summarizeFeedback(feedback ?? []),
         pastActions: actions ?? [],
+        lang: settings?.prefs?.lang === "en" ? "en" : "ro",
       });
       summary.planned++;
       if (!plan.actions.length) continue;

@@ -5,6 +5,7 @@ import { aiErrorCopy, habitInsights, weeklyReflection } from "../lib/ai.js";
 import { coachData, hasHistory } from "../lib/coach.js";
 import { getClient } from "../lib/supabase.js";
 import { isoWeek, load as loadReflections, save as saveReflection } from "../lib/reflections.js";
+import { tr } from "../lib/i18n.js";
 
 /**
  * One AI call per click, result kept until the next click. Not run on mount: every call
@@ -36,7 +37,7 @@ export function Shell({ state, run, label, children, always, input, hint, idle, 
       <div className={`flex flex-wrap items-end gap-3 ${stack ? "flex-col items-stretch sm:items-start" : ""}`}>
         {input && <div className={`min-w-0 ${stack ? "w-full" : "flex-1 basis-60"}`}>{input}</div>}
         <Button variant="gold" icon={state.status === "done" ? RefreshCw : Sparkles} busy={busy} disabled={busy} onClick={run} className="max-sm:w-full sm:shrink-0">
-          {busy ? "Se gândește…" : state.status === "done" ? "Din nou" : label}
+          {busy ? tr("Se gândește…") : state.status === "done" ? tr("Din nou") : label}
         </Button>
       </div>
       {hint && (
@@ -53,7 +54,7 @@ export function Shell({ state, run, label, children, always, input, hint, idle, 
         )}
         {busy && (
           <div className="mt-4 space-y-2">
-            <p className="text-xs font-extrabold text-violet-hi">Molt se gândește…</p>
+            <p className="text-xs font-extrabold text-violet-hi">{tr("Molt se gândește…")}</p>
             <Skeleton className="h-12" />
             <Skeleton className="h-12" />
           </div>
@@ -73,13 +74,9 @@ export function NeedHistory({ data, onNotes }) {
     <div className="inset flex items-start gap-3 p-4">
       <Clock size={18} className="mt-0.5 shrink-0 text-violet-hi" aria-hidden="true" />
       <div className="text-sm font-semibold text-body">
-        <p>
-          Mai are nevoie de câteva zile de bifări: caută tipare abia când un obicei are cel puțin 7 zile programate în ultimele 4 săptămâni (acum cel mai lung are {best}).
-        </p>
+        <p>{tr("Mai are nevoie de câteva zile de bifări: caută tipare abia când un obicei are cel puțin 7 zile programate în ultimele 4 săptămâni (acum cel mai lung are {best}).", { best })}</p>
         {onNotes && (
-          <button type="button" onClick={onNotes} className="focus-ring mt-1.5 text-violet-hi underline">
-            Până atunci, spune-i lui Molt ce se întâmplă
-          </button>
+          <button type="button" onClick={onNotes} className="focus-ring mt-1.5 text-violet-hi underline">{tr("Până atunci, spune-i lui Molt ce se întâmplă")}</button>
         )}
       </div>
     </div>
@@ -93,7 +90,7 @@ export function InsightsPanel({ state, today, ai, onNotes }) {
   if (!ai?.server) return null;
   if (!hasHistory(data)) return <NeedHistory data={data} onNotes={onNotes} />;
   return (
-    <Shell state={s} run={run} label="Ce observi?" idle="Aici apar 3 tipare găsite în bifările tale.">
+    <Shell state={s} run={run} label={tr("Ce observi?")} idle={tr("Aici apar 3 tipare găsite în bifările tale.")}>
       <ul className="grid gap-3 md:grid-cols-3">
         {s.data?.map((i) => (
           <li key={i.title} className="inset p-3">
@@ -129,7 +126,7 @@ export function ReflectionPanel({ state, today, ai, onNotes }) {
   if (!ai?.server) return null;
   if (!hasHistory(data)) return <NeedHistory data={data} onNotes={onNotes} />;
   const go = () => {
-    if (!answer.trim()) return setHint("Scrie mai întâi câteva cuvinte despre săptămâna ta.");
+    if (!answer.trim()) return setHint(tr("Scrie mai întâi câteva cuvinte despre săptămâna ta."));
     setHint("");
     run();
   };
@@ -137,18 +134,18 @@ export function ReflectionPanel({ state, today, ai, onNotes }) {
     <Shell
       state={s}
       run={go}
-      label="Reflectează"
+      label={tr("Reflectează")}
       hint={hint}
-      idle="Aici apar observația lui Molt și un singur pas pentru săptămâna viitoare."
+      idle={tr("Aici apar observația lui Molt și un singur pas pentru săptămâna viitoare.")}
       stack
       always={history.length > 0 && <ReflectionHistory items={history} />}
-      input={<textarea className="field min-h-20 w-full resize-y" value={answer} onChange={(e) => setAnswer(e.target.value)} placeholder="Ce ți-a făcut săptămâna mai ușoară sau mai grea?" aria-label="Răspuns pentru reflecție" />}
+      input={<textarea className="field min-h-20 w-full resize-y" value={answer} onChange={(e) => setAnswer(e.target.value)} placeholder={tr("Ce ți-a făcut săptămâna mai ușoară sau mai grea?")} aria-label={tr("Răspuns pentru reflecție")} />}
     >
       {s.data && (
         <div className="inset p-3 text-sm font-semibold text-body">
-          <p><strong className="text-ink">Observație:</strong> {s.data.observation}</p>
-          <p className="mt-2"><strong className="text-ink">Următorul pas:</strong> {s.data.nextStep}</p>
-          {s.data.dataUsed.length > 0 && <p className="mt-2 text-xs font-bold text-dim">Date folosite: {s.data.dataUsed.join(" · ")}.</p>}
+          <p><strong className="text-ink">{tr("Observație:")}</strong> {s.data.observation}</p>
+          <p className="mt-2"><strong className="text-ink">{tr("Următorul pas:")}</strong> {s.data.nextStep}</p>
+          {s.data.dataUsed.length > 0 && <p className="mt-2 text-xs font-bold text-dim">{tr("Date folosite: {join}.", { join: s.data.dataUsed.join(" · ") })}</p>}
         </div>
       )}
     </Shell>
@@ -158,13 +155,13 @@ export function ReflectionPanel({ state, today, ai, onNotes }) {
 function ReflectionHistory({ items }) {
   return (
     <details className="mt-3">
-      <summary className="cursor-pointer text-xs font-extrabold text-dim hover:text-ink">Reflecții anterioare ({items.length})</summary>
+      <summary className="cursor-pointer text-xs font-extrabold text-dim hover:text-ink">{tr("Reflecții anterioare ({length})", { length: items.length })}</summary>
       <ul className="mt-2 space-y-2">
         {items.map((r) => (
           <li key={r.id} className="inset p-3 text-sm font-semibold text-body">
             <p className="text-xs font-bold text-dim">{r.week}</p>
-            <p className="mt-1"><strong className="text-ink">Observație:</strong> {r.observation}</p>
-            <p className="mt-1"><strong className="text-ink">Următorul pas:</strong> {r.nextStep}</p>
+            <p className="mt-1"><strong className="text-ink">{tr("Observație:")}</strong> {r.observation}</p>
+            <p className="mt-1"><strong className="text-ink">{tr("Următorul pas:")}</strong> {r.nextStep}</p>
           </li>
         ))}
       </ul>
@@ -172,7 +169,7 @@ function ReflectionHistory({ items }) {
   );
 }
 
-const STRENGTH = { strong: "dovezi solide", moderate: "dovezi moderate", theory: "model teoretic" };
+const STRENGTH = { strong: tr("dovezi solide"), moderate: tr("dovezi moderate"), theory: tr("model teoretic") };
 /** "Sheeran, Listrom & Gollwitzer (2025). Title…" -> "Sheeran, Listrom & Gollwitzer 2025" */
 const shortCite = (cite) => {
   const m = /^(.*?)\s*\((\d{4})\)/.exec(cite || "");
@@ -180,7 +177,7 @@ const shortCite = (cite) => {
 };
 
 export function Sources({ sources }) {
-  if (!sources.length) return <p className="mt-1 text-[11px] font-bold text-faint">Fără sursă din cercetare: propunerea vine doar din datele tale.</p>;
+  if (!sources.length) return <p className="mt-1 text-[11px] font-bold text-faint">{tr("Fără sursă din cercetare: propunerea vine doar din datele tale.")}</p>;
   return (
     <details className="mt-1.5">
       <summary className="cursor-pointer text-[11px] font-extrabold text-dim hover:text-ink">
@@ -191,7 +188,7 @@ export function Sources({ sources }) {
         {sources.map((s) => (
           <li key={s.id} className="text-xs font-semibold text-body">
             <p>{s.cite}</p>
-            <p className="mt-0.5 text-dim">Limită: {s.limits}</p>
+            <p className="mt-0.5 text-dim">{tr("Limită: {limits}", { limits: s.limits })}</p>
             <a className="text-sky underline" href={`https://doi.org/${s.doi}`} target="_blank" rel="noreferrer">
               doi.org/{s.doi}
             </a>

@@ -5,6 +5,7 @@ import { DateSelect, Select, TimeSelect } from "./Select.jsx";
 import { DayPicker } from "./HabitEditor.jsx";
 import { fmtDuration } from "../lib/dates.js";
 import { makeRepeat } from "../lib/todos.js";
+import { tr } from "../lib/i18n.js";
 
 const DURATIONS = [15, 30, 45, 60, 90, 120, 180];
 
@@ -33,20 +34,14 @@ export function TodoEditor({ todo, state, today, onSave, onDelete, onClose }) {
       onClose={onClose}
       tone="violet"
       icon={ListTodo}
-      title={todo.isNew ? "To-do nou" : "Editează to-do"}
+      title={todo.isNew ? tr("To-do nou") : tr("Editează to-do")}
       footer={
         <>
           {!todo.isNew && (
-            <Button variant="ghost" icon={Trash2} className="mr-auto" onClick={() => onDelete(todo.id)}>
-              Șterge
-            </Button>
+            <Button variant="ghost" icon={Trash2} className="mr-auto" onClick={() => onDelete(todo.id)}>{tr("Șterge")}</Button>
           )}
-          <Button variant="ghost" onClick={onClose}>
-            Renunță
-          </Button>
-          <Button id="todo-save" icon={Check} onClick={save} disabled={!canSave}>
-            Salvează
-          </Button>
+          <Button variant="ghost" onClick={onClose}>{tr("Renunță")}</Button>
+          <Button id="todo-save" icon={Check} onClick={save} disabled={!canSave}>{tr("Salvează")}</Button>
         </>
       }
     >
@@ -57,24 +52,22 @@ export function TodoEditor({ todo, state, today, onSave, onDelete, onClose }) {
           save();
         }}
       >
-        <Field label="Ce ai de făcut" htmlFor="todo-title">
-          <input id="todo-title" className="field" value={draft.title} maxLength={80} placeholder="ex.: Trimite tema la fizică" onChange={(e) => set("title")(e.target.value)} />
+        <Field label={tr("Ce ai de făcut")} htmlFor="todo-title">
+          <input id="todo-title" className="field" value={draft.title} maxLength={80} placeholder={tr("ex.: Trimite tema la fizică")} onChange={(e) => set("title")(e.target.value)} />
         </Field>
         <div className="grid gap-4 sm:grid-cols-3">
-          <Field label="Zi" htmlFor="todo-date">
+          <Field label={tr("Zi")} htmlFor="todo-date">
             <DateSelect id="todo-date" value={draft.date || null} onChange={(v) => setDraft((x) => ({ ...x, date: v, time: v ? x.time : null }))} />
           </Field>
-          <Field label="Ora" htmlFor="todo-time" hint="Opțional">
+          <Field label={tr("Ora")} htmlFor="todo-time" hint={tr("Opțional")}>
             <TimeSelect id="todo-time" value={draft.time || null} disabled={!draft.date} onChange={set("time")} />
           </Field>
-          <Field label="Durată" htmlFor="todo-dur">
+          <Field label={tr("Durată")} htmlFor="todo-dur">
             <Select id="todo-dur" value={draft.dur || 30} onChange={set("dur")} options={DURATIONS.map((m) => ({ value: m, label: fmtDuration(m) }))} />
           </Field>
         </div>
         <div className="flex flex-wrap gap-2">
-          <button type="button" className="rounded-full px-3 py-1 text-xs font-extrabold text-dim ring-1 ring-edge hover:text-ink" onClick={() => set("date")(today)}>
-            Azi
-          </button>
+          <button type="button" className="rounded-full px-3 py-1 text-xs font-extrabold text-dim ring-1 ring-edge hover:text-ink" onClick={() => set("date")(today)}>{tr("Azi")}</button>
           <button
             type="button"
             className="rounded-full px-3 py-1 text-xs font-extrabold text-dim ring-1 ring-edge hover:text-ink"
@@ -82,12 +75,10 @@ export function TodoEditor({ todo, state, today, onSave, onDelete, onClose }) {
               setDraft((x) => ({ ...x, date: null, time: null }));
               setKind("none");
             }}
-          >
-            Fără dată
-          </button>
+          >{tr("Fără dată")}</button>
         </div>
         <div className="space-y-3 rounded-xl bg-well p-3 ring-1 ring-edge">
-          <Field label="Se repetă" htmlFor="todo-repeat">
+          <Field label={tr("Se repetă")} htmlFor="todo-repeat">
             <Select
               id="todo-repeat"
               value={kind}
@@ -96,35 +87,34 @@ export function TodoEditor({ todo, state, today, onSave, onDelete, onClose }) {
                 if (v !== "none" && !draft.date) set("date")(today); // a series needs a first day
               }}
               options={[
-                { value: "none", label: "Nu se repetă" },
-                { value: "daily", label: "În fiecare zi" },
-                { value: "days", label: "În anumite zile ale săptămânii" },
+                { value: "none", label: tr("Nu se repetă") },
+                { value: "daily", label: tr("În fiecare zi") },
+                { value: "days", label: tr("În anumite zile ale săptămânii") },
               ]}
             />
           </Field>
           {kind === "days" && (
             <div>
-              <span className="mb-1.5 block text-xs font-extrabold uppercase tracking-wider text-dim">În zilele</span>
+              <span className="mb-1.5 block text-xs font-extrabold uppercase tracking-wider text-dim">{tr("În zilele")}</span>
               <DayPicker value={picked} onChange={setPicked} idPrefix="todo-day" />
             </div>
           )}
           {repeating && (
-            <Field label="Se oprește" htmlFor="todo-until" hint={until ? undefined : "Fără sfârșit: se repetă până o ștergi."}>
-              <DateSelect id="todo-until" value={until} onChange={setUntil} placeholder="Niciodată" />
+            <Field label={tr("Se oprește")} htmlFor="todo-until" hint={until ? undefined : tr("Fără sfârșit: se repetă până o ștergi.")}>
+              <DateSelect id="todo-until" value={until} onChange={setUntil} placeholder={tr("Niciodată")} />
             </Field>
           )}
           {repeating && (
             <p className="flex items-center gap-1.5 text-xs font-semibold text-dim">
-              <Repeat size={13} aria-hidden="true" /> Fiecare zi se bifează separat: bifa de azi nu o atinge pe cea de mâine.
-            </p>
+              <Repeat size={13} aria-hidden="true" />{" "}{tr("Fiecare zi se bifează separat: bifa de azi nu o atinge pe cea de mâine.")}</p>
           )}
         </div>
-        <Field label="Legat de un obicei" htmlFor="todo-habit" hint="Pregătirile pentru un obicei apar lângă el în calendar.">
+        <Field label={tr("Legat de un obicei")} htmlFor="todo-habit" hint={tr("Pregătirile pentru un obicei apar lângă el în calendar.")}>
           <Select
             id="todo-habit"
             value={draft.habitId || null}
             onChange={set("habitId")}
-            options={[{ value: null, label: "Niciunul" }, ...habits.map((h) => ({ value: h.id, label: h.name }))]}
+            options={[{ value: null, label: tr("Niciunul") }, ...habits.map((h) => ({ value: h.id, label: h.name }))]}
           />
         </Field>
         <button type="submit" className="hidden" aria-hidden="true" tabIndex={-1} />
