@@ -5,6 +5,7 @@ import { Ban, CopyPlus, Link2, Plus, RotateCcw, Target, Trash2, X } from "lucide
 import { Button, CheckButton, Panel, SectionTitle, Tabs } from "./ui.jsx";
 import { MAX_LINKS, childrenOf, liveLinks, normalizeGoal, progressOf, suggestDone, topLevel } from "../lib/milestones.js";
 import { MAX_PER_PERIOD, MAX_TEXT, carryable, goalsFor, periodKey, periodLabel } from "../lib/goals.js";
+import { tr } from "../lib/i18n.js";
 
 const chip = "inline-flex max-w-full items-center gap-1 rounded-lg px-2 py-0.5 text-xs font-bold ring-1";
 
@@ -20,7 +21,7 @@ function GoalRow({ g, state, goals, child = false }) {
   const full = linked.todos.length + linked.habits.length >= MAX_LINKS;
   const openTodos = (state.todos || []).filter((t) => !t.done && !t.repeat).slice(0, 12);
   const habits = (state.habits || []).filter((h) => !h.archivedAt).slice(0, 12);
-  const meta = [g.due && `până la ${g.due}`, child && g.criteria, dropped && "renunțat"].filter(Boolean).join(" · ");
+  const meta = [g.due && tr("până la {due}", { due: g.due }), child && g.criteria, dropped && tr("renunțat")].filter(Boolean).join(" · ");
   const chipBtn = ({ field, id, label, on }) => (
     <button
       key={id}
@@ -37,7 +38,7 @@ function GoalRow({ g, state, goals, child = false }) {
   return (
     <div className={`rounded-xl bg-well px-2.5 ${child ? "py-1.5" : "py-2"} ring-1 ring-edge`}>
       <div className="flex items-center gap-2.5">
-        <CheckButton size="sm" checked={g.done} onClick={() => goals.toggle(g.id)} label={g.done ? `Debifează: ${g.text}` : `Bifează: ${g.text}`} />
+        <CheckButton size="sm" checked={g.done} onClick={() => goals.toggle(g.id)} label={g.done ? tr("Debifează: {text}", { text: g.text }) : tr("Bifează: {text}", { text: g.text })} />
         <span className={`min-w-0 flex-1 text-sm font-bold ${g.done || dropped ? "text-faint line-through" : "text-ink"}`}>
           {g.text}
           {meta && <span className="block text-xs font-semibold text-dim">{meta}</span>}
@@ -48,17 +49,17 @@ function GoalRow({ g, state, goals, child = false }) {
           onClick={() => setPick((v) => !v)}
           aria-expanded={pick}
           className="focus-ring grid h-7 w-7 shrink-0 place-items-center rounded-lg text-faint hover:bg-panel-hi hover:text-ink"
-          aria-label={`Leagă sarcini sau obiceiuri de: ${g.text}`}
+          aria-label={tr("Leagă sarcini sau obiceiuri de: {text}", { text: g.text })}
         >
           <Link2 size={14} aria-hidden="true" />
         </button>
         {dropped ? (
-          <button type="button" onClick={() => goals.status(g.id, "open")} className="focus-ring grid h-7 w-7 shrink-0 place-items-center rounded-lg text-faint hover:bg-panel-hi hover:text-ink" aria-label={`Redeschide: ${g.text}`}>
+          <button type="button" onClick={() => goals.status(g.id, "open")} className="focus-ring grid h-7 w-7 shrink-0 place-items-center rounded-lg text-faint hover:bg-panel-hi hover:text-ink" aria-label={tr("Redeschide: {text}", { text: g.text })}>
             <RotateCcw size={14} aria-hidden="true" />
           </button>
         ) : (
           !g.done && (
-            <button type="button" onClick={() => goals.status(g.id, "dropped")} className="focus-ring grid h-7 w-7 shrink-0 place-items-center rounded-lg text-faint hover:bg-panel-hi hover:text-ink" aria-label={`Renunță la: ${g.text}`}>
+            <button type="button" onClick={() => goals.status(g.id, "dropped")} className="focus-ring grid h-7 w-7 shrink-0 place-items-center rounded-lg text-faint hover:bg-panel-hi hover:text-ink" aria-label={tr("Renunță la: {text}", { text: g.text })}>
               <Ban size={14} aria-hidden="true" />
             </button>
           )
@@ -67,7 +68,7 @@ function GoalRow({ g, state, goals, child = false }) {
           type="button"
           onClick={() => goals.remove(g.id)}
           className="focus-ring grid h-7 w-7 shrink-0 place-items-center rounded-lg text-faint hover:bg-panel-hi hover:text-rose"
-          aria-label={`Șterge scopul: ${g.text}`}
+          aria-label={tr("Șterge scopul: {text}", { text: g.text })}
         >
           <Trash2 size={14} aria-hidden="true" />
         </button>
@@ -77,15 +78,13 @@ function GoalRow({ g, state, goals, child = false }) {
           {linked.todos.map((t) => chipBtn({ field: "todoIds", id: t.id, label: t.title, on: true }))}
           {linked.habits.map((h) => chipBtn({ field: "habitIds", id: h.id, label: h.name, on: true }))}
           {suggest && (
-            <button type="button" onClick={() => goals.status(g.id, "done")} className={`${chip} focus-ring text-mint ring-edge`}>
-              Toate sarcinile sunt gata — marchează scopul ca făcut
-            </button>
+            <button type="button" onClick={() => goals.status(g.id, "done")} className={`${chip} focus-ring text-mint ring-edge`}>{tr("Toate sarcinile sunt gata — marchează scopul ca făcut")}</button>
           )}
         </div>
       )}
       {pick && (
         <div className="mt-1.5 space-y-1.5 pl-8">
-          {openTodos.length + habits.length === 0 && <p className="text-xs font-semibold text-dim">Nu ai sarcini deschise sau obiceiuri de legat.</p>}
+          {openTodos.length + habits.length === 0 && <p className="text-xs font-semibold text-dim">{tr("Nu ai sarcini deschise sau obiceiuri de legat.")}</p>}
           {openTodos.length > 0 && (
             <div className="flex flex-wrap gap-1.5">
               {openTodos.map((t) => chipBtn({ field: "todoIds", id: t.id, label: t.title, on: linked.todos.includes(t) }))}
@@ -96,7 +95,7 @@ function GoalRow({ g, state, goals, child = false }) {
               {habits.map((h) => chipBtn({ field: "habitIds", id: h.id, label: h.name, on: linked.habits.includes(h) }))}
             </div>
           )}
-          <p className="text-xs font-semibold text-dim">Cel mult {MAX_LINKS} legături.</p>
+          <p className="text-xs font-semibold text-dim">{tr("Cel mult {MAX_LINKS} legături.", { MAX_LINKS })}</p>
         </div>
       )}
     </div>
@@ -112,7 +111,7 @@ export function GoalsCard({ state, today, goals }) {
   const done = list.filter((g) => g.done);
   const carry = carryable(state.goals, period, key);
   const full = list.length >= MAX_PER_PERIOD;
-  const noun = period === "week" ? "săptămâna" : "luna";
+  const noun = period === "week" ? tr("săptămâna") : tr("luna");
 
   const add = (e) => {
     e.preventDefault();
@@ -124,17 +123,15 @@ export function GoalsCard({ state, today, goals }) {
 
   return (
     <Panel className="p-4 sm:p-5">
-      <SectionTitle icon={Target} tone="sky" sub={`${periodLabel(period, key)} · ${done.length} din ${list.length} gata`}>
-        Scopuri
-      </SectionTitle>
+      <SectionTitle icon={Target} tone="sky" sub={tr("{periodLabel} · {length} din {length2} gata", { periodLabel: periodLabel(period, key), length: done.length, length2: list.length })}>{tr("Scopuri")}</SectionTitle>
       <Tabs
         className="mb-3"
         size="sm"
         value={period}
         onChange={setPeriod}
         items={[
-          { value: "week", label: "Săptămâna asta" },
-          { value: "month", label: "Luna asta" },
+          { value: "week", label: tr("Săptămâna asta") },
+          { value: "month", label: tr("Luna asta") },
         ]}
       />
       <form className="mb-3 flex gap-2" onSubmit={add}>
@@ -144,13 +141,13 @@ export function GoalsCard({ state, today, goals }) {
           value={text}
           maxLength={MAX_TEXT}
           disabled={full}
-          placeholder={full ? `Maximum ${MAX_PER_PERIOD} scopuri pentru ${noun}` : `Ce vrei să realizezi ${period === "week" ? "săptămâna asta" : "luna asta"}?`}
+          placeholder={full ? tr("Maximum {MAX_PER_PERIOD} scopuri pentru {noun}", { MAX_PER_PERIOD, noun }) : tr("Ce vrei să realizezi {v}?", { v: period === "week" ? tr("săptămâna asta") : tr("luna asta") })}
           onChange={(e) => setText(e.target.value)}
-          aria-label={`Scop nou pentru ${noun}`}
+          aria-label={tr("Scop nou pentru {noun}", { noun })}
         />
-        <Button type="submit" variant="mint" icon={Plus} disabled={!text.trim() || full} aria-label="Adaugă scop" />
+        <Button type="submit" variant="mint" icon={Plus} disabled={!text.trim() || full} aria-label={tr("Adaugă scop")} />
       </form>
-      {list.length === 0 && <p className="py-3 text-center text-sm font-semibold text-dim">Niciun scop scris pentru {noun}. Alege 2–3 lucruri care contează.</p>}
+      {list.length === 0 && <p className="py-3 text-center text-sm font-semibold text-dim">{tr("Niciun scop scris pentru {noun}. Alege 2–3 lucruri care contează.", { noun })}</p>}
       <ul className="space-y-1.5">
         {topLevel([...open, ...done], list).map((g) => {
           const kids = childrenOf(list, g.id);
@@ -171,9 +168,7 @@ export function GoalsCard({ state, today, goals }) {
         })}
       </ul>
       {carry.length > 0 && !full && (
-        <Button variant="ghost" size="sm" icon={CopyPlus} className="mt-3" onClick={() => goals.carry(period, key, carry.slice(0, MAX_PER_PERIOD - list.length))}>
-          Reia {carry.length === 1 ? "scopul nefăcut" : `cele ${carry.length} scopuri nefăcute`} din {period === "week" ? "săptămâna trecută" : "luna trecută"}
-        </Button>
+        <Button variant="ghost" size="sm" icon={CopyPlus} className="mt-3" onClick={() => goals.carry(period, key, carry.slice(0, MAX_PER_PERIOD - list.length))}>{tr("Reia")}{" "}{carry.length === 1 ? tr("scopul nefăcut") : tr("cele {length} scopuri nefăcute", { length: carry.length })}{" "}{tr("din {v}", { v: period === "week" ? tr("săptămâna trecută") : tr("luna trecută") })}</Button>
       )}
     </Panel>
   );

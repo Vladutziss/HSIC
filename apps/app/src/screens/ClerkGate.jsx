@@ -1,6 +1,7 @@
 // Sign-in gate for the web build: Clerk handles email, Google and the account UI.
 // Loaded lazily from Auth.jsx, so the artifact build (no backend) never bundles Clerk.
 
+import LanguageSwitch from "../components/LanguageSwitch.jsx";
 import React, { useEffect, useMemo, useState } from "react";
 import { ClerkProvider, SignIn, SignUp, useAuth, useClerk, useUser } from "@clerk/clerk-react";
 import { Leaf, ShieldCheck } from "lucide-react";
@@ -8,6 +9,7 @@ import Splash from "./Splash.jsx";
 import { Button } from "../components/ui.jsx";
 import { useTheme } from "../lib/themes.js";
 import { LEGAL_VERSION, LegalChecks, clearTicked, legalOk, rememberTicked, wasTicked } from "../components/LegalChecks.jsx";
+import { tr, legalUrl } from "../lib/i18n.js";
 
 // Clerk wants real colours, not CSS variables, so the card is painted from the theme that is active right now
 // (read off the page) and rebuilt when the theme changes: a light theme gets a light card, a dark one a dark card.
@@ -74,9 +76,9 @@ function Consent({ children }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ticked]);
 
-  if (!isLoaded || !user) return <Splash text="Se încarcă aventura…" />;
+  if (!isLoaded || !user) return <Splash text={tr("Se încarcă aventura…")} />;
   if (accepted(user)) return children;
-  if (ticked && !failed) return <Splash text="Se încarcă aventura…" />;
+  if (ticked && !failed) return <Splash text={tr("Se încarcă aventura…")} />;
 
   return (
     <div className="app-bg grid min-h-screen place-items-center p-4">
@@ -86,24 +88,18 @@ function Consent({ children }) {
             <ShieldCheck size={20} aria-hidden="true" />
           </span>
           <div>
-            <h1 className="font-pixel text-xl leading-tight text-ink">Un ultim pas</h1>
-            <p className="text-xs font-semibold text-dim">Înainte să intri în Molted</p>
+            <h1 className="font-pixel text-xl leading-tight text-ink">{tr("Un ultim pas")}</h1>
+            <p className="text-xs font-semibold text-dim">{tr("Înainte să intri în Molted")}</p>
           </div>
         </div>
-        <p className="text-sm text-body">Ca să folosești aplicația, confirmă mai jos. Documentele se deschid într-o pagină nouă, ca să le poți citi pe îndelete.</p>
+        <p className="text-sm text-body">{tr("Ca să folosești aplicația, confirmă mai jos. Documentele se deschid într-o pagină nouă, ca să le poți citi pe îndelete.")}</p>
         <LegalChecks value={checks} onChange={setChecks} />
         {failed && (
-          <p role="alert" className="rounded-xl bg-rose/10 p-3 text-sm font-semibold text-rose ring-1 ring-rose/30">
-            Nu am putut salva confirmarea. Verifică conexiunea și încearcă din nou.
-          </p>
+          <p role="alert" className="rounded-xl bg-rose/10 p-3 text-sm font-semibold text-rose ring-1 ring-rose/30">{tr("Nu am putut salva confirmarea. Verifică conexiunea și încearcă din nou.")}</p>
         )}
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <button type="button" className="focus-ring rounded-lg px-1 text-xs font-bold text-dim underline hover:text-ink" onClick={() => signOut()}>
-            Ieși din cont
-          </button>
-          <Button id="legal-continue" busy={busy} disabled={!legalOk(checks)} onClick={record}>
-            Continuă
-          </Button>
+          <button type="button" className="focus-ring rounded-lg px-1 text-xs font-bold text-dim underline hover:text-ink" onClick={() => signOut()}>{tr("Ieși din cont")}</button>
+          <Button id="legal-continue" busy={busy} disabled={!legalOk(checks)} onClick={record}>{tr("Continuă")}</Button>
         </div>
       </div>
     </div>
@@ -114,18 +110,17 @@ function Gate({ children }) {
   const [mode, setMode] = useState("in"); // in | up
   const [signupChecks, setSignupChecks] = useState({ terms: false, age: false });
   const { isLoaded, isSignedIn, userId } = useAuth();
-  if (!isLoaded) return <Splash text="Se încarcă aventura…" />;
+  if (!isLoaded) return <Splash text={tr("Se încarcă aventura…")} />;
   if (!isSignedIn) {
     return (
       <div className="app-bg grid min-h-screen place-items-center p-4">
         <div className="flex w-full max-w-sm flex-col items-center gap-5">
+          <LanguageSwitch />
           <div className="flex items-center gap-3">
             <Leaf className="text-gold" size={28} aria-hidden="true" />
             <div className="font-pixel text-2xl leading-none text-ink">Molted</div>
           </div>
-          <p className="text-center text-sm text-dim">
-            Molted este o aplicație de self-improvement gamificată: îți urmărești obiceiurile zilnice, personajul tău evoluează odată cu progresul, poți intra în grupuri cu prietenii și primești rapoarte AI.
-          </p>
+          <p className="text-center text-sm text-dim">{tr("Molted este o aplicație de self-improvement gamificată: îți urmărești obiceiurile zilnice, personajul tău evoluează odată cu progresul, poți intra în grupuri cu prietenii și primești rapoarte AI.")}</p>
           {mode === "in" ? (
             <SignIn key="in" routing="hash" />
           ) : (
@@ -143,7 +138,7 @@ function Gate({ children }) {
               {legalOk(signupChecks) ? (
                 <SignUp key="up" routing="hash" />
               ) : (
-                <p className="w-full rounded-xl border border-dashed border-edge-hi p-4 text-center text-sm font-semibold text-dim">Bifează căsuțele de mai sus ca să-ți poți crea contul.</p>
+                <p className="w-full rounded-xl border border-dashed border-edge-hi p-4 text-center text-sm font-semibold text-dim">{tr("Bifează căsuțele de mai sus ca să-ți poți crea contul.")}</p>
               )}
             </>
           )}
@@ -151,15 +146,11 @@ function Gate({ children }) {
               if (mode === "up") clearTicked(); // going back to sign-in: the ticks of the sign-up form no longer count
               setMode(mode === "in" ? "up" : "in");
             }}>
-            {mode === "in" ? "Nu ai cont? Creează unul" : "Ai deja cont? Intră în cont"}
+            {mode === "in" ? tr("Nu ai cont? Creează unul") : tr("Ai deja cont? Intră în cont")}
           </button>
           <div className="flex gap-4 text-xs font-bold text-faint">
-            <a className="focus-ring underline" href="https://molted.eu/privacy.html">
-              Confidențialitate
-            </a>
-            <a className="focus-ring underline" href="https://molted.eu/terms.html">
-              Termeni
-            </a>
+            <a className="focus-ring underline" href={legalUrl("privacy")}>{tr("Confidențialitate")}</a>
+            <a className="focus-ring underline" href={legalUrl("terms")}>{tr("Termeni")}</a>
           </div>
         </div>
       </div>

@@ -7,6 +7,7 @@ import { addDays, dayKey, fmt12, mondayOf, relDay } from "../lib/dates.js";
 import { fmtSpan } from "../lib/focus.js";
 import { focusSessionXp, focusXpByDay } from "../lib/engine.js";
 import { c } from "../lib/themes.js";
+import { tr } from "../lib/i18n.js";
 
 const dayOf = (ms) => dayKey(new Date(ms));
 const timeOf = (ms) => {
@@ -42,33 +43,29 @@ export function FocusStats({ sessions = [], today, onFocus }) {
       <SectionTitle
         icon={Timer}
         tone="violet"
-        sub="Timpul în care te-ai concentrat, fără pauze"
+        sub={tr("Timpul în care te-ai concentrat, fără pauze")}
         action={
           <Button variant="ghost" size="sm" icon={Play} onClick={onFocus}>
             Focus
           </Button>
         }
-      >
-        Sesiuni Focus
-      </SectionTitle>
+      >{tr("Sesiuni Focus")}</SectionTitle>
       {sessions.length === 0 ? (
-        <Empty icon={Timer} title="Nicio sesiune încă">
-          Pornește Focus din Acasă sau din meniu. Fiecare sesiune de cel puțin un minut apare aici.
-        </Empty>
+        <Empty icon={Timer} title={tr("Nicio sesiune încă")}>{tr("Pornește Focus din Acasă sau din meniu. Fiecare sesiune de cel puțin un minut apare aici.")}</Empty>
       ) : (
         <div className="space-y-5">
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-            <Stat icon={Timer} tone="violet" label="Total concentrat" value={fmtSpan(stats.total)} sub={`${stats.count} ${stats.count === 1 ? "sesiune" : "sesiuni"}`} />
-            <Stat icon={Timer} tone="gold" label="Săptămâna asta" value={fmtSpan(stats.week)} />
-            <Stat icon={Timer} tone="mint" label="Cea mai lungă" value={fmtSpan(stats.longest)} />
-            <Stat icon={Timer} tone="sky" label="Momentum din Focus" value={`+${stats.xp}`} sub="în total" />
+            <Stat icon={Timer} tone="violet" label={tr("Total concentrat")} value={fmtSpan(stats.total)} sub={`${stats.count} ${stats.count === 1 ? tr("sesiune") : tr("sesiuni")}`} />
+            <Stat icon={Timer} tone="gold" label={tr("Săptămâna asta")} value={fmtSpan(stats.week)} />
+            <Stat icon={Timer} tone="mint" label={tr("Cea mai lungă")} value={fmtSpan(stats.longest)} />
+            <Stat icon={Timer} tone="sky" label={tr("Momentum din Focus")} value={`+${stats.xp}`} sub={tr("în total")} />
           </div>
 
           <div>
-            <div className="mb-2 text-[11px] font-extrabold uppercase tracking-wider text-dim">Ultimele 14 zile</div>
-            <div className="flex h-28 items-end gap-1.5" role="img" aria-label="Minute de concentrare pe fiecare dintre ultimele 14 zile">
+            <div className="mb-2 text-[11px] font-extrabold uppercase tracking-wider text-dim">{tr("Ultimele 14 zile")}</div>
+            <div className="flex h-28 items-end gap-1.5" role="img" aria-label={tr("Minute de concentrare pe fiecare dintre ultimele 14 zile")}>
               {bars.map((b) => (
-                <div key={b.day} className="flex h-full min-w-0 flex-1 flex-col items-center justify-end gap-1" title={`${relDay(b.day, today)}: ${b.seconds ? fmtSpan(b.seconds) : "nimic"}`}>
+                <div key={b.day} className="flex h-full min-w-0 flex-1 flex-col items-center justify-end gap-1" title={`${relDay(b.day, today)}: ${b.seconds ? fmtSpan(b.seconds) : tr("nimic")}`}>
                   <div
                     className="w-full rounded-t-md"
                     style={{ height: `${Math.max(b.seconds ? 6 : 2, b.ratio * 100)}%`, background: b.seconds ? (b.day === today ? c("gold-ink") : c("violet-ink")) : c("edge") }}
@@ -91,27 +88,21 @@ export function FocusStats({ sessions = [], today, onFocus }) {
                 <div className="font-pixel tabular text-xl text-ink">{fmtSpan(s.work)}</div>
                 <div className="ml-auto flex flex-wrap items-center gap-1.5">
                   {s.pomodoro ? (
-                    <Chip tone="violet" icon={Timer}>
-                      Pomodoro {s.pomodoro.work}/{s.pomodoro.brk}
-                      {s.cycles ? ` · ${s.cycles} ${s.cycles === 1 ? "ciclu" : "cicluri"}` : ""}
+                    <Chip tone="violet" icon={Timer}>{tr("Pomodoro {work}/{brk}", { work: s.pomodoro.work, brk: s.pomodoro.brk })}{s.cycles ? ` · ${s.cycles} ${s.cycles === 1 ? "ciclu" : "cicluri"}` : ""}
                     </Chip>
                   ) : (
-                    <Chip>fără pauze</Chip>
+                    <Chip>{tr("fără pauze")}</Chip>
                   )}
-                  {focusSessionXp(s) > 0 && <Chip tone="gold">+{focusSessionXp(s)} momentum</Chip>}
+                  {focusSessionXp(s) > 0 && <Chip tone="gold">{tr("+{focusSessionXp} momentum", { focusSessionXp: focusSessionXp(s) })}</Chip>}
                   {s.breaks >= 60 && (
-                    <Chip tone="mint" icon={Coffee}>
-                      pauze {fmtSpan(s.breaks)}
-                    </Chip>
+                    <Chip tone="mint" icon={Coffee}>{tr("pauze {fmtSpan}", { fmtSpan: fmtSpan(s.breaks) })}</Chip>
                   )}
                 </div>
               </li>
             ))}
           </ul>
           {list.length > shown && (
-            <Button variant="ghost" size="sm" onClick={() => setShown((n) => n + 10)}>
-              Sesiuni mai vechi
-            </Button>
+            <Button variant="ghost" size="sm" onClick={() => setShown((n) => n + 10)}>{tr("Sesiuni mai vechi")}</Button>
           )}
         </div>
       )}

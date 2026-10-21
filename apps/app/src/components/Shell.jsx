@@ -27,17 +27,18 @@ import { fmt12, parseHM } from "../lib/dates.js";
 import { REVIVES_PER_MONTH } from "../lib/derive.js";
 import { c as tc } from "../lib/themes.js";
 import { usePref } from "../lib/prefs.js";
+import { tr } from "../lib/i18n.js";
 
 // Six places, grouped by what you do there. `also`: other views that belong to the same place
 // (Obiective is a tab of Plan). `ai`: the place where the AI features live, drawn to stand out.
 export const NAV = [
-  { id: "home", label: "Acasă", icon: House },
-  { id: "molt", label: "Molt", icon: Egg, ai: true },
-  { id: "habits", label: "Obiceiuri", icon: ScrollText },
-  { id: "plan", label: "Plan și obiective", short: "Plan", icon: CalendarDays, also: ["goals"] },
-  { id: "group", label: "Grup", icon: Users },
-  { id: "stats", label: "Statistici", icon: ChartLine },
-  { id: "settings", label: "Setări", icon: Settings },
+  { id: "home", label: tr("Acasă"), icon: House },
+  { id: "molt", label: tr("Molt"), icon: Egg, ai: true },
+  { id: "habits", label: tr("Obiceiuri"), icon: ScrollText },
+  { id: "plan", label: tr("Plan și obiective"), short: tr("Plan"), icon: CalendarDays, also: ["goals"] },
+  { id: "group", label: tr("Grup"), icon: Users },
+  { id: "stats", label: tr("Statistici"), icon: ChartLine },
+  { id: "settings", label: tr("Setări"), icon: Settings },
 ];
 const isHere = (n, view) => view === n.id || !!n.also?.includes(view);
 
@@ -49,10 +50,10 @@ const aim = (e) => {
 };
 
 export const MOOD_LABEL = {
-  sleep: "doarme",
-  joy: "se bucură",
-  happy: "e fericit",
-  idle: "e treaz",
+  sleep: tr("doarme§stare"),
+  joy: tr("se bucură"),
+  happy: tr("e fericit"),
+  idle: tr("e treaz"),
 };
 
 function Logo({ compact = false }) {
@@ -77,15 +78,15 @@ function Logo({ compact = false }) {
 function SaveIndicator({ mode, saveStatus }) {
   if (mode === "loading") return null;
   const map = {
-    cloud: { icon: Cloud, text: "Salvat în contul tău", cls: "text-mint" },
-    supabase: { icon: Cloud, text: "Salvat în contul tău, sincronizat pe toate dispozitivele", cls: "text-mint" },
-    local: { icon: HardDrive, text: "Salvat pe acest dispozitiv", cls: "text-sky" },
-    memory: { icon: CloudOff, text: "Nu se salvează: stocare indisponibilă", cls: "text-rose" },
+    cloud: { icon: Cloud, text: tr("Salvat în contul tău"), cls: "text-mint" },
+    supabase: { icon: Cloud, text: tr("Salvat în contul tău, sincronizat pe toate dispozitivele"), cls: "text-mint" },
+    local: { icon: HardDrive, text: tr("Salvat pe acest dispozitiv"), cls: "text-sky" },
+    memory: { icon: CloudOff, text: tr("Nu se salvează: stocare indisponibilă"), cls: "text-rose" },
   };
   let m = map[mode] || map.memory;
-  if (saveStatus === "saving") m = { icon: Loader2, text: "Se salvează…", cls: "text-dim anim-spin" };
-  if (saveStatus === "readonly") m = { icon: CloudOff, text: "Doar vizualizare: modificările nu se salvează", cls: "text-rose" };
-  if (saveStatus === "error") m = { icon: CloudOff, text: "Salvarea a eșuat. Reîncercăm la următoarea modificare.", cls: "text-rose" };
+  if (saveStatus === "saving") m = { icon: Loader2, text: tr("Se salvează…"), cls: "text-dim anim-spin" };
+  if (saveStatus === "readonly") m = { icon: CloudOff, text: tr("Doar vizualizare: modificările nu se salvează"), cls: "text-rose" };
+  if (saveStatus === "error") m = { icon: CloudOff, text: tr("Salvarea a eșuat. Reîncercăm la următoarea modificare."), cls: "text-rose" };
   const Icon = m.icon;
   return (
     <span title={m.text} aria-label={m.text} className="grid h-9 w-9 place-items-center">
@@ -111,14 +112,14 @@ function Hud({ d, state, setView, onReview, mode, saveStatus, now }) {
       if (reviewed) window.dispatchEvent(new Event("molted:open-review"));
     }, 60);
   };
-  const reviewText = reviewed ? "Raport gata" : left > 0 ? `Raport ${fmt12(state.settings?.reviewTime)}` : "E ora raportului";
+  const reviewText = reviewed ? tr("Raport gata") : left > 0 ? tr("Raport {fmt12}", { fmt12: fmt12(state.settings?.reviewTime) }) : tr("E ora raportului");
   return (
     <header className="sticky top-0 z-30 border-b border-edge bg-night/85 backdrop-blur" style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}>
       <div className="mx-auto flex h-16 max-w-[1240px] items-center gap-2 px-3 sm:gap-3 sm:px-4 lg:px-8">
-        <button type="button" onClick={() => setView("home")} className="focus-ring hidden rounded-lg sm:block lg:hidden" aria-label="Acasă">
+        <button type="button" onClick={() => setView("home")} className="focus-ring hidden rounded-lg sm:block lg:hidden" aria-label={tr("Acasă")}>
           <Logo compact />
         </button>
-        <button type="button" onClick={() => setView("stats")} className="focus-ring flex min-w-0 items-center gap-2.5 rounded-xl px-1 py-1 text-left" aria-label={`Momentum nivel ${level.lvl}, ${level.name}`}>
+        <button type="button" onClick={() => setView("stats")} className="focus-ring flex min-w-0 items-center gap-2.5 rounded-xl px-1 py-1 text-left" aria-label={tr("Momentum nivel {lvl}, {name}", { lvl: level.lvl, name: level.name })}>
           <LevelBadge lvl={level.lvl} size={40} />
           <div className="hidden w-48 sm:block">
             <div className="flex items-baseline justify-between gap-2 text-xs font-extrabold">
@@ -128,19 +129,19 @@ function Hud({ d, state, setView, onReview, mode, saveStatus, now }) {
                 {level.next ? ` / ${level.next.min}` : ""}
               </span>
             </div>
-            <Bar value={level.progress} className="mt-1" height={12} label="Progres spre nivelul următor" />
+            <Bar value={level.progress} className="mt-1" height={12} label={tr("Progres spre nivelul următor")} />
           </div>
         </button>
 
         <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
           <div
             className="flex items-center gap-1.5 rounded-xl bg-well px-2.5 py-1.5 ring-1 ring-edge"
-            title={`Serie de ${streak.current} ${streak.current === 1 ? "zi" : "zile"} · ${revive.left === 1 ? "1 revive rămas" : `${revive.left} revive-uri rămase`} luna aceasta`}
+            title={tr("Serie de {current} {v} · {v2} luna aceasta", { current: streak.current, v: streak.current === 1 ? tr("zi") : tr("zile"), v2: revive.left === 1 ? tr("1 revive rămas") : tr("{left} revive-uri rămase", { left: revive.left }) })}
           >
             <Flame size={18} className={streak.todayDone ? "anim-flicker text-ember" : "text-faint"} fill={streak.todayDone ? tc("ember") : "none"} aria-hidden="true" />
             <span className="font-pixel tabular text-lg leading-none text-ink">{streak.current}</span>
-            <span className="sr-only">zile la rând</span>
-            <span className="ml-1 hidden items-center gap-0.5 sm:flex" aria-label={`${revive.left} revive-uri rămase`}>
+            <span className="sr-only">{tr("zile la rând")}</span>
+            <span className="ml-1 hidden items-center gap-0.5 sm:flex" aria-label={tr("{left} revive-uri rămase", { left: revive.left })}>
               {Array.from({ length: REVIVES_PER_MONTH }, (_, i) => (
                 <FlaskConical
                   key={i}
@@ -153,7 +154,7 @@ function Hud({ d, state, setView, onReview, mode, saveStatus, now }) {
               ))}
             </span>
           </div>
-          <button type="button" onClick={() => setView("home")} className="focus-ring hidden items-center gap-2 rounded-xl bg-well px-2 py-1 ring-1 ring-edge sm:flex" title="Misiunile de azi">
+          <button type="button" onClick={() => setView("home")} className="focus-ring hidden items-center gap-2 rounded-xl bg-well px-2 py-1 ring-1 ring-edge sm:flex" title={tr("Misiunile de azi")}>
             <Ring value={scheduled.length ? doneScheduled / scheduled.length : 0} size={30} stroke={4}>
               <span className="text-[9px] font-black text-ink">{doneScheduled}</span>
             </Ring>
@@ -165,13 +166,13 @@ function Hud({ d, state, setView, onReview, mode, saveStatus, now }) {
             type="button"
             onClick={openReview}
             className="focus-ring hidden items-center gap-1.5 rounded-xl bg-well px-2.5 py-2 text-xs font-extrabold ring-1 ring-edge transition hover:bg-panel-hi md:flex"
-            title="Deschide raportul zilei"
+            title={tr("Deschide raportul zilei")}
           >
             <Clock size={14} className={reviewed ? "text-mint" : left <= 0 ? "text-gold" : "text-dim"} aria-hidden="true" />
             <span className={reviewed ? "text-mint" : left <= 0 ? "text-gold" : "text-body"}>{reviewText}</span>
           </button>
           <SaveIndicator mode={mode} saveStatus={saveStatus} />
-          <button type="button" onClick={() => setView("settings")} className="focus-ring grid h-9 w-9 place-items-center rounded-xl text-dim hover:bg-panel-hi hover:text-ink lg:hidden" aria-label="Setări">
+          <button type="button" onClick={() => setView("settings")} className="focus-ring grid h-9 w-9 place-items-center rounded-xl text-dim hover:bg-panel-hi hover:text-ink lg:hidden" aria-label={tr("Setări")}>
             <Settings size={18} aria-hidden="true" />
           </button>
         </div>
@@ -211,18 +212,18 @@ export function Shell({ view, setView, onReview, onFocus, d, state, unread, goal
           type="button"
           onClick={toggleSide}
           className="focus-ring absolute -right-3.5 top-7 z-10 grid h-7 w-7 place-items-center rounded-full border border-edge-hi bg-panel-hi text-dim shadow transition hover:text-ink"
-          aria-label={folded ? "Deschide meniul" : "Închide meniul"}
+          aria-label={folded ? tr("Deschide meniul") : tr("Închide meniul")}
           aria-expanded={!folded}
-          title={folded ? "Deschide meniul" : "Închide meniul"}
+          title={folded ? tr("Deschide meniul") : tr("Închide meniul")}
         >
           {folded ? <ChevronsRight size={14} aria-hidden="true" /> : <ChevronsLeft size={14} aria-hidden="true" />}
         </button>
         <div className={folded ? "flex justify-center" : ""}>
-          <button type="button" onClick={() => setView("home")} className="focus-ring rounded-lg text-left" aria-label="Acasă" title={folded ? "Acasă" : undefined}>
+          <button type="button" onClick={() => setView("home")} className="focus-ring rounded-lg text-left" aria-label={tr("Acasă")} title={folded ? tr("Acasă") : undefined}>
             <Logo compact={folded} />
           </button>
         </div>
-        <nav className="mt-8 flex flex-col gap-1" aria-label="Navigare">
+        <nav className="mt-8 flex flex-col gap-1" aria-label={tr("Navigare")}>
           {NAV.map((n) => {
             const Icon = n.icon;
             return (
@@ -240,11 +241,10 @@ export function Shell({ view, setView, onReview, onFocus, d, state, unread, goal
                 {!folded && <span>{n.label}</span>}
                 {n.ai && !folded && (
                   <span className="ml-auto inline-flex items-center gap-0.5 rounded-md bg-violet/30 px-1.5 py-0.5 text-[10px] font-black tracking-wider text-violet-hi">
-                    <Sparkles size={10} strokeWidth={3} aria-hidden="true" /> AI
-                  </span>
+                    <Sparkles size={10} strokeWidth={3} aria-hidden="true" />{" "}{tr("AI")}</span>
                 )}
                 {n.id === "plan" && goalsDue > 0 && (folded ? <span className="absolute right-2 top-1.5 h-2.5 w-2.5 rounded-full bg-ember" /> : <span className="ml-auto rounded-full bg-ember px-1.5 text-[11px] font-black text-night">{goalsDue}</span>)}
-                {n.id === "home" && reviewDue && (folded ? <span className="absolute right-2 top-1.5 h-2.5 w-2.5 rounded-full bg-rose" /> : <span className="ml-auto grid h-5 w-5 place-items-center rounded-full bg-rose text-on-rose" title="Raportul zilei te așteaptă" role="img" aria-label="Raportul zilei te așteaptă"><Moon size={11} strokeWidth={3} aria-hidden="true" /></span>)}
+                {n.id === "home" && reviewDue && (folded ? <span className="absolute right-2 top-1.5 h-2.5 w-2.5 rounded-full bg-rose" /> : <span className="ml-auto grid h-5 w-5 place-items-center rounded-full bg-rose text-on-rose" title={tr("Raportul zilei te așteaptă")} role="img" aria-label={tr("Raportul zilei te așteaptă")}><Moon size={11} strokeWidth={3} aria-hidden="true" /></span>)}
                 {n.id === "group" && unread > 0 && (folded ? <span className="absolute right-2 top-1.5 h-2.5 w-2.5 rounded-full bg-rose" /> : <span className="ml-auto rounded-full bg-rose px-1.5 text-[11px] font-black text-on-rose">{unread}</span>)}
               </button>
             );
@@ -263,19 +263,19 @@ export function Shell({ view, setView, onReview, onFocus, d, state, unread, goal
         <button
           type="button"
           onClick={() => setView("molt")}
-          aria-label={folded ? c.name || "Oul tău" : undefined}
-          title={folded ? c.name || "Oul tău" : undefined}
+          aria-label={folded ? c.name || tr("Oul tău") : undefined}
+          title={folded ? c.name || tr("Oul tău") : undefined}
           className={`panel panel-violet focus-ring mt-auto flex items-center text-left transition hover:brightness-110 ${folded ? "justify-center p-1.5" : "gap-3 p-3"}`}
         >
           <span className={`pedestal grid shrink-0 place-items-center rounded-xl ${folded ? "h-12 w-12" : "h-16 w-16"}`}>
             <Sprite path={path} stage={c.stage.id} mood={c.mood} size={folded ? 48 : 64} crack={eggCrack(c.ep)} look={c.look} />
           </span>
           <span className={`min-w-0 ${folded ? "hidden" : ""}`}>
-            <span className="block truncate font-pixel text-base text-ink">{c.name || "Oul tău"}</span>
+            <span className="block truncate font-pixel text-base text-ink">{c.name || tr("Oul tău")}</span>
             <span className="block text-[11px] font-extrabold uppercase tracking-wider text-violet-hi">
               {c.stage.name} · {PATHS[path]?.cls}
             </span>
-            <span className="block text-xs font-semibold text-dim">{c.stage.id === "egg" ? "așteaptă bifări" : MOOD_LABEL[c.mood]}</span>
+            <span className="block text-xs font-semibold text-dim">{c.stage.id === "egg" ? tr("așteaptă bifări") : MOOD_LABEL[c.mood]}</span>
           </span>
         </button>
       </aside>
@@ -288,7 +288,7 @@ export function Shell({ view, setView, onReview, onFocus, d, state, unread, goal
       <nav
         className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-7 border-t border-edge bg-deep/95 backdrop-blur lg:hidden"
         style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
-        aria-label="Navigare"
+        aria-label={tr("Navigare")}
       >
         {NAV.filter((n) => n.id !== "settings").map((n) => {
           const Icon = n.icon;
@@ -304,7 +304,7 @@ export function Shell({ view, setView, onReview, onFocus, d, state, unread, goal
               <Icon size={20} strokeWidth={2.25} aria-hidden="true" />
               <span className="max-w-full truncate px-0.5">{n.short || n.label}</span>
               {n.id === "plan" && goalsDue > 0 && <span className="absolute right-[22%] top-1 h-2 w-2 rounded-full bg-ember" />}
-              {n.id === "home" && reviewDue && <span className="absolute right-[22%] top-1 h-2 w-2 rounded-full bg-rose" aria-label="Raportul zilei te așteaptă" />}
+              {n.id === "home" && reviewDue && <span className="absolute right-[22%] top-1 h-2 w-2 rounded-full bg-rose" aria-label={tr("Raportul zilei te așteaptă")} />}
               {n.id === "group" && unread > 0 && <span className="absolute right-[22%] top-1 h-2 w-2 rounded-full bg-rose" />}
             </button>
           );

@@ -1,3 +1,4 @@
+import { getLocale, tr } from "./i18n.js";
 // Calendar helpers. Days are local "YYYY-MM-DD" keys, which sort as strings.
 
 export const DAY_MS = 86400000;
@@ -43,25 +44,30 @@ export function monthsBetween(fromKey, toKey) {
   return out;
 }
 
-// Romanian names, written out so output does not depend on the browser's locale data.
-export const RO_DAYS = ["duminică", "luni", "marți", "miercuri", "joi", "vineri", "sâmbătă"];
-export const RO_DAYS_SHORT = ["Dum", "Lun", "Mar", "Mie", "Joi", "Vin", "Sâm"];
-export const RO_DAYS_MIN = ["D", "L", "Ma", "Mi", "J", "V", "S"];
-export const RO_MONTHS = [
-  "ianuarie",
-  "februarie",
-  "martie",
-  "aprilie",
-  "mai",
-  "iunie",
-  "iulie",
-  "august",
-  "septembrie",
-  "octombrie",
-  "noiembrie",
-  "decembrie",
-];
-export const RO_MONTHS_SHORT = ["ian", "feb", "mar", "apr", "mai", "iun", "iul", "aug", "sep", "oct", "nov", "dec"];
+// Day and month names, written out so output does not depend on the browser's locale data. The constants keep their
+// original names (RO_*) but hold the names in the page language (Romanian, or English when the page is in English).
+export const NAMES = {
+  ro: {
+    days: ["duminică", "luni", "marți", "miercuri", "joi", "vineri", "sâmbătă"],
+    short: ["Dum", "Lun", "Mar", "Mie", "Joi", "Vin", "Sâm"],
+    min: ["D", "L", "Ma", "Mi", "J", "V", "S"],
+    months: ["ianuarie", "februarie", "martie", "aprilie", "mai", "iunie", "iulie", "august", "septembrie", "octombrie", "noiembrie", "decembrie"],
+    monthsShort: ["ian", "feb", "mar", "apr", "mai", "iun", "iul", "aug", "sep", "oct", "nov", "dec"],
+  },
+  en: {
+    days: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"],
+    short: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
+    min: ["S", "M", "Tu", "W", "Th", "F", "Sa"],
+    months: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
+    monthsShort: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+  },
+};
+const NAME = NAMES[getLocale()] || NAMES.ro;
+export const RO_DAYS = NAME.days;
+export const RO_DAYS_SHORT = NAME.short;
+export const RO_DAYS_MIN = NAME.min;
+export const RO_MONTHS = NAME.months;
+export const RO_MONTHS_SHORT = NAME.monthsShort;
 
 export const fmtDay = (key) => {
   const d = parseDay(key);
@@ -78,10 +84,10 @@ export const fmtMonth = (ym) => {
 
 export function relDay(key, today) {
   const n = diffDays(key, today);
-  if (n === 0) return "azi";
-  if (n === 1) return "ieri";
-  if (n === -1) return "mâine";
-  if (n > 1 && n < 7) return `acum ${n} zile`;
+  if (n === 0) return tr("azi");
+  if (n === 1) return tr("ieri");
+  if (n === -1) return tr("mâine");
+  if (n > 1 && n < 7) return tr("acum {n} zile", { n });
   return fmtDay(key);
 }
 

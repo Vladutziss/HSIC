@@ -2,14 +2,15 @@ import React, { useState } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { Button, Choice, IconButton, Skeleton } from "./ui.jsx";
 import { DateSelect } from "./Select.jsx";
+import { tr } from "../lib/i18n.js";
 
 const KINDS = [
-  { id: "note", label: "Notă" },
-  { id: "event", label: "Eveniment" },
-  { id: "constraint", label: "Restricție" },
-  { id: "preference", label: "Preferință" },
+  { id: "note", label: tr("Notă") },
+  { id: "event", label: tr("Eveniment") },
+  { id: "constraint", label: tr("Restricție") },
+  { id: "preference", label: tr("Preferință") },
 ];
-const kindLabel = (id) => KINDS.find((k) => k.id === id)?.label || "Notă";
+const kindLabel = (id) => KINDS.find((k) => k.id === id)?.label || tr("Notă");
 
 /**
  * What the player tells the coach: one line to write, the button beside it, the kind as pills. `notes` null = still
@@ -40,28 +41,24 @@ export function CoachNotes({ notes, onAdd, onRemove, busy = false, error = "" })
             className="field min-w-0 flex-1 basis-60"
             value={body}
             maxLength={300}
-            placeholder="ex.: Am examen pe 20 octombrie"
-            aria-label="Nota ta"
+            placeholder={tr("ex.: Am examen pe 20 octombrie")}
+            aria-label={tr("Nota ta")}
             onChange={(e) => setBody(e.target.value)}
           />
-          <Button type="submit" variant="mint" icon={Plus} busy={busy} disabled={!can} className="max-sm:w-full sm:shrink-0">
-            Adaugă nota
-          </Button>
+          <Button type="submit" variant="mint" icon={Plus} busy={busy} disabled={!can} className="max-sm:w-full sm:shrink-0">{tr("Adaugă nota")}</Button>
         </div>
         <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
-          <Choice label="Tipul notei" value={kind} onChange={setKind} options={KINDS.map((k) => ({ value: k.id, label: k.label }))} />
+          <Choice label={tr("Tipul notei")} value={kind} onChange={setKind} options={KINDS.map((k) => ({ value: k.id, label: k.label }))} />
           <div className="flex items-center gap-2">
-            <label htmlFor="coach-note-ends" className="text-xs font-extrabold text-dim">
-              Valabilă până la
-            </label>
+            <label htmlFor="coach-note-ends" className="text-xs font-extrabold text-dim">{tr("Valabilă până la")}</label>
             <div className="w-44">
-              <DateSelect id="coach-note-ends" value={endsOn} onChange={setEndsOn} placeholder="Fără dată" />
+              <DateSelect id="coach-note-ends" value={endsOn} onChange={setEndsOn} placeholder={tr("Fără dată")} />
             </div>
           </div>
         </div>
       </form>
 
-      <p className="mt-3 text-[11px] font-bold text-faint">Notele sunt trimise modelului AI când ceri un plan. Nu scrie date personale sensibile.</p>
+      <p className="mt-3 text-[11px] font-bold text-faint">{tr("Notele sunt trimise modelului AI când ceri un plan. Nu scrie date personale sensibile.")}</p>
       {error && (
         <p role="alert" className="mt-2 text-sm font-semibold text-dim">
           {error}
@@ -72,7 +69,7 @@ export function CoachNotes({ notes, onAdd, onRemove, busy = false, error = "" })
         {notes === null || notes === undefined ? (
           <Skeleton className="h-16" />
         ) : notes.length === 0 ? (
-          <p className="text-sm font-semibold text-dim">Nicio notă activă. Scrie prima: un examen, o restricție sau ce îți place.</p>
+          <p className="text-sm font-semibold text-dim">{tr("Nicio notă activă. Scrie prima: un examen, o restricție sau ce îți place.")}</p>
         ) : (
           <ul className="space-y-2">
             {notes.map((n) => (
@@ -81,10 +78,10 @@ export function CoachNotes({ notes, onAdd, onRemove, busy = false, error = "" })
                   <p className="break-words text-sm font-semibold text-body">{n.body}</p>
                   <p className="text-xs font-bold text-dim">
                     {kindLabel(n.kind)}
-                    {n.ends_on ? ` · până la ${n.ends_on}` : ""}
+                    {n.ends_on ? tr(" · până la {ends_on}", { ends_on: n.ends_on }) : ""}
                   </p>
                 </div>
-                <IconButton icon={Trash2} label={`Șterge nota: ${n.body}`} disabled={busy} onClick={() => onRemove(n.id)} />
+                <IconButton icon={Trash2} label={tr("Șterge nota: {body}", { body: n.body })} disabled={busy} onClick={() => onRemove(n.id)} />
               </li>
             ))}
           </ul>
