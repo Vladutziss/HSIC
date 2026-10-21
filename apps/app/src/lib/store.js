@@ -9,6 +9,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { capability, inViewer } from "./platform.js";
 import { getClient } from "./supabase.js";
 import * as remote from "./remote.js";
+import { syncEmailProfile } from "./emailPrefs.js";
 
 const PREFIX = "momentum2:";
 const LEGACY_LOCAL_KEY = "momentum-habits-v1"; // the first version of the app
@@ -153,6 +154,7 @@ export function useAppStore() {
       try {
         const { error: profileError } = await client.rpc("ensure_profile", { pname: fullName, pavatar: authUser.imageUrl || null });
         if (profileError) throw profileError;
+        syncEmailProfile(client, authUser).catch(() => {}); // the address and "last seen" for the emails; best effort
         first = await remote.loadState(client, uid);
       } catch {
         setSaveStatus("error");

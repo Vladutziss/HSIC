@@ -4,7 +4,10 @@
   "version": "2.0.0",
   "type": "module",
   "description": "Molted monorepo: apps/app (aplicația), apps/web (landing molted.eu), packages/ui (design tokens comune).",
-  "workspaces": ["apps/*", "packages/*"],
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
     "dev": "npm run dev -w @molted/app",
     "dev:web": "npm run dev -w @molted/web",
@@ -12,6 +15,12 @@
     "build:web": "npm run build -w @molted/web",
     "build:artifact": "npm run build:artifact -w @molted/app",
     "test": "npm test -w @molted/app && npm test -w @molted/web",
-    "sync:functions": "node scripts/sync-functions.mjs"
+    "sync:functions": "node scripts/sync-functions.mjs",
+    "build:emails": "node scripts/build-emails.mjs",
+    "preview:emails": "node scripts/build-emails.mjs --preview"
+  },
+  "devDependencies": {
+    "@react-email/components": "^1.0.12",
+    "@react-email/render": "^2.1.1"
   }
 }
