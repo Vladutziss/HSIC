@@ -298,6 +298,8 @@ begin
 end $$;
 create trigger giveaway_campaign_audit after insert or update or delete on public.giveaway_campaigns
   for each row execute function public.giveaway_campaign_audit();
+-- trigger functions are not part of the API
+revoke execute on function public.giveaway_campaign_guard(), public.giveaway_campaign_audit() from public, anon, authenticated;
 
 -- ------------------------------------------------------------ public reads
 -- The public JSON of one campaign (never internal_name, notes, checklist, creator, counts).
