@@ -69,7 +69,7 @@ function entryPanel(c, ctx) {
   if (c.me?.entered) {
     return box(
       c.me.status === "disqualified"
-        ? `<p class="mt-3 font-bold text-rose">Înscrierea ta nu a fost validată.</p>${note("Dacă crezi că e o greșeală, scrie-ne la hsicmomentum@proton.me.")}`
+        ? `<p class="mt-3 font-bold text-rose">Înscrierea ta nu a fost validată.</p>${note("Dacă crezi că e o greșeală, scrie-ne la molted.app@gmail.com.")}`
         : `<p class="mt-3 font-bold text-mint" role="status">Ești înscris. Mult succes!</p>${note("Îți confirmăm aici dacă ești înscris. Nu e nevoie să faci nimic altceva.")}`,
     );
   }

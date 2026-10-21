@@ -27,6 +27,11 @@
 - Secrete: `OPENROUTER_API_KEY`, `AI_MODEL`, `AGENT_MODEL`, `AGENT_CRON_SECRET` (niciodată în repo).
 - Regulă: textul AI e generat de AI sau deloc (fără fallback-uri scrise de mână).
 
+### Emailuri (Resend)
+
+- Retenție (secvență pe 4 pași) și reactivare (un singur email), trimise de funcția `campaigns` (job zilnic) de la `mail.molted.eu`; dezabonare și webhook în funcția `email`. Totul în spatele `CAMPAIGNS_ENABLED` (oprit implicit). Detalii, config, ce rămâne manual: `docs/EMAILS.md`. Șabloanele (React Email) se regenerează cu `npm run build:emails` și fișierul generat se commit-uiește.
+- Adresa de email nu e în DB până la prima autentificare după migrarea 0032 (`sync_email_profile()` o citește din tokenul Clerk). Consimțământul stă în `email_preferences`, nu în Clerk.
+
 ## Limbi (RO / EN)
 
 - Interfața aplicației e în română și engleză. Textul sursă e în română: orice text vizibil e `tr("text românesc {var}", { var })` din `apps/app/src/lib/i18n.js`; engleza se caută după același text în `apps/app/src/i18n/en.js`. Fără intrare în `en.js` textul rămâne românesc, iar `tests/i18n.test.mjs` pică (acoperire, placeholdere identice, chei rămase fără folosire, text românesc scăpat în afara `tr()`).
