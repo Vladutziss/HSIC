@@ -1,5 +1,5 @@
 // Romanian copy for the landing site (build-time). Client-side strings live in client.js.
-const OG_ALT = "Molt, personajul din Molted, în cinci stadii: ou, pui, ucenic, adept și maestru.";
+const OG_ALT = "Molted, aplicație de obiceiuri cu coach AI, și personajul Molt de la ou la maestru.";
 
 export default {
   lang: "ro",
@@ -21,15 +21,15 @@ export default {
   },
   meta: {
     home: {
-      title: "Molted: coach AI agentic pentru obiceiuri",
+      title: "Molted: aplicație de obiceiuri cu coach AI",
       description:
-        "Molted are un agent AI care îți analizează obiceiurile, propune schimbări concrete și măsoară dacă au ajutat. Tu confirmi. Plus un joc cu un personaj care evoluează.",
-      ogTitle: "Molted: coach AI agentic pentru obiceiuri",
-      ogDescription: "Un agent AI propune, tu confirmi, iar Molted măsoară efectul.",
+        "Aplicație de obiceiuri cu coach AI: îți analizează progresul, propune pași concreți și îți planifică temele și examenele. Tu bifezi, personajul tău crește.",
+      ogTitle: "Molted: aplicație de obiceiuri cu coach AI",
+      ogDescription: "Un coach AI care știe ce obiceiuri ai, îți propune pași concreți și îți spune de ce. Tu decizi.",
       ogImageAlt: OG_ALT,
     },
     team: {
-      title: "Echipa Molted",
+      title: "Echipa Molted: cine face aplicația",
       description: "Oamenii din spatele Molted: echipa care construiește aplicația de obiceiuri în care personajul tău evoluează.",
       ogTitle: "Echipa Molted",
       ogDescription: "Oamenii din spatele Molted: echipa care construiește aplicația de obiceiuri în care personajul tău evoluează.",
@@ -57,10 +57,10 @@ export default {
     home: "Înapoi la prima pagină",
   },
   home: {
-    ids: { agent: "agentul", faq: "intrebari" },
-    nav: { agent: "Agentul AI", faq: "Întrebări" },
-    kicker: "Coach AI agentic · pentru obiceiuri",
-    h1: "Un agent AI care te ajută să-ți ții obiceiurile",
+    ids: { agent: "agentul", features: "functii", faq: "intrebari" },
+    nav: { agent: "Agentul AI", features: "Funcții", faq: "Întrebări" },
+    kicker: "Aplicație de obiceiuri · coach AI",
+    h1: "Un coach AI care te ajută să-ți ții obiceiurile",
     lead: "Molted nu doar notează ce ai bifat. Un agent îți citește istoricul, caută în surse, propune o schimbare concretă și, după două săptămâni, verifică dacă a ajutat. Tu hotărăști mereu.",
     ctaAgent: "Cum gândește agentul",
     mockAria: "Exemplu ilustrativ: o propunere a agentului",
@@ -89,6 +89,15 @@ export default {
     weeklyAria: "Exemplu ilustrativ: rularea săptămânală",
     weeklyTitle: "Duminică, 18:00 · rulare automată (opțional)",
     weeklyText: "Agentul face singur bilanțul săptămânii, îți pregătește un pas mic pentru luni și îl notează în istoric. Îl poți opri oricând din Setări.",
+    featuresH2: "Ce găsești în Molted",
+    features: [
+      { title: "Habit tracker", text: "Obiceiuri cu zile, oră și țintă. Le bifezi, ții serii și strângi momentum prin 10 niveluri." },
+      { title: "Coach AI", text: "Vorbește cu tine știind ce obiceiuri, obiective și taskuri ai. Propune pași concreți și îți spune de ce." },
+      { title: "Planificator pentru teme și examene", text: "Scrii cum vorbești, de exemplu „test la mate joi”, iar Molted pune examenul în calendar." },
+      { title: "Obiective în pași mici", text: "Un obiectiv mare devine pași de făcut săptămâna asta, cu sesiuni Focus când ai nevoie." },
+      { title: "Revenire după pauză", text: "Dacă ai lipsit, nu primești tot programul înapoi, ci un pas mic: varianta ușoară a unui obicei." },
+      { title: "Grupuri cu prietenii", text: "Intrați cu un cod, vă vedeți în clasamentul săptămânal și vă trimiteți remindere." },
+    ],
     numbersH2: "Molted în cifre",
     numbersIntro: "Totaluri adunate de la toți jucătorii, fără nimic personal.",
     numbers: { users: "Jucători", active7: "Activi în 7 zile", checkins: "Bife de obiceiuri", objectives: "Obiective", todos: "To-do-uri făcute" },
@@ -105,17 +114,20 @@ export default {
     ],
     faqH2: "Întrebări frecvente",
     faq: [
+      { q: "Ce este Molted?", a: "O aplicație de obiceiuri (habit tracker) cu un coach AI. Îți bifezi obiceiurile, coach-ul îți analizează progresul și propune pași concreți, iar un personaj din joc evoluează odată cu tine." },
+      { q: "Ce face agentul AI?", a: "Un agent îți analizează obiceiurile cu unelte proprii (statistici, tipare, surse), propune acțiuni concrete și, după confirmarea ta, le aplică și le măsoară. Mai scrie raportul zilei și capitole din povestea lui Molt." },
+      { q: "Pentru cine este Molted?", a: "Pentru oricine vrea să-și țină obiceiurile, de la 16 ani în sus (sau mai devreme, cu acordul unui părinte). Planificatorul de teme și examene e gândit mai ales pentru elevi și studenți." },
       { q: "De unde primesc personajul?", a: "La început primești un ou. Drumul pe care îl alegi (Sport, Studiu, Bani, Minte sau Creativitate) decide ce creatură iese din el: Atlet, Cărturar, Negustor, Înțelept sau Bard." },
       { q: "Ce se întâmplă dacă ratez zile?", a: "Personajul nu moare, doar doarme cât lipsești. O zi ratată scade puțin momentum-ul, iar după 3 zile la rând fără activitate (poți alege între 2 și 5) revine la zero. Seria poate fi salvată cu 2 revive-uri pe lună." },
-      { q: "Ce face agentul AI?", a: "Un agent îți analizează obiceiurile cu unelte proprii (statistici, tipare, surse), propune acțiuni concrete și, după confirmarea ta, le aplică și le măsoară. Mai scrie raportul zilei și capitole din povestea lui Molt." },
       { q: "Cum funcționează grupurile?", a: "Creezi un grup sau un partener de progres și primești un cod de invitație de 6 caractere. Membrii apar într-un clasament săptămânal și își pot trimite remindere." },
+      { q: "Ce se întâmplă cu datele mele?", a: "Le folosim doar ca să funcționeze aplicația. Nu vindem datele și nu afișăm reclame. AI-ul primește doar textul de care are nevoie, de exemplu numele obiceiurilor și câte ai bifat, nu emailul tău." },
       { q: "Trebuie să instalez ceva?", a: "Nu. Molted este o aplicație web: o deschizi în browser, la app.molted.eu.", link: true },
     ],
     ctaH2: "Oul tău te așteaptă",
     ctaText: "Alege un drum, bifează primul obicei și vezi ce iese.",
     eggAlt: "Un ou, începutul lui Molt",
     appDescription:
-      "Coach AI agentic pentru obiceiuri: analizează istoricul, propune acțiuni, le aplică după confirmare și măsoară efectul. Plus gamificare, planificator și grupuri.",
+      "Aplicație de obiceiuri (habit tracker) cu un coach AI care analizează progresul, propune pași concreți și îi aplică doar după confirmare. Include planificator pentru teme și examene, obiective, sesiuni Focus, grupuri și un personaj care evoluează.",
   },
   team: {
     h1: "Echipa",
