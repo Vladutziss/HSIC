@@ -47,6 +47,11 @@ export function resetAiJobs() {
   emit();
 }
 
+/** A job whose answer was taken in by its screen: back to idle (the chat uses it once the reply is in its list). */
+export function idleAiJob(kind) {
+  if (kinds.has(kind)) put(kind, { s: IDLE, unseen: false });
+}
+
 /** Which abilities are thinking right now, and which finished while nobody was looking (for the badges). */
 export function useAiJobs() {
   useSyncExternalStore(subscribe, () => version);
