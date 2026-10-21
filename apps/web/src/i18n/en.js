@@ -1,5 +1,5 @@
 // English copy for the landing site (build-time). Client-side strings live in client.js.
-const OG_ALT = "Molt, the character from Molted, in five stages: egg, hatchling, apprentice, adept and master.";
+const OG_ALT = "Molted, a habit tracker app with an AI coach, and its character Molt from egg to master.";
 
 export default {
   lang: "en",
@@ -21,15 +21,15 @@ export default {
   },
   meta: {
     home: {
-      title: "Molted: an agentic AI coach for your habits",
+      title: "Molted: habit tracker app with an AI coach",
       description:
-        "Molted has an AI agent that analyzes your habits, proposes concrete changes and measures whether they helped. You confirm. Plus a game with a character that evolves.",
-      ogTitle: "Molted: an agentic AI coach for your habits",
-      ogDescription: "An AI agent proposes, you confirm, and Molted measures the effect.",
+        "A habit tracker with an AI coach: it analyzes your progress, proposes concrete steps and plans your homework and exams. You tick habits, your character grows.",
+      ogTitle: "Molted: habit tracker app with an AI coach",
+      ogDescription: "An AI coach that knows your habits, proposes concrete steps and tells you why. You decide.",
       ogImageAlt: OG_ALT,
     },
     team: {
-      title: "The Molted team",
+      title: "The Molted team: who builds the app",
       description: "The people behind Molted: the team building the habit app where your character evolves.",
       ogTitle: "The Molted team",
       ogDescription: "The people behind Molted: the team building the habit app where your character evolves.",
@@ -57,10 +57,10 @@ export default {
     home: "Back to the home page",
   },
   home: {
-    ids: { agent: "agent", faq: "faq" },
-    nav: { agent: "AI agent", faq: "FAQ" },
-    kicker: "Agentic AI coach · for habits",
-    h1: "An AI agent that helps you keep your habits",
+    ids: { agent: "agent", features: "features", faq: "faq" },
+    nav: { agent: "AI agent", features: "Features", faq: "FAQ" },
+    kicker: "Habit tracker · AI coach",
+    h1: "An AI coach that helps you keep your habits",
     lead: "Molted does not just log what you ticked. An agent reads your history, looks things up in sources, proposes one concrete change and, two weeks later, checks whether it helped. You always decide.",
     ctaAgent: "How the agent thinks",
     mockAria: "Illustrative example: a proposal from the agent",
@@ -89,6 +89,15 @@ export default {
     weeklyAria: "Illustrative example: the weekly run",
     weeklyTitle: "Sunday, 6:00 PM · automatic run (optional)",
     weeklyText: "The agent reviews your week on its own, prepares one small step for Monday and writes it into the history. You can turn it off at any time in Settings.",
+    featuresH2: "What you get in Molted",
+    features: [
+      { title: "Habit tracker", text: "Habits with days, a time and a target. You tick them, keep streaks and build momentum through 10 levels." },
+      { title: "AI coach", text: "It talks to you knowing your habits, goals and tasks. It proposes concrete steps and tells you why." },
+      { title: "Homework and exam planner", text: "Write it the way you talk, for example “math test on Thursday”, and Molted puts the exam in your calendar." },
+      { title: "Goals in small steps", text: "A big goal becomes steps for this week, with Focus sessions when you need them." },
+      { title: "Back after a break", text: "If you were away, you do not get the whole schedule back at once, just one small step: the easy version of a habit." },
+      { title: "Groups with friends", text: "Join with a code, see each other on the weekly leaderboard and send reminders." },
+    ],
     numbersH2: "Molted in numbers",
     numbersIntro: "Totals gathered from all players, with nothing personal.",
     numbers: { users: "Players", active7: "Active in 7 days", checkins: "Habit check-ins", objectives: "Objectives", todos: "To-dos done" },
@@ -105,17 +114,20 @@ export default {
     ],
     faqH2: "Frequently asked questions",
     faq: [
+      { q: "What is Molted?", a: "A habit tracker app with an AI coach. You tick your habits, the coach analyzes your progress and proposes concrete steps, and a character from the game evolves with you." },
+      { q: "What does the AI agent do?", a: "An agent analyzes your habits with its own tools (statistics, patterns, sources), proposes concrete actions and, after you confirm, applies and measures them. It also writes the day's report and chapters of Molt's story." },
+      { q: "Who is Molted for?", a: "Anyone who wants to keep their habits, from 16 years old (or younger, with a parent's consent). The homework and exam planner is made mainly for students." },
       { q: "Where do I get my character?", a: "You start with an egg. The path you choose (Sport, Study, Money, Mind or Creativity) decides which creature hatches from it: Athlete, Scholar, Merchant, Sage or Bard." },
       { q: "What happens if I miss days?", a: "Your character does not die, it just sleeps while you are away. A missed day lowers momentum a little, and after 3 days in a row with no activity (you can choose between 2 and 5) it goes back to zero. A streak can be saved with 2 revives per month." },
-      { q: "What does the AI agent do?", a: "An agent analyzes your habits with its own tools (statistics, patterns, sources), proposes concrete actions and, after you confirm, applies and measures them. It also writes the day's report and chapters of Molt's story." },
       { q: "How do groups work?", a: "You create a group or a progress partner and get a 6-character invitation code. Members appear on a weekly leaderboard and can send each other reminders." },
+      { q: "What happens to my data?", a: "We use it only to make the app work. We do not sell data and we do not show ads. The AI only gets the text it needs, for example the names of your habits and how many you ticked, not your email." },
       { q: "Do I need to install anything?", a: "No. Molted is a web app: you open it in your browser, at app.molted.eu. The app interface is currently available in Romanian only.", link: true },
     ],
     ctaH2: "Your egg is waiting",
     ctaText: "Pick a path, tick your first habit and see what hatches.",
     eggAlt: "An egg, the beginning of Molt",
     appDescription:
-      "An agentic AI coach for habits: it analyzes your history, proposes actions, applies them after you confirm and measures the effect. Plus gamification, a planner and groups.",
+      "A habit tracker app with an AI coach that analyzes your progress, proposes concrete steps and applies them only after you confirm. It includes a homework and exam planner, goals, Focus sessions, groups and a character that evolves.",
   },
   team: {
     h1: "Team",

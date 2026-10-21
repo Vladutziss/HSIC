@@ -44,5 +44,5 @@ Add a route to `ROUTES`, add its copy (`meta.<key>` in both dictionaries), a ren
 ## Known limits
 
 - The app at `app.molted.eu` is Romanian only. English pages link to it and the English FAQ says so.
-- `og.png` has no text, so the same image is used for both languages (alt text is localized).
+- The share card has text, so there is one per language: `og.png` (Romanian) and `og-en.png`, both written by `node apps/web/scripts/og.mjs` (headless Chrome or Edge) and committed.
 - No `lastmod` in the sitemap (no reliable per-page date).

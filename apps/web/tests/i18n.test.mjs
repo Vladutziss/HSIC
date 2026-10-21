@@ -145,7 +145,7 @@ test("og:locale and robots are right; social image has alt text; public pages ar
     const robots = meta(p.html, "robots")[0];
     assert.match(robots, /^index, follow/);
     assert.ok(!/noindex/.test(robots));
-    assert.equal(meta(p.html, "og:image")[0], `${SITE_URL}/og.png`);
+    assert.equal(meta(p.html, "og:image")[0], `${SITE_URL}/${p.locale === "ro" ? "og.png" : "og-en.png"}`, p.file);
     assert.ok(meta(p.html, "og:image:alt")[0].length > 10);
     assert.equal(meta(p.html, "twitter:card")[0], "summary_large_image");
   }

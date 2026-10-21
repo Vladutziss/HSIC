@@ -74,6 +74,7 @@ ${header(
     locale,
     t,
     `        <a href="#${h.ids.agent}" class="hidden text-dim hover:text-ink sm:inline">${esc(h.nav.agent)}</a>
+        <a href="#${h.ids.features}" class="hidden text-dim hover:text-ink md:inline">${esc(h.nav.features)}</a>
         <a href="#${h.ids.faq}" class="hidden text-dim hover:text-ink sm:inline">${esc(h.nav.faq)}</a>
         <a href="${link("team", locale)}" class="hidden text-dim hover:text-ink sm:inline">${esc(t.common.team)}</a>
 ${isAvailable(routeByKey("giveaways"), locale) ? `        <a href="${link("giveaways", locale)}" class="hidden text-dim hover:text-ink sm:inline">${esc(RO_ONLY.common.giveaways)}</a>
@@ -121,6 +122,13 @@ ${h.control.map((c) => `            <li class="tick">${esc(c)}</li>`).join("\n")
           <p class="text-xs font-bold uppercase tracking-wider text-dim">${esc(h.weeklyTitle)}</p>
           <p class="mt-2 text-sm">${esc(h.weeklyText)}</p>
         </figure>
+      </section>
+
+      <section id="${h.ids.features}" class="mx-auto max-w-6xl scroll-mt-6 px-5 py-16" aria-labelledby="t-functii">
+        <h2 id="t-functii" class="font-pixel text-3xl font-bold text-ink">${esc(h.featuresH2)}</h2>
+        <ul class="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+${h.features.map((f) => `          <li class="mock"><h3 class="font-pixel text-xl font-bold text-ink">${esc(f.title)}</h3><p class="mt-2 text-sm">${esc(f.text)}</p></li>`).join("\n")}
+        </ul>
       </section>
 
       <!-- numbers: shown only when the server answers (see src/main.js) -->

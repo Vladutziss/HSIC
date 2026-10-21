@@ -2,7 +2,8 @@
 // Pure functions: the output is plain HTML strings so the metadata is in the initial response, not added by scripts.
 import { SITE_URL, absoluteUrl, alternates, availableLocales, isAvailable } from "./i18n/routes.js";
 
-export const OG_IMAGE = `${SITE_URL}/og.png`;
+/** The share card has text on it, so each language gets its own (scripts/og.mjs writes both). */
+export const ogImage = (locale) => `${SITE_URL}/${locale === "ro" ? "og.png" : `og-${locale}.png`}`;
 export const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 
 const FONTS = `    <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -28,6 +29,7 @@ export function renderHead({ route, locale, t, styles = "tailwind", script, json
   const m = t.meta[route.key];
   const url = urlOverride || absoluteUrl(route, locale);
   const otherLocales = availableLocales(route).filter((l) => l !== locale);
+  const OG_IMAGE = ogImage(locale);
   const lines = [
     `    <meta charset="UTF-8" />`,
     `    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />`,
@@ -46,6 +48,7 @@ export function renderHead({ route, locale, t, styles = "tailwind", script, json
     `    <meta property="og:description" content="${esc(m.ogDescription)}" />`,
     `    <meta property="og:url" content="${url}" />`,
     `    <meta property="og:image" content="${OG_IMAGE}" />`,
+    `    <meta property="og:image:type" content="image/png" />`,
     `    <meta property="og:image:width" content="1200" />`,
     `    <meta property="og:image:height" content="630" />`,
     `    <meta property="og:image:alt" content="${esc(m.ogImageAlt)}" />`,
@@ -66,17 +69,33 @@ export function renderHead({ route, locale, t, styles = "tailwind", script, json
 /** Structured data for the home page, built from the same visible FAQ so the two can never disagree. */
 export function homeJsonLd(t, locale, route) {
   const url = absoluteUrl(route, locale);
+  const org = `${SITE_URL}/#org`;
   return {
     "@context": "https://schema.org",
     "@graph": [
+      {
+        "@type": "Organization",
+        "@id": org,
+        name: "Molted",
+        url: `${SITE_URL}/`,
+        logo: { "@type": "ImageObject", url: `${SITE_URL}/icons/apple-touch-icon.png`, width: 180, height: 180 },
+        email: "hsicmomentum@proton.me",
+      },
+      { "@type": "WebSite", "@id": `${SITE_URL}/#website`, name: "Molted", url: `${SITE_URL}/`, inLanguage: availableLocales(route), publisher: { "@id": org } },
       {
         "@type": "WebApplication",
         name: "Molted",
         url: "https://app.molted.eu",
         description: t.home.appDescription,
         applicationCategory: "LifestyleApplication",
+        applicationSubCategory: "Habit tracker",
         operatingSystem: "Web",
-        inLanguage: "ro",
+        inLanguage: "ro", // the app itself is Romanian only
+        isAccessibleForFree: true, // the terms: "Aplicația este gratuită în forma actuală"
+        offers: { "@type": "Offer", price: "0", priceCurrency: "RON" },
+        audience: { "@type": "PeopleAudience", suggestedMinAge: 16 },
+        featureList: t.home.features.map((f) => f.title),
+        publisher: { "@id": org },
       },
       {
         "@type": "FAQPage",
