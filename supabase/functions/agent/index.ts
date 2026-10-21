@@ -21,6 +21,7 @@ import { analyzePatterns } from "../_shared/app/patterns.js";
 import { activeContext, summarizeFeedback } from "../_shared/app/memory.js";
 import { FACTORS, analyzeExperiment, designExperiment } from "../_shared/app/experiments.js";
 import { addDays } from "../_shared/app/dates.js";
+import { RO_WORDING } from "../_shared/prompts.ts";
 import { goalsSnapshot, schoolSnapshot, validateProposals } from "../_shared/agent-core.js";
 
 // deno-lint-ignore no-explicit-any
@@ -78,7 +79,8 @@ const systemFor = (en: boolean) =>
         .replaceAll('"examen mate în 4 zile", "0 min studiate la mate în 14 zile"', '"maths exam in 4 days", "0 min studied for maths in 14 days"')
         .replaceAll('(for example "un studiu din 2024")', '(for example "a 2024 study")')
         .replaceAll("Romanian", "English")
-    : SYSTEM;
+    : `${SYSTEM}
+- ${RO_WORDING}`;
 
 const TOOLS = [
   {

@@ -24,6 +24,7 @@ export const CODE = { DONE: 1 };
 export const countedXp = (bases) => [...bases].sort((a, b) => b - a).slice(0, RULES.habitsPerDay).reduce((a, b) => a + b, 0);
 
 export const RULES = {
+  evolutionScale: 2, // evolution points of a day = this * sqrt(ticked difficulty points), see dayEvolution
   habitsPerDay: 8, // ticked habits that earn momentum in one day: a player can keep more, only the 8 most valuable count
   todoXp: 5,
   todoCap: 6,
@@ -348,20 +349,35 @@ export const STAGES = [
   { id: "legend", name: tr("Legendă"), min: 210 },
 ];
 
-/** The companion grows from check-ins: each one earns the habit's difficulty in points (1, 2 or 3). */
+/**
+ * Evolution points of one day from `bases` (the difficulty points, 1-3, of every habit ticked that day): the most valuable
+ * RULES.habitsPerDay count, and the day gives evolutionScale * sqrt(their sum). Square root: each extra habit still helps,
+ * but less and less, so a long list does not make Molt evolve in days (2 medium habits give 4, 8 give 8, 8 hard ones 9.8).
+ */
+export function dayEvolution(bases) {
+  const raw = [...bases].sort((a, b) => b - a).slice(0, RULES.habitsPerDay).reduce((a, b) => a + b, 0);
+  return RULES.evolutionScale * Math.sqrt(raw);
+}
+
+/** Days before this one keep the first rule (every check-in earns its difficulty), so nobody loses a stage they reached. */
+export const EVOLUTION_V2_FROM = "2026-10-22";
+
+/** The companion grows from check-ins: until EVOLUTION_V2_FROM each earns the habit's difficulty in points (1, 2 or 3), after it a day follows dayEvolution. */
 export function evolutionPoints(state) {
   state = withHistory(state);
   const diff = Object.fromEntries((state.habits || []).map((h) => [h.id, h.diff]));
   let ep = 0;
   let checkins = 0;
-  for (const entries of Object.values(state.log || {})) {
+  for (const [day, entries] of Object.entries(state.log || {})) {
+    const bases = [];
     for (const [habitId, code] of Object.entries(entries)) {
       if (!code) continue;
-      ep += diffEp(diff[habitId]);
+      bases.push(diffEp(diff[habitId]));
       checkins++;
     }
+    ep += day < EVOLUTION_V2_FROM ? bases.reduce((a, b) => a + b, 0) : dayEvolution(bases);
   }
-  return { ep, checkins };
+  return { ep: Math.floor(ep + 1e-9), checkins };
 }
 
 export function stageFor(ep) {

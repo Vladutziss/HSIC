@@ -241,7 +241,8 @@ export default function Settings({ state, d, ai, mode, env, onChange, onWipe, on
             <FlaskConical size={14} className="text-mint" aria-hidden="true" />{" "}{tr("Seria: {revivesPerMonth} revive-uri pe lună (ai folosit {used} luna aceasta).", { revivesPerMonth: RULES.revivesPerMonth, used: d.revive.used })}</p>
           <Fold title={tr("Cum câștigi momentum")}>
             <ul className="space-y-1 text-xs font-semibold leading-relaxed text-body">
-              <li>{tr("· Bifă: +10 / +20 / +30 momentum după dificultate, plus 1 / 2 / 3 puncte de evoluție pentru personaj.")}</li>
+              <li>{tr("· Bifă: +10 / +20 / +30 momentum după dificultate, plus puncte de evoluție pentru personaj (după dificultate).")}</li>
+              <li>{tr("· Evoluția: într-o zi, punctele bifărilor se adună sub radical (2·√suma), pentru cel mult {habitsPerDay} obiceiuri: a zecea bifă nu mai grăbește evoluția.", { habitsPerDay: RULES.habitsPerDay })}</li>
               <li>{tr("· Zile active la rând: până la +40% la tot ce câștigi.")}</li>
               <li>{tr("· Toate misiunile programate bifate: cufărul zilei, +{chestXp}.", { chestXp: RULES.chestXp })}</li>
               <li>{tr("· Poți avea mai multe obiceiuri active, dar într-o zi aduc momentum cel mult {habitsPerDay} obiceiuri bifate (cele mai valoroase).", { habitsPerDay: RULES.habitsPerDay })}</li>

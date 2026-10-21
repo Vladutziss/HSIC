@@ -171,7 +171,18 @@ Rules: if the goal is vague, ask at most 2 short clarifying questions and set "p
 Reply with only JSON: {"reply":"<=600 chars","plan":null | {"title":"<=80","steps":[{"text":"<=120","period":"week|month","due":"YYYY-MM-DD or empty","criteria":"<=120 or empty"}] (max 6),"habits":[{"name":"<=40","diff":1-3,"days":[0-6]}] (max 3),"todos":[{"title":"<=80","date":"YYYY-MM-DD","dur":10-60}] (max 4),"why":"<=200"}}`;
 }
 
+/** Wording rules for Romanian replies: small models invent words ("această țigară" for "acest obicei"), so the key terms are fixed. */
+export const RO_WORDING =
+  'Romanian wording: a habit is always "obicei" (plural "obiceiuri"), ticking one off is "a bifa" or "bifă", a streak is "serie", a to-do is "to-do". Write plain, natural Romanian with everyday words only; if you are not sure a word exists or fits, rephrase with a simpler one. Never use a word you are not certain is real Romanian.';
+
 export function buildPrompt(kind: Kind, params: any, lang?: unknown): string {
+  const prompt = promptFor(kind, params, lang);
+  return lang === "en" ? prompt : `${prompt}
+
+${RO_WORDING}`;
+}
+
+function promptFor(kind: Kind, params: any, lang?: unknown): string {
   const p = params && typeof params === "object" ? params : {};
   LANG = langName(lang);
   TU = lang === "en" ? "" : ' as "tu"';
