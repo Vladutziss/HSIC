@@ -1,7 +1,7 @@
 // Chat with the Molt: the AI contract (kind "chat" of the `ai` Edge Function) and the plan it proposes.
 // normalizePlan/chatContext are pure; askChat is the only part that calls the server (web build only).
 
-import { askCoach } from "./ai.js";
+import { askCoach, askCoachBackground } from "./ai.js";
 import { addDays, dayKey } from "./dates.js";
 import { isScheduled, streakInfo } from "./engine.js";
 import { periodKey } from "./goals.js";
@@ -100,12 +100,23 @@ export function chatContext(state, today, noteRows = []) {
   };
 }
 
-/** One chat turn. Resolves {reply, plan} (plan normalized or null); throws {code} like the other coach calls. */
-export async function askChat({ name, cls, goal, messages, plan, context }, signal) {
-  const msgs = arr((messages || []).slice(-12), 12)
+const chatParams = ({ name, cls, goal, messages, plan, context }) => ({
+  name,
+  cls,
+  goal,
+  messages: arr((messages || []).slice(-12), 12)
     .map((m) => ({ role: m?.role === "assistant" ? "assistant" : "user", content: str(m?.content, 600) }))
-    .filter((m) => m.content);
-  const r = await askCoach("chat", { name, cls, goal, messages: msgs, plan: plan || null, context }, signal);
+    .filter((m) => m.content),
+  plan: plan || null,
+  context,
+});
+
+/** Asks for a reply the server writes into the conversation by itself (see lib/chatRun.js for waiting on it). */
+export const startChat = (args, signal) => askCoachBackground("chat", chatParams(args), signal);
+
+/** One chat turn in one call. Resolves {reply, plan} (plan normalized or null); throws {code} like the other coach calls. */
+export async function askChat(args, signal) {
+  const r = await askCoach("chat", chatParams(args), signal);
   const reply = str(r?.reply, 600);
   if (!reply) throw { code: "invalid_json" };
   return { reply, plan: normalizePlan(r.plan) };
