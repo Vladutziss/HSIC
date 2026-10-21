@@ -127,3 +127,20 @@ test("remember: kept only with a valid kind and body, once per body", () => {
   assert.equal(out[0].body, "Nu pot seara, am antrenament");
   assert.equal(out[0].startsOn, null);
 });
+
+test("a goal needs a free slot, a title and steps; one per run; never one the player already has", async () => {
+  const { goalsSnapshot } = await import("../../../supabase/functions/_shared/agent-core.js");
+  const goal = { action: "goal", title: "Termin cursul de Python", why: "Vreau să construiesc un joc", deadline: "2026-12-01", steps: ["Lecția 1", "Lecția 2", ""], reason: "Ai spus că vrei asta" };
+  const ok = validateProposals([goal], habits, read, 8, 2);
+  assert.equal(ok.length, 1);
+  assert.deepEqual(ok[0].steps, ["Lecția 1", "Lecția 2"]);
+  assert.equal(ok[0].deadline, "2026-12-01");
+  assert.equal(validateProposals([goal], habits, read, 8, 0).length, 0, "no free slot");
+  assert.equal(validateProposals([{ ...goal, steps: [] }], habits, read, 8, 2).length, 0, "no steps");
+  assert.equal(validateProposals([goal], habits, read, 8, 2, ["termin cursul de python"]).length, 0, "already has it");
+  assert.equal(validateProposals([goal, { ...goal, title: "Altul" }], habits, read, 8, 2).length, 1, "one per run");
+  const snap = goalsSnapshot({ objectives: [{ title: "A", steps: [{ done: true }, { done: false }] }, { title: "B", archived: true }], profile: { goal: "Să fiu constant" } }, "2026-10-21");
+  assert.equal(snap.active.length, 1);
+  assert.equal(snap.free, 5);
+  assert.equal(snap.profileGoal, "Să fiu constant");
+});

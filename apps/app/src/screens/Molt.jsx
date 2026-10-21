@@ -7,13 +7,13 @@
 // the action button and the answer are one block, so nothing needs hunting for.
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { BookOpen, Bot, CalendarCheck, CalendarRange, Check, Egg, History, Lock, MessageSquare, NotebookPen, Pencil, Shirt, Sparkles, Target, Wand2 } from "lucide-react";
+import { BookOpen, Bot, Loader2, CalendarCheck, CalendarRange, Check, Egg, History, Lock, MessageSquare, NotebookPen, Pencil, Shirt, Sparkles, Target, Wand2 } from "lucide-react";
 import { Bar, Button, Chip, Panel } from "../components/ui.jsx";
 import { Sprite, eggCrack } from "../components/Sprite.jsx";
 import { moodLine } from "../components/Cards.jsx";
 import { AgentLog } from "../components/AgentLog.jsx";
 import { ExperimentsPanel, NotesPanel, PlanPanel } from "../components/CoachAgent.jsx";
-import { InsightsPanel, ReflectionPanel } from "../components/AiCoach.jsx";
+import { InsightsPanel, ReflectionPanel, useAiJobs } from "../components/AiCoach.jsx";
 import { DailyPlanPanel, GoalDecomposer, HomeworkPanel } from "./Planner.jsx";
 import { pendingConfirm } from "../lib/agentActions.js";
 import { PATHS } from "../lib/catalog.js";
@@ -27,8 +27,8 @@ import { tr } from "../lib/i18n.js";
 const SKILLS = [
   { id: "chat", label: tr("Vorbește"), icon: MessageSquare, ai: true, title: (n) => tr("Vorbește cu {n}", { n }), say: tr("Întreabă-mă orice despre școală, obiective și rutină. Îți fac planuri pe care le aplici dintr-un click.") },
   { id: "day", label: tr("Planul zilei"), icon: Sparkles, group: tr("Planifică"), ai: true, title: () => tr("Planul zilei"), say: tr("Spune-mi cât timp și câtă energie ai, iar eu aleg pașii potriviți din ce ai deja programat.") },
-  { id: "school", label: tr("Teme și examene"), icon: CalendarCheck, group: tr("Planifică"), ai: true, title: () => tr("Teme și examene"), say: tr("Scrie-mi ce ai de făcut, de exemplu „Test la mate vineri”, și le fac pași pe care îi poți planifica.") },
   { id: "week", label: tr("Planul săptămânii"), icon: CalendarRange, group: tr("Planifică"), ai: true, title: () => tr("Planul săptămânii"), say: tr("Citesc bifările tale, notele și cercetarea, apoi îți propun pașii pentru săptămâna viitoare.") },
+  { id: "school", label: tr("Teme și examene"), icon: CalendarCheck, group: tr("Planifică"), ai: true, title: () => tr("Teme și examene"), say: tr("Scrie-mi ce ai de făcut, de exemplu „Test la mate vineri”, și le fac pași pe care îi poți planifica.") },
   { id: "goal", label: tr("Scop în pași"), icon: Target, group: tr("Planifică"), ai: true, title: () => tr("Scop în pași"), say: tr("Dă-mi un scop mare și îl tai în pași mici, cu termene. Îi salvezi în Plan, la Obiective.") },
   { id: "mirror", label: tr("Reflecție"), icon: BookOpen, group: tr("Înțelege"), ai: true, title: () => tr("Reflecția săptămânii"), say: tr("Cum a fost săptămâna? Spune-mi ce te-a ajutat sau ce te-a blocat și îți propun un singur pas.") },
   { id: "patterns", label: tr("Tipare"), icon: Wand2, group: tr("Înțelege"), ai: true, title: () => tr("Ce observ la tine"), say: tr("Mă uit la ultimele 4 săptămâni de bifări și îți spun ce tipare văd.") },
@@ -37,6 +37,9 @@ const SKILLS = [
   { id: "log", label: tr("Ce a făcut Molt"), icon: History, group: tr("Molt"), ai: true, title: () => tr("Ce am făcut"), say: tr("Tot ce ți-am propus sau am făcut, cu efectul măsurat și opțiunea de a anula.") },
   { id: "evolution", label: tr("Evoluție"), icon: Egg, group: tr("Molt"), title: () => tr("Evoluția mea"), say: tr("Cresc odată cu obiceiurile pe care le bifezi: fiecare bifă aduce 1, 2 sau 3 puncte de evoluție, după dificultate.") },
 ];
+
+/** The name of an ability, for messages elsewhere in the app. */
+export const skillLabel = (id) => SKILLS.find((s) => s.id === id)?.label || "";
 
 const ALIAS = { ai: "day" }; // the old "Ajutor AI" tab, still reachable from other screens
 export const MOLT_TABS = [...SKILLS.map((s) => s.id), ...Object.keys(ALIAS)];
@@ -122,6 +125,7 @@ function MoltCard({ state, d, ai, wide, waiting, onWaiting, onRename }) {
 
 // The list of abilities: a column beside the workbench on wide screens, a strip you swipe on phones.
 function SkillNav({ active, setTab, wide, waiting, locked }) {
+  const jobs = useAiJobs(); // an ability can be thinking, or have an answer waiting, while you are on another one
   useEffect(() => {
     if (!wide) document.getElementById(`molt-tab-${active}`)?.scrollIntoView({ inline: "center", block: "nearest" });
   }, [active, wide]);
@@ -181,6 +185,8 @@ function SkillNav({ active, setTab, wide, waiting, locked }) {
                 </span>
                 <span className="whitespace-nowrap lg:flex-1 lg:truncate">{sk.label}</span>
                 {count > 0 && <span className="rounded-full bg-rose px-1.5 text-[10px] text-on-rose">{count}</span>}
+                {jobs.busy.includes(sk.id) && <Loader2 size={13} className="anim-spin shrink-0 text-violet-hi" role="img" aria-label={tr("Molt se gândește…")} />}
+                {!on && jobs.ready.includes(sk.id) && <span className="h-2 w-2 shrink-0 rounded-full bg-mint" role="img" aria-label={tr("Molt are un răspuns pentru tine")} title={tr("Molt are un răspuns pentru tine")} />}
                 {locked && sk.ai && <Lock size={12} className="hidden shrink-0 text-faint lg:block" aria-label={tr("cere un cont")} />}
               </button>
             </React.Fragment>

@@ -4,7 +4,7 @@
 // OpenRouter key, the prompts and the daily limit. There are no written fallbacks:
 // when the AI is unavailable or fails, the feature says so (see aiErrorCopy) and shows nothing generated.
 
-import { PATHS } from "./catalog.js";
+import { MAX_HABITS, PATHS } from "./catalog.js";
 import { fmtLong } from "./dates.js";
 import { capability, inViewer } from "./platform.js";
 import { getClient } from "./supabase.js";
@@ -84,6 +84,10 @@ export function aiErrorCopy(code) {
       return tr("AI-ul nu e disponibil aici.");
     case "experiment_running":
       return tr("Ai deja un experiment în desfășurare. Termină-l sau anulează-l înainte să începi altul.");
+    case "habit_limit":
+      return tr("Ai deja {MAX_HABITS} obiceiuri active. Arhivează sau șterge unul ca să adaugi altul.", { MAX_HABITS });
+    case "goal_limit":
+      return tr("Ai deja 6 obiective active. Termină sau arhivează unul ca să adaugi altul.");
     case "context_limit":
       return tr("Ai deja 50 de note active. Șterge una ca să adaugi alta.");
     case "invalid_note":
@@ -260,7 +264,8 @@ export async function coachAgent(today, signal) {
     steps: Array.isArray(r.steps) ? r.steps : [],
     proposals: r.proposals.map((p) => ({
       id: p.id || null, // the row in agent_actions, when the log was written
-      action: p.action === "add" ? "add" : p.action === "experiment" ? "experiment" : p.action === "todo" ? "todo" : "change",
+      action: p.action === "add" ? "add" : p.action === "experiment" ? "experiment" : p.action === "todo" ? "todo" : p.action === "goal" ? "goal" : "change",
+      ...(p.action === "goal" ? { title: clip(p.title, 80), why: clip(p.why, 200), deadline: p.deadline || null, steps: (Array.isArray(p.steps) ? p.steps : []).map((x) => clip(x, 80)).filter(Boolean).slice(0, 5) } : {}),
       ...(p.action === "todo" ? { title: clip(p.title, 120), date: p.date, dur: Number(p.dur) || 20 } : {}),
       habitId: p.habitId,
       name: clip(p.name, 40),
