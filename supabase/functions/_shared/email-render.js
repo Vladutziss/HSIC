@@ -3,7 +3,7 @@
 const APP_URL = "https://app.molted.eu";
 const FUNCTIONS = "https://ldggxdgrmlhcfoherdlu.supabase.co/functions/v1";
 export const CONTACT = "molted.app@gmail.com";
-export const FROM = "Molted <noreply@mail.molted.eu>";
+export const FROM = "Molted <noreply@molted.eu>";
 
 export const escapeHtml = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 

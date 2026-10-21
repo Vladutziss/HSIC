@@ -29,7 +29,7 @@
 
 ### Emailuri (Resend)
 
-- Retenție (secvență pe 4 pași) și reactivare (un singur email), trimise de funcția `campaigns` (job zilnic) de la `mail.molted.eu`; dezabonare și webhook în funcția `email`. Totul în spatele `CAMPAIGNS_ENABLED` (oprit implicit). Detalii, config, ce rămâne manual: `docs/EMAILS.md`. Șabloanele (React Email) se regenerează cu `npm run build:emails` și fișierul generat se commit-uiește.
+- Retenție (secvență pe 4 pași) și reactivare (un singur email), trimise de funcția `campaigns` (job zilnic) de la `molted.eu`; dezabonare și webhook în funcția `email`. Totul în spatele `CAMPAIGNS_ENABLED` (oprit implicit). Detalii, config, ce rămâne manual: `docs/EMAILS.md`. Șabloanele (React Email) se regenerează cu `npm run build:emails` și fișierul generat se commit-uiește.
 - Adresa de email nu e în DB până la prima autentificare după migrarea 0032 (`sync_email_profile()` o citește din tokenul Clerk). Consimțământul stă în `email_preferences`, nu în Clerk.
 
 ## Limbi (RO / EN)

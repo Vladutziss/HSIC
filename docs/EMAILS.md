@@ -1,6 +1,6 @@
 # Emails from Molted (retention and reactivation)
 
-Two campaigns, sent through Resend from `Molted <noreply@mail.molted.eu>` (reply-to `molted.app@gmail.com`). Everything is behind a feature flag: **nothing is sent until `CAMPAIGNS_ENABLED=true` is set as a Supabase secret.**
+Two campaigns, sent through Resend from `Molted <noreply@molted.eu>` (reply-to `molted.app@gmail.com`). Everything is behind a feature flag: **nothing is sent until `CAMPAIGNS_ENABLED=true` is set as a Supabase secret.**
 
 ## What is sent, and when
 
@@ -44,16 +44,13 @@ npx supabase functions deploy email --no-verify-jwt --use-api
 
 Dry run (never sends; reports counts and a sample of player ids): POST to `functions/v1/campaigns` with header `x-cron-secret: <CAMPAIGNS_SECRET>` and body `{}` while the flag is off, or `{"dry_run": true}` any time.
 
-One sample email to an address you name (fake name, nothing logged): body `{"test_to": "you@example.com", "campaign": "reactivation", "lang": "ro", "variant": "a"}`. It needs `mail.molted.eu` verified in Resend.
+One sample email to an address you name (fake name, nothing logged): body `{"test_to": "you@example.com", "campaign": "reactivation", "lang": "ro", "variant": "a"}`. It needs `molted.eu` verified in Resend.
 
 ## What is still manual
 
-1. **DNS** for `mail.molted.eu` at Namecheap (Advanced DNS), then verify it in Resend. Records (Host is the part before `.molted.eu`):
-   - TXT `resend._domainkey.mail` — the DKIM value Resend shows for the domain
-   - MX `send.mail` → `feedback-smtp.eu-west-1.amazonses.com`, priority 10
-   - TXT `send.mail` → `v=spf1 include:amazonses.com ~all`
-   - CNAME `rsend.mail` → `send.forge.rmta.net`
-   - Recommended: TXT `_dmarc` → `v=DMARC1; p=none; rua=mailto:molted.app@gmail.com` (start in monitoring mode, tighten later).
+1. **DNS** at Namecheap (Advanced DNS). The sending domain is `molted.eu` itself, verified in Resend with these records (Host is the part before `.molted.eu`): TXT `resend._domainkey` (the DKIM value Resend shows), MX `send` → `feedback-smtp.eu-west-1.amazonses.com` priority 10 (Mail Settings → Custom MX), TXT `send` → `v=spf1 include:amazonses.com ~all`, CNAME `rsend` → `send.forge.rmta.net`.
+   - Still to add: TXT `_dmarc` → `v=DMARC1; p=none; rua=mailto:molted.app@gmail.com` (monitoring mode, tighten later).
+   - Heads-up: switching Namecheap's Mail Settings to *Custom MX* (needed for the `send` MX) removed the registrar's email-forwarding MX and SPF records on the root. If addresses @molted.eu forwarded somewhere, re-add as Custom MX `@` → `eforward1..5.registrar-servers.com` and a root TXT `v=spf1 include:spf.efwd.registrar-servers.com ~all`.
 2. **Cron**: replace the placeholder in `0034_email_cron.sql` with the `CAMPAIGNS_SECRET` value and run it.
 3. **Switch on**: `supabase secrets set CAMPAIGNS_ENABLED=true` (only after DNS is verified and a test email looked right).
 4. Secrets already set: `RESEND_API_KEY`, `CAMPAIGNS_SECRET`, `RESEND_WEBHOOK_SECRET`. The Resend webhook points at `functions/v1/email?a=webhook` (events: delivered, bounced, complained).
