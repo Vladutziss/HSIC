@@ -3,6 +3,10 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  [hidden] { display: none !important; } /* .btn and friends set display, which would otherwise win over the hidden attribute */
+}
+
 @layer components {
   .skip { position: absolute; left: -999px; top: 0; z-index: 10; background: #ffc542; color: #0c0a1d; padding: 0.5rem 1rem; font-weight: 800; }
   .skip:focus { left: 0.5rem; top: 0.5rem; }
