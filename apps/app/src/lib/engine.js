@@ -92,7 +92,7 @@ export function focusXpByDay(sessions) {
 }
 
 export const habitExists = (h, day) => !(h.createdAt && day < h.createdAt) && !(h.archivedAt && day >= h.archivedAt);
-export const isScheduled = (h, day) => habitExists(h, day) && (h.days || []).includes(weekday(day));
+export const isScheduled = (h, day) => habitExists(h, day) && (h.days || []).includes(weekday(day)) && !(h.skip || []).includes(day); // skip: days taken off just once
 
 function firstDay(state, today) {
   let first = state.meta?.start || today;
