@@ -1,7 +1,7 @@
 // Account actions for the web build: sign out, export, delete. The session is Clerk's.
 import { releasePush } from "./push.js";
 
-const TABLES = ["profiles", "habits", "completions", "day_reviews", "todos", "chapters", "streak_revives", "wardrobe_items"];
+const TABLES = ["profiles", "habits", "completions", "day_reviews", "todos", "chapters", "streak_revives", "wardrobe_items", "ai_results"];
 
 export async function signOut() {
   await releasePush(); // while the session still authorises removing this device's row

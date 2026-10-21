@@ -1,36 +1,121 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { BookOpen, Clock, RefreshCw, Sparkles } from "lucide-react";
+import { BookOpen, Clock, History, RefreshCw, Sparkles, Trash2 } from "lucide-react";
 import { Button, Skeleton } from "./ui.jsx";
 import { aiErrorCopy, habitInsights, weeklyReflection } from "../lib/ai.js";
 import { coachData, hasHistory } from "../lib/coach.js";
 import { getClient } from "../lib/supabase.js";
 import { isoWeek, load as loadReflections, save as saveReflection } from "../lib/reflections.js";
-import { tr } from "../lib/i18n.js";
+import { loadResults, removeResult, saveResult } from "../lib/aiHistory.js";
+import { getLocale, tr } from "../lib/i18n.js";
 
 /**
- * One AI call per click, result kept until the next click. Not run on mount: every call
- * counts against the daily limit, and the player decides when the numbers are worth asking about.
+ * One AI call per click. Not run on mount: every call counts against the daily limit, and the player decides when the
+ * numbers are worth asking about.
+ *
+ * With `opts` ({kind, label: () => string}) the answers are also kept per account (table ai_results): the newest one is
+ * shown again after a refresh or a change of page, and the older ones are listed in the history (third value).
  */
-export function useCoach(ask) {
-  const [s, setS] = useState({ status: "idle", data: null, error: "" });
+export function useCoach(ask, opts) {
+  const [s, setS] = useState({ status: "idle", data: null, error: "", at: null });
+  const [items, setItems] = useState([]);
   const ctl = useRef(null);
+  const asked = useRef(false);
+  const kind = opts?.kind;
+  const labelRef = useRef(opts?.label);
+  labelRef.current = opts?.label;
   useEffect(() => () => ctl.current?.abort(), []);
+  useEffect(() => {
+    if (!kind) return undefined;
+    let live = true;
+    getClient()
+      .then((c) => loadResults(c, kind))
+      .then((list) => {
+        if (!live) return;
+        setItems(list);
+        // the last answer is back on screen, unless the player already asked again in the meantime
+        if (list[0] && !asked.current) setS({ status: "done", data: list[0].data, error: "", at: list[0].createdAt, id: list[0].id });
+      })
+      .catch(() => {}); // the history is a bonus
+    return () => {
+      live = false;
+    };
+  }, [kind]);
   const run = () => {
+    asked.current = true;
     ctl.current?.abort();
     ctl.current = new AbortController();
-    setS({ status: "busy", data: null, error: "" });
+    setS({ status: "busy", data: null, error: "", at: null });
     ask(ctl.current.signal)
-      .then((data) => setS({ status: "done", data, error: "" }))
-      .catch((e) => e?.code !== "cancelled" && setS({ status: "error", data: null, error: aiErrorCopy(e?.code) }));
+      .then(async (data) => {
+        let saved = null;
+        if (kind) {
+          try {
+            saved = await saveResult(await getClient(), kind, labelRef.current?.() || "", data);
+          } catch {
+            // not saved (offline, old schema): the answer is still shown
+          }
+        }
+        if (saved) setItems((l) => [saved, ...l].slice(0, 20));
+        setS({ status: "done", data, error: "", at: saved?.createdAt || new Date().toISOString(), id: saved?.id });
+      })
+      .catch((e) => e?.code !== "cancelled" && setS({ status: "error", data: null, error: aiErrorCopy(e?.code), at: null }));
   };
-  return [s, run];
+  const history = kind
+    ? {
+        items,
+        activeId: s.id,
+        pick: (it) => {
+          asked.current = true;
+          ctl.current?.abort();
+          setS({ status: "done", data: it.data, error: "", at: it.createdAt, id: it.id });
+        },
+        remove: async (it) => {
+          try {
+            await removeResult(await getClient(), it.id);
+          } catch {
+            return;
+          }
+          setItems((l) => l.filter((x) => x.id !== it.id));
+          setS((cur) => (cur.id === it.id ? { status: "idle", data: null, error: "", at: null } : cur));
+        },
+      }
+    : null;
+  return [s, run, history];
+}
+
+const stamp = (iso) => (iso ? new Date(iso).toLocaleString(getLocale(), { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "");
+
+/** The older answers of one ability: pick one to see it again, or remove it. `summary(data)` is its one-line preview. */
+function HistoryList({ history, summary }) {
+  if (!history?.items.length) return null;
+  return (
+    <details className="mt-5 border-t border-edge/60 pt-3">
+      <summary className="cursor-pointer text-xs font-extrabold text-dim hover:text-ink">
+        <History size={13} className="mr-1.5 inline" aria-hidden="true" />
+        {tr("Istoric ({length})", { length: history.items.length })}
+      </summary>
+      <ul className="mt-2 space-y-1.5">
+        {history.items.map((it) => (
+          <li key={it.id} className={`flex items-center gap-2 rounded-xl px-2 py-1.5 ring-1 ${it.id === history.activeId ? "bg-violet/10 ring-violet/40" : "bg-well ring-edge"}`}>
+            <button type="button" onClick={() => history.pick(it)} className="focus-ring min-w-0 flex-1 rounded-lg text-left">
+              <span className="block text-[11px] font-bold text-dim">{stamp(it.createdAt)}{it.label ? ` · ${it.label}` : ""}</span>
+              <span className="block truncate text-sm font-semibold text-body">{summary?.(it.data) || ""}</span>
+            </button>
+            <button type="button" onClick={() => history.remove(it)} className="focus-ring shrink-0 rounded-lg p-1.5 text-faint hover:text-rose" aria-label={tr("Șterge din istoric")}>
+              <Trash2 size={14} aria-hidden="true" />
+            </button>
+          </li>
+        ))}
+      </ul>
+    </details>
+  );
 }
 
 // The body of one Molt ability: the question (`input`), the action button right next to it, then the answer.
 // `input` is always visible (what the player types or picks); `children` is the answer, shown once the AI replied;
 // `hint` says why a tap did nothing yet; `idle` says where the answer will appear; `always` sits under the answer; `stack` puts the button under a wide input
 // (a text area) instead of beside it. The title and the line Molt says live in the Molt page, not here.
-export function Shell({ state, run, label, children, always, input, hint, idle, stack = false }) {
+export function Shell({ state, run, label, children, always, input, hint, idle, stack = false, history, summary }) {
   const busy = state.status === "busy";
   return (
     <div>
@@ -60,9 +145,15 @@ export function Shell({ state, run, label, children, always, input, hint, idle, 
           </div>
         )}
         {state.status === "error" && <p className="mt-4 rounded-xl bg-rose/10 p-3 text-sm font-semibold text-body ring-1 ring-rose/30">{state.error}</p>}
-        {state.status === "done" && <div className="anim-slide mt-4 border-t border-edge/60 pt-4">{children}</div>}
+        {state.status === "done" && (
+          <div className="anim-slide mt-4 border-t border-edge/60 pt-4">
+            {state.at && history && <p className="mb-2 text-[11px] font-bold text-dim">{tr("Răspuns din {when}", { when: stamp(state.at) })}</p>}
+            {children}
+          </div>
+        )}
       </div>
       {always}
+      <HistoryList history={history} summary={summary} />
     </div>
   );
 }
@@ -86,11 +177,11 @@ export function NeedHistory({ data, onNotes }) {
 /** Patterns in the last 4 weeks of check-ins (Statistici). */
 export function InsightsPanel({ state, today, ai, onNotes }) {
   const data = useMemo(() => coachData(state, today), [state, today]);
-  const [s, run] = useCoach((signal) => habitInsights(data, signal));
+  const [s, run, history] = useCoach((signal) => habitInsights(data, signal), { kind: "patterns", label: () => tr("ultimele 4 săptămâni") });
   if (!ai?.server) return null;
   if (!hasHistory(data)) return <NeedHistory data={data} onNotes={onNotes} />;
   return (
-    <Shell state={s} run={run} label={tr("Ce observi?")} idle={tr("Aici apar 3 tipare găsite în bifările tale.")}>
+    <Shell state={s} run={run} label={tr("Ce observi?")} idle={tr("Aici apar 3 tipare găsite în bifările tale.")} history={history} summary={(d) => (Array.isArray(d) ? d.map((i) => i.title).join(" · ") : "")}>
       <ul className="grid gap-3 md:grid-cols-3">
         {s.data?.map((i) => (
           <li key={i.title} className="inset p-3">
