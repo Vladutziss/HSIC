@@ -11,7 +11,7 @@
     "build": "npm run build -w @molted/app",
     "build:web": "npm run build -w @molted/web",
     "build:artifact": "npm run build:artifact -w @molted/app",
-    "test": "npm test -w @molted/app",
+    "test": "npm test -w @molted/app && npm test -w @molted/web",
     "sync:functions": "node scripts/sync-functions.mjs"
   }
 }
