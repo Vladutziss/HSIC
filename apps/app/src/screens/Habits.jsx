@@ -205,12 +205,13 @@ function LayoutSwitch({ value, onChange }) {
             role="radio"
             aria-checked={on}
             onClick={() => onChange(l.id)}
-            className={`focus-ring flex items-center gap-1.5 px-3 py-2 text-xs font-extrabold transition ${i > 0 ? "border-l border-edge" : ""} ${
+            aria-label={l.label}
+            title={l.label}
+            className={`focus-ring flex items-center px-3 py-2.5 text-xs font-extrabold transition ${i > 0 ? "border-l border-edge" : ""} ${
               on ? "bg-gold text-on-gold" : "text-dim hover:text-ink"
             }`}
           >
-            <Icon size={14} strokeWidth={2.5} aria-hidden="true" />
-            {l.label}
+            <Icon size={16} strokeWidth={2.5} aria-hidden="true" />
           </button>
         );
       })}
@@ -314,7 +315,25 @@ export default function Habits({ state, d, today, go, ai, focus, setFocus, onAdd
           <h1 className="font-pixel text-3xl text-ink">{tr("Obiceiuri")}</h1>
           <p className="text-sm font-semibold text-dim">{tr("{length} din {MAX_HABITS} active · fiecare obicei are propriul momentum", { length: active.length, MAX_HABITS })}</p>
         </div>
-        <LayoutSwitch value={layout} onChange={setLayout} />
+      </div>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div className="flex flex-col items-start gap-2">
+          <Button icon={Plus} onClick={onAdd} disabled={active.length >= MAX_HABITS}>{tr("Adaugă obicei")}</Button>
+          {active.length >= MAX_HABITS && (
+            <p role="status" className="inline-flex items-center gap-2 rounded-xl bg-well px-3 py-1.5 text-xs font-semibold text-dim ring-1 ring-edge">
+              <Info size={14} className="shrink-0 text-faint" aria-hidden="true" />{tr("Poți avea maximum {MAX_HABITS} obiceiuri active", { MAX_HABITS })}</p>
+          )}
+        </div>
+        <div className="flex items-end gap-3">
+          <LayoutSwitch value={layout} onChange={setLayout} />
+          {active.length > 1 && (
+            <Field label={tr("Sortează după")} htmlFor="habits-sort">
+              <div className="w-56">
+                <Select id="habits-sort" value={sort} onChange={pickSort} options={SORTS.map((x) => ({ value: x.value, label: x.value === sort && desc ? x.rev : x.label }))} />
+              </div>
+            </Field>
+          )}
+        </div>
       </div>
       {ai?.server && (
         <button
@@ -330,22 +349,6 @@ export default function Habits({ state, d, today, go, ai, focus, setFocus, onAdd
           <span className="shrink-0 text-xs font-extrabold text-violet-hi">{tr("Deschide →")}</span>
         </button>
       )}
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div className="flex flex-col items-start gap-2">
-          <Button icon={Plus} onClick={onAdd} disabled={active.length >= MAX_HABITS}>{tr("Adaugă obicei")}</Button>
-          {active.length >= MAX_HABITS && (
-            <p role="status" className="inline-flex items-center gap-2 rounded-xl bg-well px-3 py-1.5 text-xs font-semibold text-dim ring-1 ring-edge">
-              <Info size={14} className="shrink-0 text-faint" aria-hidden="true" />{tr("Poți avea maximum {MAX_HABITS} obiceiuri active", { MAX_HABITS })}</p>
-          )}
-        </div>
-        {active.length > 1 && (
-          <Field label={tr("Sortează după")} htmlFor="habits-sort">
-            <div className="w-56">
-              <Select id="habits-sort" value={sort} onChange={pickSort} options={SORTS.map((x) => ({ value: x.value, label: x.value === sort && desc ? x.rev : x.label }))} />
-            </div>
-          </Field>
-        )}
-      </div>
       {active.length === 0 ? (
         <Panel>
           <Empty icon={ScrollText} title={tr("Niciun obicei activ")} action={<Button icon={Plus} onClick={onAdd}>{tr("Adaugă primul obicei")}</Button>}>{tr("Alege din catalog sau creează unul personalizat.")}</Empty>
