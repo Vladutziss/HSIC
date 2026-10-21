@@ -272,8 +272,8 @@ test("vercel.json serves every /ro/giveaways/<slug>/ from the shell and hides th
   const v = JSON.parse(readFileSync(new URL("../vercel.json", import.meta.url), "utf8"));
   // both spellings, so the rewrite matches whichever way the host normalizes the trailing slash
   assert.deepEqual(v.rewrites, [
-    { source: "/ro/giveaways/:slug/", destination: "/ro/giveaways/_shell/" },
-    { source: "/ro/giveaways/:slug", destination: "/ro/giveaways/_shell/" },
+    { source: "/ro/giveaways/:slug([a-z0-9-]{3,60})/", destination: "/ro/giveaways/_shell/" },
+    { source: "/ro/giveaways/:slug([a-z0-9-]{3,60})", destination: "/ro/giveaways/_shell/" },
   ]);
   assert.ok(v.redirects.some((r) => r.source === "/ro/giveaways/_shell/" && r.destination === "/ro/giveaways/"));
   assert.ok(!JSON.stringify(v).includes("/en/giveaways"));
