@@ -6,6 +6,7 @@ import React from "react";
 import { CalendarDays, Target } from "lucide-react";
 import { pct } from "../lib/objectives.js";
 import { todosForToday } from "../lib/todos.js";
+import { tr } from "../lib/i18n.js";
 
 function TabCard({ id, on, icon: Icon, title, short, sub, badge, onClick }) {
   return (
@@ -27,7 +28,7 @@ function TabCard({ id, on, icon: Icon, title, short, sub, badge, onClick }) {
           <span className="sm:hidden">{short}</span>
           <span className="hidden sm:inline">{title}</span>
         </span>
-        <span className="block truncate text-xs font-semibold text-dim">{sub}</span>
+        <span className="block text-xs font-semibold text-dim">{sub}</span>
       </span>
       {badge > 0 && <span className="absolute -right-1.5 -top-1.5 grid h-5 min-w-5 place-items-center rounded-full bg-ember px-1 text-[11px] font-black text-night">{badge}</span>}
     </button>
@@ -42,26 +43,26 @@ export default function PlanHub({ view, go, state, today, goalsDue = 0, children
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="font-pixel text-3xl text-ink">Plan</h1>
-        <p className="text-sm font-semibold text-dim">Ce ai de făcut azi și unde vrei să ajungi, într-un singur loc.</p>
+        <h1 className="font-pixel text-3xl text-ink">{tr("Plan")}</h1>
+        <p className="text-sm font-semibold text-dim">{tr("Ce ai de făcut azi și unde vrei să ajungi, într-un singur loc.")}</p>
       </div>
-      <div role="tablist" aria-label="Părțile din Plan" className="grid grid-cols-2 gap-3">
+      <div role="tablist" aria-label={tr("Părțile din Plan")} className="grid grid-cols-2 gap-3">
         <TabCard
           id="plan-tab-calendar"
           on={here === "plan"}
           icon={CalendarDays}
-          title="Calendar și to-do"
-          short="Calendar"
-          sub={todosLeft ? `${todosLeft} ${todosLeft === 1 ? "to-do" : "to-do-uri"} de făcut azi` : "Nimic de făcut azi"}
+          title={tr("Calendar și to-do")}
+          short={tr("Calendar")}
+          sub={todosLeft ? tr("{todosLeft} {v} de făcut azi", { todosLeft, v: todosLeft === 1 ? tr("to-do") : tr("to-do-uri") }) : tr("Nimic de făcut azi")}
           onClick={() => go("plan")}
         />
         <TabCard
           id="plan-tab-goals"
           on={here === "goals"}
           icon={Target}
-          title="Obiective și scopuri"
-          short="Obiective"
-          sub={goals.length ? `${goals.length} ${goals.length === 1 ? "obiectiv" : "obiective"} · ${avg}% progres` : "Pune-ți primul obiectiv"}
+          title={tr("Obiective și scopuri")}
+          short={tr("Obiective")}
+          sub={goals.length ? tr("{length} {v} · {avg}% progres", { length: goals.length, v: goals.length === 1 ? tr("obiectiv") : tr("obiective"), avg }) : tr("Pune-ți primul obiectiv")}
           badge={goalsDue}
           onClick={() => go("goals")}
         />

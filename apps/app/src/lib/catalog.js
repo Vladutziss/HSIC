@@ -1,61 +1,62 @@
+import { tr } from "./i18n.js";
 // Paths decide which creature hatches from the egg; habits come from a
 // predefined catalog or are created by the player.
 
 export const PATHS = {
   sport: {
     id: "sport",
-    label: "Sport",
-    cls: "Atlet",
+    label: tr("Sport"),
+    cls: tr("Atlet"),
     icon: "dumbbell",
     color: "#ff7b47",
-    pitch: "Forță, rezistență și energie.",
-    egg: "Oul tău va deveni un Atlet.",
+    pitch: tr("Forță, rezistență și energie."),
+    egg: tr("Oul tău va deveni un Atlet."),
   },
   studiu: {
     id: "studiu",
-    label: "Studiu",
-    cls: "Cărturar",
+    label: tr("Studiu"),
+    cls: tr("Cărturar"),
     icon: "book",
     color: "#5cb8ff",
-    pitch: "Învățare, concentrare, cunoaștere.",
-    egg: "Oul tău va deveni un Cărturar.",
+    pitch: tr("Învățare, concentrare, cunoaștere."),
+    egg: tr("Oul tău va deveni un Cărturar."),
   },
   bani: {
     id: "bani",
-    label: "Bani",
-    cls: "Negustor",
+    label: tr("Bani"),
+    cls: tr("Negustor"),
     icon: "coins",
     color: "#ffc542",
-    pitch: "Economii, investiții, proiecte proprii.",
-    egg: "Oul tău va deveni un Negustor.",
+    pitch: tr("Economii, investiții, proiecte proprii."),
+    egg: tr("Oul tău va deveni un Negustor."),
   },
   minte: {
     id: "minte",
-    label: "Minte",
-    cls: "Înțelept",
+    label: tr("Minte"),
+    cls: tr("Înțelept"),
     icon: "brain",
     color: "#3fe0a5",
-    pitch: "Calm, somn bun, echilibru.",
-    egg: "Oul tău va deveni un Înțelept.",
+    pitch: tr("Calm, somn bun, echilibru."),
+    egg: tr("Oul tău va deveni un Înțelept."),
   },
   creativ: {
     id: "creativ",
-    label: "Creativitate",
-    cls: "Bard",
+    label: tr("Creativitate"),
+    cls: tr("Bard"),
     icon: "palette",
     color: "#c58bff",
-    pitch: "Artă, muzică, scris.",
-    egg: "Oul tău va deveni un Bard.",
+    pitch: tr("Artă, muzică, scris."),
+    egg: tr("Oul tău va deveni un Bard."),
   },
 };
 export const PATH_LIST = Object.values(PATHS);
 
 export const DEFAULT_NAMES = {
-  sport: ["Fulger", "Sprint", "Titan"],
-  studiu: ["Pana", "Socrat", "Sigma"],
-  bani: ["Bănuț", "Galben", "Ducat"],
-  minte: ["Zen", "Lotus", "Briza"],
-  creativ: ["Ecou", "Lira", "Pensula"],
+  sport: [tr("Fulger"), tr("Sprint"), tr("Titan")],
+  studiu: [tr("Pana"), tr("Socrat"), tr("Sigma")],
+  bani: [tr("Bănuț"), tr("Galben"), tr("Ducat")],
+  minte: [tr("Zen"), tr("Lotus"), tr("Briza")],
+  creativ: [tr("Ecou"), tr("Lira"), tr("Pensula")],
 };
 
 const EVERY_DAY = [0, 1, 2, 3, 4, 5, 6];
@@ -63,35 +64,35 @@ const WEEKDAYS = [1, 2, 3, 4, 5];
 
 // diff: 1 = ușor, 2 = mediu, 3 = greu
 export const CATALOG = [
-  { id: "gym", cat: "sport", name: "Antrenament la sală", icon: "dumbbell", diff: 3, days: [1, 3, 5], time: "18:00", target: "45 de minute" },
-  { id: "run", cat: "sport", name: "Alergare", icon: "footprints", diff: 2, days: [2, 4, 6], time: "07:30", target: "3 km" },
-  { id: "steps", cat: "sport", name: "10.000 de pași", icon: "activity", diff: 1, days: EVERY_DAY, time: null, target: "10.000 de pași" },
-  { id: "stretch", cat: "sport", name: "Stretching", icon: "person", diff: 1, days: EVERY_DAY, time: "08:00", target: "10 minute" },
-  { id: "pushups", cat: "sport", name: "Flotări și abdomene", icon: "flame", diff: 2, days: EVERY_DAY, time: null, target: "3 serii" },
+  { id: "gym", cat: "sport", name: tr("Antrenament la sală"), icon: "dumbbell", diff: 3, days: [1, 3, 5], time: "18:00", target: tr("45 de minute") },
+  { id: "run", cat: "sport", name: tr("Alergare"), icon: "footprints", diff: 2, days: [2, 4, 6], time: "07:30", target: tr("3 km") },
+  { id: "steps", cat: "sport", name: tr("10.000 de pași"), icon: "activity", diff: 1, days: EVERY_DAY, time: null, target: tr("10.000 de pași") },
+  { id: "stretch", cat: "sport", name: tr("Stretching"), icon: "person", diff: 1, days: EVERY_DAY, time: "08:00", target: tr("10 minute") },
+  { id: "pushups", cat: "sport", name: tr("Flotări și abdomene"), icon: "flame", diff: 2, days: EVERY_DAY, time: null, target: tr("3 serii") },
 
-  { id: "study", cat: "studiu", name: "Sesiune de studiu", icon: "graduation", diff: 3, days: WEEKDAYS, time: "17:00", target: "50 de minute fără telefon" },
-  { id: "read", cat: "studiu", name: "Citit", icon: "book", diff: 1, days: EVERY_DAY, time: "22:00", target: "20 de pagini" },
-  { id: "math", cat: "studiu", name: "Probleme de matematică", icon: "sigma", diff: 2, days: EVERY_DAY, time: null, target: "3 probleme rezolvate" },
-  { id: "lang", cat: "studiu", name: "Limbă străină", icon: "languages", diff: 1, days: EVERY_DAY, time: null, target: "15 minute" },
-  { id: "cards", cat: "studiu", name: "Recapitulare cu fișe", icon: "layers", diff: 1, days: EVERY_DAY, time: null, target: "20 de fișe" },
+  { id: "study", cat: "studiu", name: tr("Sesiune de studiu"), icon: "graduation", diff: 3, days: WEEKDAYS, time: "17:00", target: tr("50 de minute fără telefon") },
+  { id: "read", cat: "studiu", name: tr("Citit"), icon: "book", diff: 1, days: EVERY_DAY, time: "22:00", target: tr("20 de pagini") },
+  { id: "math", cat: "studiu", name: tr("Probleme de matematică"), icon: "sigma", diff: 2, days: EVERY_DAY, time: null, target: tr("3 probleme rezolvate") },
+  { id: "lang", cat: "studiu", name: tr("Limbă străină"), icon: "languages", diff: 1, days: EVERY_DAY, time: null, target: tr("15 minute") },
+  { id: "cards", cat: "studiu", name: tr("Recapitulare cu fișe"), icon: "layers", diff: 1, days: EVERY_DAY, time: null, target: tr("20 de fișe") },
 
-  { id: "expenses", cat: "bani", name: "Notează cheltuielile", icon: "receipt", diff: 1, days: EVERY_DAY, time: "21:30", target: "toate cheltuielile zilei" },
-  { id: "save", cat: "bani", name: "Pune bani deoparte", icon: "piggy", diff: 2, days: [1], time: null, target: "10% din venit" },
-  { id: "invest", cat: "bani", name: "Învață despre investiții", icon: "trending", diff: 1, days: [2, 4], time: null, target: "un articol sau un capitol" },
-  { id: "project", cat: "bani", name: "Proiectul propriu", icon: "rocket", diff: 3, days: WEEKDAYS, time: "19:00", target: "o oră de lucru concentrat" },
-  { id: "nobuy", cat: "bani", name: "Fără cumpărături impulsive", icon: "bag", diff: 1, days: EVERY_DAY, time: null, target: "nimic neplanificat" },
+  { id: "expenses", cat: "bani", name: tr("Notează cheltuielile"), icon: "receipt", diff: 1, days: EVERY_DAY, time: "21:30", target: tr("toate cheltuielile zilei") },
+  { id: "save", cat: "bani", name: tr("Pune bani deoparte"), icon: "piggy", diff: 2, days: [1], time: null, target: tr("10% din venit") },
+  { id: "invest", cat: "bani", name: tr("Învață despre investiții"), icon: "trending", diff: 1, days: [2, 4], time: null, target: tr("un articol sau un capitol") },
+  { id: "project", cat: "bani", name: tr("Proiectul propriu"), icon: "rocket", diff: 3, days: WEEKDAYS, time: "19:00", target: tr("o oră de lucru concentrat") },
+  { id: "nobuy", cat: "bani", name: tr("Fără cumpărături impulsive"), icon: "bag", diff: 1, days: EVERY_DAY, time: null, target: tr("nimic neplanificat") },
 
-  { id: "meditate", cat: "minte", name: "Meditație", icon: "wind", diff: 1, days: EVERY_DAY, time: "07:00", target: "10 minute" },
-  { id: "sleep", cat: "minte", name: "Somn la timp", icon: "moon", diff: 2, days: EVERY_DAY, time: "23:00", target: "în pat până la 23:00" },
-  { id: "journal", cat: "minte", name: "Jurnal", icon: "notebook", diff: 1, days: EVERY_DAY, time: "22:30", target: "trei rânduri" },
-  { id: "water", cat: "minte", name: "Hidratare", icon: "droplets", diff: 1, days: EVERY_DAY, time: null, target: "2 litri de apă" },
-  { id: "nophone", cat: "minte", name: "Dimineață fără telefon", icon: "phoneoff", diff: 2, days: EVERY_DAY, time: "07:00", target: "prima oră după trezire" },
+  { id: "meditate", cat: "minte", name: tr("Meditație"), icon: "wind", diff: 1, days: EVERY_DAY, time: "07:00", target: tr("10 minute") },
+  { id: "sleep", cat: "minte", name: tr("Somn la timp"), icon: "moon", diff: 2, days: EVERY_DAY, time: "23:00", target: tr("în pat până la 23:00") },
+  { id: "journal", cat: "minte", name: tr("Jurnal"), icon: "notebook", diff: 1, days: EVERY_DAY, time: "22:30", target: tr("trei rânduri") },
+  { id: "water", cat: "minte", name: tr("Hidratare"), icon: "droplets", diff: 1, days: EVERY_DAY, time: null, target: tr("2 litri de apă") },
+  { id: "nophone", cat: "minte", name: tr("Dimineață fără telefon"), icon: "phoneoff", diff: 2, days: EVERY_DAY, time: "07:00", target: tr("prima oră după trezire") },
 
-  { id: "draw", cat: "creativ", name: "Desen", icon: "brush", diff: 2, days: EVERY_DAY, time: null, target: "30 de minute" },
-  { id: "music", cat: "creativ", name: "Exersează la instrument", icon: "music", diff: 2, days: EVERY_DAY, time: "20:00", target: "30 de minute" },
-  { id: "write", cat: "creativ", name: "Scris creativ", icon: "feather", diff: 2, days: EVERY_DAY, time: null, target: "300 de cuvinte" },
-  { id: "photo", cat: "creativ", name: "Fotografie", icon: "camera", diff: 1, days: [0, 6], time: null, target: "o fotografie bună" },
-  { id: "craft", cat: "creativ", name: "Proiect creativ", icon: "lightbulb", diff: 3, days: [6], time: "11:00", target: "două ore" },
+  { id: "draw", cat: "creativ", name: tr("Desen"), icon: "brush", diff: 2, days: EVERY_DAY, time: null, target: tr("30 de minute") },
+  { id: "music", cat: "creativ", name: tr("Exersează la instrument"), icon: "music", diff: 2, days: EVERY_DAY, time: "20:00", target: tr("30 de minute") },
+  { id: "write", cat: "creativ", name: tr("Scris creativ"), icon: "feather", diff: 2, days: EVERY_DAY, time: null, target: tr("300 de cuvinte") },
+  { id: "photo", cat: "creativ", name: tr("Fotografie"), icon: "camera", diff: 1, days: [0, 6], time: null, target: tr("o fotografie bună") },
+  { id: "craft", cat: "creativ", name: tr("Proiect creativ"), icon: "lightbulb", diff: 3, days: [6], time: "11:00", target: tr("două ore") },
 ];
 
 export const RECOMMENDED = {

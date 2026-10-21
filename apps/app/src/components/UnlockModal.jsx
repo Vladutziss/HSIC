@@ -3,6 +3,7 @@ import { Shirt } from "lucide-react";
 import { Button, Chip, Modal } from "./ui.jsx";
 import { Sprite, eggCrack } from "./Sprite.jsx";
 import { RARITY_LABEL, SLOT_LABEL, itemById } from "../lib/cosmetics.js";
+import { tr } from "../lib/i18n.js";
 
 const RARITY_TONE = { common: "dim", rare: "sky", epic: "violet", legendary: "gold" };
 
@@ -21,14 +22,12 @@ export function UnlockModal({ ids, state, d, onWear, onOpen, onClose }) {
     <Modal
       open
       onClose={onClose}
-      title={one ? "Ai deblocat ceva nou" : `Ai deblocat ${items.length} obiecte`}
+      title={one ? tr("Ai deblocat ceva nou") : tr("Ai deblocat {length} obiecte", { length: items.length })}
       icon={Shirt}
       tone="gold"
       footer={
         <>
-          <Button variant="ghost" onClick={onClose}>
-            Mai târziu
-          </Button>
+          <Button variant="ghost" onClick={onClose}>{tr("Mai târziu")}</Button>
           {one ? (
             <Button
               onClick={() => {
@@ -36,9 +35,7 @@ export function UnlockModal({ ids, state, d, onWear, onOpen, onClose }) {
                 onClose();
               }}
               data-autofocus
-            >
-              Îmbracă acum
-            </Button>
+            >{tr("Îmbracă acum")}</Button>
           ) : (
             <Button
               onClick={() => {
@@ -46,16 +43,14 @@ export function UnlockModal({ ids, state, d, onWear, onOpen, onClose }) {
                 onClose();
               }}
               data-autofocus
-            >
-              Deschide Garderoba
-            </Button>
+            >{tr("Deschide Garderoba")}</Button>
           )}
         </>
       }
     >
       <div className="flex flex-col items-center gap-4 text-center">
         <div className="pedestal flex justify-center rounded-3xl px-10 pt-2">
-          <Sprite path={path} stage={c.stage.id} mood="joy" size={160} crack={eggCrack(c.ep)} look={{ ...d.look, [first.slot]: first.id }} label={`${c.name || "Moltul tău"} purtând ${first.name}`} />
+          <Sprite path={path} stage={c.stage.id} mood="joy" size={160} crack={eggCrack(c.ep)} look={{ ...d.look, [first.slot]: first.id }} label={tr("{v} purtând {name}", { v: c.name || tr("Moltul tău"), name: first.name })} />
         </div>
         <ul className="w-full space-y-2 text-left">
           {items.map((i) => (
@@ -68,7 +63,7 @@ export function UnlockModal({ ids, state, d, onWear, onOpen, onClose }) {
             </li>
           ))}
         </ul>
-        <p className="text-sm font-semibold text-body">Le-ai câștigat din ce ai făcut. Rămân ale tale, orice s-ar întâmpla cu momentum-ul.</p>
+        <p className="text-sm font-semibold text-body">{tr("Le-ai câștigat din ce ai făcut. Rămân ale tale, orice s-ar întâmpla cu momentum-ul.")}</p>
       </div>
     </Modal>
   );

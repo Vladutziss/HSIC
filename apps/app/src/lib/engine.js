@@ -5,12 +5,13 @@
 import { addDays, dayKey, diffDays, mondayOf, weekday } from "./dates.js";
 import { withHistory } from "./retired.js";
 import { stepDoneDays } from "./objectives.js";
+import { tr } from "./i18n.js";
 
 // xp: momentum for a check-in; ep: evolution points the companion earns from it
 export const DIFF = {
-  1: { xp: 10, ep: 1, label: "Ușor" },
-  2: { xp: 20, ep: 2, label: "Mediu" },
-  3: { xp: 30, ep: 3, label: "Greu" },
+  1: { xp: 10, ep: 1, label: tr("Ușor") },
+  2: { xp: 20, ep: 2, label: tr("Mediu") },
+  3: { xp: 30, ep: 3, label: tr("Greu") },
 };
 export const diffEp = (d) => (DIFF[d] || DIFF[2]).ep;
 export const diffXp = (d) => (DIFF[d] || DIFF[2]).xp;
@@ -40,16 +41,16 @@ export const RULES = {
 };
 
 export const LEVELS = [
-  { lvl: 1, name: "Scânteie", min: 0 },
-  { lvl: 2, name: "Jar", min: 150 },
-  { lvl: 3, name: "Flacără", min: 450 },
-  { lvl: 4, name: "Torță", min: 900 },
-  { lvl: 5, name: "Foc de tabără", min: 1500 },
-  { lvl: 6, name: "Far", min: 2300 },
-  { lvl: 7, name: "Vâlvătaie", min: 3300 },
-  { lvl: 8, name: "Cometă", min: 4500 },
-  { lvl: 9, name: "Stea", min: 6200 },
-  { lvl: 10, name: "Supernovă", min: 8500 },
+  { lvl: 1, name: tr("Scânteie"), min: 0 },
+  { lvl: 2, name: tr("Jar"), min: 150 },
+  { lvl: 3, name: tr("Flacără"), min: 450 },
+  { lvl: 4, name: tr("Torță"), min: 900 },
+  { lvl: 5, name: tr("Foc de tabără"), min: 1500 },
+  { lvl: 6, name: tr("Far"), min: 2300 },
+  { lvl: 7, name: tr("Vâlvătaie"), min: 3300 },
+  { lvl: 8, name: tr("Cometă"), min: 4500 },
+  { lvl: 9, name: tr("Stea"), min: 6200 },
+  { lvl: 10, name: tr("Supernovă"), min: 8500 },
 ];
 
 export function levelInfo(points) {
@@ -333,12 +334,12 @@ export function reviveInfo(state, today) {
 // ---------------------------------------------------------------- companion
 
 export const STAGES = [
-  { id: "egg", name: "Ou", min: 0 },
-  { id: "hatchling", name: "Pui", min: 3 },
-  { id: "apprentice", name: "Ucenic", min: 15 },
-  { id: "adept", name: "Adept", min: 45 },
-  { id: "master", name: "Maestru", min: 105 },
-  { id: "legend", name: "Legendă", min: 210 },
+  { id: "egg", name: tr("Ou"), min: 0 },
+  { id: "hatchling", name: tr("Pui"), min: 3 },
+  { id: "apprentice", name: tr("Ucenic"), min: 15 },
+  { id: "adept", name: tr("Adept"), min: 45 },
+  { id: "master", name: tr("Maestru"), min: 105 },
+  { id: "legend", name: tr("Legendă"), min: 210 },
 ];
 
 /** The companion grows from check-ins: each one earns the habit's difficulty in points (1, 2 or 3). */

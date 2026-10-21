@@ -6,13 +6,14 @@ import { ObjectivesMini } from "./Objectives.jsx";
 import { fmtDay, fmtLong } from "../lib/dates.js";
 import { RULES } from "../lib/engine.js";
 import { hintFor, nextReward } from "../lib/cosmetics.js";
+import { tr } from "../lib/i18n.js";
 
 function greeting() {
   const h = new Date().getHours();
-  if (h < 5) return "Noapte bună";
-  if (h < 11) return "Bună dimineața";
-  if (h < 18) return "Bună ziua";
-  return "Bună seara";
+  if (h < 5) return tr("Noapte bună");
+  if (h < 11) return tr("Bună dimineața");
+  if (h < 18) return tr("Bună ziua");
+  return tr("Bună seara");
 }
 
 function Hero({ state, d, today, onFocus }) {
@@ -21,10 +22,10 @@ function Hero({ state, d, today, onFocus }) {
   const left = d.scheduled.length - d.doneScheduled;
   const sub =
     d.scheduled.length === 0
-      ? "Azi nu ai misiuni programate. Poți face oricare obicei ca bonus."
+      ? tr("Azi nu ai misiuni programate. Poți face oricare obicei ca bonus.")
       : left === 0
-        ? "Toate misiunile de azi sunt gata. Cufărul zilei e deschis!"
-        : `Mai ai ${left} ${left === 1 ? "misiune" : "misiuni"} azi. ${d.companion.stage.id === "egg" ? "Prima bifă îți încălzește oul." : "Fiecare bifă îl ajută pe " + (d.companion.name || "personajul tău") + " să crească."}`;
+        ? tr("Toate misiunile de azi sunt gata. Cufărul zilei e deschis!")
+        : tr("Mai ai {left} {v} azi. {v2}", { left, v: left === 1 ? tr("misiune") : tr("misiuni"), v2: d.companion.stage.id === "egg" ? tr("Prima bifă îți încălzește oul.") : tr("Fiecare bifă îl ajută pe ") + (d.companion.name || tr("personajul tău")) + tr(" să crească.") });
   return (
     <Panel tone="gold" corners className="overflow-hidden p-5 sm:p-6">
       <div className="pointer-events-none absolute -right-16 -top-24 h-64 w-64 rounded-full bg-gold/10 blur-3xl" aria-hidden="true" />
@@ -42,18 +43,18 @@ function Hero({ state, d, today, onFocus }) {
         <div className="flex w-full items-center gap-4 sm:w-auto">
           <LevelBadge lvl={level.lvl} size={76} />
           <div className="min-w-0 flex-1 sm:w-56 sm:flex-none">
-            <div className="text-[11px] font-extrabold uppercase tracking-wider text-dim">Momentum · {level.name}</div>
+            <div className="text-[11px] font-extrabold uppercase tracking-wider text-dim">{tr("Momentum · {name}", { name: level.name })}</div>
             <div className="font-pixel tabular text-4xl leading-none text-ink">{entry?.momentum ?? 0}</div>
-            <Bar value={level.progress} className="mt-2" label="Progres spre nivelul următor" />
-            <div className="mt-1 text-xs font-bold text-dim">{level.next ? `${level.toNext} până la nivelul ${level.next.lvl}, ${level.next.name}` : "Ai atins nivelul maxim"}</div>
+            <Bar value={level.progress} className="mt-2" label={tr("Progres spre nivelul următor")} />
+            <div className="mt-1 text-xs font-bold text-dim">{level.next ? tr("{toNext} până la nivelul {lvl}, {name}", { toNext: level.toNext, lvl: level.next.lvl, name: level.next.name }) : tr("Ai atins nivelul maxim")}</div>
           </div>
         </div>
       </div>
       <div className="relative mt-5 grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
-        <MiniStat icon={Zap} tone="text-gold" label="Azi" value={`+${entry?.gain ?? 0}`} sub={entry?.closed ? "zi închisă" : "provizoriu"} />
-        <MiniStat icon={TrendingUp} tone="text-mint" label="Săptămâna asta" value={`+${week}`} sub="momentum" />
-        <MiniStat icon={Flame} tone="text-ember" label="Serie" value={`${streak.current} ${streak.current === 1 ? "zi" : "zile"}`} sub={`record: ${streak.best}`} />
-        <MiniStat icon={FlaskConical} tone="text-mint" label="Revive-uri" value={`${d.revive.left}/${RULES.revivesPerMonth}`} sub="luna aceasta" />
+        <MiniStat icon={Zap} tone="text-gold" label={tr("Azi")} value={`+${entry?.gain ?? 0}`} sub={entry?.closed ? tr("zi închisă") : tr("provizoriu")} />
+        <MiniStat icon={TrendingUp} tone="text-mint" label={tr("Săptămâna asta")} value={`+${week}`} sub={tr("momentum")} />
+        <MiniStat icon={Flame} tone="text-ember" label={tr("Serie")} value={`${streak.current} ${streak.current === 1 ? tr("zi") : tr("zile")}`} sub={`record: ${streak.best}`} />
+        <MiniStat icon={FlaskConical} tone="text-mint" label={tr("Revive-uri")} value={`${d.revive.left}/${RULES.revivesPerMonth}`} sub={tr("luna aceasta")} />
       </div>
     </Panel>
   );
@@ -82,18 +83,16 @@ function ReviveBanner({ d, onRevive }) {
         <FlaskConical size={24} aria-hidden="true" />
       </span>
       <div className="min-w-[220px] flex-1">
-        <div className="font-extrabold text-ink">Seria ta de {offer.streakBefore} zile s-a întrerupt</div>
+        <div className="font-extrabold text-ink">{tr("Seria ta de {streakBefore} zile s-a întrerupt", { streakBefore: offer.streakBefore })}</div>
         <p className="text-sm text-body">
-          {n === 1 ? `Ai sărit peste ${fmtDay(offer.days[0])}.` : `Ai sărit peste ${fmtDay(offer.days[0])} și ${fmtDay(offer.days[1])}.`}{" "}
+          {n === 1 ? tr("Ai sărit peste {fmtDay}.", { fmtDay: fmtDay(offer.days[0]) }) : tr("Ai sărit peste {fmtDay} și {fmtDay2}.", { fmtDay: fmtDay(offer.days[0]), fmtDay2: fmtDay(offer.days[1]) })}{" "}
           {offer.affordable
-            ? `Un revive o repară${n > 1 ? " (îți trebuie două)" : ""}. Ai ${d.revive.left} luna aceasta.`
-            : "Nu mai ai destule revive-uri luna aceasta, dar seria nouă începe chiar azi."}
+            ? tr("Un revive o repară{v}. Ai {left} luna aceasta.", { v: n > 1 ? tr(" (îți trebuie două)") : "", left: d.revive.left })
+            : tr("Nu mai ai destule revive-uri luna aceasta, dar seria nouă începe chiar azi.")}
         </p>
       </div>
       {offer.affordable && (
-        <Button id="use-revive" variant="mint" icon={FlaskConical} onClick={onRevive}>
-          Folosește {n === 1 ? "revive" : "2 revive-uri"}
-        </Button>
+        <Button id="use-revive" variant="mint" icon={FlaskConical} onClick={onRevive}>{tr("Folosește {v}", { v: n === 1 ? tr("revive") : tr("2 revive-uri") })}</Button>
       )}
     </Panel>
   );
@@ -104,10 +103,7 @@ function ResetWarning({ d }) {
   return (
     <div className="flex items-start gap-3 rounded-2xl bg-ember/10 p-4 ring-1 ring-ember/30">
       <AlertTriangle size={20} className="mt-0.5 shrink-0 text-ember" aria-hidden="true" />
-      <p className="text-sm font-semibold text-body">
-        <span className="font-extrabold text-ink">Ultima zi înainte de resetare.</span> Ai avut {d.quietDays} {d.quietDays === 1 ? "zi" : "zile"} fără activitate. Dacă azi bifezi un singur lucru, momentum-ul tău de{" "}
-        {d.timeline.byDay[d.today]?.momentum ?? 0} rămâne; altfel pornește din nou de la zero.
-      </p>
+      <p className="text-sm font-semibold text-body">{tr("{span} Ai avut {quietDays} {v} fără activitate. Dacă azi bifezi un singur lucru, momentum-ul tău de {v2} rămâne; altfel pornește din nou de la zero.", { span: <span className="font-extrabold text-ink">{tr("Ultima zi înainte de resetare.")}</span>, quietDays: d.quietDays, v: d.quietDays === 1 ? tr("zi") : tr("zile"), v2: d.timeline.byDay[d.today]?.momentum ?? 0 })}</p>
     </div>
   );
 }
@@ -117,12 +113,10 @@ function RescueCard({ rescue, onRescue, goalReminders = [], goalActions }) {
   return (
     <Panel tone="mint" className="flex flex-wrap items-center gap-3 p-4">
       <span className="min-w-0 flex-1">
-        <span className="block text-sm font-extrabold text-ink">Un pas mic pentru revenire</span>
+        <span className="block text-sm font-extrabold text-ink">{tr("Un pas mic pentru revenire")}</span>
         <span className="block text-sm font-semibold text-body">{rescue.reason}</span>
       </span>
-      <Button variant="mint" size="sm" icon={CalendarCheck} onClick={() => onRescue?.(rescue)}>
-        Adaugă pasul
-      </Button>
+      <Button variant="mint" size="sm" icon={CalendarCheck} onClick={() => onRescue?.(rescue)}>{tr("Adaugă pasul")}</Button>
     </Panel>
   );
 }
@@ -145,20 +139,16 @@ export default function Dashboard({ state, d, today, go, ai, months, recentStori
         <Panel className="p-4 sm:p-5">
           <SectionTitle
             icon={Swords}
-            sub={`${d.doneScheduled} din ${d.scheduled.length} misiuni programate azi`}
+            sub={tr("{doneScheduled} din {length} misiuni programate azi", { doneScheduled: d.doneScheduled, length: d.scheduled.length })}
             action={
-              <Button variant="ghost" size="sm" icon={Plus} onClick={onAddHabit}>
-                Obicei nou
-              </Button>
+              <Button variant="ghost" size="sm" icon={Plus} onClick={onAddHabit}>{tr("Obicei nou")}</Button>
             }
-          >
-            Misiunile zilei
-          </SectionTitle>
+          >{tr("Misiunile zilei")}</SectionTitle>
           <div className="space-y-2.5">
             {d.scheduled.map(({ h, code, scheduled }) => (
               <QuestCard key={h.id} h={h} code={code} scheduled={scheduled} runMult={d.runMult} onCheck={onCheck} onOpen={() => go("habits", h.id)} />
             ))}
-            {d.scheduled.length === 0 && <p className="inset p-4 text-center text-sm font-semibold text-dim">Nicio misiune programată azi. Zi de odihnă sau de bonusuri!</p>}
+            {d.scheduled.length === 0 && <p className="inset p-4 text-center text-sm font-semibold text-dim">{tr("Nicio misiune programată azi. Zi de odihnă sau de bonusuri!")}</p>}
           </div>
           {d.optional.length > 0 && (
             // the optional habits live inside this grey box and unfold with it
@@ -167,15 +157,13 @@ export default function Dashboard({ state, d, today, go, ai, months, recentStori
                 <span className="flex min-w-0 items-center gap-2.5">
                   <CalendarCheck size={16} className="shrink-0 text-gold-hi" aria-hidden="true" />
                   <span className="min-w-0">
-                    <span className="block text-sm font-extrabold text-ink">
-                      Opționale azi <span className="text-dim">({d.optional.length})</span>
-                    </span>
-                    <span className="block text-xs font-semibold text-dim">Bonusuri fără obligație: bifate, aduc momentum în plus</span>
+                    <span className="block text-sm font-extrabold text-ink">{tr("Opționale azi {span}", { span: <span className="text-dim">({d.optional.length})</span> })}</span>
+                    <span className="block text-xs font-semibold text-dim">{tr("Bonusuri fără obligație: bifate, aduc momentum în plus")}</span>
                   </span>
                 </span>
                 <span className="inline-flex shrink-0 items-center gap-1 text-xs font-extrabold text-dim group-hover:text-ink">
-                  <span className="group-open:hidden">Arată</span>
-                  <span className="hidden group-open:inline">Ascunde</span>
+                  <span className="group-open:hidden">{tr("Arată")}</span>
+                  <span className="hidden group-open:inline">{tr("Ascunde")}</span>
                   <ChevronDown size={16} className="transition-transform group-open:rotate-180" aria-hidden="true" />
                 </span>
               </summary>
@@ -187,15 +175,15 @@ export default function Dashboard({ state, d, today, go, ai, months, recentStori
             </details>
           )}
           <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
-            <p className="text-xs font-bold text-dim">Fiecare bifă aduce momentum și puncte de evoluție pentru personaj.</p>
+            <p className="text-xs font-bold text-dim">{tr("Fiecare bifă aduce momentum și puncte de evoluție pentru personaj.")}</p>
             <div
               className={`flex items-center gap-2 rounded-xl px-3 py-1.5 text-xs font-extrabold ring-1 ${
                 chestOpen ? "bg-gold/15 text-gold-hi ring-gold/40" : "bg-well text-dim ring-edge"
               }`}
-              title="Cufărul zilei: toate misiunile programate bifate"
+              title={tr("Cufărul zilei: toate misiunile programate bifate")}
             >
               <Gift size={16} className={chestOpen ? "anim-flicker text-gold" : ""} aria-hidden="true" />
-              {chestOpen ? `Cufăr deschis · +${RULES.chestXp}` : `Cufărul zilei · +${RULES.chestXp}`}
+              {chestOpen ? tr("Cufăr deschis · +{chestXp}", { chestXp: RULES.chestXp }) : tr("Cufărul zilei · +{chestXp}", { chestXp: RULES.chestXp })}
             </div>
           </div>
         </Panel>

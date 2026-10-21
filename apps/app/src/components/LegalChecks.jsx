@@ -3,6 +3,7 @@
 // in a way that needs a new acceptance, and every account is asked once more.
 
 import React from "react";
+import { tr, legalUrl } from "../lib/i18n.js";
 
 export const LEGAL_VERSION = "2026-10-11";
 
@@ -28,20 +29,8 @@ export function LegalChecks({ value, onChange }) {
   const set = (k) => (v) => onChange({ ...value, [k]: v });
   return (
     <div className="space-y-2">
-      <Check id="legal-terms" checked={!!value.terms} onChange={set("terms")}>
-        Am citit și sunt de acord cu{" "}
-        <a className={LINK} href="https://molted.eu/terms.html" target="_blank" rel="noopener">
-          Termenii și condițiile
-        </a>{" "}
-        și cu{" "}
-        <a className={LINK} href="https://molted.eu/privacy.html" target="_blank" rel="noopener">
-          Politica de confidențialitate
-        </a>
-        .
-      </Check>
-      <Check id="legal-age" checked={!!value.age} onChange={set("age")}>
-        Am cel puțin 16 ani sau am acordul părintelui ori al tutorelui meu legal.
-      </Check>
+      <Check id="legal-terms" checked={!!value.terms} onChange={set("terms")}>{tr("Am citit și sunt de acord cu {a} și cu {a2}.", { a: <a className={LINK} href={legalUrl("terms")} target="_blank" rel="noopener">{tr("Termenii și condițiile")}</a>, a2: <a className={LINK} href={legalUrl("privacy")} target="_blank" rel="noopener">{tr("Politica de confidențialitate")}</a> })}</Check>
+      <Check id="legal-age" checked={!!value.age} onChange={set("age")}>{tr("Am cel puțin 16 ani sau am acordul părintelui ori al tutorelui meu legal.")}</Check>
     </div>
   );
 }

@@ -69,6 +69,16 @@ Rules for proposals:
 - For every proposal, include dataUsed with the concrete measurements or context behind it, confidence as low, medium or high, and expectedEffect as a short measurable outcome. Keep these claims modest and never turn an association into a cause.
 - All text for the player is in Romanian. Habit names stay as the player wrote them.`;
 
+/** The instructions in the player's language (the text is written in Romanian by default). */
+const systemFor = (en: boolean) =>
+  en
+    ? SYSTEM.replaceAll(' addressing the player as "tu",', " addressing the player,")
+        .replaceAll('("pe 8 miercuri", "slab", "destul de clar")', '("on 8 Wednesdays", "weak", "fairly clear")')
+        .replaceAll('"examen mate în 4 zile", "0 min studiate la mate în 14 zile"', '"maths exam in 4 days", "0 min studied for maths in 14 days"')
+        .replaceAll('(for example "un studiu din 2024")', '(for example "a 2024 study")')
+        .replaceAll("Romanian", "English")
+    : SYSTEM;
+
 const TOOLS = [
   {
     type: "function",
@@ -190,14 +200,16 @@ async function embedMissing(admin: any) {
 
 // ------------------------------------------------------------ model
 
-async function chat(models: string[], apiKey: string, messages: unknown[]) {
+const TOOLS_EN = JSON.parse(JSON.stringify(TOOLS).replaceAll("Romanian", "English"));
+
+async function chat(models: string[], apiKey: string, messages: unknown[], en = false) {
   let failure = { status: 502, code: "upstream_error" };
   for (const model of models) {
     try {
       const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
         method: "POST",
         headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json", "X-Title": "Molted" },
-        body: JSON.stringify({ model, messages, tools: TOOLS, tool_choice: "auto", max_tokens: 2500, temperature: 0.3 }),
+        body: JSON.stringify({ model, messages, tools: en ? TOOLS_EN : TOOLS, tool_choice: "auto", max_tokens: 2500, temperature: 0.3 }),
         signal: AbortSignal.timeout(40_000),
       });
       if (!res.ok) {
@@ -234,8 +246,11 @@ Deno.serve(async (req) => {
   if (authError || !userId) return fail(401, "session_expired");
 
   let today: unknown;
+  let en = false; // the player's language: English only when the app says so, Romanian otherwise
   try {
-    today = (await req.json())?.today;
+    const sent = await req.json();
+    today = sent?.today;
+    en = sent?.lang === "en";
   } catch {
     return fail(400, "bad_request");
   }
@@ -367,14 +382,14 @@ Deno.serve(async (req) => {
   // deno-lint-ignore no-explicit-any
   const nothingFound = !(snapshot.analyze_patterns as any)?.findings?.length;
   const messages: unknown[] = [
-    { role: "system", content: SYSTEM },
+    { role: "system", content: systemFor(en) },
     {
       role: "user",
       content:
         `Today is ${today}. Everything you can know about the player is already gathered below, so do not call the get_* or analyze_patterns tools again. ` +
         `Use search_knowledge only when a mechanism needs a cited source, then propose_action for each proposal, then answer.` +
         (nothingFound
-          ? ` No pattern passed the statistical tests, so say plainly, in Romanian, that there is not yet enough data to see a pattern, and do not praise or judge the player's progress.`
+          ? ` No pattern passed the statistical tests, so say plainly, in ${en ? "English" : "Romanian"}, that there is not yet enough data to see a pattern, and do not praise or judge the player's progress.`
           : "") +
         `\n\n${JSON.stringify(snapshot)}`,
     },
@@ -382,7 +397,7 @@ Deno.serve(async (req) => {
   let summary = "";
   let pool = models;
   for (let step = 0; step < MAX_STEPS; step++) {
-    const r = await chat(pool, apiKey, messages);
+    const r = await chat(pool, apiKey, messages, en);
     if (!r.msg) return fail(r.failure!.status, r.failure!.code);
     pool = [r.model!]; // the model that handled tools keeps the thread
     const msg = r.msg;

@@ -3,18 +3,19 @@
 
 import { diffDays } from "./dates.js";
 import { momentumDrop } from "./engine.js";
+import { tr } from "./i18n.js";
 
 export const STREAK_MARKS = [3, 7, 14, 30, 60, 100, 200, 365];
 const ORDER = ["reset", "return", "hatch", "evolve", "levelup", "streak", "drop"];
 
 export const MOMENT_META = {
-  reset: { title: "Momentum-ul pornește din nou", tone: "rose" },
-  drop: { title: "Momentum-ul încetinește", tone: "ember" },
-  return: { title: "Bine ai revenit!", tone: "mint" },
-  hatch: { title: "Oul s-a deschis!", tone: "gold" },
-  evolve: { title: "Molt-ul tău a evoluat", tone: "gold" },
-  levelup: { title: "Nivel nou de momentum", tone: "gold" },
-  streak: { title: "Serie nouă", tone: "ember" },
+  reset: { title: tr("Momentum-ul pornește din nou"), tone: "rose" },
+  drop: { title: tr("Momentum-ul încetinește"), tone: "ember" },
+  return: { title: tr("Bine ai revenit!"), tone: "mint" },
+  hatch: { title: tr("Oul s-a deschis!"), tone: "gold" },
+  evolve: { title: tr("Molt-ul tău a evoluat"), tone: "gold" },
+  levelup: { title: tr("Nivel nou de momentum"), tone: "gold" },
+  streak: { title: tr("Serie nouă"), tone: "ember" },
 };
 
 const markFor = (n) => STREAK_MARKS.filter((m) => m <= n).pop() || 0;

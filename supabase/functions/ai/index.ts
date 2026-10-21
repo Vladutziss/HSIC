@@ -61,7 +61,7 @@ Deno.serve(async (req) => {
   if (usageError) return fail(500, "upstream_error");
   if (!allowed) return fail(429, "rate_limited");
 
-  const content = buildPrompt(kind, body.params);
+  const content = buildPrompt(kind, body.params, body.lang);
 
   // AI_MODEL may list several models, comma separated. The next one is tried when a model
   // is rate-limited, fails, or answers with something that is not JSON; the reasons go to the logs.

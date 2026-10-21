@@ -9,11 +9,12 @@
 // defaults until their phase.
 
 import { LEVELS, STAGES } from "./engine.js";
+import { tr } from "./i18n.js";
 
 export const SLOTS = ["hat", "aura", "effect", "held", "dye", "scene", "pet", "title"];
-export const SLOT_LABEL = { hat: "Pălărie", aura: "Aură", effect: "Efect", held: "În mână", dye: "Culoare", scene: "Scenă", pet: "Companion", title: "Titlu" };
+export const SLOT_LABEL = { hat: tr("Pălărie"), aura: tr("Aură"), effect: tr("Efect"), held: tr("În mână"), dye: tr("Culoare"), scene: tr("Scenă"), pet: tr("Companion"), title: tr("Titlu") };
 export const RARITIES = ["common", "rare", "epic", "legendary"];
-export const RARITY_LABEL = { common: "Comun", rare: "Rar", epic: "Epic", legendary: "Legendar" };
+export const RARITY_LABEL = { common: tr("Comun"), rare: tr("Rar"), epic: tr("Epic"), legendary: tr("Legendar") };
 
 // What an empty slot holds. "signature" is the piece the class has always worn on its own, "none" is nothing.
 export const DEFAULT_LOOK = { hat: "signature", aura: "none", effect: "none", held: "signature", dye: "none", scene: "none", pet: "none", title: "none" };
@@ -32,43 +33,43 @@ const item = (slot, id, rarity, name, rule) => ({ id, slot, rarity, name, rule }
 
 // What a count fact is called, as [one, few (2-19), many (20+)], for the hint "încă 6 sesiuni Focus".
 const COUNT_LABEL = {
-  focusSessions: ["sesiune Focus", "sesiuni Focus", "de sesiuni Focus"],
-  studySessions: ["sesiune de studiu", "sesiuni de studiu", "de sesiuni de studiu"],
-  reviews: ["raport de seară", "rapoarte de seară", "de rapoarte de seară"],
-  goalsDone: ["obiectiv terminat", "obiective terminate", "de obiective terminate"],
+  focusSessions: [tr("sesiune Focus"), tr("sesiuni Focus"), tr("de sesiuni Focus")],
+  studySessions: [tr("sesiune de studiu"), tr("sesiuni de studiu"), tr("de sesiuni de studiu")],
+  reviews: [tr("raport de seară"), tr("rapoarte de seară"), tr("de rapoarte de seară")],
+  goalsDone: [tr("obiectiv terminat"), tr("obiective terminate"), tr("de obiective terminate")],
 };
 
 // The auras follow the momentum levels (their names are flames, so the auras are too): level 2 = Jar … 10 = Supernovă.
 const AURA_LEVELS = [
-  ["embers", 2, "common", "Licurici"],
-  ["warm", 3, "common", "Contur cald"],
-  ["torch", 4, "rare", "Flăcărui la picioare"],
-  ["sparks", 5, "rare", "Scântei care urcă"],
-  ["beam", 6, "rare", "Fascicul de far"],
-  ["blaze", 7, "epic", "Aură roșu-aurie"],
-  ["comet", 8, "epic", "Coadă de cometă"],
-  ["constellation", 9, "legendary", "Constelație"],
-  ["nova", 10, "legendary", "Explozie de culori"],
+  ["embers", 2, "common", tr("Licurici")],
+  ["warm", 3, "common", tr("Contur cald")],
+  ["torch", 4, "rare", tr("Flăcărui la picioare")],
+  ["sparks", 5, "rare", tr("Scântei care urcă")],
+  ["beam", 6, "rare", tr("Fascicul de far")],
+  ["blaze", 7, "epic", tr("Aură roșu-aurie")],
+  ["comet", 8, "epic", tr("Coadă de cometă")],
+  ["constellation", 9, "legendary", tr("Constelație")],
+  ["nova", 10, "legendary", tr("Explozie de culori")],
 ];
 
 export const CATALOG = [
-  free("hat", "signature", "Semnul clasei"),
-  free("hat", "none", "Fără pălărie"),
-  item("hat", "focus-cap", "common", "Cască de focus", { type: "count", fact: "focusSessions", min: 10 }),
-  item("hat", "night-cap", "common", "Fes de noapte", { type: "count", fact: "reviews", min: 7 }),
-  item("hat", "grad-cap", "rare", "Beretă de absolvent", { type: "count", fact: "studySessions", min: 10 }),
-  item("hat", "wizard", "epic", "Pălărie de vrăjitor", { type: "streak", min: 30 }),
-  item("hat", "laurel", "epic", "Coroană de lauri", { type: "count", fact: "goalsDone", min: 1 }),
-  item("hat", "crown", "legendary", "Coroană", { type: "stage", min: 5 }),
-  free("held", "signature", "Unealta clasei"),
-  free("held", "none", "Mâinile libere"),
-  free("aura", "none", "Fără aură"),
+  free("hat", "signature", tr("Semnul clasei")),
+  free("hat", "none", tr("Fără pălărie")),
+  item("hat", "focus-cap", "common", tr("Cască de focus"), { type: "count", fact: "focusSessions", min: 10 }),
+  item("hat", "night-cap", "common", tr("Fes de noapte"), { type: "count", fact: "reviews", min: 7 }),
+  item("hat", "grad-cap", "rare", tr("Beretă de absolvent"), { type: "count", fact: "studySessions", min: 10 }),
+  item("hat", "wizard", "epic", tr("Pălărie de vrăjitor"), { type: "streak", min: 30 }),
+  item("hat", "laurel", "epic", tr("Coroană de lauri"), { type: "count", fact: "goalsDone", min: 1 }),
+  item("hat", "crown", "legendary", tr("Coroană"), { type: "stage", min: 5 }),
+  free("held", "signature", tr("Unealta clasei")),
+  free("held", "none", tr("Mâinile libere")),
+  free("aura", "none", tr("Fără aură")),
   ...AURA_LEVELS.map(([id, min, rarity, name]) => item("aura", id, rarity, name, { type: "level", min })),
-  free("dye", "none", "Culoarea clasei"),
-  free("effect", "none", "Fără efect"),
-  free("scene", "none", "Noaptea înstelată"),
-  free("pet", "none", "Fără companion"),
-  free("title", "none", "Fără titlu"),
+  free("dye", "none", tr("Culoarea clasei")),
+  free("effect", "none", tr("Fără efect")),
+  free("scene", "none", tr("Noaptea înstelată")),
+  free("pet", "none", tr("Fără companion")),
+  free("title", "none", tr("Fără titlu")),
 ];
 
 export const itemsFor = (slot, catalog = CATALOG) => catalog.filter((i) => i.slot === slot);
@@ -185,10 +186,10 @@ export function recordUnlocks(unlocked, ids, day) {
 }
 
 /** Level name for a hint, e.g. "nivelul 5 (Foc de tabără)". */
-export const levelHint = (lvl) => `nivelul ${lvl} (${LEVELS.find((l) => l.lvl === lvl)?.name || "?"})`;
+export const levelHint = (lvl) => tr("nivelul {lvl} ({v})", { lvl, v: LEVELS.find((l) => l.lvl === lvl)?.name || "?" });
 
 const countText = (fact, n) => {
-  const [one, few, many] = COUNT_LABEL[fact] || ["lucru", "lucruri", "de lucruri"];
+  const [one, few, many] = COUNT_LABEL[fact] || [tr("lucru"), tr("lucruri"), tr("de lucruri")];
   return `${n} ${n === 1 ? one : n < 20 ? few : many}`;
 };
 
@@ -204,16 +205,16 @@ export function hintFor(item, facts) {
   let text;
   switch (r.type) {
     case "count":
-      text = `Încă ${countText(r.fact, left)}`;
+      text = tr("Încă {countText}", { countText: countText(r.fact, left) });
       break;
     case "level":
-      text = `Atinge ${levelHint(r.min)}`;
+      text = tr("Atinge {levelHint}", { levelHint: levelHint(r.min) });
       break;
     case "streak":
-      text = `Serie de ${r.min} de zile (recordul tău: ${progress.have})`;
+      text = tr("Serie de {min} de zile (recordul tău: {have})", { min: r.min, have: progress.have });
       break;
     case "stage":
-      text = `Evoluează până la ${STAGES[r.min]?.name || "următorul stadiu"}`;
+      text = tr("Evoluează până la {v}", { v: STAGES[r.min]?.name || tr("următorul stadiu") });
       break;
     default:
       text = "";

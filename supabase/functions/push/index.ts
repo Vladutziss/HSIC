@@ -43,6 +43,23 @@ async function send(admin: ReturnType<typeof createClient>, subs: Sub[], payload
   return subs.length - gone.length;
 }
 
+/** Sends a notification in each device owner's language (profiles.settings.prefs.lang; Romanian unless it says "en"). */
+async function sendLocalized(
+  admin: ReturnType<typeof createClient>,
+  subs: Sub[],
+  payloads: { ro: unknown; en: unknown },
+) {
+  if (!subs.length) return 0;
+  const { data: owners } = await admin.from("push_subscriptions").select("endpoint,user_id").in("endpoint", subs.map((s) => s.endpoint));
+  const ids = [...new Set((owners ?? []).map((o: { user_id: string }) => o.user_id))];
+  const { data: profiles } = ids.length ? await admin.from("profiles").select("id,settings").in("id", ids) : { data: [] };
+  const english = new Set((profiles ?? []).filter((p: { settings?: { prefs?: { lang?: string } } }) => p.settings?.prefs?.lang === "en").map((p: { id: string }) => p.id));
+  const enEndpoints = new Set((owners ?? []).filter((o: { user_id: string }) => english.has(o.user_id)).map((o: { endpoint: string }) => o.endpoint));
+  const en = subs.filter((s) => enEndpoints.has(s.endpoint));
+  const ro = subs.filter((s) => !enEndpoints.has(s.endpoint));
+  return (ro.length ? await send(admin, ro, payloads.ro) : 0) + (en.length ? await send(admin, en, payloads.en) : 0);
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   if (req.method !== "POST") return reply(405, { code: "bad_request" });
@@ -60,11 +77,9 @@ Deno.serve(async (req) => {
       const { data, error } = await admin.rpc("due_report_pushes");
       if (error) throw error;
       const sent = data?.length
-        ? await send(admin, data, {
-            title: "Raportul zilei e gata",
-            body: "Deschide Molted și vezi cum ți-a mers azi.",
-            url: "/",
-            tag: "daily-report",
+        ? await sendLocalized(admin, data, {
+            ro: { title: "Raportul zilei e gata", body: "Deschide Molted și vezi cum ți-a mers azi.", url: "/", tag: "daily-report" },
+            en: { title: "Your daily report is ready", body: "Open Molted to see how your day went.", url: "/", tag: "daily-report" },
           })
         : 0;
       return reply(200, { sent });
@@ -76,11 +91,19 @@ Deno.serve(async (req) => {
       if (!secret || req.headers.get("x-cron-secret") !== secret) return reply(401, { code: "session_expired" });
       const { data: subs } = await admin.from("push_subscriptions").select("endpoint,p256dh,auth").eq("user_id", input.userId);
       const n = Number(input.count) || 1;
-      const sent = await send(admin, subs ?? [], {
-        title: "Coach-ul ți-a pregătit săptămâna",
-        body: n === 1 ? "Ai o propunere nouă. Deschide Obiceiuri." : `Ai ${n} propuneri noi. Deschide Obiceiuri.`,
-        url: "/",
-        tag: "coach-weekly",
+      const sent = await sendLocalized(admin, subs ?? [], {
+        ro: {
+          title: "Coach-ul ți-a pregătit săptămâna",
+          body: n === 1 ? "Ai o propunere nouă. Deschide Obiceiuri." : `Ai ${n} propuneri noi. Deschide Obiceiuri.`,
+          url: "/",
+          tag: "coach-weekly",
+        },
+        en: {
+          title: "Your coach prepared your week",
+          body: n === 1 ? "You have a new proposal. Open Habits." : `You have ${n} new proposals. Open Habits.`,
+          url: "/",
+          tag: "coach-weekly",
+        },
       });
       return reply(200, { sent });
     }
@@ -90,7 +113,11 @@ Deno.serve(async (req) => {
       const secret = Deno.env.get("AGENT_CRON_SECRET");
       if (!secret || req.headers.get("x-cron-secret") !== secret) return reply(401, { code: "session_expired" });
       const { data: subs } = await admin.from("push_subscriptions").select("endpoint,p256dh,auth").eq("user_id", input.userId);
-      const sent = await send(admin, subs ?? [], { title: "Molt îți ține seria", body: input.text.slice(0, 200), url: "/", tag: "coach-nudge" });
+      const body = input.text.slice(0, 200); // already written in the player's language by the weekly function
+      const sent = await sendLocalized(admin, subs ?? [], {
+        ro: { title: "Molt îți ține seria", body, url: "/", tag: "coach-nudge" },
+        en: { title: "Molt is guarding your streak", body, url: "/", tag: "coach-nudge" },
+      });
       return reply(200, { sent });
     }
 
@@ -110,11 +137,9 @@ Deno.serve(async (req) => {
         admin.from("profiles").select("name").eq("id", me).maybeSingle(),
         admin.from("push_subscriptions").select("endpoint,p256dh,auth").in("user_id", nudge.to_users).eq("group_nudges", true),
       ]);
-      const sent = await send(admin, subs ?? [], {
-        title: `${profile?.name || "Un prieten"} ți-a trimis un reminder`,
-        body: nudge.text,
-        url: "/",
-        tag: `nudge-${input.id}`,
+      const sent = await sendLocalized(admin, subs ?? [], {
+        ro: { title: `${profile?.name || "Un prieten"} ți-a trimis un reminder`, body: nudge.text, url: "/", tag: `nudge-${input.id}` },
+        en: { title: `${profile?.name || "A friend"} sent you a reminder`, body: nudge.text, url: "/", tag: `nudge-${input.id}` },
       });
       return reply(200, { sent });
     }

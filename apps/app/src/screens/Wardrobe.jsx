@@ -7,6 +7,7 @@ import { Check, Lock } from "lucide-react";
 import { Bar, Button, Chip } from "../components/ui.jsx";
 import { Sprite, eggCrack } from "../components/Sprite.jsx";
 import { RARITY_LABEL, SLOT_LABEL, SLOTS, findItem, hintFor, itemsFor, nextReward, unlockedIds } from "../lib/cosmetics.js";
+import { tr } from "../lib/i18n.js";
 
 const RARITY_TONE = { common: "dim", rare: "sky", epic: "violet", legendary: "gold" };
 const RARITY_RING = { common: "ring-edge", rare: "ring-sky/50", epic: "ring-violet/60", legendary: "ring-gold/60" };
@@ -15,7 +16,7 @@ const RARITY_RING = { common: "ring-edge", rare: "ring-sky/50", epic: "ring-viol
 const SLOTS_SHOWN = SLOTS.filter((s) => itemsFor(s).length > 1);
 // the stage index from which a slot is worn (the renderer decides the same, see `wearable` in sprites.js)
 const WORN_FROM = { hat: 2, held: 3 };
-const STAGE_NAME = { 2: "Ucenic", 3: "Adept" };
+const STAGE_NAME = { 2: tr("Ucenic"), 3: tr("Adept") };
 
 export default function Wardrobe({ state, d, onLook }) {
   const c = d.companion;
@@ -43,7 +44,7 @@ export default function Wardrobe({ state, d, onLook }) {
     <div className="grid gap-5 md:grid-cols-[minmax(0,260px),minmax(0,1fr)]">
       <div className="space-y-3">
         <div className="pedestal flex justify-center rounded-2xl px-4 pb-2 pt-5 ring-1 ring-edge">
-          <Sprite path={path} stage={c.stage.id} mood={c.mood} size={160} crack={eggCrack(c.ep)} look={shown} label={`${c.name || "Moltul tău"} cu ținuta aleasă`} />
+          <Sprite path={path} stage={c.stage.id} mood={c.mood} size={160} crack={eggCrack(c.ep)} look={shown} label={tr("{v} cu ținuta aleasă", { v: c.name || tr("Moltul tău") })} />
         </div>
         <div className="inset space-y-2 p-3" aria-live="polite">
           {detail ? (
@@ -57,30 +58,29 @@ export default function Wardrobe({ state, d, onLook }) {
                   <p className="flex items-center gap-1.5 text-sm font-extrabold text-body">
                     <Lock size={14} className="shrink-0 text-violet-hi" aria-hidden="true" /> {detailHint?.text}
                   </p>
-                  {detailHint?.progress && <Bar value={detailHint.progress.ratio} tone="violet" label={`Progres spre ${picked.name}`} />}
-                  <p className="text-xs font-semibold text-dim">Previzualizare: îl porți când îl câștigi.</p>
+                  {detailHint?.progress && <Bar value={detailHint.progress.ratio} tone="violet" label={tr("Progres spre {name}", { name: picked.name })} />}
+                  <p className="text-xs font-semibold text-dim">{tr("Previzualizare: îl porți când îl câștigi.")}</p>
                 </>
               ) : (
                 <p className="flex items-center gap-1.5 text-sm font-extrabold text-mint">
-                  <Check size={14} className="shrink-0" aria-hidden="true" /> Îl porți acum
-                </p>
+                  <Check size={14} className="shrink-0" aria-hidden="true" />{" "}{tr("Îl porți acum")}</p>
               )}
             </>
           ) : null}
-          {tooYoung && <p className="text-xs font-semibold text-dim">Se vede de la {STAGE_NAME[WORN_FROM[slot]]}: {slot === "hat" ? "pălăriile" : "uneltele"} se poartă după ce Molt iese din ou și crește.</p>}
+          {tooYoung && <p className="text-xs font-semibold text-dim">{tr("Se vede de la {v}: {v2} se poartă după ce Molt iese din ou și crește.", { v: STAGE_NAME[WORN_FROM[slot]], v2: slot === "hat" ? tr("pălăriile") : "uneltele" })}</p>}
         </div>
         {next && (
           <div className="rounded-2xl bg-violet/10 p-3 ring-1 ring-violet/30">
-            <p className="text-xs font-extrabold text-violet-hi">Cea mai apropiată recompensă</p>
+            <p className="text-xs font-extrabold text-violet-hi">{tr("Cea mai apropiată recompensă")}</p>
             <p className="mt-0.5 text-sm font-extrabold text-ink">{next.item.name}</p>
             <p className="text-xs font-semibold text-body">{hintFor(next.item, d.facts).text}</p>
-            <Bar className="mt-2" value={next.progress.ratio} tone="violet" label={`Progres spre ${next.item.name}`} />
+            <Bar className="mt-2" value={next.progress.ratio} tone="violet" label={tr("Progres spre {name}", { name: next.item.name })} />
           </div>
         )}
       </div>
 
       <div className="min-w-0">
-        <div role="tablist" aria-label="Ce porți" className="mb-3 flex flex-wrap gap-1.5">
+        <div role="tablist" aria-label={tr("Ce porți")} className="mb-3 flex flex-wrap gap-1.5">
           {SLOTS_SHOWN.map((s) => {
             const list = itemsFor(s);
             const on = s === slot;
@@ -113,7 +113,7 @@ export default function Wardrobe({ state, d, onLook }) {
                   type="button"
                   role="radio"
                   aria-checked={isWorn}
-                  aria-label={`${item.name}${isWorn ? ", îl porți" : owned ? "" : `, blocat: ${hint}`}`}
+                  aria-label={`${item.name}${isWorn ? tr(", îl porți") : owned ? "" : tr(", blocat: {hint}", { hint })}`}
                   onClick={() => choose(item)}
                   className={`focus-ring relative flex w-full flex-col items-center gap-1 rounded-2xl bg-well p-2 text-center ring-2 transition hover:bg-panel-hi ${
                     isWorn ? "ring-gold" : isPicked ? "ring-violet" : `${RARITY_RING[item.rarity]} ring-1`
@@ -139,9 +139,7 @@ export default function Wardrobe({ state, d, onLook }) {
           })}
         </ul>
         {worn !== "none" && SLOTS_SHOWN.includes(slot) && itemsFor(slot).some((i) => i.id === "none") && (
-          <Button size="sm" variant="ghost" className="mt-3" onClick={() => onLook(slot, "none")}>
-            Scoate {slot === "hat" ? "pălăria" : slot === "aura" ? "aura" : "unealta"}
-          </Button>
+          <Button size="sm" variant="ghost" className="mt-3" onClick={() => onLook(slot, "none")}>{tr("Scoate {v}", { v: slot === "hat" ? tr("pălăria") : slot === "aura" ? tr("aura") : tr("unealta") })}</Button>
         )}
       </div>
     </div>

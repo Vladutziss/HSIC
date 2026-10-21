@@ -8,6 +8,11 @@ import { PATHS } from "./catalog.js";
 import { fmtLong } from "./dates.js";
 import { capability, inViewer } from "./platform.js";
 import { getClient } from "./supabase.js";
+import { getLocale, tr } from "./i18n.js";
+
+// The AI writes in the interface language (the Edge Function gets it as `lang`; the artifact's own prompts use these).
+const langName = () => (getLocale() === "en" ? "English" : "Romanian");
+const addressTu = () => (getLocale() === "en" ? "" : ' as "tu"');
 
 const HIDE = new Set(["not_granted", "sampling_disabled", "not_declared", "capability_disabled", "capability_removed"]);
 let disabled = false;
@@ -28,7 +33,7 @@ async function serverClient() {
 /** Calls an Edge Function; throws {code} (see aiErrorCopy) on any failure. */
 async function invoke(client, fn, body, signal) {
   if (signal?.aborted) throw { code: "cancelled" };
-  const { data, error } = await client.functions.invoke(fn, { body, signal });
+  const { data, error } = await client.functions.invoke(fn, { body: { ...body, lang: getLocale() }, signal });
   if (signal?.aborted) throw { code: "cancelled" };
   if (error) {
     let code = "upstream_error";
@@ -70,25 +75,25 @@ export function aiErrorCopy(code) {
   switch (code) {
     case "not_granted":
     case "sampling_disabled":
-      return "AI-ul nu are permisiune în această pagină.";
+      return tr("AI-ul nu are permisiune în această pagină.");
     case "rate_limited":
-      return "Prea multe cereri către AI acum. Încearcă din nou peste puțin timp.";
+      return tr("Prea multe cereri către AI acum. Încearcă din nou peste puțin timp.");
     case "session_expired":
-      return "Sesiunea a expirat. Reîncarcă pagina și autentifică-te din nou.";
+      return tr("Sesiunea a expirat. Reîncarcă pagina și autentifică-te din nou.");
     case "unavailable":
-      return "AI-ul nu e disponibil aici.";
+      return tr("AI-ul nu e disponibil aici.");
     case "experiment_running":
-      return "Ai deja un experiment în desfășurare. Termină-l sau anulează-l înainte să începi altul.";
+      return tr("Ai deja un experiment în desfășurare. Termină-l sau anulează-l înainte să începi altul.");
     case "context_limit":
-      return "Ai deja 50 de note active. Șterge una ca să adaugi alta.";
+      return tr("Ai deja 50 de note active. Șterge una ca să adaugi alta.");
     case "invalid_note":
-      return "Nota nu e validă: scrie între 1 și 300 de caractere.";
+      return tr("Nota nu e validă: scrie între 1 și 300 de caractere.");
     case "db_error":
-      return "Nu s-a putut salva acum. Încearcă din nou.";
+      return tr("Nu s-a putut salva acum. Încearcă din nou.");
     case "cancelled":
       return "";
     default:
-      return "AI-ul nu a răspuns de data asta.";
+      return tr("AI-ul nu a răspuns de data asta.");
   }
 }
 
@@ -108,7 +113,7 @@ ${lines || "- nothing scheduled"}
 To-dos done: ${p.todos.done} of ${p.todos.total}${p.todos.titles.length ? ` (${p.todos.titles.slice(0, 5).join("; ")})` : ""}.
 Momentum: level ${p.level.lvl} (${p.level.name}), ${p.momentum} points. Streak: ${p.streak} days.
 
-Score the day from 0 to 100 for effort and consistency against the plan: 100 = everything scheduled done; about 60 = most of it done; about 30 = a small start; 0 = nothing. Then write, in Romanian, addressing the player as "tu":
+Score the day from 0 to 100 for effort and consistency against the plan: 100 = everything scheduled done; about 60 = most of it done; about 30 = a small start; 0 = nothing. Then write, in ${langName()}, addressing the player${addressTu()}:
 - summary: 2 sentences, specific to what was done today, honest and encouraging, without guilt or pressure.
 - highlight: the best thing today, at most 8 words.
 - tip: one concrete suggestion for tomorrow, at most 18 words.
@@ -147,7 +152,7 @@ Reply with only JSON: {"score": <integer 0-100>, "summary": "...", "highlight": 
 
 export async function momentLineAI(situation, quote, signal) {
   const server = await serverClient();
-  const prompt = `In one sentence in Romanian (at most 170 characters), connect this quote to the player's situation in a self-improvement game. Address the player as "tu", be warm and concrete, and do not repeat the quote.
+  const prompt = `In one sentence in ${langName()} (at most 170 characters), connect this quote to the player's situation in a self-improvement game. Address the player${addressTu()}, be warm and concrete, and do not repeat the quote.
 Situation: ${situation}.
 Quote: "${quote.text}" (${quote.author}).
 Reply with only JSON: {"line":"..."}`;
@@ -160,7 +165,7 @@ export async function evolutionChapter({ name, pathId, from, to, recent = [] }, 
   const prompt = `In "Molted", a self-improvement RPG, the player's companion ${name || "the Molt"} (a ${PATHS[pathId]?.cls || "hero"}) just evolved from "${from}" to "${to}" thanks to the player's daily check-ins.
 Recent story (newest last):
 ${recent.slice(-3).map((s) => `- ${s}`).join("\n") || "- (none yet)"}
-Write a short celebratory chapter: 3 sentences, at most 380 characters, in Romanian, third person, present tense, describing the transformation and what the companion can do now. Give it a title of 2-4 words.
+Write a short celebratory chapter: 3 sentences, at most 380 characters, in ${langName()}, third person, present tense, describing the transformation and what the companion can do now. Give it a title of 2-4 words.
 Reply with only JSON: {"title":"...","story":"..."}`;
   const r = server
     ? await askServer(server, "chapter", { name, cls: PATHS[pathId]?.cls, from, to, recent: recent.slice(-3) }, signal)
