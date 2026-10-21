@@ -316,6 +316,20 @@ export default function Habits({ state, d, today, go, ai, focus, setFocus, onAdd
         </div>
         <LayoutSwitch value={layout} onChange={setLayout} />
       </div>
+      {ai?.server && (
+        <button
+          type="button"
+          onClick={() => go?.("molt", "ai")}
+          className="focus-ring flex w-full items-center gap-3 rounded-2xl bg-violet/10 p-3 text-left ring-1 ring-violet/30 transition hover:bg-violet/15"
+        >
+          <Sparkles size={18} className="shrink-0 text-violet-hi" aria-hidden="true" />
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm font-extrabold text-ink">{tr("Cere-i lui Molt un plan pentru obiceiurile tale")}</span>
+            <span className="block text-xs font-semibold text-dim">{tr("Analizează bifările, propune schimbări și experimente. Notele și propunerile lui sunt în pagina Molt.")}</span>
+          </span>
+          <span className="shrink-0 text-xs font-extrabold text-violet-hi">{tr("Deschide →")}</span>
+        </button>
+      )}
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div className="flex flex-col items-start gap-2">
           <Button icon={Plus} onClick={onAdd} disabled={active.length >= MAX_HABITS}>{tr("Adaugă obicei")}</Button>
@@ -370,20 +384,6 @@ export default function Habits({ state, d, today, go, ai, focus, setFocus, onAdd
             ))}
           </ul>
         )
-      )}
-      {ai?.server && (
-        <button
-          type="button"
-          onClick={() => go?.("molt", "ai")}
-          className="focus-ring flex w-full items-center gap-3 rounded-2xl bg-violet/10 p-3 text-left ring-1 ring-violet/30 transition hover:bg-violet/15"
-        >
-          <Sparkles size={18} className="shrink-0 text-violet-hi" aria-hidden="true" />
-          <span className="min-w-0 flex-1">
-            <span className="block text-sm font-extrabold text-ink">{tr("Cere-i lui Molt un plan pentru obiceiurile tale")}</span>
-            <span className="block text-xs font-semibold text-dim">{tr("Analizează bifările, propune schimbări și experimente. Notele și propunerile lui sunt în pagina Molt.")}</span>
-          </span>
-          <span className="shrink-0 text-xs font-extrabold text-violet-hi">{tr("Deschide →")}</span>
-        </button>
       )}
       {archived.length > 0 && (
         <div>
