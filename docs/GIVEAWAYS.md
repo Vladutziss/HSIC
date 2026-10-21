@@ -87,7 +87,7 @@ Only after entries close (phase `ended` or status `completed`). `draw_giveaway_w
 
 ## Known limits (honest list)
 
-- **Unknown campaign slugs return HTTP 200**, not 404, because the campaign set is in the database and the host serves a static shell. The page shows "Campania nu a fost găsită" and sets `noindex`. A real 404 needs an edge function or server rendering. Slugs that are structurally invalid, and anything under `/en`, do return 404.
+- **Unknown campaign slugs return HTTP 200**, not 404, because the campaign set is in the database and the host serves a static shell. The page shows "Campania nu a fost găsită" and sets `noindex`. A real 404 needs an edge function or server rendering. Slugs that cannot be valid (characters outside `a-z 0-9 -`, wrong length, extra path segments), and anything under `/en`, do return 404.
 - **Per-campaign metadata is set by JavaScript** (title, description, canonical, Open Graph). Search engines that render JavaScript see it; link-preview bots that do not (some social apps) see the generic title. Fixing that needs edge or server rendering. There is no structured data for campaigns on purpose (no prize claims without a source).
 - The sitemap lists `/ro/giveaways/` only; campaign pages are discoverable from the list.
 - No QR image generation, no email/push notification to winners (status is tracked by hand), no referral mechanic, no unique-visitor count, no per-IP rate limiting, no scheduled job (not needed).

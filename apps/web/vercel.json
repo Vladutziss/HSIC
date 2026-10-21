@@ -87,11 +87,11 @@
   ],
   "rewrites": [
     {
-      "source": "/ro/giveaways/:slug/",
+      "source": "/ro/giveaways/:slug([a-z0-9-]{3,60})/",
       "destination": "/ro/giveaways/_shell/"
     },
     {
-      "source": "/ro/giveaways/:slug",
+      "source": "/ro/giveaways/:slug([a-z0-9-]{3,60})",
       "destination": "/ro/giveaways/_shell/"
     }
   ]
