@@ -296,7 +296,7 @@ export function Shell({ view, setView, onReview, onFocus, d, state, unread, goal
         style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
         aria-label={tr("Navigare")}
       >
-        {NAV.filter((n) => n.id !== "settings").map((n) => {
+        {[...NAV.filter((n) => n.id !== "settings" && n.id !== "molt"), ...NAV.filter((n) => n.id === "molt")].map((n) => { /* on the phone Molt sits on the right, next to Focus */
           const Icon = n.icon;
           return (
             <button

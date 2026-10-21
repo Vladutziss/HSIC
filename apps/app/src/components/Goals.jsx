@@ -1,7 +1,7 @@
 // "Scopuri": the week's and the month's goals, written by the player.
 
 import React, { useState } from "react";
-import { Ban, CopyPlus, Link2, Plus, RotateCcw, Target, Trash2, X } from "lucide-react";
+import { Ban, CalendarClock, CopyPlus, Link2, Plus, RotateCcw, Target, Trash2, X } from "lucide-react";
 import { Button, CheckButton, Panel, SectionTitle, Tabs } from "./ui.jsx";
 import { MAX_LINKS, childrenOf, liveLinks, normalizeGoal, progressOf, suggestDone, topLevel } from "../lib/milestones.js";
 import { MAX_PER_PERIOD, MAX_TEXT, carryable, goalsFor, periodKey, periodLabel } from "../lib/goals.js";
@@ -44,6 +44,17 @@ function GoalRow({ g, state, goals, child = false }) {
           {meta && <span className="block text-xs font-semibold text-dim">{meta}</span>}
         </span>
         {kids.length > 0 && p.total > 0 && <span className="shrink-0 text-xs font-extrabold text-dim">{p.done}/{p.total}</span>}
+        {!g.done && !dropped && goals.toTomorrow && (
+          <button
+            type="button"
+            onClick={() => goals.toTomorrow(g.id)}
+            className="focus-ring grid h-7 w-7 shrink-0 place-items-center rounded-lg text-faint hover:bg-panel-hi hover:text-gold"
+            aria-label={tr("Pune pe mâine ca to-do: {text}", { text: g.text })}
+            title={tr("Pune pe mâine ca to-do")}
+          >
+            <CalendarClock size={14} aria-hidden="true" />
+          </button>
+        )}
         <button
           type="button"
           onClick={() => setPick((v) => !v)}
