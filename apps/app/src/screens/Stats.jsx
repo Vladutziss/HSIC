@@ -101,6 +101,21 @@ export default function Stats({ state, d, today, go, mode, saveStatus, ai, agent
         <Stat icon={Gauge} tone="sky" label={tr("Scor mediu")} value={s.avg} sub={tr("ultimele 30 de zile")} />
       </div>
 
+      {ai?.server && (
+        <button
+          type="button"
+          onClick={() => go?.("molt", "ai")}
+          className="focus-ring flex w-full items-center gap-3 rounded-2xl bg-violet/10 p-3 text-left ring-1 ring-violet/30 transition hover:bg-violet/15"
+        >
+          <Sparkles size={18} className="shrink-0 text-violet-hi" aria-hidden="true" />
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm font-extrabold text-ink">{tr("Ce înseamnă cifrele astea? Întreabă-l pe Molt")}</span>
+            <span className="block text-xs font-semibold text-dim">{tr("Molt vede tiparele din ultimele 4 săptămâni și te ajută cu o reflecție de săptămână.")}</span>
+          </span>
+          <span className="shrink-0 text-xs font-extrabold text-violet-hi">{tr("Deschide →")}</span>
+        </button>
+      )}
+
       <Panel tone="gold" corners className="p-4 sm:p-5">
         <SectionTitle
           icon={Zap}
@@ -207,21 +222,6 @@ export default function Stats({ state, d, today, go, mode, saveStatus, ai, agent
           </ol>
         </Panel>
       </div>
-
-      {ai?.server && (
-        <button
-          type="button"
-          onClick={() => go?.("molt", "ai")}
-          className="focus-ring flex w-full items-center gap-3 rounded-2xl bg-violet/10 p-3 text-left ring-1 ring-violet/30 transition hover:bg-violet/15"
-        >
-          <Sparkles size={18} className="shrink-0 text-violet-hi" aria-hidden="true" />
-          <span className="min-w-0 flex-1">
-            <span className="block text-sm font-extrabold text-ink">{tr("Ce înseamnă cifrele astea? Întreabă-l pe Molt")}</span>
-            <span className="block text-xs font-semibold text-dim">{tr("Molt vede tiparele din ultimele 4 săptămâni și te ajută cu o reflecție de săptămână.")}</span>
-          </span>
-          <span className="shrink-0 text-xs font-extrabold text-violet-hi">{tr("Deschide →")}</span>
-        </button>
-      )}
 
       {ai?.server && agent?.log && <AgentImpact log={agent.log} />}
       <FocusStats sessions={state.focusSessions || []} today={today} onFocus={onFocus} />
