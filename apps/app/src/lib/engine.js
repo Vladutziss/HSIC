@@ -143,30 +143,30 @@ export function computeTimeline(state, today) {
     const review = reviews[d];
     const closed = d < today || !!review;
 
-    let schedBase = 0;
-    let doneSchedBase = 0;
-    let schedCount = 0;
-    let doneSched = 0;
-    let doneCount = 0;
+    // A day counts at most RULES.habitsPerDay habits, scheduled or ticked: the score and the chest are measured against the
+    // most valuable scheduled ones, so 8 ticked habits out of 20 scheduled is a full day.
+    const schedBases = [];
+    const doneSchedBases = [];
     const doneBases = [];
+    let doneCount = 0;
     for (const h of habits) {
       if (!habitExists(h, d)) continue;
       const base = diffXp(h.diff);
       const sched = isScheduled(h, d);
       const code = entries[h.id];
-      if (sched) {
-        schedBase += base;
-        schedCount++;
-      }
+      if (sched) schedBases.push(base);
       if (code) {
         doneCount++;
-        if (sched) {
-          doneSchedBase += base;
-          doneSched++;
-        }
+        if (sched) doneSchedBases.push(base);
         doneBases.push(base);
       }
     }
+    const top = (bases) => [...bases].sort((a, b) => b - a).slice(0, RULES.habitsPerDay);
+    const sum = (bases) => bases.reduce((a, b) => a + b, 0);
+    const schedBase = sum(top(schedBases));
+    const doneSchedBase = sum(top(doneSchedBases));
+    const schedCount = Math.min(schedBases.length, RULES.habitsPerDay);
+    const doneSched = Math.min(doneSchedBases.length, RULES.habitsPerDay);
     const habitXp = countedXp(doneBases); // more than habitsPerDay ticked: only the most valuable ones add momentum
     const todos = todosByDay[d] || 0;
     const focusXp = focusByDay[d] || 0;
