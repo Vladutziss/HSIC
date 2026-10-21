@@ -1141,6 +1141,7 @@ export default {
   "Primele misiuni": "First missions",
   "Primește primul echipament al drumului său.": "Gets the first gear of its path.",
   "Primește raportul zilei și impulsurile din grup și când aplicația e închisă.": "Get the daily report and group nudges even when the app is closed.",
+  "Notificările sunt pornite pe cont. Activează-le și pe acest device.": "Notifications are on for your account. Turn them on for this device too.",
   "Primii pași": "First steps",
   "Primul capitol apare când oul se deschide. Bifează-ți obiceiurile și ai răbdare.": "The first chapter appears when the egg opens. Check off your habits and be patient.",
   "Primul obiectiv": "First objective",

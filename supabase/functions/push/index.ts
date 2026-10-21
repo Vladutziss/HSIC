@@ -133,10 +133,15 @@ Deno.serve(async (req) => {
       const { data: nudge } = await admin.from("nudges").select("from_user,to_users,text,at").eq("id", input.id).maybeSingle();
       if (!nudge || nudge.from_user !== me || Date.now() - new Date(nudge.at).getTime() > 120_000) return reply(403, { code: "forbidden" });
 
-      const [{ data: profile }, { data: subs }] = await Promise.all([
+      // the choice is the account's (profiles.settings.pushNudges, on unless it says false), not the device's
+      const [{ data: profile }, { data: recipients }] = await Promise.all([
         admin.from("profiles").select("name").eq("id", me).maybeSingle(),
-        admin.from("push_subscriptions").select("endpoint,p256dh,auth").in("user_id", nudge.to_users).eq("group_nudges", true),
+        admin.from("profiles").select("id,settings").in("id", nudge.to_users),
       ]);
+      const wanting = (recipients ?? []).filter((r: { settings?: { pushNudges?: unknown } }) => r.settings?.pushNudges !== false).map((r: { id: string }) => r.id);
+      const { data: subs } = wanting.length
+        ? await admin.from("push_subscriptions").select("endpoint,p256dh,auth").in("user_id", wanting)
+        : { data: [] };
       const sent = await sendLocalized(admin, subs ?? [], {
         ro: { title: `${profile?.name || "Un prieten"} ți-a trimis un reminder`, body: nudge.text, url: "/", tag: `nudge-${input.id}` },
         en: { title: `${profile?.name || "A friend"} sent you a reminder`, body: nudge.text, url: "/", tag: `nudge-${input.id}` },

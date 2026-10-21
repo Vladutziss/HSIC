@@ -1,3 +1,4 @@
+import { ensurePush } from "./lib/push.js";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CalendarCheck, CalendarX, CheckCircle2, FlaskConical, Leaf, Timer, Zap } from "lucide-react";
 import { useAppStore } from "./lib/store.js";
@@ -324,6 +325,13 @@ function Game() {
     return unbind;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasState, accountPrefs]);
+
+  // notifications are the account's: a device that already has the browser permission joins them by itself
+  const accountPush = !!state?.settings?.pushOn;
+  useEffect(() => {
+    if (!hasState || !accountPush || !__SUPABASE__) return;
+    ensurePush().catch(() => {});
+  }, [hasState, accountPush]);
 
   // new cosmetic items: recorded in the account and celebrated once each. A player who already has some when this appears gets them in one go.
   useEffect(() => {
