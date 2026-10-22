@@ -4,7 +4,7 @@ import { Button, Chip, Field, Gems, Modal, Tabs } from "./ui.jsx";
 import { Select, TimeSelect } from "./Select.jsx";
 import { HABIT_ICONS, iconFor } from "./icons.js";
 import { CATALOG, ICON_KEYS, MAX_HABITS, PATHS, PATH_LIST, habitFromCatalog, nextColor, uid } from "../lib/catalog.js";
-import { DIFF } from "../lib/engine.js";
+import { DIFF, RULES } from "../lib/engine.js";
 import { RO_DAYS_MIN } from "../lib/dates.js";
 import { tr } from "../lib/i18n.js";
 
@@ -280,6 +280,9 @@ export function HabitEditor({ open, initial, tab: initialTab = "catalog", state,
       ) : (
         <>
           {full && <p className="mb-4 rounded-xl bg-ember/10 p-3 text-sm font-semibold text-ember ring-1 ring-ember/30">{tr("Ai deja {MAX_HABITS} obiceiuri active. Arhivează sau șterge unul ca să adaugi altul.", { MAX_HABITS })}</p>}
+          {!editing && !full && active.length >= RULES.habitsPerDay && (
+            <p role="note" className="mb-4 rounded-xl bg-gold/10 p-3 text-sm font-semibold text-body ring-1 ring-gold/30">{tr("Ai deja {length} obiceiuri active. Într-o zi, doar cele mai valoroase {habitsPerDay} obiceiuri bifate aduc momentum și evoluție.", { length: active.length, habitsPerDay: RULES.habitsPerDay })}</p>
+          )}
           <HabitForm draft={draft} setDraft={setDraft} />
           <div className="mt-4 flex items-center gap-2 text-xs font-semibold text-dim">
             <Chip tone="gold">{tr("+{xp} momentum pe bifă", { xp: DIFF[draft.diff].xp })}</Chip>

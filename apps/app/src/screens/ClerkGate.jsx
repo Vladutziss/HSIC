@@ -8,7 +8,7 @@ import { Leaf, ShieldCheck } from "lucide-react";
 import Splash from "./Splash.jsx";
 import { Button } from "../components/ui.jsx";
 import { useTheme } from "../lib/themes.js";
-import { LEGAL_VERSION, LegalChecks, clearTicked, legalOk, rememberTicked, wasTicked } from "../components/LegalChecks.jsx";
+import { LEGAL_VERSION, LegalChecks, clearTicked, legalOk, rememberTicked, tickedEmails, wasTicked } from "../components/LegalChecks.jsx";
 import { tr, legalUrl } from "../lib/i18n.js";
 import { identify, resetIfIdentified } from "../lib/analytics.js";
 
@@ -55,7 +55,7 @@ const accepted = (user) => user?.unsafeMetadata?.legal?.version === LEGAL_VERSIO
 function Consent({ children }) {
   const { user, isLoaded } = useUser();
   const { signOut } = useClerk();
-  const [checks, setChecks] = useState({ terms: false, age: false });
+  const [checks, setChecks] = useState({ terms: false, age: false, emails: true });
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
 
@@ -63,7 +63,9 @@ function Consent({ children }) {
     setBusy(true);
     setFailed(false);
     try {
-      await user.update({ unsafeMetadata: { ...user.unsafeMetadata, legal: { version: LEGAL_VERSION, at: new Date().toISOString(), age16: true } } });
+      // `emails` is the optional box of the sign-up form (from the form itself when the player ticked it before the account existed)
+      const emails = wasTicked() ? tickedEmails() : checks.emails !== false;
+      await user.update({ unsafeMetadata: { ...user.unsafeMetadata, legal: { version: LEGAL_VERSION, at: new Date().toISOString(), age16: true, emails } } });
       clearTicked();
     } catch {
       setFailed(true);
@@ -109,7 +111,7 @@ function Consent({ children }) {
 
 function Gate({ children }) {
   const [mode, setMode] = useState("in"); // in | up
-  const [signupChecks, setSignupChecks] = useState({ terms: false, age: false });
+  const [signupChecks, setSignupChecks] = useState({ terms: false, age: false, emails: true });
   const { isLoaded, isSignedIn, userId } = useAuth();
   useEffect(() => {
     if (!isLoaded) return;
@@ -136,7 +138,7 @@ function Gate({ children }) {
                   value={signupChecks}
                   onChange={(v) => {
                     setSignupChecks(v);
-                    if (legalOk(v)) rememberTicked();
+                    if (legalOk(v)) rememberTicked(v.emails);
                     else clearTicked();
                   }}
                 />

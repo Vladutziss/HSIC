@@ -12,7 +12,7 @@ import { tr } from "../lib/i18n.js";
 
 // ------------------------------------------------------------ quests
 
-export function QuestCard({ h, code, scheduled, runMult, onCheck, onOpen }) {
+export function QuestCard({ h, code, scheduled, runMult, doneBases, onCheck, onOpen }) {
   const Icon = iconFor(h.icon);
   const done = code > 0;
   const [burst, setBurst] = useState(0);
@@ -22,7 +22,7 @@ export function QuestCard({ h, code, scheduled, runMult, onCheck, onOpen }) {
     return () => clearTimeout(t);
   }, [burst]);
   const click = () => {
-    if (!done) setBurst(checkInGain(h, runMult));
+    if (!done) setBurst(checkInGain(h, runMult, doneBases));
     onCheck(h.id);
   };
   return (
@@ -54,7 +54,7 @@ export function QuestCard({ h, code, scheduled, runMult, onCheck, onOpen }) {
               {fmt12(h.time)}
             </span>
           )}
-          {done ? <span className="font-extrabold text-mint">{tr("Bifat")}</span> : <span className="font-extrabold text-gold-hi">+{checkInGain(h, runMult)}</span>}
+          {done ? <span className="font-extrabold text-mint">{tr("Bifat")}</span> : <span className="font-extrabold text-gold-hi">+{checkInGain(h, runMult, doneBases)}</span>}
         </div>
       </div>
       <CheckButton checked={done} onClick={click} label={done ? tr("Anulează bifa pentru {name}", { name: h.name }) : tr("Bifează {name}", { name: h.name })} />

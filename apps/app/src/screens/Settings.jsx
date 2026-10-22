@@ -8,6 +8,7 @@ import { exportData, signOut } from "../lib/account.js";
 import { THEMES, setTheme, useTheme } from "../lib/themes.js";
 import { fmt12 } from "../lib/dates.js";
 import NotificationsPanel from "../components/NotificationsPanel.jsx";
+import EmailsPanel from "../components/EmailsPanel.jsx";
 import LanguageSwitch from "../components/LanguageSwitch.jsx";
 import { ConsentSetting } from "../components/ConsentBanner.jsx";
 import { tr, legalUrl } from "../lib/i18n.js";
@@ -241,9 +242,11 @@ export default function Settings({ state, d, ai, mode, env, onChange, onWipe, on
             <FlaskConical size={14} className="text-mint" aria-hidden="true" />{" "}{tr("Seria: {revivesPerMonth} revive-uri pe lună (ai folosit {used} luna aceasta).", { revivesPerMonth: RULES.revivesPerMonth, used: d.revive.used })}</p>
           <Fold title={tr("Cum câștigi momentum")}>
             <ul className="space-y-1 text-xs font-semibold leading-relaxed text-body">
-              <li>{tr("· Bifă: +10 / +20 / +30 momentum după dificultate, plus 1 / 2 / 3 puncte de evoluție pentru personaj.")}</li>
+              <li>{tr("· Bifă: +10 / +20 / +30 momentum după dificultate, plus puncte de evoluție pentru personaj (după dificultate).")}</li>
+              <li>{tr("· Evoluția: într-o zi, punctele bifărilor se adună sub radical (2·√suma), pentru cel mult {habitsPerDay} obiceiuri: a zecea bifă nu mai grăbește evoluția.", { habitsPerDay: RULES.habitsPerDay })}</li>
               <li>{tr("· Zile active la rând: până la +40% la tot ce câștigi.")}</li>
-              <li>{tr("· Toate misiunile programate bifate: cufărul zilei, +{chestXp}.", { chestXp: RULES.chestXp })}</li>
+              <li>{tr("· Toate misiunile programate bifate (cele mai valoroase {habitsPerDay}, dacă ai mai multe): cufărul zilei, +{chestXp}.", { chestXp: RULES.chestXp, habitsPerDay: RULES.habitsPerDay })}</li>
+              <li>{tr("· Poți avea mai multe obiceiuri active, dar într-o zi aduc momentum cel mult {habitsPerDay} obiceiuri bifate (cele mai valoroase).", { habitsPerDay: RULES.habitsPerDay })}</li>
               <li>{tr("· Raportul de seară: jumătate din scorul zilei devine momentum.")}</li>
               <li>{tr("· Focus: o sesiune încheiată de cel puțin {focusMinMinutes} minute aduce 1 momentum la 2 minute (+{focusCycleBonus} pentru fiecare pomodoro terminat), maximum {focusDayCap} pe zi.", { focusMinMinutes: RULES.focusMinMinutes, focusCycleBonus: RULES.focusCycleBonus, focusDayCap: RULES.focusDayCap })}</li>
               <li>{tr("· O zi fără nimic păstrează 85% din momentum; una incompletă, cel puțin 92%.")}</li>
@@ -268,6 +271,7 @@ export default function Settings({ state, d, ai, mode, env, onChange, onWipe, on
             {(mode === "cloud" || mode === "supabase") && tr(" Grupurile văd doar nivelul, seria, momentum-ul și personajul.")}
           </p>
           <NotificationsPanel settings={settings} set={set} />
+          {mode === "supabase" && <EmailsPanel />}
           {mode === "supabase" && (
             <div className="flex flex-wrap gap-2">
               <Button variant="ghost" size="sm" icon={Download} busy={exporting} onClick={download}>{tr("Descarcă datele mele")}</Button>

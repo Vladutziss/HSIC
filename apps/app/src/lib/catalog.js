@@ -113,7 +113,7 @@ export const ICON_KEYS = [
 
 // Categorical slots (validated for CVD and contrast on the dark panel).
 export const HABIT_COLORS = ["#3987e5", "#d95926", "#199e70", "#c98500", "#d55181", "#008300", "#9085e9", "#e66767"];
-export const MAX_HABITS = HABIT_COLORS.length;
+export const MAX_HABITS = 20; // active habits; colours repeat past HABIT_COLORS.length, and a day counts at most RULES.habitsPerDay ticked ones (engine.js)
 
 export function nextColor(habits) {
   const used = new Set(habits.filter((h) => !h.archivedAt).map((h) => h.color));

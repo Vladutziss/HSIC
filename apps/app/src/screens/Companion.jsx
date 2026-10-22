@@ -97,7 +97,7 @@ export default function Companion({ state, d, today, months, loadMonth, onRename
                     <span className="tabular">{tr("{ep} / {min} PE", { ep: c.ep, min: c.next.min })}</span>
                   </div>
                   <Bar value={c.progress} tone="violet" label={tr("Progres spre evoluția următoare")} />
-                  <p className="mt-1 text-xs font-semibold text-faint">{tr("Puncte de evoluție (PE): fiecare bifă aduce 1, 2 sau 3, după dificultatea obiceiului.")}</p>
+                  <p className="mt-1 text-xs font-semibold text-faint">{tr("Puncte de evoluție (PE): fiecare bifă contează după dificultatea obiceiului, dar cu cât bifezi mai multe într-o zi, cu atât fiecare adaugă mai puțin.")}</p>
                 </div>
               ) : (
                 <Chip tone="gold" icon={Sparkles}>{tr("Evoluție completă")}</Chip>

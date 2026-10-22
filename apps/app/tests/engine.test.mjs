@@ -178,3 +178,55 @@ test("the companion sleeps while the player is away and is happy on return", () 
   assert.equal(c.mood, "joy");
   assert.equal(c.awayDays, 2);
 });
+
+test("a day counts at most 8 ticked habits: the 8 most valuable add momentum, the rest add nothing", async () => {
+  const { RULES, countedXp } = await import("../src/lib/engine.js");
+  const { checkInGain } = await import("../src/lib/derive.js");
+  assert.equal(RULES.habitsPerDay, 8);
+  assert.equal(countedXp([6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6]), 6 * 8);
+  assert.equal(countedXp([2, 2, 2, 2, 2, 2, 2, 2, 3]), 3 + 2 * 7, "a harder habit pushes out an easier one");
+  const twenty = Array.from({ length: 20 }, (_, i) => habit(`h${i}`));
+  const eight = twenty.slice(0, 8);
+  const tl = (habits, ticked) => computeTimeline(stateWith({ activeDays: [TODAY], habits, extra: {}, codes: { [TODAY]: Object.fromEntries(habits.map((h) => [h.id, ticked.includes(h.id) ? CODE.DONE : 0])) } }), TODAY).byDay[TODAY];
+  const at8 = tl(eight, eight.map((h) => h.id));
+  const at20 = tl(twenty, twenty.map((h) => h.id));
+  assert.equal(at20.habitXp, at8.habitXp, "20 ticked earn what 8 ticked earn");
+  assert.equal(at20.doneCount, 20, "the count itself stays real");
+  const { diffXp } = await import("../src/lib/engine.js");
+  const b = diffXp(2);
+  assert.equal(checkInGain({ diff: 2 }, 1, Array(8).fill(b)), 0, "a ninth equal habit adds nothing");
+  assert.equal(checkInGain({ diff: 3 }, 1, Array(8).fill(b)), diffXp(3) - b, "a harder one still adds what it has over the weakest");
+  assert.equal(checkInGain({ diff: 2 }, 1, Array(7).fill(b)), b, "under the limit it adds its full value");
+});
+
+test("evolution points: days before 2026-10-22 keep one point per difficulty, later days follow 2*sqrt of the ticked points (at most 8 habits)", async () => {
+  const { EVOLUTION_V2_FROM, dayEvolution, evolutionPoints } = await import("../src/lib/engine.js");
+  assert.equal(EVOLUTION_V2_FROM, "2026-10-22");
+  assert.equal(dayEvolution([2, 2]), 4, "two medium habits give 4");
+  assert.equal(dayEvolution(Array(8).fill(2)), 8);
+  assert.equal(dayEvolution(Array(20).fill(2)), 8, "habits past the eighth add nothing");
+  assert.ok(Math.abs(dayEvolution(Array(8).fill(3)) - 2 * Math.sqrt(24)) < 1e-9);
+  const habits = Array.from({ length: 10 }, (_, i) => habit(`e${i}`));
+  const tick = (n) => Object.fromEntries(habits.slice(0, n).map((h) => [h.id, CODE.DONE]));
+  const old = evolutionPoints({ habits, log: { "2026-10-20": tick(10) } });
+  assert.equal(old.ep, 20, "an old day keeps the old sum");
+  const fresh = evolutionPoints({ habits, log: { "2026-10-23": tick(10) } });
+  assert.equal(fresh.ep, 8, "the same day after the change gives 8");
+  assert.equal(fresh.checkins, 10);
+  assert.equal(evolutionPoints({ habits, log: { "2026-10-20": tick(10), "2026-10-23": tick(2) } }).ep, 24, "mixed: old 20 + new 4");
+});
+
+test("with more than 8 scheduled habits the day is measured against the 8 most valuable: 8 ticked is a full day with the chest", async () => {
+  const { RULES } = await import("../src/lib/engine.js");
+  const day = "2026-10-26";
+  const habits = Array.from({ length: 12 }, (_, i) => habit(`m${i}`));
+  const at = (n) => computeTimeline({ meta: { start: day }, habits, log: { [day]: Object.fromEntries(habits.slice(0, n).map((h) => [h.id, CODE.DONE])) }, reviews: {}, todos: [] }, day).byDay[day];
+  const eight = at(8);
+  assert.equal(eight.completion, 1);
+  assert.equal(eight.chest, true);
+  assert.equal(eight.schedCount, RULES.habitsPerDay);
+  assert.equal(eight.doneSched, RULES.habitsPerDay);
+  assert.equal(eight.gain, at(12).gain, "ticking all 12 adds nothing over 8");
+  assert.ok(at(7).gain < eight.gain, "7 of 12 is still short of a full day");
+  assert.equal(at(7).chest, false);
+});
