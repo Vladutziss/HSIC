@@ -586,7 +586,8 @@ function Detail({ o, state, d, today, act, onBack, onEdit, go }) {
   const addStep = (e) => {
     e.preventDefault();
     const t = step.trim();
-    if (!t || steps.length >= MAX_STEPS) return;
+    if (!t) return e.currentTarget.elements[0].focus();
+    if (steps.length >= MAX_STEPS) return;
     act.addStep(o.id, t.slice(0, MAX_TITLE));
     setStep("");
   };
@@ -690,7 +691,7 @@ function Detail({ o, state, d, today, act, onBack, onEdit, go }) {
             {steps.length < MAX_STEPS && (
               <form onSubmit={addStep} className="mt-3 flex gap-2">
                 <input className="field flex-1" value={step} maxLength={MAX_TITLE} onChange={(e) => setStep(e.target.value)} placeholder={tr("Pas nou")} aria-label={tr("Pas nou")} />
-                <Button type="submit" icon={Plus} disabled={!step.trim()}>{tr("Adaugă")}</Button>
+                <Button type="submit" icon={Plus}>{tr("Adaugă")}</Button>
               </form>
             )}
           </Panel>
