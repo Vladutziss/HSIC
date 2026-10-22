@@ -32,7 +32,7 @@ ${extraNav}        ${languageSwitch(route, locale, t)}
 }
 
 function footer(locale, t) {
-  const items = ["team", "giveaways", "privacy", "terms"].filter((k) => isAvailable(routeByKey(k), locale));
+  const items = ["team", "giveaways", "privacy", "terms", "cookies"].filter((k) => isAvailable(routeByKey(k), locale));
   const label = (k) => (k === "giveaways" ? RO_ONLY.common.giveaways : t.common[k]); // Romania-only: only offered when the route exists in this locale
   return `    <footer class="border-t border-edge">
       <div class="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-5 py-8 text-sm text-dim">

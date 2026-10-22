@@ -9,6 +9,7 @@ import { THEMES, setTheme, useTheme } from "../lib/themes.js";
 import { fmt12 } from "../lib/dates.js";
 import NotificationsPanel from "../components/NotificationsPanel.jsx";
 import LanguageSwitch from "../components/LanguageSwitch.jsx";
+import { ConsentSetting } from "../components/ConsentBanner.jsx";
 import { tr, legalUrl } from "../lib/i18n.js";
 
 const TIMES = ["18:00", "18:30", "19:00", "19:30", "20:00", "20:30", "21:00", "21:30", "22:00", "22:30", "23:00", "23:30"];
@@ -276,7 +277,9 @@ export default function Settings({ state, d, ai, mode, env, onChange, onWipe, on
           <p className="flex flex-wrap gap-x-4 gap-y-1 text-xs font-bold text-dim">
             <a className="focus-ring underline hover:text-ink" href={legalUrl("terms")} target="_blank" rel="noopener">{tr("Termeni și condiții")}</a>
             <a className="focus-ring underline hover:text-ink" href={legalUrl("privacy")} target="_blank" rel="noopener">{tr("Politica de confidențialitate")}</a>
+            <a className="focus-ring underline hover:text-ink" href={legalUrl("cookies")} target="_blank" rel="noopener">{tr("Politica de cookie-uri")}</a>
           </p>
+          <ConsentSetting />
           <Fold title={tr("Zona periculoasă")} tone="text-rose">
             <p className="mb-2 text-xs font-semibold text-dim">{tr("Ștergerea nu se poate anula.")}</p>
             <div className="flex flex-wrap gap-2">
