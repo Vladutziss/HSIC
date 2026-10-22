@@ -8,12 +8,12 @@
 //
 // The language is chosen once per page load: switching it saves the choice and reloads, so nothing has to re-render
 // piecemeal and module-level constants built with tr() are right. Order: ?lang= in the address, then the choice saved
-// on this device (the account keeps it too: prefs.lang), then Romanian if the country hint cookie says Romania or Moldova
-// (set by middleware.js, see lib/geo.js) or the browser language is Romanian (ro-*), otherwise English.
+// on this device (the account keeps it too: prefs.lang), then Romanian if the address carries ?hl=ro (middleware.js adds it
+// for visitors in Romania or Moldova, see lib/geo.js) or the browser language is Romanian (ro-*), otherwise English.
 
 import { Fragment, cloneElement, createElement, isValidElement } from "react";
 import EN from "../i18n/en.js";
-import { hintFromCookie } from "./geo.js";
+import { HINT_PARAM, hintFromSearch } from "./geo.js";
 
 export const LOCALES = ["ro", "en"];
 export const LANG_NAMES = { ro: "Română", en: "English" };
@@ -37,7 +37,7 @@ export function detectLocale() {
   const saved = savedChoice();
   if (saved) return saved;
   try {
-    if (hintFromCookie(document.cookie) === "ro") return "ro";
+    if (hintFromSearch(window.location.search) === "ro") return "ro";
   } catch {}
   const langs = (typeof navigator !== "undefined" && (navigator.languages?.length ? navigator.languages : [navigator.language])) || [];
   const first = String(langs[0] || "ro").toLowerCase();
@@ -45,6 +45,16 @@ export function detectLocale() {
 }
 
 let current = detectLocale();
+// the country hint has done its job: take it out of the address (nothing about it is kept)
+if (typeof window !== "undefined") {
+  try {
+    const u = new URL(window.location.href);
+    if (u.searchParams.has(HINT_PARAM)) {
+      u.searchParams.delete(HINT_PARAM);
+      window.history.replaceState(window.history.state, "", u);
+    }
+  } catch {}
+}
 export const getLocale = () => current;
 export const isEn = () => current === "en";
 /** For tests and the account sync: change the language of this page load without reloading. */

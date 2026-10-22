@@ -5,20 +5,22 @@
 <p>Cookie-urile sunt fișiere mici salvate în browser. Folosim și tehnologii asemănătoare (în special <i>localStorage</i>), pe care le tratăm la fel. Această politică spune exact ce salvăm pe dispozitivul tău, de ce și cum îți schimbi alegerea. Datele personale ca atare sunt descrise în <a href="{{href:privacy}}">Politica de confidențialitate</a>. Operatorul este cel indicat acolo.</p>
 
 <h2>2. Ce cerem și ce nu</h2>
-<p>Cele <b>strict necesare</b> sunt salvate fără acordul tău, pentru că fără ele serviciul pe care îl ceri nu funcționează (art. 4 alin. (5) din Legea 506/2004, care transpune Directiva 2002/58/CE). Cele de <b>analiză</b> sunt salvate <b>doar dacă le accepți</b>. Până alegi, nu se salvează și nu se trimite nimic către instrumentul de analiză. Nu folosim cookie-uri de publicitate sau de marketing și nu vindem date.</p>
+<p>Cele <b>strict necesare</b> sunt salvate fără acordul tău, pentru că sunt strict necesare ca să-ți oferim serviciul pe care l-ai cerut în mod expres și fără ele nu funcționează (art. 5 alin. (3) din Directiva 2002/58/CE; art. 4 alin. (6) lit. b) din Legea 506/2004). Pentru orice alt cookie sau stocare locală, legea cere acordul tău prealabil (art. 4 alin. (5) din Legea 506/2004). Cele de <b>analiză</b> sunt salvate <b>doar dacă le accepți</b>. Până alegi, nu se salvează și nu se trimite nimic către instrumentul de analiză. Nu folosim cookie-uri de publicitate sau de marketing și nu vindem date.</p>
 
 <h2>3. Strict necesare (fără consimțământ)</h2>
 <table>
 <thead><tr><th>Nume</th><th>Cine</th><th>La ce servește</th><th>Durată</th></tr></thead>
 <tbody>
 <tr><td><code>__session</code>, <code>__client_uat</code>, <code>__client</code>, <code>__clerk_db_jwt</code></td><td>Clerk (autentificare)</td><td>Te țin conectat și protejează contul și înregistrarea împotriva abuzului.</td><td>Sesiune, până la aproximativ un an (<code>__client</code>)</td></tr>
-<tr><td><code>molted.prefs.*</code> (limba, tema și preferințele de interfață)</td><td>Molted (localStorage)</td><td>Aplicația se deschide în limba și tema ta, înainte să se încarce contul.</td><td>Până o ștergi</td></tr>
-<tr><td><code>molted_lang_hint</code> (cookie, doar pe app.molted.eu)</td><td>Molted</td><td>Aplicația se deschide în română dacă te afli în România sau Moldova, iar în rest în limba browserului (română sau engleză), până alegi tu o limbă. Conține doar „ro” sau „en”, nu țara. Țara se deduce din adresa IP la cerere și nu se salvează.</td><td>30 de zile</td></tr>
+<tr><td><code>molted.prefs.*</code> (limba, tema și preferințele de interfață pe care le alegi tu)</td><td>Molted (localStorage)</td><td>Aplicația se deschide în limba și tema pe care le-ai ales, înainte să se încarce contul. Se salvează doar după ce alegi tu ceva.</td><td>Până o ștergi</td></tr>
 <tr><td>Sesiunea Focus în curs, conversația cu Molt (când nu ești conectat)</td><td>Molted (localStorage)</td><td>Nu pierzi o sesiune începută dacă reîncarci pagina.</td><td>Până se încheie sau o ștergi</td></tr>
 <tr><td><code>molted.legalTicked</code> (sessionStorage)</td><td>Molted</td><td>Reține că ai bifat termenii la înscriere, până creezi contul.</td><td>Până închizi fila</td></tr>
 <tr><td><code>molted.consent</code></td><td>Molted (localStorage)</td><td>Reține alegerea ta despre analiză, ca să nu te întrebăm la fiecare vizită.</td><td>12 luni</td></tr>
 </tbody>
 </table>
+
+<p><b>Limba la prima vizită.</b> Dacă nu ai ales încă o limbă, pagina se deschide în română dacă te afli în România sau în Republica Moldova ori dacă browserul tău e în română, și în engleză în rest. Țara este dedusă din adresa IP, la fiecare cerere, de furnizorul nostru de găzduire (Vercel), iar limba browserului vine din antetul cererii. <b>Nu salvăm nimic pe dispozitivul tău pentru asta</b>: nu există cookie și nici intrare în localStorage pentru țară. Pe app.molted.eu, un vizitator din România sau Moldova poate vedea o dată <code>?hl=ro</code> în adresă, pe care aplicația o citește și o șterge. Doar alegerea ta explicită de limbă, făcută din comutator, se salvează (în <code>molted.prefs.*</code>, mai sus).</p>
+<p><b>Fonturi.</b> Fontul Nunito este servit de pe domeniile noastre, nu de la Google sau de la alt terț, deci încărcarea lui nu trimite nicăieri adresa ta IP.</p>
 
 <h2>4. Analiză (doar cu acordul tău)</h2>
 <table>

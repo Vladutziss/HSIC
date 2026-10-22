@@ -5,20 +5,22 @@
 <p>Cookies are small files saved in your browser. We also use similar technologies (mainly <i>localStorage</i>) and treat them the same way. This policy says exactly what we store on your device, why, and how to change your choice. Personal data as such is described in the <a href="{{href:privacy}}">Privacy Policy</a>. The operator is the one named there.</p>
 
 <h2>2. What we ask for and what we do not</h2>
-<p><b>Strictly necessary</b> items are stored without your consent because the service you ask for does not work without them (Article 4(5) of Romanian Law 506/2004, implementing Directive 2002/58/EC). <b>Analytics</b> items are stored <b>only if you accept them</b>. Until you choose, nothing is stored and nothing is sent to the analytics tool. We use no advertising or marketing cookies and we do not sell data.</p>
+<p><b>Strictly necessary</b> items are stored without your consent because they are strictly necessary to provide the service you expressly asked for and it does not work without them (Article 5(3) of Directive 2002/58/EC; Article 4(6)(b) of Romanian Law 506/2004). For any other cookie or local storage, the law requires your prior consent (Article 4(5) of Law 506/2004). <b>Analytics</b> items are stored <b>only if you accept them</b>. Until you choose, nothing is stored and nothing is sent to the analytics tool. We use no advertising or marketing cookies and we do not sell data.</p>
 
 <h2>3. Strictly necessary (no consent)</h2>
 <table>
 <thead><tr><th>Name</th><th>Who</th><th>Purpose</th><th>Duration</th></tr></thead>
 <tbody>
 <tr><td><code>__session</code>, <code>__client_uat</code>, <code>__client</code>, <code>__clerk_db_jwt</code></td><td>Clerk (sign-in)</td><td>Keep you signed in and protect the account and sign-up from abuse.</td><td>Session, up to about a year (<code>__client</code>)</td></tr>
-<tr><td><code>molted.prefs.*</code> (language, theme and interface preferences)</td><td>Molted (localStorage)</td><td>The app opens in your language and theme before your account has loaded.</td><td>Until you delete it</td></tr>
-<tr><td><code>molted_lang_hint</code> (cookie, on app.molted.eu only)</td><td>Molted</td><td>The app opens in Romanian if you are in Romania or Moldova and otherwise in your browser language (Romanian or English), until you choose a language yourself. It holds only "ro" or "en", not your country. The country is worked out from the IP address on each request and is not stored.</td><td>30 days</td></tr>
+<tr><td><code>molted.prefs.*</code> (language, theme and interface preferences that you choose)</td><td>Molted (localStorage)</td><td>The app opens in the language and theme you chose before your account has loaded. It is saved only after you choose something.</td><td>Until you delete it</td></tr>
 <tr><td>Running Focus session, conversation with Molt (when signed out)</td><td>Molted (localStorage)</td><td>You do not lose a session in progress if you reload the page.</td><td>Until it ends or you delete it</td></tr>
 <tr><td><code>molted.legalTicked</code> (sessionStorage)</td><td>Molted</td><td>Remembers that you ticked the terms at sign-up, until the account is created.</td><td>Until you close the tab</td></tr>
 <tr><td><code>molted.consent</code></td><td>Molted (localStorage)</td><td>Remembers your analytics choice so we do not ask on every visit.</td><td>12 months</td></tr>
 </tbody>
 </table>
+
+<p><b>Language on your first visit.</b> If you have not chosen a language yet, the page opens in Romanian if you are in Romania or the Republic of Moldova or if your browser is set to Romanian, and in English otherwise. The country is worked out from your IP address, on each request, by our hosting provider (Vercel), and the browser language comes from the request header. <b>We store nothing on your device for this</b>: there is no cookie and no localStorage entry for the country. On app.molted.eu a visitor from Romania or Moldova may see <code>?hl=ro</code> once in the address, which the app reads and removes. Only your explicit language choice, made with the language switch, is saved (in <code>molted.prefs.*</code>, above).</p>
+<p><b>Fonts.</b> The Nunito font is served from our own domains, not from Google or any other third party, so loading it does not send your IP address anywhere.</p>
 
 <h2>4. Analytics (only with your consent)</h2>
 <table>
