@@ -4,11 +4,6 @@
   "trailingSlash": true,
   "redirects": [
     {
-      "source": "/",
-      "destination": "/ro/",
-      "permanent": false
-    },
-    {
       "source": "/index.html",
       "destination": "/ro/",
       "permanent": true
@@ -93,6 +88,10 @@
     {
       "source": "/ro/giveaways/:slug([a-z0-9-]{3,60})",
       "destination": "/ro/giveaways/_shell/"
+    },
+    {
+      "source": "/",
+      "destination": "/ro/"
     }
   ]
 }

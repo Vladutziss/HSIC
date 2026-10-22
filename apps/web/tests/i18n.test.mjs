@@ -47,7 +47,7 @@ test("route resolution: every live page exists in ro and en under its own slug",
   assert.equal(resolve("/en/terms/").route.key, "terms");
 });
 
-test("root redirects to /ro/ (temporary), a missing trailing slash redirects to the canonical form", () => {
+test("root without geo information is Romanian (temporary), a missing trailing slash redirects to the canonical form", () => {
   assert.deepEqual(resolve("/"), { redirect: "/ro/", status: 307 });
   assert.deepEqual(resolve("/en"), { redirect: "/en/", status: 308 });
   assert.deepEqual(resolve("/ro/echipa"), { redirect: "/ro/echipa/", status: 308 });
@@ -67,11 +67,14 @@ test("unknown routes are 404, never the home page", () => {
   }
 });
 
-test("vercel.json mirrors the routing rules: trailing slash, root + legacy redirects, admin noindex", () => {
+test("vercel.json mirrors the routing rules: trailing slash, legacy redirects, root left to the middleware, admin noindex", () => {
   const v = JSON.parse(readFileSync(new URL("../vercel.json", import.meta.url), "utf8"));
   assert.equal(v.trailingSlash, true);
   const redirect = (src) => v.redirects.find((r) => r.source === src);
-  assert.deepEqual([redirect("/").destination, redirect("/").permanent], ["/ro/", false]);
+  // "/" is decided by middleware.js (by country). A redirect here would run first and hide it; the rewrite is only the
+  // fallback that serves the Romanian home if the middleware is not deployed.
+  assert.equal(redirect("/"), undefined);
+  assert.deepEqual(v.rewrites.find((r) => r.source === "/"), { source: "/", destination: "/ro/" });
   // cleanUrls would turn /team.html into /team (and trailingSlash into /team/), so every spelling must be covered
   for (const l of LEGACY_REDIRECTS) {
     const base = l.from.replace(/\.html$/, "");
@@ -271,7 +274,7 @@ test("the shared campaign shell: generic metadata, canonical to the list, wired 
 test("vercel.json serves every /ro/giveaways/<slug>/ from the shell and hides the shell itself", () => {
   const v = JSON.parse(readFileSync(new URL("../vercel.json", import.meta.url), "utf8"));
   // both spellings, so the rewrite matches whichever way the host normalizes the trailing slash
-  assert.deepEqual(v.rewrites, [
+  assert.deepEqual(v.rewrites.filter((r) => r.source !== "/"), [
     { source: "/ro/giveaways/:slug([a-z0-9-]{3,60})/", destination: "/ro/giveaways/_shell/" },
     { source: "/ro/giveaways/:slug([a-z0-9-]{3,60})", destination: "/ro/giveaways/_shell/" },
   ]);
