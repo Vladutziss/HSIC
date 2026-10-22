@@ -1525,4 +1525,12 @@ export default {
   "Zilnic": "Daily",
   "Ziua de azi e închisă": "Today is closed",
   "Zona periculoasă": "Danger zone",
+  "Cookie-uri": "Cookies",
+  "Refuz": "Decline",
+  "Accept": "Accept",
+  "Pornește": "Turn on",
+  "Politica de cookie-uri": "Cookie Policy",
+  "Analiza de utilizare este activă.": "Usage analytics are on.",
+  "Analiza de utilizare este oprită.": "Usage analytics are off.",
+  "Folosim cookie-uri strict necesare ca să funcționeze aplicația. Cu acordul tău, folosim și analiză anonimizată de utilizare, ca să o îmbunătățim. {a}": "We use strictly necessary cookies to make the app work. With your consent, we also use pseudonymised usage analytics to improve it. {a}",
 };
