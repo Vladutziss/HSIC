@@ -19,8 +19,56 @@ const safeStorage = (kind) => {
     return { getItem: () => null, setItem: () => {} }; // private mode / blocked storage: everything still works, just without memory
   }
 };
-const local = safeStorage("localStorage");
-const session = safeStorage("sessionStorage");
+const realLocal = safeStorage("localStorage");
+const realSession = safeStorage("sessionStorage");
+
+// Remembering the campaign source (or a visit flag) on the device is not strictly necessary, so it needs consent
+// (Legea 506/2004). Until the player accepts, both live only in memory for this page load.
+const CONSENT_KEY = "molted.consent";
+const consent = () => {
+  try {
+    const v = JSON.parse(realLocal.getItem(CONSENT_KEY) || "null");
+    return v && Date.now() - v.at < 365 * 864e5 ? v.analytics : null;
+  } catch {
+    return null;
+  }
+};
+const memory = () => {
+  const m = new Map();
+  return { getItem: (k) => m.get(k) ?? null, setItem: (k, v) => m.set(k, String(v)), entries: () => [...m] };
+};
+const gated = (real) => {
+  const mem = memory();
+  return {
+    getItem: (k) => (consent() === true ? real.getItem(k) : mem.getItem(k)),
+    setItem: (k, v) => (consent() === true ? real : mem).setItem(k, v),
+    flush: () => mem.entries().forEach(([k, v]) => real.setItem(k, v)),
+  };
+};
+const local = gated(realLocal);
+const session = gated(realSession);
+
+function askConsent() {
+  if (consent() !== null) return;
+  const bar = document.createElement("div");
+  bar.setAttribute("role", "region");
+  bar.setAttribute("aria-label", "Cookie-uri");
+  bar.className = "fixed inset-x-3 bottom-3 z-50 mx-auto max-w-md rounded-2xl border border-edge bg-panel p-4 text-sm text-body shadow-lg";
+  bar.innerHTML = `<p>Putem reține în browser de unde ai venit (link sau cod QR) timp de 7 zile, ca să știm ce campanii funcționează. Necesită acordul tău. <a class="underline font-extrabold" href="/ro/cookie-uri/">Politica de cookie-uri</a></p>
+<div class="mt-3 flex gap-2"><button type="button" class="btn btn-gold btn-sm flex-1" data-c="0">Refuz</button><button type="button" class="btn btn-gold btn-sm flex-1" data-c="1">Accept</button></div>`;
+  bar.addEventListener("click", (e) => {
+    const c = e.target.closest("[data-c]")?.dataset.c;
+    if (c === undefined) return;
+    realLocal.setItem(CONSENT_KEY, JSON.stringify({ analytics: c === "1", at: Date.now() }));
+    if (c === "1") {
+      local.flush();
+      session.flush();
+    }
+    bar.remove();
+  });
+  document.body.append(bar);
+}
+askConsent();
 
 const state = { campaign: null, signedIn: false, token: null, busy: false, message: "", error: "", clerk: null };
 

@@ -15,6 +15,7 @@ export const ROUTES = [
   { key: "team", paths: { ro: "echipa", en: "team" }, page: "team", priority: "0.6" },
   { key: "privacy", paths: { ro: "confidentialitate", en: "privacy" }, page: "legal", priority: "0.3" },
   { key: "terms", paths: { ro: "termeni", en: "terms" }, page: "legal", priority: "0.3" },
+  { key: "cookies", paths: { ro: "cookie-uri", en: "cookies" }, page: "legal", priority: "0.3" },
   // Romania-only giveaways. Only `ro` has a path, so /en/giveaways can never exist, be linked, or be listed (sitemap,
   // hreflang, navigation) and the language switch from here falls back to /en/. The list page is a normal static page;
   // the detail page is ONE static shell served for every /ro/giveaways/<slug>/ (see `shell` and vercel.json rewrites),
