@@ -15,3 +15,6 @@ ul{margin:0 0 12px;padding-left:22px} li{margin-bottom:6px}
 b{color:#f3efff;font-weight:800}
 a{color:#b19bff} a:hover{color:#ffd978} a:focus-visible{outline:2px solid #ffd978;outline-offset:3px;border-radius:4px}
 .back{justify-self:start;font-weight:800;font-size:14px;color:#9a91c9;text-decoration:none}
+table{width:100%;border-collapse:collapse;font-size:14px;margin:12px 0}
+th,td{text-align:left;vertical-align:top;padding:8px;border-bottom:1px solid rgba(154,145,201,.25)}
+code{font-size:13px;word-break:break-all}

@@ -91,6 +91,10 @@ export function setLocale(l) {
   window.location.reload();
 }
 
-/** The public terms / privacy pages on molted.eu in the page language. */
-export const legalUrl = (kind) =>
-  `https://www.molted.eu/${current === "en" ? "en" : "ro"}/${kind === "terms" ? (current === "en" ? "terms" : "termeni") : current === "en" ? "privacy" : "confidentialitate"}/`;
+const LEGAL_PATHS = { terms: ["termeni", "terms"], privacy: ["confidentialitate", "privacy"], cookies: ["cookie-uri", "cookies"] };
+
+/** The public terms / privacy / cookies pages on molted.eu in the page language. */
+export const legalUrl = (kind) => {
+  const en = current === "en";
+  return `https://www.molted.eu/${en ? "en" : "ro"}/${LEGAL_PATHS[kind][en ? 1 : 0]}/`;
+};
