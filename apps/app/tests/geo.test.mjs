@@ -36,27 +36,45 @@ test("the middleware only adds the cookie on /, continues to the page and sets n
   assert.equal(unknown.headers.get("set-cookie"), null);
 });
 
-test("detectLocale: ?lang= beats the saved choice, which beats the country hint, which beats the browser language", () => {
+test("detectLocale: ?lang= beats the saved choice, which beats country and browser", () => {
   const set = (o) => {
     const store = { "molted.prefs": o.saved ? JSON.stringify({ lang: o.saved }) : null };
     globalThis.window = { location: { search: o.query || "" } };
     globalThis.localStorage = { getItem: (k) => store[k] ?? null };
     globalThis.document = { cookie: o.cookie || "" };
     Object.defineProperty(globalThis, "navigator", { value: { languages: o.browser ? [o.browser] : [] }, configurable: true });
+    return detectLocale();
   };
   try {
-    set({ query: "?lang=en", saved: "ro", cookie: `${GEO_COOKIE}=ro`, browser: "ro-RO" });
-    assert.equal(detectLocale(), "en");
-    set({ saved: "en", cookie: `${GEO_COOKIE}=ro`, browser: "ro-RO" });
-    assert.equal(detectLocale(), "en");
-    set({ cookie: `${GEO_COOKIE}=en`, browser: "ro-RO" });
-    assert.equal(detectLocale(), "en");
-    set({ cookie: `${GEO_COOKIE}=ro`, browser: "en-US" });
-    assert.equal(detectLocale(), "ro");
-    set({ browser: "ro-RO" });
-    assert.equal(detectLocale(), "ro");
-    set({ browser: "en-US" });
-    assert.equal(detectLocale(), "en");
+    assert.equal(set({ query: "?lang=en", saved: "ro", cookie: `${GEO_COOKIE}=ro`, browser: "ro-RO" }), "en");
+    assert.equal(set({ query: "?lang=ro", saved: "en", cookie: `${GEO_COOKIE}=en`, browser: "en-US" }), "ro");
+    assert.equal(set({ saved: "en", cookie: `${GEO_COOKIE}=ro`, browser: "ro-RO" }), "en");
+    assert.equal(set({ saved: "ro", cookie: `${GEO_COOKIE}=en`, browser: "en-US" }), "ro");
+  } finally {
+    delete globalThis.window;
+    delete globalThis.localStorage;
+    delete globalThis.document;
+    delete globalThis.navigator;
+  }
+});
+
+test("detectLocale without a choice: Romania/Moldova or a Romanian browser give Romanian, everything else English", () => {
+  const set = (o) => {
+    globalThis.window = { location: { search: "" } };
+    globalThis.localStorage = { getItem: () => null };
+    globalThis.document = { cookie: o.cookie || "" };
+    Object.defineProperty(globalThis, "navigator", { value: { languages: o.browser ? [o.browser] : [] }, configurable: true });
+    return detectLocale();
+  };
+  try {
+    assert.equal(set({ cookie: `${GEO_COOKIE}=ro`, browser: "en-US" }), "ro", "in Romania with an English browser");
+    assert.equal(set({ cookie: `${GEO_COOKIE}=ro` }), "ro", "in Romania, no browser language");
+    assert.equal(set({ cookie: `${GEO_COOKIE}=en`, browser: "ro-RO" }), "ro", "Romanian browser abroad");
+    assert.equal(set({ cookie: `${GEO_COOKIE}=en`, browser: "ro" }), "ro", "Romanian browser abroad, bare tag");
+    assert.equal(set({ cookie: `${GEO_COOKIE}=en`, browser: "en-GB" }), "en", "English browser abroad");
+    assert.equal(set({ cookie: `${GEO_COOKIE}=en`, browser: "de-DE" }), "en", "German browser abroad");
+    assert.equal(set({ browser: "ro-RO" }), "ro", "no cookie, Romanian browser");
+    assert.equal(set({ browser: "en-US" }), "en", "no cookie, English browser");
   } finally {
     delete globalThis.window;
     delete globalThis.localStorage;

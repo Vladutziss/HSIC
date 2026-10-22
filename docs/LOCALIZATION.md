@@ -12,7 +12,7 @@ Production host: `https://www.molted.eu` (the apex `molted.eu` redirects to it).
 | Terms | `/ro/termeni/` | `/en/terms/` |
 | Giveaways (Romania only) | `/ro/giveaways/`, `/ro/giveaways/<slug>/` | does not exist |
 
-- `/` redirects (307, temporary, `no-store`) by the visitor's country: Romania and Moldova go to `/ro/`, every other country to `/en/` (see "Language by country"). There is no `x-default` hreflang because `/` is only a redirect. Only `/` is affected: a visitor who opens `/ro/…` or `/en/…` directly always gets that page.
+- `/` redirects (307, temporary, `no-store`) by the visitor's country: Romania and Moldova go to `/ro/`, and so does anyone whose browser is in Romanian; everyone else goes to `/en/` (see "Language by country"). There is no `x-default` hreflang because `/` is only a redirect. Only `/` is affected: a visitor who opens `/ro/…` or `/en/…` directly always gets that page.
 - Canonical form has a trailing slash (`trailingSlash: true` in `apps/web/vercel.json`).
 - Unknown URLs get the real 404 page (`404.html`, one file for both languages that shows the English text under `/en/`).
 - Old URLs (`/team.html`, `/privacy.html`, `/terms.html`, `/index.html`, with or without `.html` and slash) redirect permanently (301/308) to the Romanian equivalents. The app (`app.molted.eu`) still links to `https://molted.eu/terms.html` and `/privacy.html`; they keep working through these redirects.
@@ -28,11 +28,11 @@ Production host: `https://www.molted.eu` (the apex `molted.eu` redirects to it).
 
 ## Language by country
 
-- `apps/web/middleware.js` (Vercel Routing Middleware, matcher `/`) reads `x-vercel-ip-country` (ISO country from the IP, set by Vercel) and redirects to `/ro/` for `RO` and `MD`, to `/en/` otherwise. The decision is in `src/i18n/geo.js`. If the header is missing or unusable (`XX`, `T1`, not two letters), the browser's `Accept-Language` decides (`ro*` = Romanian) and the default is English.
+- `apps/web/middleware.js` (Vercel Routing Middleware, matcher `/`) reads `x-vercel-ip-country` (ISO country from the IP, set by Vercel) and redirects to `/ro/` when the country is `RO` or `MD` **or** the first language of `Accept-Language` is Romanian (`ro`, `ro-RO`, `ro-MD`), and to `/en/` in every other case. The decision is in `src/i18n/geo.js`. A missing or unusable country (`XX`, `T1`, not two letters) simply does not count as Romanian.
 - `vercel.json` must not redirect `/` itself: redirects run before middleware and would hide it. The `/` → `/ro/` rewrite in `vercel.json` is only the fallback if the middleware is not deployed (then `/` answers 200 with the Romanian home instead of a redirect).
-- `apps/app/middleware.js` (matcher `/`) sets the cookie `molted_lang_hint=ro|en` (30 days, `Secure`, `SameSite=Lax`) from the same header and never redirects. `detectLocale()` in `apps/app/src/lib/i18n.js` reads it after `?lang=` and the saved choice and before the browser language. With an unknown country no cookie is set. It is listed in the cookie policy (`content/cookies.*.html`).
+- `apps/app/middleware.js` (matcher `/`) sets the cookie `molted_lang_hint=ro|en` (30 days, `Secure`, `SameSite=Lax`) from the same header and never redirects. `detectLocale()` in `apps/app/src/lib/i18n.js` reads it after `?lang=` and the saved choice: `ro` gives Romanian, otherwise a Romanian browser (`ro-*`) gives Romanian and anything else English. With an unknown country no cookie is set. It is listed in the cookie policy (`content/cookies.*.html`).
 - The two country lists (`apps/web/src/i18n/geo.js`, `apps/app/src/lib/geo.js`) are kept equal by a test. To add a country, change both.
-- Consequence to know: the country wins over the browser language, so a Romanian-speaking visitor abroad (diaspora) opens in English until they switch; the choice is then kept (app: saved on the device and in the account). On the site the switch does not remember the choice for `/`.
+- Romanians abroad (Romanian browser, foreign IP) get Romanian; an English-language browser in Romania also gets Romanian (the country is enough), and can switch. Explicit choice: app saves it on the device and in the account; the site's switch does not remember it for `/`.
 - Crawlers: Googlebot normally crawls from the US and so sees `/` redirect to `/en/`; `/ro/…` and `/en/…` stay directly crawlable with reciprocal hreflang.
 
 ## Adding a page
