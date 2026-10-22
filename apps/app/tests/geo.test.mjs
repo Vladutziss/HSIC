@@ -1,84 +1,91 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import middleware, { config } from "../middleware.js";
 import { ROMANIAN_COUNTRIES as WEB_COUNTRIES } from "../../web/src/i18n/geo.js";
-import { GEO_COOKIE, ROMANIAN_COUNTRIES, hintCookie, hintFromCookie, localeForCountry } from "../src/lib/geo.js";
+import { HINT_PARAM, ROMANIAN_COUNTRIES, hintFromSearch, isRomanianCountry } from "../src/lib/geo.js";
 import { detectLocale } from "../src/lib/i18n.js";
 
-test("Romania and Moldova get Romanian, every other country English, unknown gets no hint", () => {
-  for (const c of ["RO", "MD", "ro", " md "]) assert.equal(localeForCountry(c), "ro", c);
-  for (const c of ["US", "GB", "DE", "FR", "IT", "ES", "UA", "HU", "BG", "RU"]) assert.equal(localeForCountry(c), "en", c);
-  for (const c of [undefined, null, "", "XX", "T1", "ROU", "1"]) assert.equal(localeForCountry(c), null, String(c));
-});
+const visit = (country, path = "/") => middleware(new Request(`https://app.molted.eu${path}`, { headers: country ? { "x-vercel-ip-country": country } : {} }));
 
-test("the app and the site use the same list of Romanian-speaking countries", () => {
+test("only Romania and Moldova count as Romanian-speaking, and the site uses the same list", () => {
   assert.deepEqual(ROMANIAN_COUNTRIES, WEB_COUNTRIES);
+  for (const c of ["RO", "MD", "ro", " md "]) assert.equal(isRomanianCountry(c), true, c);
+  for (const c of ["US", "GB", "DE", "IT", "ES", "UA", "HU", "BG", "RU", "", "XX", "T1", undefined, null]) assert.equal(isRomanianCountry(c), false, String(c));
 });
 
-test("the hint cookie is written and read back, and nothing else is mistaken for it", () => {
-  assert.equal(hintFromCookie(hintCookie("ro").split(";")[0]), "ro");
-  assert.equal(hintFromCookie(`a=1; ${GEO_COOKIE}=en; b=2`), "en");
-  assert.equal(hintFromCookie(`x${GEO_COOKIE}=ro`), null);
-  assert.equal(hintFromCookie(`${GEO_COOKIE}=fr`), null);
-  assert.equal(hintFromCookie(""), null);
-  assert.match(hintCookie("en"), /; Path=\/; Max-Age=\d+; SameSite=Lax; Secure$/);
+test("the hint is read from the address, and only the value ro is accepted", () => {
+  assert.equal(hintFromSearch(`?${HINT_PARAM}=ro`), "ro");
+  assert.equal(hintFromSearch(`?a=1&${HINT_PARAM}=ro`), "ro");
+  for (const s of [`?${HINT_PARAM}=en`, `?${HINT_PARAM}=`, `?x${HINT_PARAM}=ro`, "", "?", undefined, null]) assert.equal(hintFromSearch(s), null, String(s));
 });
 
-test("the middleware only adds the cookie on /, continues to the page and sets nothing for an unknown country", async () => {
+test("a visitor from Romania or Moldova is redirected once to /?hl=ro, privately and temporarily", () => {
   assert.equal(config.matcher, "/");
-  const run = (country) => middleware(new Request("https://app.molted.eu/", { headers: country ? { "x-vercel-ip-country": country } : {} }));
-  const ro = run("RO");
-  assert.equal(ro.headers.get("x-middleware-next"), "1");
-  assert.equal(hintFromCookie(ro.headers.get("set-cookie")), "ro");
-  assert.equal(hintFromCookie(run("US").headers.get("set-cookie")), "en");
-  const unknown = run(undefined);
-  assert.equal(unknown.headers.get("x-middleware-next"), "1");
-  assert.equal(unknown.headers.get("set-cookie"), null);
-});
-
-test("detectLocale: ?lang= beats the saved choice, which beats country and browser", () => {
-  const set = (o) => {
-    const store = { "molted.prefs": o.saved ? JSON.stringify({ lang: o.saved }) : null };
-    globalThis.window = { location: { search: o.query || "" } };
-    globalThis.localStorage = { getItem: (k) => store[k] ?? null };
-    globalThis.document = { cookie: o.cookie || "" };
-    Object.defineProperty(globalThis, "navigator", { value: { languages: o.browser ? [o.browser] : [] }, configurable: true });
-    return detectLocale();
-  };
-  try {
-    assert.equal(set({ query: "?lang=en", saved: "ro", cookie: `${GEO_COOKIE}=ro`, browser: "ro-RO" }), "en");
-    assert.equal(set({ query: "?lang=ro", saved: "en", cookie: `${GEO_COOKIE}=en`, browser: "en-US" }), "ro");
-    assert.equal(set({ saved: "en", cookie: `${GEO_COOKIE}=ro`, browser: "ro-RO" }), "en");
-    assert.equal(set({ saved: "ro", cookie: `${GEO_COOKIE}=en`, browser: "en-US" }), "ro");
-  } finally {
-    delete globalThis.window;
-    delete globalThis.localStorage;
-    delete globalThis.document;
-    delete globalThis.navigator;
+  for (const c of ["RO", "MD"]) {
+    const r = visit(c);
+    assert.equal(r.status, 307, c);
+    assert.equal(r.headers.get("location"), "https://app.molted.eu/?hl=ro", c);
+    assert.match(r.headers.get("cache-control"), /no-store/);
+    assert.match(r.headers.get("vary"), /x-vercel-ip-country/);
   }
 });
 
-test("detectLocale without a choice: Romania/Moldova or a Romanian browser give Romanian, everything else English", () => {
-  const set = (o) => {
-    globalThis.window = { location: { search: "" } };
-    globalThis.localStorage = { getItem: () => null };
-    globalThis.document = { cookie: o.cookie || "" };
-    Object.defineProperty(globalThis, "navigator", { value: { languages: o.browser ? [o.browser] : [] }, configurable: true });
-    return detectLocale();
-  };
-  try {
-    assert.equal(set({ cookie: `${GEO_COOKIE}=ro`, browser: "en-US" }), "ro", "in Romania with an English browser");
-    assert.equal(set({ cookie: `${GEO_COOKIE}=ro` }), "ro", "in Romania, no browser language");
-    assert.equal(set({ cookie: `${GEO_COOKIE}=en`, browser: "ro-RO" }), "ro", "Romanian browser abroad");
-    assert.equal(set({ cookie: `${GEO_COOKIE}=en`, browser: "ro" }), "ro", "Romanian browser abroad, bare tag");
-    assert.equal(set({ cookie: `${GEO_COOKIE}=en`, browser: "en-GB" }), "en", "English browser abroad");
-    assert.equal(set({ cookie: `${GEO_COOKIE}=en`, browser: "de-DE" }), "en", "German browser abroad");
-    assert.equal(set({ browser: "ro-RO" }), "ro", "no cookie, Romanian browser");
-    assert.equal(set({ browser: "en-US" }), "en", "no cookie, English browser");
-  } finally {
-    delete globalThis.window;
-    delete globalThis.localStorage;
-    delete globalThis.document;
-    delete globalThis.navigator;
+test("other query parameters survive the redirect and nothing is ever stored", () => {
+  const r = visit("RO", "/?ref=poster&x=1");
+  assert.equal(r.headers.get("location"), "https://app.molted.eu/?ref=poster&x=1&hl=ro");
+  for (const response of [r, visit("US"), visit(undefined), visit("RO", "/?hl=ro")]) assert.equal(response.headers.get("set-cookie"), null);
+});
+
+test("no redirect for other countries, an unknown country, or when hl or lang is already there (no loops)", () => {
+  for (const response of [visit("US"), visit("DE"), visit(undefined), visit("XX"), visit("RO", "/?hl=ro"), visit("RO", "/?lang=en"), visit("RO", "/?lang=ro")]) {
+    assert.equal(response.status, 200);
+    assert.equal(response.headers.get("x-middleware-next"), "1");
+    assert.equal(response.headers.get("location"), null);
   }
+});
+
+test("the app no longer asks Google for fonts and sets no cookie of its own", () => {
+  const index = readFileSync(new URL("../index.html", import.meta.url), "utf8");
+  assert.doesNotMatch(index, /fonts\.googleapis|fonts\.gstatic/);
+  assert.match(index, /\/fonts\/nunito\.css/);
+  assert.doesNotMatch(readFileSync(new URL("../middleware.js", import.meta.url), "utf8"), /set-cookie/i);
+  assert.doesNotMatch(readFileSync(new URL("../src/lib/geo.js", import.meta.url), "utf8"), /document\.cookie/);
+});
+
+function setup({ query = "", saved, browser }) {
+  const store = { "molted.prefs": saved ? JSON.stringify({ lang: saved }) : null };
+  globalThis.window = { location: { search: query } };
+  globalThis.localStorage = { getItem: (k) => store[k] ?? null };
+  Object.defineProperty(globalThis, "navigator", { value: { languages: browser ? [browser] : [] }, configurable: true });
+}
+const teardown = () => {
+  delete globalThis.window;
+  delete globalThis.localStorage;
+  delete globalThis.navigator;
+};
+const locale = (o) => {
+  setup(o);
+  try {
+    return detectLocale();
+  } finally {
+    teardown();
+  }
+};
+
+test("detectLocale: ?lang= beats the saved choice, which beats the country hint and the browser", () => {
+  assert.equal(locale({ query: "?lang=en&hl=ro", saved: "ro", browser: "ro-RO" }), "en");
+  assert.equal(locale({ query: "?lang=ro", saved: "en", browser: "en-US" }), "ro");
+  assert.equal(locale({ query: "?hl=ro", saved: "en", browser: "ro-RO" }), "en");
+  assert.equal(locale({ query: "?hl=ro", saved: "ro", browser: "en-US" }), "ro");
+});
+
+test("detectLocale without a choice: Romania/Moldova (hint) or a Romanian browser give Romanian, everything else English", () => {
+  assert.equal(locale({ query: "?hl=ro", browser: "en-US" }), "ro", "in Romania with an English browser");
+  assert.equal(locale({ query: "?hl=ro" }), "ro", "in Romania, no browser language");
+  assert.equal(locale({ browser: "ro-RO" }), "ro", "Romanian browser abroad");
+  assert.equal(locale({ browser: "ro" }), "ro", "Romanian browser abroad, bare tag");
+  assert.equal(locale({ browser: "en-GB" }), "en", "English browser abroad");
+  assert.equal(locale({ browser: "de-DE" }), "en", "German browser abroad");
+  assert.equal(locale({ query: "?hl=en", browser: "en-US" }), "en", "only hl=ro is a hint");
 });
