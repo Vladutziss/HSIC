@@ -117,7 +117,7 @@ export default {
       { q: "What happens if I miss days?", a: "Your character does not die, it just sleeps while you are away. A missed day lowers momentum a little, and after 3 days in a row with no activity (you can choose between 2 and 5) it goes back to zero. A streak can be saved with 2 revives per month." },
       { q: "What does the AI agent do?", a: "An agent analyzes your habits with its own tools (statistics, patterns, sources), proposes concrete actions and, after you confirm, applies and measures them. It also writes the day's report and chapters of Molt's story." },
       { q: "How do groups work?", a: "You create a group or a progress partner and get a 6-character invitation code. Members appear on a weekly leaderboard and can send each other reminders." },
-      { q: "Do I need to install anything?", a: "No. Molted is a web app: you open it in your browser, at app.molted.eu. The app interface is currently available in Romanian only.", link: true },
+      { q: "Do I need to install anything?", a: "No. Molted is a web app: you open it in your browser, at app.molted.eu. The app is available in Romanian and English.", link: true },
     ],
     ctaH2: "Your egg is waiting",
     ctaText: "Pick a path, tick your first habit and see what hatches.",
