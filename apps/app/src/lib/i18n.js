@@ -8,10 +8,12 @@
 //
 // The language is chosen once per page load: switching it saves the choice and reloads, so nothing has to re-render
 // piecemeal and module-level constants built with tr() are right. Order: ?lang= in the address, then the choice saved
-// on this device (the account keeps it too: prefs.lang), then the browser language (Romanian only for ro-*).
+// on this device (the account keeps it too: prefs.lang), then the country hint cookie (Romania and Moldova: Romanian,
+// anywhere else: English; set by middleware.js, see lib/geo.js), then the browser language (Romanian only for ro-*).
 
 import { Fragment, cloneElement, createElement, isValidElement } from "react";
 import EN from "../i18n/en.js";
+import { hintFromCookie } from "./geo.js";
 
 export const LOCALES = ["ro", "en"];
 export const LANG_NAMES = { ro: "Română", en: "English" };
@@ -34,6 +36,10 @@ export function detectLocale() {
   } catch {}
   const saved = savedChoice();
   if (saved) return saved;
+  try {
+    const hint = hintFromCookie(document.cookie);
+    if (hint) return hint;
+  } catch {}
   const langs = (typeof navigator !== "undefined" && (navigator.languages?.length ? navigator.languages : [navigator.language])) || [];
   const first = String(langs[0] || "ro").toLowerCase();
   return first.startsWith("ro") ? "ro" : "en";
