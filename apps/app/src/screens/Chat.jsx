@@ -15,10 +15,12 @@ import {
   Trash2,
 } from "lucide-react";
 import { Button, Chip, Confirm, IconButton, Panel, Skeleton, useToast } from "../components/ui.jsx";
+import { idleAiJob, trackAiJob, useCoach } from "../components/AiCoach.jsx";
 import { Sprite, eggCrack } from "../components/Sprite.jsx";
 import { PATHS } from "../lib/catalog.js";
 import { append as appendChat, clear as clearChat, load as loadChat, loadLocal, saveLocal } from "../lib/chatStore.js";
-import { askChat, chatContext } from "../lib/chat.js";
+import { chatContext, normalizePlan, startChat } from "../lib/chat.js";
+import { resumeChatRun, waitForReply } from "../lib/chatRun.js";
 import { goalSet, habitList, summary as planSummary, todoList } from "../lib/planApply.js";
 import { getClient } from "../lib/supabase.js";
 import { loadNotes } from "../lib/memory.js";
@@ -38,8 +40,7 @@ const STARTERS = [
 export default function Chat({ state, d, today, ai, goals, todo, agent, onAddHabit, embedded = false, initialPrompt = null, onPromptUsed }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
+  const pending = useRef(null); // what the request in flight is about (read when it starts)
   const [notes, setNotes] = useState([]);
   const [clearOpen, setClearOpen] = useState(false);
   const [loaded, setLoaded] = useState(false);
@@ -65,9 +66,10 @@ export default function Chat({ state, d, today, ai, goals, todo, agent, onAddHab
               loadNotes(c).catch(() => []),
             ]);
             if (alive) {
-              setMessages(loadedMsgs);
+              setMessages(loadedMsgs.map((m) => (m.plan ? { ...m, plan: normalizePlan(m.plan) } : m))); // the server stores the plan as the model wrote it
               setNotes(loadedNotes);
             }
+            resumeChatRun(c, trackAiJob).catch(() => {}); // a reply still being written: thinking state and all
           } catch {
             if (alive) setMessages(loadLocal());
           }
@@ -88,6 +90,41 @@ export default function Chat({ state, d, today, ai, goals, todo, agent, onAddHab
     };
   }, [ai?.server]);
 
+  // The reply is an AI job like the other abilities (see components/AiCoach.jsx): it belongs to the app, not to this screen,
+  // so it keeps going when you open another tab or page, and the Molt menu shows that Molt is thinking; a toast tells you
+  // when it is ready. The server writes the reply itself (lib/chatRun.js), so it also survives a refresh or a phone that
+  // slept: the question is saved before asking, and the app picks the reply up again when it reopens.
+  const [job, run] = useCoach(
+    async () => {
+      const { text, nextMessages, latestPlan, context } = pending.current;
+      const client = ai?.server ? await getClient() : null;
+      if (!client) throw { code: "unavailable" };
+      await appendChat(client, { role: "user", content: text }).catch(() => {});
+      await startChat({ name: companion.name || pInfo.cls, cls: pInfo.cls, goal: state?.profile?.goal || "", messages: nextMessages, plan: latestPlan, context });
+      return waitForReply(client); // the server writes the reply into the conversation; this only waits for it
+    },
+    { kind: "chat", persist: false }
+  );
+  const busy = job.status === "busy";
+  const error = job.status === "error" ? job.error || tr("Moltul nu a putut răspunde. Încearcă din nou.") : "";
+
+  // the reply arrived (here or while you were away): it goes into the list once, then the job is idle again
+  useEffect(() => {
+    if (!loaded || job.status !== "done" || !job.data) return;
+    const reply = job.data;
+    setMessages((list) => (list.some((m) => m.id === reply.id) || (list.at(-1)?.role === "assistant" && list.at(-1)?.content === reply.content) ? list : [...list, reply]));
+    idleAiJob("chat");
+  }, [loaded, job]);
+  // an error you have seen is not shown again the next time you open the chat
+  const statusRef = useRef(job.status);
+  statusRef.current = job.status;
+  useEffect(
+    () => () => {
+      if (statusRef.current === "error") idleAiJob("chat");
+    },
+    []
+  );
+
   // Scroll to bottom on new messages
   useEffect(() => {
     // follow the conversation inside the list only: scrollIntoView would also move the whole page, and opening the
@@ -96,59 +133,20 @@ export default function Chat({ state, d, today, ai, goals, todo, agent, onAddHab
     if (list && messages.length > 0) list.scrollTo({ top: list.scrollHeight, behavior: "smooth" });
   }, [messages, busy]);
 
-  const handleSend = async (textToSend) => {
+  const handleSend = (textToSend) => {
     const text = (typeof textToSend === "string" ? textToSend : input).trim();
     if (!text || busy) return;
     setInput("");
-    setError("");
-
     const userMsg = { id: `local-${Date.now()}`, role: "user", content: text, plan: null, createdAt: new Date().toISOString() };
     const nextMessages = [...messages, userMsg];
     setMessages(nextMessages);
-    setBusy(true);
-
-    try {
-      const client = ai?.server ? await getClient() : null;
-      if (client) {
-        appendChat(client, { role: "user", content: text }).catch(() => {});
-      } else {
-        saveLocal(nextMessages);
-      }
-
-      // Find current active plan from previous messages to allow iterative editing
-      const latestPlan = [...nextMessages].reverse().find((m) => m.plan)?.plan || null;
-
-      const context = chatContext(state, today, notes);
-      const res = await askChat({
-        name: companion.name || pInfo.cls,
-        cls: pInfo.cls,
-        goal: state?.profile?.goal || "",
-        messages: nextMessages,
-        plan: latestPlan,
-        context,
-      });
-
-      const assistantMsg = {
-        id: `local-${Date.now() + 1}`,
-        role: "assistant",
-        content: res.reply,
-        plan: res.plan,
-        createdAt: new Date().toISOString(),
-      };
-
-      const finalMessages = [...nextMessages, assistantMsg];
-      setMessages(finalMessages);
-
-      if (client) {
-        appendChat(client, { role: "assistant", content: res.reply, plan: res.plan }).catch(() => {});
-      } else {
-        saveLocal(finalMessages);
-      }
-    } catch (e) {
-      setError(aiErrorCopy(e?.code) || tr("Moltul nu a putut răspunde. Încearcă din nou."));
-    } finally {
-      setBusy(false);
-    }
+    pending.current = {
+      text,
+      nextMessages,
+      latestPlan: [...nextMessages].reverse().find((m) => m.plan)?.plan || null, // lets the player edit the plan step by step
+      context: chatContext(state, today, notes),
+    };
+    run();
   };
 
   // a question asked from elsewhere in the app goes out once, after the old messages are in

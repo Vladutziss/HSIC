@@ -20,7 +20,12 @@ export const diffXp = (d) => (DIFF[d] || DIFF[2]).xp;
 // also holds 2-5 from the time check-ins could carry a proof, and they are read as 1.
 export const CODE = { DONE: 1 };
 
+/** Momentum base of the ticked habits that count today: the `habitsPerDay` most valuable ones. */
+export const countedXp = (bases) => [...bases].sort((a, b) => b - a).slice(0, RULES.habitsPerDay).reduce((a, b) => a + b, 0);
+
 export const RULES = {
+  evolutionScale: 2, // evolution points of a day = this * sqrt(ticked difficulty points), see dayEvolution
+  habitsPerDay: 8, // ticked habits that earn momentum in one day: a player can keep more, only the 8 most valuable count
   todoXp: 5,
   todoCap: 6,
   chestXp: 25, // every scheduled habit done
@@ -87,7 +92,7 @@ export function focusXpByDay(sessions) {
 }
 
 export const habitExists = (h, day) => !(h.createdAt && day < h.createdAt) && !(h.archivedAt && day >= h.archivedAt);
-export const isScheduled = (h, day) => habitExists(h, day) && (h.days || []).includes(weekday(day));
+export const isScheduled = (h, day) => habitExists(h, day) && (h.days || []).includes(weekday(day)) && !(h.skip || []).includes(day); // skip: days taken off just once
 
 function firstDay(state, today) {
   let first = state.meta?.start || today;
@@ -138,30 +143,31 @@ export function computeTimeline(state, today) {
     const review = reviews[d];
     const closed = d < today || !!review;
 
-    let schedBase = 0;
-    let doneSchedBase = 0;
-    let schedCount = 0;
-    let doneSched = 0;
+    // A day counts at most RULES.habitsPerDay habits, scheduled or ticked: the score and the chest are measured against the
+    // most valuable scheduled ones, so 8 ticked habits out of 20 scheduled is a full day.
+    const schedBases = [];
+    const doneSchedBases = [];
+    const doneBases = [];
     let doneCount = 0;
-    let habitXp = 0;
     for (const h of habits) {
       if (!habitExists(h, d)) continue;
       const base = diffXp(h.diff);
       const sched = isScheduled(h, d);
       const code = entries[h.id];
-      if (sched) {
-        schedBase += base;
-        schedCount++;
-      }
+      if (sched) schedBases.push(base);
       if (code) {
         doneCount++;
-        if (sched) {
-          doneSchedBase += base;
-          doneSched++;
-        }
-        habitXp += base;
+        if (sched) doneSchedBases.push(base);
+        doneBases.push(base);
       }
     }
+    const top = (bases) => [...bases].sort((a, b) => b - a).slice(0, RULES.habitsPerDay);
+    const sum = (bases) => bases.reduce((a, b) => a + b, 0);
+    const schedBase = sum(top(schedBases));
+    const doneSchedBase = sum(top(doneSchedBases));
+    const schedCount = Math.min(schedBases.length, RULES.habitsPerDay);
+    const doneSched = Math.min(doneSchedBases.length, RULES.habitsPerDay);
+    const habitXp = countedXp(doneBases); // more than habitsPerDay ticked: only the most valuable ones add momentum
     const todos = todosByDay[d] || 0;
     const focusXp = focusByDay[d] || 0;
     const active = doneCount > 0 || todos > 0 || focusXp > 0;
@@ -229,6 +235,7 @@ export function computeTimeline(state, today) {
       doneCount,
       todos,
       habitXp: Math.round(habitXp),
+      doneBases: doneBases.sort((a, b) => b - a), // every ticked habit's base, highest first (what a new tick adds depends on it)
       todoXp,
       focusXp,
       reviewXp,
@@ -342,20 +349,35 @@ export const STAGES = [
   { id: "legend", name: tr("Legendă"), min: 210 },
 ];
 
-/** The companion grows from check-ins: each one earns the habit's difficulty in points (1, 2 or 3). */
+/**
+ * Evolution points of one day from `bases` (the difficulty points, 1-3, of every habit ticked that day): the most valuable
+ * RULES.habitsPerDay count, and the day gives evolutionScale * sqrt(their sum). Square root: each extra habit still helps,
+ * but less and less, so a long list does not make Molt evolve in days (2 medium habits give 4, 8 give 8, 8 hard ones 9.8).
+ */
+export function dayEvolution(bases) {
+  const raw = [...bases].sort((a, b) => b - a).slice(0, RULES.habitsPerDay).reduce((a, b) => a + b, 0);
+  return RULES.evolutionScale * Math.sqrt(raw);
+}
+
+/** Days before this one keep the first rule (every check-in earns its difficulty), so nobody loses a stage they reached. */
+export const EVOLUTION_V2_FROM = "2026-10-22";
+
+/** The companion grows from check-ins: until EVOLUTION_V2_FROM each earns the habit's difficulty in points (1, 2 or 3), after it a day follows dayEvolution. */
 export function evolutionPoints(state) {
   state = withHistory(state);
   const diff = Object.fromEntries((state.habits || []).map((h) => [h.id, h.diff]));
   let ep = 0;
   let checkins = 0;
-  for (const entries of Object.values(state.log || {})) {
+  for (const [day, entries] of Object.entries(state.log || {})) {
+    const bases = [];
     for (const [habitId, code] of Object.entries(entries)) {
       if (!code) continue;
-      ep += diffEp(diff[habitId]);
+      bases.push(diffEp(diff[habitId]));
       checkins++;
     }
+    ep += day < EVOLUTION_V2_FROM ? bases.reduce((a, b) => a + b, 0) : dayEvolution(bases);
   }
-  return { ep, checkins };
+  return { ep: Math.floor(ep + 1e-9), checkins };
 }
 
 export function stageFor(ep) {

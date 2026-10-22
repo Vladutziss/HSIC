@@ -35,6 +35,12 @@ const keyOf = (table, row) => SPEC[table].pk.map((c) => row[c]).join("|");
 
 // ------------------------------------------------------------ state <-> rows
 
+function skipsOf(list, field) {
+  const out = {};
+  for (const x of list) if (x[field]?.length) out[x.id] = x[field].slice(-120);
+  return out;
+}
+
 export function toRows(state, uid) {
   const p = state.profile || {};
   const meta = state.meta || {};
@@ -56,6 +62,9 @@ export function toRows(state, uid) {
       focusSessions: state.focusSessions || [],
       goals: state.goals || [],
       objectives: state.objectives || [],
+      // per-day exceptions have no column in habits/todos: "not on this day" lists, by id
+      habitSkips: skipsOf(habits, "skip"),
+      todoSkips: skipsOf(state.todos || [], "skipDays"),
     },
     onboarded: true,
   };
@@ -95,6 +104,7 @@ export function toRows(state, uid) {
       dur: t.dur ?? 30,
       done: !!t.done,
       done_on: nul(t.doneOn),
+      focus: !!t.focus,
       repeat: nul(t.repeat),
       done_days: t.repeat ? t.doneDays || [] : [],
       created_at: nul(t.createdAt),
@@ -198,6 +208,7 @@ export function fromRows(rows) {
         color: h.color,
         createdAt: h.created_at,
         archivedAt: h.archived_at,
+        ...(extra.habitSkips?.[h.id]?.length ? { skip: extra.habitSkips[h.id] } : {}),
       })),
     log,
     reviews,
@@ -209,7 +220,9 @@ export function fromRows(rows) {
       dur: t.dur,
       done: t.done,
       doneOn: t.done_on,
+      ...(t.focus ? { focus: true } : {}),
       ...(t.repeat ? { repeat: t.repeat, doneDays: t.done_days || [] } : {}),
+      ...(t.repeat && extra.todoSkips?.[t.id]?.length ? { skipDays: extra.todoSkips[t.id] } : {}),
       createdAt: t.created_at,
     })),
     streak: { revived },

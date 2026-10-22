@@ -1,36 +1,215 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
-import { BookOpen, Clock, RefreshCw, Sparkles } from "lucide-react";
+import React, { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { BookOpen, Clock, History, RefreshCw, Sparkles, Trash2 } from "lucide-react";
 import { Button, Skeleton } from "./ui.jsx";
 import { aiErrorCopy, habitInsights, weeklyReflection } from "../lib/ai.js";
 import { coachData, hasHistory } from "../lib/coach.js";
 import { getClient } from "../lib/supabase.js";
 import { isoWeek, load as loadReflections, save as saveReflection } from "../lib/reflections.js";
-import { tr } from "../lib/i18n.js";
+import { loadResults, removeResult, saveResult } from "../lib/aiHistory.js";
+import { getLocale, tr } from "../lib/i18n.js";
+
+// ---------------------------------------------------------------------------------------------------------------
+// The AI jobs live here, outside the screens: a request keeps running (and its answer is kept) when the player opens
+// another ability, another page or another browser tab, and the answer is waiting when they come back.
+// Per ability (`kind`): its current state, its history, the request in flight and how many screens show it.
+const kinds = new Map();
+const listeners = new Set();
+let version = 0;
+const emit = () => {
+  version++;
+  listeners.forEach((fn) => fn());
+};
+const subscribe = (fn) => {
+  listeners.add(fn);
+  return () => listeners.delete(fn);
+};
+const finishListeners = new Set();
+/** Called when an ability finishes while its screen is closed ({kind, failed}): the app tells the player with a toast. */
+export function onAiFinished(fn) {
+  finishListeners.add(fn);
+  return () => finishListeners.delete(fn);
+}
+const finished = (kind, failed) => finishListeners.forEach((fn) => fn({ kind, failed }));
+const IDLE = { status: "idle", data: null, error: "", at: null, id: null };
+const slot = (kind) => {
+  if (!kinds.has(kind)) kinds.set(kind, { s: IDLE, items: [], loaded: false, ctl: null, mounted: 0, unseen: false, asked: false });
+  return kinds.get(kind);
+};
+const put = (kind, patch) => {
+  Object.assign(slot(kind), patch);
+  emit();
+};
+
+/** Signing out: nothing of the account stays in memory (requests stop, answers and history are dropped). */
+export function resetAiJobs() {
+  kinds.forEach((v) => v.ctl?.abort());
+  kinds.clear();
+  emit();
+}
+
+/** Starts a job that does not come from a screen's button (a reply still being written when the app was reopened); false when that ability is already busy. */
+export function trackAiJob(kind, ask) {
+  if (slot(kind).s.status === "busy") return false;
+  startJob(kind, ask, null, false);
+  return true;
+}
+
+/** A job whose answer was taken in by its screen: back to idle (the chat uses it once the reply is in its list). */
+export function idleAiJob(kind) {
+  if (kinds.has(kind)) put(kind, { s: IDLE, unseen: false });
+}
+
+/** Which abilities are thinking right now, and which finished while nobody was looking (for the badges). */
+export function useAiJobs() {
+  useSyncExternalStore(subscribe, () => version);
+  const busy = [];
+  const ready = [];
+  kinds.forEach((v, k) => {
+    if (v.s.status === "busy") busy.push(k);
+    else if (v.unseen) ready.push(k);
+  });
+  return { busy, ready };
+}
+
+function startJob(kind, ask, label, persist) {
+  const k = slot(kind);
+  k.ctl?.abort();
+  const ctl = new AbortController();
+  put(kind, { ctl, asked: true, unseen: false, s: { status: "busy", data: null, error: "", at: null, id: null } });
+  ask(ctl.signal)
+    .then(async (data) => {
+      if (slot(kind).ctl !== ctl) return; // a newer request replaced this one
+      let saved = null;
+      if (persist) {
+        try {
+          saved = await saveResult(await getClient(), kind, label?.() || "", data);
+        } catch {
+          // not saved (offline, old schema): the answer is still shown
+        }
+      }
+      if (slot(kind).ctl !== ctl) return;
+      const cur = slot(kind);
+      put(kind, {
+        items: saved ? [saved, ...cur.items].slice(0, 20) : cur.items,
+        unseen: cur.mounted === 0,
+        s: { status: "done", data, error: "", at: saved?.createdAt || new Date().toISOString(), id: saved?.id || null },
+      });
+      if (cur.mounted === 0) finished(kind, false);
+    })
+    .catch((e) => {
+      if (e?.code === "cancelled" || slot(kind).ctl !== ctl) return;
+      put(kind, { unseen: slot(kind).mounted === 0, s: { status: "error", data: null, error: aiErrorCopy(e?.code), at: null, id: null } });
+      if (slot(kind).mounted === 0) finished(kind, true);
+    });
+}
 
 /**
- * One AI call per click, result kept until the next click. Not run on mount: every call
- * counts against the daily limit, and the player decides when the numbers are worth asking about.
+ * One AI call per click. Not run on mount: every call counts against the daily limit, and the player decides when the
+ * numbers are worth asking about.
+ *
+ * `opts` = {kind, label: () => string, persist = true}. The request belongs to the ability (see above), not to the
+ * screen: it goes on when the screen closes. With `persist` the answers are also kept per account (table ai_results):
+ * the newest one is shown again after a refresh, and the older ones are listed in the history (third value).
  */
-export function useCoach(ask) {
-  const [s, setS] = useState({ status: "idle", data: null, error: "" });
+export function useCoach(ask, opts) {
+  const kind = opts?.kind || "";
+  const persist = !!kind && opts?.persist !== false;
+  useSyncExternalStore(subscribe, () => version);
+  const k = kind ? slot(kind) : null;
+  useEffect(() => {
+    if (!kind) return undefined;
+    const cur = slot(kind);
+    cur.mounted++;
+    if (cur.unseen) put(kind, { unseen: false });
+    return () => {
+      slot(kind).mounted--;
+    };
+  }, [kind]);
+  useEffect(() => {
+    if (!persist || slot(kind).loaded) return;
+    put(kind, { loaded: true });
+    getClient()
+      .then((c) => loadResults(c, kind))
+      .then((list) => {
+        const cur = slot(kind);
+        // the last answer is back on screen, unless the player already asked in the meantime
+        put(kind, { items: list, ...(list[0] && !cur.asked ? { s: { status: "done", data: list[0].data, error: "", at: list[0].createdAt, id: list[0].id } } : {}) });
+      })
+      .catch(() => put(kind, { loaded: false })); // the history is a bonus
+  }, [kind, persist]);
+
+  // without a kind the state stays in the screen (nothing to share)
+  const [local, setLocal] = useState(IDLE);
   const ctl = useRef(null);
   useEffect(() => () => ctl.current?.abort(), []);
-  const run = () => {
-    ctl.current?.abort();
-    ctl.current = new AbortController();
-    setS({ status: "busy", data: null, error: "" });
-    ask(ctl.current.signal)
-      .then((data) => setS({ status: "done", data, error: "" }))
-      .catch((e) => e?.code !== "cancelled" && setS({ status: "error", data: null, error: aiErrorCopy(e?.code) }));
-  };
-  return [s, run];
+  const labelRef = useRef(opts?.label);
+  labelRef.current = opts?.label;
+
+  if (!kind) {
+    const run = () => {
+      ctl.current?.abort();
+      ctl.current = new AbortController();
+      setLocal({ ...IDLE, status: "busy" });
+      ask(ctl.current.signal)
+        .then((data) => setLocal({ ...IDLE, status: "done", data }))
+        .catch((e) => e?.code !== "cancelled" && setLocal({ ...IDLE, status: "error", error: aiErrorCopy(e?.code) }));
+    };
+    return [local, run, null];
+  }
+
+  const run = () => startJob(kind, ask, () => labelRef.current?.(), persist);
+  const history = persist
+    ? {
+        items: k.items,
+        activeId: k.s.id,
+        pick: (it) => put(kind, { asked: true, unseen: false, s: { status: "done", data: it.data, error: "", at: it.createdAt, id: it.id } }),
+        remove: async (it) => {
+          try {
+            await removeResult(await getClient(), it.id);
+          } catch {
+            return;
+          }
+          const cur = slot(kind);
+          put(kind, { items: cur.items.filter((x) => x.id !== it.id), ...(cur.s.id === it.id ? { s: IDLE } : {}) });
+        },
+      }
+    : null;
+  return [k.s, run, history];
+}
+
+const stamp = (iso) => (iso ? new Date(iso).toLocaleString(getLocale(), { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "");
+
+/** The older answers of one ability: pick one to see it again, or remove it. `summary(data)` is its one-line preview. */
+function HistoryList({ history, summary }) {
+  if (!history?.items.length) return null;
+  return (
+    <details className="mt-5 border-t border-edge/60 pt-3">
+      <summary className="cursor-pointer text-xs font-extrabold text-dim hover:text-ink">
+        <History size={13} className="mr-1.5 inline" aria-hidden="true" />
+        {tr("Istoric ({length})", { length: history.items.length })}
+      </summary>
+      <ul className="mt-2 space-y-1.5">
+        {history.items.map((it) => (
+          <li key={it.id} className={`flex items-center gap-2 rounded-xl px-2 py-1.5 ring-1 ${it.id === history.activeId ? "bg-violet/10 ring-violet/40" : "bg-well ring-edge"}`}>
+            <button type="button" onClick={() => history.pick(it)} className="focus-ring min-w-0 flex-1 rounded-lg text-left">
+              <span className="block text-[11px] font-bold text-dim">{stamp(it.createdAt)}{it.label ? ` · ${it.label}` : ""}</span>
+              <span className="block truncate text-sm font-semibold text-body">{summary?.(it.data) || ""}</span>
+            </button>
+            <button type="button" onClick={() => history.remove(it)} className="focus-ring shrink-0 rounded-lg p-1.5 text-faint hover:text-rose" aria-label={tr("Șterge din istoric")}>
+              <Trash2 size={14} aria-hidden="true" />
+            </button>
+          </li>
+        ))}
+      </ul>
+    </details>
+  );
 }
 
 // The body of one Molt ability: the question (`input`), the action button right next to it, then the answer.
 // `input` is always visible (what the player types or picks); `children` is the answer, shown once the AI replied;
 // `hint` says why a tap did nothing yet; `idle` says where the answer will appear; `always` sits under the answer; `stack` puts the button under a wide input
 // (a text area) instead of beside it. The title and the line Molt says live in the Molt page, not here.
-export function Shell({ state, run, label, children, always, input, hint, idle, stack = false }) {
+export function Shell({ state, run, label, children, always, input, hint, idle, stack = false, history, summary }) {
   const busy = state.status === "busy";
   return (
     <div>
@@ -60,9 +239,15 @@ export function Shell({ state, run, label, children, always, input, hint, idle, 
           </div>
         )}
         {state.status === "error" && <p className="mt-4 rounded-xl bg-rose/10 p-3 text-sm font-semibold text-body ring-1 ring-rose/30">{state.error}</p>}
-        {state.status === "done" && <div className="anim-slide mt-4 border-t border-edge/60 pt-4">{children}</div>}
+        {state.status === "done" && (
+          <div className="anim-slide mt-4 border-t border-edge/60 pt-4">
+            {state.at && history && <p className="mb-2 text-[11px] font-bold text-dim">{tr("Răspuns din {when}", { when: stamp(state.at) })}</p>}
+            {children}
+          </div>
+        )}
       </div>
       {always}
+      <HistoryList history={history} summary={summary} />
     </div>
   );
 }
@@ -86,11 +271,11 @@ export function NeedHistory({ data, onNotes }) {
 /** Patterns in the last 4 weeks of check-ins (Statistici). */
 export function InsightsPanel({ state, today, ai, onNotes }) {
   const data = useMemo(() => coachData(state, today), [state, today]);
-  const [s, run] = useCoach((signal) => habitInsights(data, signal));
+  const [s, run, history] = useCoach((signal) => habitInsights(data, signal), { kind: "patterns", label: () => tr("ultimele 4 săptămâni") });
   if (!ai?.server) return null;
   if (!hasHistory(data)) return <NeedHistory data={data} onNotes={onNotes} />;
   return (
-    <Shell state={s} run={run} label={tr("Ce observi?")} idle={tr("Aici apar 3 tipare găsite în bifările tale.")}>
+    <Shell state={s} run={run} label={tr("Ce observi?")} idle={tr("Aici apar 3 tipare găsite în bifările tale.")} history={history} summary={(d) => (Array.isArray(d) ? d.map((i) => i.title).join(" · ") : "")}>
       <ul className="grid gap-3 md:grid-cols-3">
         {s.data?.map((i) => (
           <li key={i.title} className="inset p-3">
@@ -122,7 +307,7 @@ export function ReflectionPanel({ state, today, ai, onNotes }) {
       // not saved (offline, old schema): the answer is still shown
     }
     return r;
-  });
+  }, { kind: "mirror", persist: false }); // kept in memory while the app is open; the reflections table is its history
   if (!ai?.server) return null;
   if (!hasHistory(data)) return <NeedHistory data={data} onNotes={onNotes} />;
   const go = () => {

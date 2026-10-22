@@ -29,25 +29,23 @@ export async function pushStatus() {
   return (await reg.pushManager.getSubscription()) ? "on" : "off";
 }
 
-/** The row the server keeps for this device: who is due at what local time, and for what. */
-async function save(sub, { reviewTime, report, nudges }) {
+/** The row the server keeps for this device: its endpoint, keys and time zone. What to send (report on/off, time,
+ *  group reminders) is the account's, read by the server from profiles.settings. */
+async function save(sub) {
   const client = await getClient();
   if (!client) throw new Error("offline");
   const k = sub.toJSON().keys;
-  const { error } = await client.rpc("save_push_subscription", {
+  const { error } = await client.rpc("save_push_device", {
     p_endpoint: sub.endpoint,
     p_p256dh: k.p256dh,
     p_auth: k.auth,
     p_tz: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
-    p_report_time: reviewTime || "21:00",
-    p_daily: report !== false,
-    p_nudges: nudges !== false,
   });
   if (error) throw error;
 }
 
 /** Call it from a tap: the permission prompt must follow a user gesture (iOS refuses it otherwise). */
-export async function enablePush(prefs) {
+export async function enablePush() {
   const reg = await registration();
   if (!reg) throw new Error("no service worker");
   if ((await Notification.requestPermission()) !== "granted") return "denied";
@@ -60,7 +58,7 @@ export async function enablePush(prefs) {
     throw Object.assign(new Error(e?.message || "subscribe"), { step: "subscribe" });
   }
   try {
-    await save(sub, prefs);
+    await save(sub);
   } catch (e) {
     await sub.unsubscribe().catch(() => {});
     throw Object.assign(new Error(e?.message || "save"), { step: "save" });
@@ -77,11 +75,36 @@ export async function disablePush() {
   await sub.unsubscribe();
 }
 
-/** Re-sends the prefs of an existing subscription (report time or toggles changed). */
-export async function syncPush(prefs) {
+/**
+ * Notifications are the account's: when the account has them on (settings.pushOn) and this device already has the
+ * browser permission, the device subscribes itself (or just re-claims its row for the signed-in account). It never
+ * asks for the permission, that only follows a tap. Returns true when this device ends up subscribed.
+ */
+export async function ensurePush() {
+  if ((await pushStatus()) === "unsupported" || Notification.permission !== "granted") return false;
   const reg = await registration();
-  const sub = await reg?.pushManager.getSubscription();
-  if (sub) await save(sub, prefs);
+  if (!reg) return false;
+  const sub =
+    (await reg.pushManager.getSubscription()) ||
+    (await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64ToBytes(KEY) }));
+  await save(sub);
+  return true;
+}
+
+/** The account turns notifications off: every device of it stops, not just this one. */
+export async function disablePushEverywhere() {
+  const client = await getClient();
+  await client?.rpc("remove_my_push_subscriptions").catch(() => {});
+  await disablePush().catch(() => {});
+}
+
+/** Signing out: this device stops receiving the account's notifications (the next account on it starts clean). */
+export async function releasePush() {
+  try {
+    await disablePush();
+  } catch {
+    /* signing out must not fail because of this */
+  }
 }
 
 /** Tells the server a nudge was just sent, so it can push to the recipients. Best effort. */

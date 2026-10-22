@@ -1,9 +1,10 @@
+import { ensurePush } from "./lib/push.js";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { CalendarCheck, CalendarX, CheckCircle2, FlaskConical, Leaf, Timer, Zap } from "lucide-react";
+import { CalendarCheck, CalendarX, CheckCircle2, FlaskConical, Leaf, Sparkles, Timer, TriangleAlert, Zap } from "lucide-react";
 import { useAppStore } from "./lib/store.js";
 import { checkInGain, derive, reviewPayload } from "./lib/derive.js";
 import { CODE, focusXpByDay } from "./lib/engine.js";
-import { addDays, dayKey, fmt12, monthKey, nowMinutes, parseHM, todayKey, weekday } from "./lib/dates.js";
+import { addDays, dayKey, fmt12, fmtDay, monthKey, nowMinutes, parseHM, todayKey, weekday } from "./lib/dates.js";
 import { detectMoments } from "./lib/moments.js";
 import { milestoneSet, statusPatch, toggleLink } from "./lib/milestones.js";
 import { pickQuote } from "./lib/quotes.js";
@@ -32,13 +33,15 @@ import { TodoEditor } from "./components/TodoEditor.jsx";
 import Onboarding from "./screens/Onboarding.jsx";
 import Dashboard from "./screens/Dashboard.jsx";
 import Habits from "./screens/Habits.jsx";
-import Molt, { MOLT_TABS } from "./screens/Molt.jsx";
+import Molt, { MOLT_TABS, skillLabel } from "./screens/Molt.jsx";
+import { onAiFinished, trackAiJob } from "./components/AiCoach.jsx";
+import { resumeChatRun } from "./lib/chatRun.js";
 import Group from "./screens/Group.jsx";
 import Planner from "./screens/Planner.jsx";
 import PlanHub from "./screens/PlanHub.jsx";
 import Stats from "./screens/Stats.jsx";
 import Objectives, { Celebration, ObjectiveEditor, ObjectivesMini, blankObjective, objectiveFromTemplate } from "./screens/Objectives.jsx";
-import { dueReminders, moveStep, newMarks, toggleStep, toggleSub } from "./lib/objectives.js";
+import { goalTodoIndex, dueReminders, moveStep, newMarks, toggleStep, toggleSub } from "./lib/objectives.js";
 import SettingsScreen from "./screens/Settings.jsx";
 import { getLocale, tr } from "./lib/i18n.js";
 
@@ -207,7 +210,7 @@ function Game() {
           return;
         }
         const r = planApply(a, state, today);
-        if (r.error) throw { code: "db_error" };
+        if (r.error) throw { code: r.error === "full" ? (a.kind === "add_goal" ? "goal_limit" : "habit_limit") : "db_error" };
         update(r.patch);
         await markApplied(await agentClient(), a.id, r.before, { outcomeDue: addDays(today, 14), action: a });
       }),
@@ -262,6 +265,34 @@ function Game() {
     setFocusHabit(arg);
     window.scrollTo(0, 0);
   }, []);
+  // a chat reply the server is still writing when the app opens (refresh, closed tab, a phone that slept): it becomes the
+  // chat's AI job again, so the Molt menu spins and the toast comes when it is ready, wherever you are in the app
+  const loadedState = !!state; // (`hasState` is declared further down, after this point)
+  useEffect(() => {
+    if (!loadedState || !ai.server) return;
+    agentClient()
+      .then((c) => resumeChatRun(c, trackAiJob))
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loadedState, ai.server]);
+
+  // an AI ability that finished while its screen was closed: a toast you can tap to open it (the Molt menu item and the
+  // ability's tab carry a dot until you look at it)
+  useEffect(
+    () =>
+      onAiFinished(({ kind, failed }) => {
+        const name = skillLabel(kind);
+        toast({
+          title: failed ? tr("{name}: nu a mers", { name }) : tr("Molt a terminat: {name}", { name }),
+          text: failed ? tr("Apasă ca să vezi ce s-a întâmplat.") : tr("Apasă ca să vezi răspunsul."),
+          icon: failed ? TriangleAlert : Sparkles,
+          tone: failed ? "rose" : "violet",
+          ms: 9000,
+          onClick: () => go("molt", kind),
+        });
+      }),
+    [toast, go]
+  );
   const askMolt = useCallback(
     (text) => {
       setMoltPrompt(text);
@@ -325,6 +356,13 @@ function Game() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasState, accountPrefs]);
 
+  // notifications are the account's: a device that already has the browser permission joins them by itself
+  const accountPush = !!state?.settings?.pushOn;
+  useEffect(() => {
+    if (!hasState || !accountPush || !__SUPABASE__) return;
+    ensurePush().catch(() => {});
+  }, [hasState, accountPush]);
+
   // new cosmetic items: recorded in the account and celebrated once each. A player who already has some when this appears gets them in one go.
   useEffect(() => {
     if (!d || !state) return;
@@ -352,7 +390,7 @@ function Game() {
       const h = state.habits.find((x) => x.id === habitId);
       const code = state.log?.[today]?.[habitId] || 0;
       setCode(habitId, code ? 0 : CODE.DONE);
-      if (!code) toast({ title: tr("+{checkInGain} momentum", { checkInGain: checkInGain(h, d.runMult) }), text: h.name, icon: Zap, tone: "gold", ms: 2200 });
+      if (!code) toast({ title: tr("+{checkInGain} momentum", { checkInGain: checkInGain(h, d.runMult, d.doneBases) }), text: h.name, icon: Zap, tone: "gold", ms: 2200 });
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [state, today, d]
@@ -395,6 +433,20 @@ function Game() {
 
   // dragging a habit block in the calendar moves its weekly slot: the day it was dragged from is replaced by the
   // day it was dropped on (and the hour changes when it is dropped at another time); a day that already has it refuses
+  // takes a repeating habit (or a repeating to-do) off one day only; the toast undoes it
+  function skipDay(kind, id, day) {
+    const field = kind === "habit" ? "skip" : "skipDays";
+    const key = kind === "habit" ? "habits" : "todos";
+    const set = (on) =>
+      update((s) => ({
+        ...s,
+        [key]: (s[key] || []).map((x) => (x.id === id ? { ...x, [field]: on ? [...new Set([...(x[field] || []), day])].sort() : (x[field] || []).filter((d) => d !== day) } : x)),
+      }));
+    const name = (state[key] || []).find((x) => x.id === id)?.[kind === "habit" ? "name" : "title"];
+    set(true);
+    toast({ title: tr("Scos doar din {day}", { day: fmtDay(day) }), text: tr("{name} · atinge ca să anulezi", { name }), icon: CalendarX, tone: "gold", ms: 5000, onClick: () => set(false) });
+  }
+
   function moveHabit(habitId, fromDay, toDay, time) {
     const habit = state.habits.find((h) => h.id === habitId);
     if (!habit) return;
@@ -453,6 +505,21 @@ function Game() {
     link: (id, field, itemId) =>
       update((s) => ({ ...s, goals: (s.goals || []).map((g) => (g.id === id && (field === "todoIds" || field === "habitIds") ? { ...g, [field]: toggleLink(g[field], itemId) } : g)) })),
     remove: (id) => update((s) => ({ ...s, goals: (s.goals || []).filter((g) => g.id !== id && g.parentId !== id) })),
+    // a to-do for tomorrow, linked to the goal so it shows the goal mark in lists and the calendar
+    toTomorrow: (id) => {
+      const g = (state.goals || []).find((x) => x.id === id);
+      if (!g) return;
+      const date = addDays(today, 1);
+      const linked = (state.todos || []).find((t) => (g.todoIds || []).includes(t.id) && t.date === date && !t.done);
+      if (linked) return toast({ title: tr("E deja pe mâine"), text: linked.title, icon: CalendarCheck, tone: "mint", ms: 2200 });
+      const todoId = uid("t");
+      update((s) => ({
+        ...s,
+        todos: [...(s.todos || []), { id: todoId, title: g.text.slice(0, 120), date, time: null, dur: 30, done: false, doneOn: null, createdAt: today }],
+        goals: (s.goals || []).map((x) => (x.id === id ? { ...x, todoIds: [...(x.todoIds || []), todoId] } : x)),
+      }));
+      toast({ title: tr("Pus pe mâine"), text: g.text, icon: CalendarCheck, tone: "mint", ms: 2200 });
+    },
     carry: (period, key, list) =>
       update((s) => ({ ...s, goals: [...(s.goals || []), ...carryCopies(list, period, key, today, () => uid("o"))].slice(-200) })),
   };
@@ -552,8 +619,9 @@ function Game() {
       update((s) => {
         const todos = s.todos.map((t) => (t.id === id ? toggleDone(t, day) : t));
         const t = todos.find((x) => x.id === id);
-        if (!t?.goalRef || t.repeat) return { ...s, todos };
-        const { oid, sid } = t.goalRef;
+        const ref = t && !t.repeat ? goalTodoIndex(s)[id] : null;
+        if (!ref?.oid) return { ...s, todos };
+        const { oid, sid } = ref;
         const objectives = (s.objectives || []).map((o) =>
           o.id !== oid ? o : { ...o, steps: o.steps.map((x) => (x.id === sid && !!x.done !== !!t.done ? toggleStep(o, sid, t.doneOn || today).steps.find((y) => y.id === sid) : x)) }
         );
@@ -737,7 +805,7 @@ function Game() {
                 setFocusPrefill({ work: t.dur || 25 });
                 setFocusSetup(true);
               }}
-              onMoveHabit={moveHabit}
+              onMoveHabit={moveHabit} onSkipDay={skipDay}
             />
           )}
         </PlanHub>

@@ -3,12 +3,13 @@
 // Pure functions first (state patches the app runs through update(fn)), then a thin data layer on the
 // player's own supabase client. Errors are thrown as {code}: unavailable | db_error.
 
-import { CATALOG, habitFromCatalog } from "./catalog.js";
+import { CATALOG, HABIT_COLORS, MAX_HABITS, habitFromCatalog } from "./catalog.js";
+import { MAX_OBJECTIVES, MAX_STEPS } from "./objectives.js";
 import { addNote, recordFeedback, removeNote } from "./memory.js";
 import { summarizeOutcomes } from "./outcomes.js";
 import { tr } from "./i18n.js";
 
-export const SUPPORTED = ["create_todo", "plan_focus", "change_habit", "add_habit", "add_note"];
+export const SUPPORTED = ["create_todo", "plan_focus", "change_habit", "add_habit", "add_note", "add_goal"];
 
 // ------------------------------------------------------------ pure
 
@@ -44,6 +45,7 @@ export const recent = (actions) =>
 // Deterministic ids make applying twice a no-op.
 const todoIdOf = (a) => `tag-${a.id}`;
 const habitIdOf = (a) => `hag-${a.id}`;
+const goalIdOf = (a) => `gag-${a.id}`;
 const validDays = (d) => Array.isArray(d) && d.every((x) => Number.isInteger(x) && x >= 0 && x <= 6);
 
 /**
@@ -91,6 +93,8 @@ export function planApply(action, state, today) {
       const id = action.before?.habitId || habitIdOf(action);
       const name = String(p.name ?? "").trim().slice(0, 60);
       if (!name || !validDays(p.days)) return { error: "invalid" };
+      // the list may have filled up since the proposal was made (the player added habits, or accepted another one)
+      if (!habits.some((h) => h.id === id) && habits.filter((h) => !h.archivedAt).length >= MAX_HABITS) return { error: "full" };
       const base = { id: null, name, icon: "target", cat: state?.profile?.path || CATALOG[0]?.cat || "sport", diff: Number.isInteger(p.diff) ? p.diff : 2, days: p.days, time: null, target: "" };
       return {
         before: { habitId: id },
@@ -99,6 +103,35 @@ export function planApply(action, state, today) {
           return { ...s, habits: [...(s.habits || []), { ...habitFromCatalog(base, s.habits || [], today), id, catalogId: undefined, fromAgent: true }] };
         },
       };
+    }
+    case "add_goal": {
+      const id = action.before?.goalId || goalIdOf(action);
+      const title = String(p.title ?? "").trim().slice(0, 80);
+      const steps = (Array.isArray(p.steps) ? p.steps : []).map((t) => String(t ?? "").trim().slice(0, 80)).filter(Boolean).slice(0, MAX_STEPS);
+      if (!title || !steps.length) return { error: "invalid" };
+      const deadline = /^\d{4}-\d{2}-\d{2}$/.test(p.deadline || "") && p.deadline >= today ? p.deadline : null;
+      const list = state?.objectives || [];
+      if (!list.some((o) => o.id === id) && list.filter((o) => !o.archived && !o.doneOn).length >= MAX_OBJECTIVES) return { error: "full" };
+      const goal = {
+        id,
+        title,
+        why: String(p.why ?? "").trim().slice(0, 240),
+        reward: "",
+        icon: "target",
+        color: HABIT_COLORS[list.length % HABIT_COLORS.length],
+        start: today,
+        deadline,
+        doneOn: null,
+        archived: false,
+        habitIds: [],
+        metric: null,
+        steps: steps.map((t, i) => ({ id: `${id}-s${i + 1}`, title: t, done: false, doneOn: null, date: null, todoId: null, subs: [] })),
+        reminder: { on: true, days: [1, 3, 5], time: "18:00" },
+        log: [],
+        seenMarks: [],
+        fromAgent: true,
+      };
+      return { before: { goalId: id }, patch: (s) => ((s.objectives || []).some((o) => o.id === id) ? s : { ...s, objectives: [...(s.objectives || []), goal] }) };
     }
     default:
       return { error: "unsupported" };
@@ -119,6 +152,8 @@ export function planUndo(action, state, today = new Date().toISOString().slice(0
     }
     case "add_habit":
       return { patch: (s) => ({ ...s, habits: (s.habits || []).map((h) => (h.id === b.habitId && !h.archivedAt ? { ...h, archivedAt: today } : h)) }) };
+    case "add_goal":
+      return { patch: (s) => ({ ...s, objectives: (s.objectives || []).map((o) => (o.id === b.goalId && !o.archived ? { ...o, archived: true } : o)) }) };
     default:
       return { error: "unsupported" };
   }
@@ -213,6 +248,7 @@ const STEP = {
   context: (s) => tr("a citit {notes} {v} despre tine", { notes: s.notes, v: s.notes === 1 ? tr("notiță") : tr("notițe") }),
   feedback: () => tr("a verificat ce ai acceptat sau respins înainte"),
   history: (s) => tr("a verificat {count} {v}", { count: s.count, v: s.count === 1 ? tr("acțiune trecută") : tr("acțiuni trecute") }),
+  goals: (s) => tr("a verificat {count} {v}", { count: s.active, v: s.active === 1 ? tr("obiectiv activ") : tr("obiective active") }),
   experiments: (s) => tr("a verificat {count} {v}", { count: s.count, v: s.count === 1 ? tr("experiment") : tr("experimente") }),
   school: (s) => tr("a citit {exams} {v} și {assignments} teme", { exams: s.exams, v: s.exams === 1 ? tr("examen") : tr("examene"), assignments: s.assignments }),
   patterns: (s) => tr("a testat tipare în istoric: {findings} {v} din {tested} testate", { findings: s.findings, v: s.findings === 1 ? tr("găsit") : tr("găsite"), tested: s.tested }),
