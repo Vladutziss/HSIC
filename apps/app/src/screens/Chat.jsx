@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
   AlertCircle,
   ArrowRight,
@@ -125,13 +125,13 @@ export default function Chat({ state, d, today, ai, goals, todo, agent, onAddHab
     []
   );
 
-  // Scroll to bottom on new messages
-  useEffect(() => {
-    // follow the conversation inside the list only: scrollIntoView would also move the whole page, and opening the
-    // chat (nothing said yet) must not scroll anything
+  // The newest message stays in view: the list scrolls to its end when you send, when the reply arrives, while Molt is
+  // thinking and when the old conversation loads. Only the list moves (scrollIntoView would also move the whole page),
+  // and it jumps instead of animating: a smooth scroll stops halfway when the list grows during the animation.
+  useLayoutEffect(() => {
     const list = listRef.current;
-    if (list && messages.length > 0) list.scrollTo({ top: list.scrollHeight, behavior: "smooth" });
-  }, [messages, busy]);
+    if (list && (messages.length > 0 || busy)) list.scrollTop = list.scrollHeight;
+  }, [messages, busy, error, loaded]);
 
   const handleSend = (textToSend) => {
     const text = (typeof textToSend === "string" ? textToSend : input).trim();
