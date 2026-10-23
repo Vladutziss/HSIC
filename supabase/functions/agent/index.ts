@@ -22,6 +22,7 @@ import { activeContext, summarizeFeedback } from "../_shared/app/memory.js";
 import { FACTORS, analyzeExperiment, designExperiment } from "../_shared/app/experiments.js";
 import { addDays } from "../_shared/app/dates.js";
 import { RO_WORDING } from "../_shared/prompts.ts";
+import { burstAllowed } from "../_shared/ratelimit.ts";
 import { goalsSnapshot, schoolSnapshot, validateProposals } from "../_shared/agent-core.js";
 
 // deno-lint-ignore no-explicit-any
@@ -271,6 +272,7 @@ Deno.serve(async (req) => {
   }
   if (typeof today !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(today)) return fail(400, "bad_request");
 
+  if (!(await burstAllowed(userId))) return fail(429, "rate_limited");
   const { data: allowed, error: usageError } = await supabase.rpc("bump_ai_usage", { daily_max: DAILY_MAX });
   if (usageError) return fail(500, "upstream_error");
   if (!allowed) return fail(429, "rate_limited");

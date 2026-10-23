@@ -8,6 +8,7 @@
 
 import { createClient } from "jsr:@supabase/supabase-js@2";
 import { buildPrompt, KINDS, type Kind } from "../_shared/prompts.ts";
+import { burstAllowed } from "../_shared/ratelimit.ts";
 
 const DAILY_MAX = Number(Deno.env.get("AI_DAILY_MAX") ?? 40); // calls per user per day
 const MAX_BODY = 100_000; // bytes; the prompts only carry short texts
@@ -57,6 +58,7 @@ Deno.serve(async (req) => {
   const kind = body?.kind as Kind;
   if (!KINDS.includes(kind)) return fail(400, "bad_request");
 
+  if (!(await burstAllowed(userId))) return fail(429, "rate_limited");
   const { data: allowed, error: usageError } = await supabase.rpc("bump_ai_usage", { daily_max: DAILY_MAX });
   if (usageError) return fail(500, "upstream_error");
   if (!allowed) return fail(429, "rate_limited");
