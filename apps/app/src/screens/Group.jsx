@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Bell, Check, CheckCheck, Copy, Crown, Flame, Handshake, Inbox, LogOut, Medal, Send, UserPlus, Users, X } from "lucide-react";
 import { Button, Chip, Confirm, DeleteButton, Empty, Field, LevelBadge, Panel, SectionTitle, Skeleton, Tabs, useToast } from "../components/ui.jsx";
 import { dayKey, diffDays, fmt12, fmtDay, todayKey } from "../lib/dates.js";
@@ -238,11 +238,14 @@ function ChatPanel({ g, groups, loading }) {
     [g.inbox, g.sent]
   );
   const scroller = useRef(null);
-  // the newest message sits at the bottom, like in any chat
-  useEffect(() => {
+  // the newest message sits at the bottom, like in any chat; only this list scrolls, not the page. It follows the last
+  // message, not the count: the thread is cut to 40, so the count stops changing once the chat is that long
+  const last = thread.at(-1);
+  const lastKey = last ? `${last.mine ? "o" : "i"}-${last.id}` : "";
+  useLayoutEffect(() => {
     const el = scroller.current;
     if (el) el.scrollTop = el.scrollHeight;
-  }, [thread.length, loading]);
+  }, [g.id, lastKey, loading]);
 
   let lastDay = null;
   return (
