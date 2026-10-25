@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { CalendarDays, CalendarPlus, CalendarX, Target, X, CalendarRange, Check, ChevronLeft, ChevronRight, Clock, GripVertical, ListTodo, Timer, Plus, Repeat, Sparkles } from "lucide-react";
+import { CalendarDays, CalendarPlus, CalendarX, Target, X, CalendarRange, Check, ChevronLeft, ChevronRight, Clock, GripVertical, ListTodo, Timer, Plus, Repeat } from "lucide-react";
 import { Button, CheckButton, Choice, Chip, Panel, SectionTitle, Tabs } from "../components/ui.jsx";
 import { Shell, useCoach } from "../components/AiCoach.jsx";
 import { aiErrorCopy, dailyPlan, decomposeGoal, parseHomework } from "../lib/ai.js";
@@ -850,7 +850,7 @@ export default function Planner({ state, today, todo, ai, go, onFocusTodo, onMov
           value={tab}
           onChange={setTab}
           items={[
-            { value: "calendar", label: tr("Calendar"), icon: CalendarDays },
+            { value: "calendar", label: tr("Program"), icon: CalendarDays },
             { value: "list", label: tr("Listă"), icon: ListTodo },
           ]}
         />
