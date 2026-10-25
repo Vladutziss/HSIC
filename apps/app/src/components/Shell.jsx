@@ -4,11 +4,9 @@ import {
   ChartLine,
   ChevronsLeft,
   ChevronsRight,
-  Clock,
   Cloud,
   CloudOff,
   Egg,
-  FlaskConical,
   Flame,
   HardDrive,
   House,
@@ -20,12 +18,11 @@ import {
   Timer,
   Users,
 } from "lucide-react";
-import { Bar, LevelBadge, Ring } from "./ui.jsx";
+import { Bar, LevelBadge } from "./ui.jsx";
 import { useAiJobs } from "./AiCoach.jsx";
 import { Sprite, eggCrack } from "./Sprite.jsx";
 import { PATHS } from "../lib/catalog.js";
-import { fmt12, parseHM } from "../lib/dates.js";
-import { REVIVES_PER_MONTH } from "../lib/derive.js";
+import { parseHM } from "../lib/dates.js";
 import { c as tc } from "../lib/themes.js";
 import { usePref } from "../lib/prefs.js";
 import { tr } from "../lib/i18n.js";
@@ -78,6 +75,9 @@ function Logo({ compact = false }) {
 
 function SaveIndicator({ mode, saveStatus }) {
   if (mode === "loading") return null;
+  // saved is the normal state and needs no icon: it appears while saving and when something is wrong
+  const problem = saveStatus === "saving" || saveStatus === "readonly" || saveStatus === "error" || mode === "memory";
+  if (!problem) return null;
   const map = {
     cloud: { icon: Cloud, text: tr("Salvat în contul tău"), cls: "text-mint" },
     supabase: { icon: Cloud, text: tr("Salvat în contul tău, sincronizat pe toate dispozitivele"), cls: "text-mint" },
@@ -96,33 +96,17 @@ function SaveIndicator({ mode, saveStatus }) {
   );
 }
 
-function Hud({ d, state, setView, onReview, mode, saveStatus, now }) {
-  const { level, entry, streak, revive, missions } = d;
-  const reviewMin = parseHM(state.settings?.reviewTime || "21:00");
-  const reviewed = !!state.reviews?.[d.today];
-  const left = reviewMin - now;
-  // same as pressing "Generează raportul": go to the card on the home screen, bring it into view
-  // once it has rendered, and start the report unless today's is already written
-  const openReview = () => {
-    setView("home");
-    onReview?.();
-    setTimeout(() => {
-      const card = document.getElementById("review-card");
-      card?.scrollIntoView({ block: "center" });
-      document.getElementById("review-run")?.focus({ preventScroll: true });
-      if (reviewed) window.dispatchEvent(new Event("molted:open-review"));
-    }, 60);
-  };
-  const reviewText = reviewed ? tr("Raport gata") : left > 0 ? tr("Raport {fmt12}", { fmt12: fmt12(state.settings?.reviewTime) }) : tr("E ora raportului");
+function Hud({ d, setView, mode, saveStatus }) {
+  const { level, entry, streak } = d;
   return (
     <header className="sticky top-0 z-30 border-b border-edge bg-night/85 backdrop-blur" style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}>
-      <div className="mx-auto flex h-16 max-w-[1240px] items-center gap-2 px-3 sm:gap-3 sm:px-4 lg:px-8">
+      <div className="mx-auto flex h-14 max-w-[1240px] items-center gap-2 px-3 sm:gap-3 sm:px-4 lg:px-8">
         <button type="button" onClick={() => setView("home")} className="focus-ring hidden rounded-lg sm:block lg:hidden" aria-label={tr("Acasă")}>
           <Logo compact />
         </button>
         <button type="button" onClick={() => setView("stats")} className="focus-ring flex min-w-0 items-center gap-2.5 rounded-xl px-1 py-1 text-left" aria-label={tr("Momentum nivel {lvl}, {name}", { lvl: level.lvl, name: level.name })}>
-          <LevelBadge lvl={level.lvl} size={40} />
-          <div className="hidden w-48 sm:block">
+          <LevelBadge lvl={level.lvl} size={36} />
+          <div className="hidden w-40 sm:block">
             <div className="flex items-baseline justify-between gap-2 text-xs font-extrabold">
               <span className="truncate text-ink">{level.name}</span>
               <span className="tabular text-dim">
@@ -130,48 +114,16 @@ function Hud({ d, state, setView, onReview, mode, saveStatus, now }) {
                 {level.next ? ` / ${level.next.min}` : ""}
               </span>
             </div>
-            <Bar value={level.progress} className="mt-1" height={12} label={tr("Progres spre nivelul următor")} />
+            <Bar value={level.progress} className="mt-1" height={10} label={tr("Progres spre nivelul următor")} />
           </div>
         </button>
 
         <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
-          <div
-            className="flex items-center gap-1.5 rounded-xl bg-well px-2.5 py-1.5 ring-1 ring-edge"
-            title={tr("Serie de {current} {v} · {v2} luna aceasta", { current: streak.current, v: streak.current === 1 ? tr("zi") : tr("zile"), v2: revive.left === 1 ? tr("1 revive rămas") : tr("{left} revive-uri rămase", { left: revive.left }) })}
-          >
+          <span className="flex items-center gap-1.5 px-1.5" title={tr("Serie de {current} {v}", { current: streak.current, v: streak.current === 1 ? tr("zi") : tr("zile") })}>
             <Flame size={18} className={streak.todayDone ? "anim-flicker text-ember" : "text-faint"} fill={streak.todayDone ? tc("ember") : "none"} aria-hidden="true" />
             <span className="font-pixel tabular text-lg leading-none text-ink">{streak.current}</span>
             <span className="sr-only">{tr("zile la rând")}</span>
-            <span className="ml-1 hidden items-center gap-0.5 sm:flex" aria-label={tr("{left} revive-uri rămase", { left: revive.left })}>
-              {Array.from({ length: REVIVES_PER_MONTH }, (_, i) => (
-                <FlaskConical
-                  key={i}
-                  size={14}
-                  strokeWidth={2.5}
-                  aria-hidden="true"
-                  className={i < revive.left ? "text-mint" : "text-faint/60"}
-                  fill={i < revive.left ? tc("mint", 0.35) : "none"}
-                />
-              ))}
-            </span>
-          </div>
-          <button type="button" onClick={() => setView("home")} className="focus-ring hidden items-center gap-2 rounded-xl bg-well px-2 py-1 ring-1 ring-edge sm:flex" title={tr("Misiunile de azi")}>
-            <Ring value={missions.total ? missions.done / missions.total : 0} size={30} stroke={4}>
-              <span className="text-[9px] font-black text-ink">{missions.done}</span>
-            </Ring>
-            <span className="pr-1 text-xs font-extrabold text-body">
-              {missions.done}/{missions.total}
-            </span>
-          </button>
-          <button
-            type="button"
-            onClick={openReview}
-            className="focus-ring hidden items-center gap-1.5 rounded-xl bg-well px-2.5 py-2 text-xs font-extrabold ring-1 ring-edge transition hover:bg-panel-hi md:flex"
-            title={tr("Deschide raportul zilei")}
-          >
-            <Clock size={14} className={reviewed ? "text-mint" : left <= 0 ? "text-gold" : "text-dim"} aria-hidden="true" />
-            <span className={reviewed ? "text-mint" : left <= 0 ? "text-gold" : "text-body"}>{reviewText}</span>
-          </button>
+          </span>
           <SaveIndicator mode={mode} saveStatus={saveStatus} />
           <button type="button" onClick={() => setView("settings")} className="focus-ring grid h-9 w-9 place-items-center rounded-xl text-dim hover:bg-panel-hi hover:text-ink lg:hidden" aria-label={tr("Setări")}>
             <Settings size={18} aria-hidden="true" />
@@ -182,7 +134,7 @@ function Hud({ d, state, setView, onReview, mode, saveStatus, now }) {
   );
 }
 
-export function Shell({ view, setView, onReview, onFocus, d, state, unread, goalsDue = 0, mode, saveStatus, now, children }) {
+export function Shell({ view, setView, onFocus, d, state, unread, goalsDue = 0, mode, saveStatus, now, children }) {
   const jobs = useAiJobs(); // Molt is thinking / has an answer waiting (shown on its menu item)
   const aiThinking = jobs.busy.length > 0;
   const aiWaiting = !aiThinking && jobs.ready.length > 0;
@@ -287,7 +239,7 @@ export function Shell({ view, setView, onReview, onFocus, d, state, unread, goal
       </aside>
 
       <div className={`transition-[padding] duration-200 ${folded ? "lg:pl-[76px]" : "lg:pl-64"}`}>
-        <Hud d={d} state={state} setView={setView} onReview={onReview} mode={mode} saveStatus={saveStatus} now={now} />
+        <Hud d={d} setView={setView} mode={mode} saveStatus={saveStatus} />
         <main className="mx-auto max-w-[1240px] px-3 pb-28 pt-5 sm:px-4 lg:px-8 lg:pb-12 lg:pt-7">{children}</main>
       </div>
 

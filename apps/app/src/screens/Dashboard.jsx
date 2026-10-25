@@ -1,8 +1,7 @@
 import React from "react";
-import { AlertTriangle, CalendarCheck, ChevronDown, Flame, FlaskConical, Gift, Plus, Swords, Timer, TrendingUp, Zap } from "lucide-react";
-import { Bar, Button, Chip, LevelBadge, Panel, SectionTitle } from "../components/ui.jsx";
-import { CompanionCard, GroupMini, QuestCard, ReviewCard } from "../components/Cards.jsx";
-import { ObjectivesMini } from "./Objectives.jsx";
+import { AlertTriangle, CalendarCheck, ChevronDown, FlaskConical, Gift, Plus, Swords, Timer } from "lucide-react";
+import { Button, Panel, SectionTitle } from "../components/ui.jsx";
+import { CompanionCard, QuestCard, ReviewCard } from "../components/Cards.jsx";
 import { fmtDay, fmtLong } from "../lib/dates.js";
 import { RULES } from "../lib/engine.js";
 import { hintFor, nextReward } from "../lib/cosmetics.js";
@@ -17,7 +16,7 @@ function greeting() {
 }
 
 function Hero({ state, d, today, onFocus }) {
-  const { level, entry, week, streak } = d;
+  const { entry, week, streak } = d;
   const nick = state.profile?.nick || "aventurierule";
   const left = d.missions.left;
   const sub =
@@ -27,55 +26,26 @@ function Hero({ state, d, today, onFocus }) {
         ? tr("Toate misiunile de azi sunt gata. Cufărul zilei e deschis!")
         : tr("Mai ai {left} {v} azi. {v2}", { left, v: left === 1 ? tr("misiune") : tr("misiuni"), v2: d.companion.stage.id === "egg" ? tr("Prima bifă îți încălzește oul.") : tr("Fiecare bifă îl ajută pe ") + (d.companion.name || tr("personajul tău")) + tr(" să crească.") });
   return (
-    <Panel tone="gold" className="overflow-hidden p-5 sm:p-6">
-      <div className="pointer-events-none absolute -right-16 -top-24 h-64 w-64 rounded-full bg-gold/10 blur-3xl" aria-hidden="true" />
-      <div className="relative flex flex-wrap items-center gap-5 sm:gap-6">
-        <div className="min-w-0 basis-full sm:min-w-[240px] sm:flex-1 sm:basis-0">
-          <p className="text-xs font-extrabold uppercase tracking-[0.2em] text-gold">{fmtLong(today)}</p>
-          <h1 className="font-pixel mt-1 text-3xl leading-tight text-ink sm:text-4xl">
-            {greeting()}, {nick}!
-          </h1>
-          <p className="mt-2 max-w-xl text-sm font-semibold leading-relaxed text-body">{sub}</p>
-          <Button variant="violet" size="sm" icon={Timer} className="mt-3" onClick={onFocus}>
-            Focus
-          </Button>
-        </div>
-        <div className="flex w-full items-center gap-4 sm:w-auto">
-          <LevelBadge lvl={level.lvl} size={76} />
-          <div className="min-w-0 flex-1 sm:w-56 sm:flex-none">
-            <div className="text-[11px] font-extrabold uppercase tracking-wider text-dim">{tr("Momentum · {name}", { name: level.name })}</div>
-            <div className="font-pixel tabular text-4xl leading-none text-ink">{entry?.momentum ?? 0}</div>
-            <Bar value={level.progress} className="mt-2" label={tr("Progres spre nivelul următor")} />
-            <div className="mt-1 text-xs font-bold text-dim">{level.next ? tr("{toNext} până la nivelul {lvl}, {name}", { toNext: level.toNext, lvl: level.next.lvl, name: level.next.name }) : tr("Ai atins nivelul maxim")}</div>
-          </div>
-        </div>
-      </div>
-      <div className="relative mt-5 grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">
-        <MiniStat icon={Zap} tone="text-gold" label={tr("Azi")} value={`+${entry?.gain ?? 0}`} sub={entry?.closed ? tr("zi închisă") : tr("provizoriu")} />
-        <MiniStat icon={TrendingUp} tone="text-mint" label={tr("Săptămâna asta")} value={`+${week}`} sub={tr("momentum")} />
-        <MiniStat icon={Flame} tone="text-ember" label={tr("Serie")} value={`${streak.current} ${streak.current === 1 ? tr("zi") : tr("zile")}`} sub={`record: ${streak.best}`} />
-        <MiniStat icon={FlaskConical} tone="text-mint" label={tr("Revive-uri")} value={`${d.revive.left}/${RULES.revivesPerMonth}`} sub={tr("luna aceasta")} />
-      </div>
+    <Panel className="p-5 sm:p-6">
+      <p className="text-xs font-extrabold uppercase tracking-[0.2em] text-dim">{fmtLong(today)}</p>
+      <h1 className="font-pixel mt-1 text-2xl leading-tight text-ink sm:text-3xl">
+        {greeting()}, {nick}!
+      </h1>
+      <p className="mt-2 max-w-xl text-sm font-semibold leading-relaxed text-body">{sub}</p>
+      <p className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm font-bold text-dim">
+        <span>{tr("Azi")} <b className="tabular text-ink">+{entry?.gain ?? 0}</b></span>
+        <span>{tr("Săptămâna asta")} <b className="tabular text-ink">+{week}</b></span>
+        <span>{tr("Serie")} <b className="tabular text-ink">{streak.current} {streak.current === 1 ? tr("zi") : tr("zile")}</b></span>
+      </p>
+      <Button variant="violet" size="sm" icon={Timer} className="mt-4" onClick={onFocus}>
+        Focus
+      </Button>
     </Panel>
-  );
-}
-
-function MiniStat({ icon: Icon, tone, label, value, sub }) {
-  return (
-    <div className="inset flex items-center gap-3 px-3 py-2.5">
-      <Icon size={20} className={tone} aria-hidden="true" />
-      <div className="min-w-0">
-        <div className="truncate text-[10px] font-extrabold uppercase tracking-wider text-dim">{label}</div>
-        <div className="font-pixel tabular text-lg leading-tight text-ink">{value}</div>
-        <div className="truncate text-[11px] font-semibold text-faint">{sub}</div>
-      </div>
-    </div>
   );
 }
 
 function ReviveBanner({ d, onRevive }) {
   const offer = d.revive.offer;
-  if (!offer) return null;
   const n = offer.days.length;
   return (
     <Panel tone="mint" className="flex flex-wrap items-center gap-4 p-4">
@@ -131,10 +101,8 @@ export default function Dashboard({ state, d, today, go, ai, months, recentStori
     <div className="grid gap-5 lg:grid-cols-12">
       <div className="min-w-0 space-y-5 lg:col-span-8">
         <Hero state={state} d={d} today={today} onFocus={onFocus} />
-        <ReviveBanner d={d} onRevive={onRevive} />
-        <ResetWarning d={d} />
-        <RescueCard rescue={rescue} onRescue={onRescue} />
-        <ObjectivesMini state={state} today={today} reminders={goalReminders} go={go} act={goalActions} />
+        {/* one notice at a time, the most urgent first */}
+        {d.revive.offer ? <ReviveBanner d={d} onRevive={onRevive} /> : d.resetRisk ? <ResetWarning d={d} /> : <RescueCard rescue={rescue} onRescue={onRescue} />}
 
         <Panel className="p-4 sm:p-5">
           <SectionTitle
@@ -175,7 +143,6 @@ export default function Dashboard({ state, d, today, go, ai, months, recentStori
             </details>
           )}
           <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
-            <p className="text-xs font-bold text-dim">{tr("Fiecare bifă aduce momentum și puncte de evoluție pentru personaj.")}</p>
             <div
               className={`flex items-center gap-2 rounded-xl px-3 py-1.5 text-xs font-extrabold ring-1 ${
                 chestOpen ? "bg-gold/15 text-gold-hi ring-gold/40" : "bg-well text-dim ring-edge"
@@ -192,7 +159,6 @@ export default function Dashboard({ state, d, today, go, ai, months, recentStori
       <div className="min-w-0 space-y-5 lg:col-span-4">
         <CompanionCard c={d.companion} path={state.profile.path} lastStory={lastStory} ai={ai} waiting={moltWaiting} reward={reward} onReward={() => go("molt", "wardrobe")} onAsk={onAskMolt} onOpen={() => go("companion")} onChat={() => go("molt", "chat")} />
         <ReviewCard d={d} state={state} months={months} review={review} ai={ai} today={today} />
-        <GroupMini groups={groups} go={go} />
       </div>
     </div>
   );

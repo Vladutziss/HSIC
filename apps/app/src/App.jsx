@@ -720,7 +720,7 @@ function Game() {
   const reviewInfo = { ...review, run: runReview, reviewMin, now };
 
   return (
-    <Shell view={view} setView={go} onFocus={() => setFocusSetup(true)} onReview={() => !state.reviews?.[today] && runReview(today)} d={d} state={state} unread={groups.unread} goalsDue={goalReminders.length} mode={store.mode} saveStatus={store.saveStatus} now={now}>
+    <Shell view={view} setView={go} onFocus={() => setFocusSetup(true)} d={d} state={state} unread={groups.unread} goalsDue={goalReminders.length} mode={store.mode} saveStatus={store.saveStatus} now={now}>
       {view === "home" && (
         <Dashboard
           {...common}
