@@ -12,8 +12,8 @@ export default function PlanHub({ view, go, goalsDue = 0, children }) {
         value={here}
         onChange={(v) => go(v)}
         items={[
-          { value: "plan", label: tr("Calendar") },
           { value: "habits", label: tr("Obiceiuri") },
+          { value: "plan", label: tr("Calendar") },
           { value: "goals", label: tr("Obiective"), count: goalsDue },
         ]}
       />

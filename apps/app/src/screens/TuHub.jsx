@@ -11,8 +11,8 @@ export default function TuHub({ view, go, unread = 0, children }) {
         value={view === "group" ? "group" : "settings"}
         onChange={(v) => go(v)}
         items={[
-          { value: "settings", label: tr("Setări") },
           { value: "group", label: tr("Grup"), count: unread },
+          { value: "settings", label: tr("Setări") },
         ]}
       />
       {children}

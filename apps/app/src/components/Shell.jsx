@@ -27,10 +27,10 @@ import { tr } from "../lib/i18n.js";
 // part of Tu). `ai`: the place where the AI features live, drawn to stand out.
 export const NAV = [
   { id: "home", label: tr("Acasă"), icon: House },
-  { id: "plan", label: tr("Plan"), icon: CalendarDays, also: ["goals", "habits"] },
+  { id: "habits", label: tr("Plan"), icon: CalendarDays, also: ["plan", "goals"] }, // opens on Obiceiuri, the first tab
   { id: "molt", label: tr("Molt"), icon: Egg, ai: true },
   { id: "stats", label: tr("Progres"), icon: ChartLine },
-  { id: "settings", label: tr("Tu"), icon: User, also: ["group"] },
+  { id: "group", label: tr("Tu"), icon: User, also: ["settings"] }, // opens on Grup, the first tab
 ];
 const isHere = (n, view) => view === n.id || !!n.also?.includes(view);
 
@@ -183,9 +183,9 @@ export function Shell({ view, setView, onFocus, d, state, unread, goalsDue = 0, 
                 )}
                 {n.id === "molt" && aiThinking && <Loader2 size={14} className="anim-spin text-violet-hi" role="img" aria-label={tr("Molt se gândește…")} />}
                 {n.id === "molt" && aiWaiting && <span className="h-2.5 w-2.5 rounded-full bg-mint" role="img" aria-label={tr("Molt are un răspuns pentru tine")} title={tr("Molt are un răspuns pentru tine")} />}
-                {n.id === "plan" && goalsDue > 0 && (folded ? <span className="absolute right-2 top-1.5 h-2.5 w-2.5 rounded-full bg-ember" /> : <span className="ml-auto rounded-full bg-ember px-1.5 text-xs font-black text-night">{goalsDue}</span>)}
+                {n.id === "habits" && goalsDue > 0 && (folded ? <span className="absolute right-2 top-1.5 h-2.5 w-2.5 rounded-full bg-ember" /> : <span className="ml-auto rounded-full bg-ember px-1.5 text-xs font-black text-night">{goalsDue}</span>)}
                 {n.id === "home" && reviewDue && (folded ? <span className="absolute right-2 top-1.5 h-2.5 w-2.5 rounded-full bg-rose" /> : <span className="ml-auto grid h-5 w-5 place-items-center rounded-full bg-rose text-on-rose" title={tr("Raportul zilei te așteaptă")} role="img" aria-label={tr("Raportul zilei te așteaptă")}><Moon size={11} strokeWidth={3} aria-hidden="true" /></span>)}
-                {n.id === "settings" && unread > 0 && (folded ? <span className="absolute right-2 top-1.5 h-2.5 w-2.5 rounded-full bg-rose" /> : <span className="ml-auto rounded-full bg-rose px-1.5 text-xs font-black text-on-rose">{unread}</span>)}
+                {n.id === "group" && unread > 0 && (folded ? <span className="absolute right-2 top-1.5 h-2.5 w-2.5 rounded-full bg-rose" /> : <span className="ml-auto rounded-full bg-rose px-1.5 text-xs font-black text-on-rose">{unread}</span>)}
               </button>
             );
           })}
@@ -226,9 +226,9 @@ export function Shell({ view, setView, onFocus, d, state, unread, goalsDue = 0, 
               <Icon size={20} strokeWidth={2.25} aria-hidden="true" />
               <span className="max-w-full truncate px-0.5">{n.short || n.label}</span>
               {n.id === "molt" && (aiThinking || aiWaiting) && <span className={`absolute right-[22%] top-1 h-2 w-2 rounded-full ${aiThinking ? "animate-pulse bg-violet-hi" : "bg-mint"}`} aria-label={aiThinking ? tr("Molt se gândește…") : tr("Molt are un răspuns pentru tine")} />}
-              {n.id === "plan" && goalsDue > 0 && <span className="absolute right-[22%] top-1 h-2 w-2 rounded-full bg-ember" />}
+              {n.id === "habits" && goalsDue > 0 && <span className="absolute right-[22%] top-1 h-2 w-2 rounded-full bg-ember" />}
               {n.id === "home" && reviewDue && <span className="absolute right-[22%] top-1 h-2 w-2 rounded-full bg-rose" aria-label={tr("Raportul zilei te așteaptă")} />}
-              {n.id === "settings" && unread > 0 && <span className="absolute right-[22%] top-1 h-2 w-2 rounded-full bg-rose" />}
+              {n.id === "group" && unread > 0 && <span className="absolute right-[22%] top-1 h-2 w-2 rounded-full bg-rose" />}
             </button>
           );
         })}

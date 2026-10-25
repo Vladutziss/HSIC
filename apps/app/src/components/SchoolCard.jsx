@@ -84,36 +84,38 @@ export function SchoolCard({ state, today, onStateChange }) {
       {rows.length > 0 && (
         <ul className="space-y-2">
           {rows.map((r) => (
-            <li key={`${r.kind}-${r.id}`} className="flex items-center gap-3 rounded-xl border border-edge bg-panel-lo px-3 py-2">
+            <li key={`${r.kind}-${r.id}`} className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border border-edge bg-panel-lo px-3 py-2">
               <CheckButton size="sm" checked={false} label={tr("Bifează: {v}", { v: r.title })} onClick={() => update((p) => setSchoolDone(p, r.kind, r.id, true))} />
-              <span className="min-w-0 flex-1">
-                <span className="flex items-center gap-2">
+              <span className="min-w-0 flex-1 basis-32">
+                <span className="flex flex-wrap items-center gap-x-2">
                   {r.kind === "exam" && <Chip tone="gold">{tr("Examen")}</Chip>}
-                  <span className="truncate text-sm font-extrabold text-ink">{r.title}</span>
+                  <span className="min-w-0 break-words text-sm font-extrabold text-ink">{r.title}</span>
                 </span>
                 <span className="block truncate text-xs font-semibold text-dim">
                   {[r.subject, dayLabel(r.left)].filter(Boolean).join(" · ")}
                 </span>
               </span>
-              {r.kind === "exam" && r.left >= 2 && (
+              <span className="ml-auto flex shrink-0 items-center gap-2">
+                {r.kind === "exam" && r.left >= 2 && (
+                  <button
+                    type="button"
+                    onClick={() => prepare(r)}
+                    className="tap focus-ring inline-flex shrink-0 items-center gap-1 rounded-lg px-2 py-1 text-xs font-extrabold text-dim ring-1 ring-edge hover:text-ink"
+                    aria-label={tr("Creează un plan de pregătire pentru {title}", { title: r.title })}
+                  >
+                    <CalendarPlus size={13} aria-hidden="true" />
+                    {tr("Plan")}
+                  </button>
+                )}
                 <button
                   type="button"
-                  onClick={() => prepare(r)}
-                  className="focus-ring inline-flex shrink-0 items-center gap-1 rounded-lg px-2 py-1 text-xs font-extrabold text-dim ring-1 ring-edge hover:text-ink"
-                  aria-label={tr("Creează un plan de pregătire pentru {title}", { title: r.title })}
+                  onClick={() => logStudy(r.subject)}
+                  className="tap focus-ring shrink-0 rounded-lg px-2 py-1 text-xs font-extrabold text-dim ring-1 ring-edge hover:text-ink"
+                  aria-label={r.subject ? tr("Am învățat {minutes} minute la {subject}", { minutes: SESSION, subject: r.subject }) : tr("Am învățat {minutes} minute", { minutes: SESSION })}
                 >
-                  <CalendarPlus size={13} aria-hidden="true" />
-                  {tr("Plan")}
+                  +{SESSION} min
                 </button>
-              )}
-              <button
-                type="button"
-                onClick={() => logStudy(r.subject)}
-                className="focus-ring shrink-0 rounded-lg px-2 py-1 text-xs font-extrabold text-dim ring-1 ring-edge hover:text-ink"
-                aria-label={r.subject ? tr("Am învățat {minutes} minute la {subject}", { minutes: SESSION, subject: r.subject }) : tr("Am învățat {minutes} minute", { minutes: SESSION })}
-              >
-                +{SESSION} min
-              </button>
+              </span>
             </li>
           ))}
         </ul>

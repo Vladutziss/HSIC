@@ -104,7 +104,7 @@ function CatalogTab({ state, today, onAdd }) {
         ))}
       </div>
       {full && <p className="rounded-xl bg-ember/10 p-3 text-sm font-semibold text-ember ring-1 ring-ember/30">{tr("Ai deja {MAX_HABITS} obiceiuri active. Arhivează sau șterge unul ca să adaugi altul.", { MAX_HABITS })}</p>}
-      <div className="grid gap-2 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         {list.map((c) => {
           const Icon = iconFor(c.icon);
           const has = taken.has(c.id);

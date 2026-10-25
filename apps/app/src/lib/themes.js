@@ -8,11 +8,13 @@ import { tr } from "./i18n.js";
 
 export const THEMES = [
   { id: "noapte", name: tr("Noapte"), mode: "dark", blurb: tr("Violet închis, cu accente aurii. Tema originală.") },
+  { id: "grafit", name: tr("Grafit"), mode: "dark", blurb: tr("Gri închis neutru, fără stele. Simplu și sobru.") },
   { id: "ceata", name: tr("Lumină"), mode: "light", blurb: tr("Gri deschis și alb, accente discrete.") },
+  { id: "lavanda", name: tr("Lavandă"), mode: "light", blurb: tr("Pastel luminos, lavandă și liliac, text violet-închis.") },
 ];
 
 // Themes that no longer exist fall back to the one of the same mode (the account may still hold the old id).
-const RETIRED = { padure: "noapte", grafit: "noapte", cod: "noapte", nord: "noapte", piersica: "ceata", lavanda: "ceata", pergament: "ceata" };
+const RETIRED = { padure: "noapte", cod: "noapte", nord: "noapte", piersica: "ceata", pergament: "ceata" };
 
 export const DEFAULT_THEME = "noapte";
 const KEY = "molted.theme"; // stored as "<id>:<mode>", read by the inline script in index.html too
