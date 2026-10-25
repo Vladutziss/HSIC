@@ -1,10 +1,9 @@
 import React, { useMemo, useState } from "react";
-import { Activity, BarChart3, Bot, CalendarDays, Flame, Gauge, Quote, Sparkles, Trophy, Zap } from "lucide-react";
-import { Chip, Empty, LevelBadge, Panel, SectionTitle, Skeleton, Stat, Tabs } from "../components/ui.jsx";
+import { Activity, BarChart3, Bot, CalendarDays, ChevronDown, Flame, Gauge, Quote, Zap } from "lucide-react";
+import { Chip, Empty, Panel, SectionTitle, Skeleton, Stat, Tabs } from "../components/ui.jsx";
 import { HEAT, HabitLines, Heatmap, MomentumChart, ScoreBars, heatLevel } from "../components/Charts.jsx";
 import { MOMENT_META } from "../lib/moments.js";
 import { quoteById } from "../lib/quotes.js";
-import { LEVELS } from "../lib/engine.js";
 import { FocusStats } from "../components/FocusStats.jsx";
 import { useStats } from "../lib/useStats.js";
 import { agentImpact } from "../lib/agentActions.js";
@@ -52,16 +51,9 @@ export default function Stats({ state, d, today, go, mode, saveStatus, ai, agent
 
   const tableRows = useMemo(() => days.slice(-14).reverse(), [days]);
 
-  const head = (
-    <div>
-      <h1 className="font-pixel text-3xl text-ink">{tr("Statistici")}</h1>
-      <p className="text-sm font-semibold text-dim">{tr("Momentum-ul general, fiecare obicei și scorurile zilnice.")}</p>
-    </div>
-  );
   if (loading)
     return (
       <div className="space-y-5" aria-busy="true">
-        {head}
         <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
           {Array.from({ length: 6 }, (_, i) => (
             <Skeleton key={i} className="h-24" />
@@ -77,46 +69,21 @@ export default function Stats({ state, d, today, go, mode, saveStatus, ai, agent
   if (!s.checkins && !days.some((x) => x.active))
     return (
       <div className="space-y-5">
-        {head}
         <Panel>
           <Empty icon={BarChart3} title={tr("Încă nu sunt statistici")}>{tr("Bifează primul obicei sau termină un to-do și graficele apar aici.")}</Empty>
         </Panel>
-        <FocusStats sessions={state.focusSessions || []} today={today} onFocus={onFocus} />
       </div>
     );
 
   return (
     <div className="space-y-5">
-      <div>
-        <h1 className="font-pixel text-3xl text-ink">{tr("Statistici")}</h1>
-        <p className="text-sm font-semibold text-dim">{tr("Momentum-ul general, fiecare obicei și scorurile zilnice.")}</p>
-      </div>
-
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+      <div className="grid grid-cols-3 gap-3">
         <Stat icon={Zap} tone="gold" label={tr("Momentum")} value={d.entry?.momentum ?? 0} sub={tr("nivel {lvl} · {name}", { lvl: d.level.lvl, name: d.level.name })} />
-        <Stat icon={Trophy} tone="gold" label={tr("Cel mai bun nivel")} value={s.bestLevel} sub={tr("{n} puncte", { n: s.bestMomentum })} />
         <Stat icon={Flame} tone="ember" label={tr("Serie")} value={s.streak.current} sub={tr("record: {best} zile", { best: s.streak.best })} />
-        <Stat icon={Activity} tone="mint" label={tr("Bifări")} value={s.checkins} sub={tr("în total")} />
-        <Stat icon={Sparkles} tone="violet" label={tr("Puncte de evoluție")} value={s.evolution?.ep ?? s.evidence?.ep ?? 0} sub={tr("{name} · personajul tău", { name: d.companion.stage.name })} />
         <Stat icon={Gauge} tone="sky" label={tr("Scor mediu")} value={s.avg} sub={tr("ultimele 30 de zile")} />
       </div>
 
-      {ai?.server && (
-        <button
-          type="button"
-          onClick={() => go?.("molt", "ai")}
-          className="focus-ring flex w-full items-center gap-3 rounded-2xl bg-violet/10 p-3 text-left ring-1 ring-violet/30 transition hover:bg-violet/15"
-        >
-          <Sparkles size={18} className="shrink-0 text-violet-hi" aria-hidden="true" />
-          <span className="min-w-0 flex-1">
-            <span className="block text-sm font-extrabold text-ink">{tr("Ce înseamnă cifrele astea? Întreabă-l pe Molt")}</span>
-            <span className="block text-xs font-semibold text-dim">{tr("Molt vede tiparele din ultimele 4 săptămâni și te ajută cu o reflecție de săptămână.")}</span>
-          </span>
-          <span className="shrink-0 text-xs font-extrabold text-violet-hi">{tr("Deschide →")}</span>
-        </button>
-      )}
-
-      <Panel tone="gold" className="p-4 sm:p-5">
+      <Panel className="p-4 sm:p-5">
         <SectionTitle
           icon={Zap}
           sub={tr("Liniile punctate sunt pragurile de nivel. Punctele roz marchează resetările după {resetAfter} zile fără activitate.", { resetAfter: s.resetAfter })}
@@ -167,6 +134,12 @@ export default function Stats({ state, d, today, go, mode, saveStatus, ai, agent
         </details>
       </Panel>
 
+      <details className="group">
+        <summary className="focus-ring flex cursor-pointer list-none items-center justify-between rounded-xl bg-well px-4 py-3 text-sm font-extrabold text-body ring-1 ring-edge hover:text-ink">
+          {tr("Mai multe detalii")}
+          <ChevronDown size={16} className="transition-transform group-open:rotate-180" aria-hidden="true" />
+        </summary>
+        <div className="mt-5 space-y-5">
       <div className="grid gap-5 xl:grid-cols-2">
         <Panel className="min-w-0 p-4 sm:p-5">
           <SectionTitle icon={Activity} sub={tr("Fiecare obicei are propriul momentum")}>{tr("Pe obiceiuri")}</SectionTitle>
@@ -201,24 +174,10 @@ export default function Stats({ state, d, today, go, mode, saveStatus, ai, agent
         </Panel>
       </div>
 
-      <div className="grid gap-5 xl:grid-cols-5">
-        <Panel className="min-w-0 p-4 sm:p-5 xl:col-span-3">
+      <div className="grid gap-5 xl:grid-cols-1">
+        <Panel className="min-w-0 p-4 sm:p-5">
           <SectionTitle icon={CalendarDays} sub={tr("Ultimele 26 de săptămâni, după scorul zilei")}>{tr("Activitate")}</SectionTitle>
           <Heatmap today={today} weeks={26} size={17} cell={cell} label={tr("Activitatea din ultimele 26 de săptămâni")} />
-        </Panel>
-        <Panel className="min-w-0 p-4 sm:p-5 xl:col-span-2">
-          <SectionTitle icon={Trophy} sub={tr("Nivelurile momentum-ului")}>{tr("Niveluri")}</SectionTitle>
-          <ol className="grid grid-cols-2 gap-1.5">
-            {LEVELS.map((l) => (
-              <li key={l.lvl} className={`flex items-center gap-2 rounded-xl px-2 py-1.5 ${l.lvl === d.level.lvl ? "bg-gold/10 ring-1 ring-gold/40" : "bg-well"}`}>
-                <LevelBadge lvl={l.lvl} size={28} tone={l.lvl <= d.level.lvl ? "gold" : "dim"} />
-                <span className="min-w-0">
-                  <span className="block truncate text-xs font-extrabold text-ink">{l.name}</span>
-                  <span className="block text-[10px] font-bold text-dim">{tr("{min} puncte", { min: l.min })}</span>
-                </span>
-              </li>
-            ))}
-          </ol>
         </Panel>
       </div>
 
@@ -253,6 +212,8 @@ export default function Stats({ state, d, today, go, mode, saveStatus, ai, agent
           </ul>
         )}
       </Panel>
+        </div>
+      </details>
     </div>
   );
 }

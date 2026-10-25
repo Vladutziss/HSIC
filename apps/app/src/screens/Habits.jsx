@@ -152,7 +152,7 @@ const LAYOUTS = [
   { id: "details", label: tr("Detalii"), icon: Rows3 },
   { id: "large", label: tr("Mari"), icon: LayoutGrid },
 ];
-const DEFAULT_LAYOUT = "large";
+const DEFAULT_LAYOUT = "compact";
 // Sorting for the habit list. `label` is the first direction, `rev` the opposite one: picking the same
 // sort again flips it, and the menu shows the direction that is active.
 const SORTS = [
@@ -312,7 +312,6 @@ export default function Habits({ state, d, today, go, ai, focus, setFocus, onAdd
     <div className="space-y-5">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="font-pixel text-3xl text-ink">{tr("Obiceiuri")}</h1>
           <p className="text-sm font-semibold text-dim">{tr("{length} din {MAX_HABITS} active · fiecare obicei are propriul momentum", { length: active.length, MAX_HABITS })}</p>
           {active.length > RULES.habitsPerDay && (
             <p role="note" className="mt-2 inline-flex max-w-prose items-start gap-2 rounded-xl bg-gold/10 px-3 py-2 text-xs font-bold text-body ring-1 ring-gold/30">

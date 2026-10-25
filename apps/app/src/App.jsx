@@ -39,6 +39,7 @@ import { resumeChatRun } from "./lib/chatRun.js";
 import Group from "./screens/Group.jsx";
 import Planner from "./screens/Planner.jsx";
 import PlanHub from "./screens/PlanHub.jsx";
+import TuHub from "./screens/TuHub.jsx";
 import Stats from "./screens/Stats.jsx";
 import Objectives, { Celebration, ObjectiveEditor, ObjectivesMini, blankObjective, objectiveFromTemplate } from "./screens/Objectives.jsx";
 import { goalTodoIndex, dueReminders, moveStep, newMarks, toggleStep, toggleSub } from "./lib/objectives.js";
@@ -726,6 +727,7 @@ function Game() {
           {...common}
           groups={groups}
           review={reviewInfo}
+          onFocus={() => setFocusSetup(true)}
           onCheck={checkIn}
           onRevive={applyRevive}
           todo={todoActions}
@@ -751,20 +753,6 @@ function Game() {
           }}
         />
       )}
-      {view === "habits" && (
-        <Habits
-          {...common}
-          focus={focusHabit}
-          setFocus={setFocusHabit}
-          onCheck={checkIn}
-          onAdd={() => setHabitEd({ tab: "catalog" })}
-          onAddHabit={(habit) => saveHabit(habit, { keepOpen: true })}
-          agent={agentActions}
-          onEdit={(habit) => setHabitEd({ habit, tab: "custom" })}
-          onArchive={archiveHabit}
-          onDelete={askDeleteHabit}
-        />
-      )}
       {view === "molt" && (
         <Molt
           {...common}
@@ -783,10 +771,22 @@ function Game() {
           onStateChange={update}
         />
       )}
-      {view === "group" && <Group {...common} groups={groups} />}
-      {(view === "plan" || view === "goals") && (
-        <PlanHub view={view} go={go} state={state} today={today} goalsDue={goalReminders.length}>
-          {view === "goals" ? (
+      {(view === "plan" || view === "goals" || view === "habits") && (
+        <PlanHub view={view} go={go} goalsDue={goalReminders.length}>
+          {view === "habits" ? (
+        <Habits
+          {...common}
+          focus={focusHabit}
+          setFocus={setFocusHabit}
+          onCheck={checkIn}
+          onAdd={() => setHabitEd({ tab: "catalog" })}
+          onAddHabit={(habit) => saveHabit(habit, { keepOpen: true })}
+          agent={agentActions}
+          onEdit={(habit) => setHabitEd({ habit, tab: "custom" })}
+          onArchive={archiveHabit}
+          onDelete={askDeleteHabit}
+        />
+      ) : view === "goals" ? (
             <Objectives
               {...common}
               goals={goalActions}
@@ -810,7 +810,9 @@ function Game() {
         </PlanHub>
       )}
       {view === "stats" && <Stats {...common} agent={agentActions} mode={store.mode} saveStatus={store.saveStatus} onFocus={() => setFocusSetup(true)} />}
-      {view === "settings" && (
+      {(view === "settings" || view === "group") && (
+        <TuHub view={view} go={go} unread={groups.unread}>
+        {view === "group" ? <Group {...common} groups={groups} /> : (
         <SettingsScreen
           {...common}
           mode={store.mode}
@@ -835,6 +837,8 @@ function Game() {
             })
           }
         />
+      )}
+        </TuHub>
       )}
 
       <FocusSetup key={String(focusSetup)} open={focusSetup} initial={focusPrefill} onStart={beginFocus} onClose={() => { setFocusSetup(false); setFocusPrefill(null); }} />

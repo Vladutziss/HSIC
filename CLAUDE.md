@@ -11,6 +11,13 @@
 - Înainte de commit: `npm test` (regulile jocului) și `npm run build:artifact`.
 - Răspunsuri scurte, în română.
 
+## Interfața aplicației (minimalism)
+
+- Cinci locuri în meniu (`components/Shell.jsx`, `NAV`): Acasă, Plan (Calendar / Obiceiuri / Obiective, `screens/PlanHub.jsx`), Molt (Vorbește / Planifică / Înțelege / Despre Molt, `screens/Molt.jsx`), Progres, Tu (Setări / Grup, `screens/TuHub.jsx`). Id-urile de vedere (`home`, `plan`, `goals`, `habits`, `molt`, `stats`, `settings`, `group`) rămân cele din `App.jsx`; hub-urile doar le grupează.
+- Reguli: fără titluri de pagină (meniul spune unde ești), titluri de secțiune neutre (`SectionTitle` nu mai are `tone`), fără colțuri decorative, un singur banner contextual pe Acasă, raportul de seară apare doar când e ora lui sau e gata. Culoarea are sens: gold = acțiunea principală, violet = Molt/AI, restul doar pentru stare.
+- Teme: doar `noapte` (dark) și `ceata` (light, afișată „Lumină"); id-urile vechi cad pe cea de același mod (`RETIRED` în `lib/themes.js`).
+- Auditul și planul: `docs/FRONTEND_CLEANUP_PROMPT.md`.
+
 ## Backend (Supabase)
 
 - Aceeași sursă dă două build-uri: **web** (`npm run build`, Vite, în `apps/app`, `__SUPABASE__=true`, hosting pe Vercel) și **artifact** (`npm run build:artifact`, `__SUPABASE__=false`, fără supabase-js, rămâne demo fără sincronizare). Cod nou care atinge Supabase se ascunde în spatele `getClient()` din `apps/app/src/lib/supabase.js`.

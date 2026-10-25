@@ -449,10 +449,7 @@ export default function Group({ groups }) {
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="font-pixel text-3xl text-ink">{tr("Grup")}</h1>
-          <p className="text-sm font-semibold text-dim">{tr("Progres împreună: clasament săptămânal și remindere între prieteni.")}</p>
-        </div>
+        <div />
         {groups.cloud && list.length > 0 && (
           <Button variant="ghost" size="sm" icon={adding ? X : UserPlus} onClick={() => setAdding((x) => !x)}>
             {adding ? tr("Anulează") : tr("Grup nou sau cod")}

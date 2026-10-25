@@ -1,10 +1,9 @@
 import React from "react";
-import { AlertTriangle, CalendarCheck, ChevronDown, FlaskConical, Gift, Plus, Swords } from "lucide-react";
+import { AlertTriangle, CalendarCheck, ChevronDown, FlaskConical, Gift, Plus, Swords, Timer } from "lucide-react";
 import { Button, Panel, SectionTitle } from "../components/ui.jsx";
 import { CompanionCard, QuestCard, ReviewCard } from "../components/Cards.jsx";
 import { fmtDay, fmtLong } from "../lib/dates.js";
 import { RULES } from "../lib/engine.js";
-import { hintFor, nextReward } from "../lib/cosmetics.js";
 import { tr } from "../lib/i18n.js";
 
 function greeting() {
@@ -15,7 +14,7 @@ function greeting() {
   return tr("Bună seara");
 }
 
-function Hero({ state, d, today }) {
+function Hero({ state, d, today, onFocus }) {
   const { entry, week, streak } = d;
   const nick = state.profile?.nick || "aventurierule";
   const left = d.missions.left;
@@ -37,6 +36,9 @@ function Hero({ state, d, today }) {
         <span>{tr("Săptămâna asta")} <b className="tabular text-ink">+{week}</b></span>
         <span>{tr("Serie")} <b className="tabular text-ink">{streak.current} {streak.current === 1 ? tr("zi") : tr("zile")}</b></span>
       </p>
+      <Button variant="violet" size="sm" icon={Timer} className="mt-4 lg:hidden" onClick={onFocus}>
+        Focus
+      </Button>
     </Panel>
   );
 }
@@ -88,16 +90,12 @@ function RescueCard({ rescue, onRescue, goalReminders = [], goalActions }) {
   );
 }
 
-export default function Dashboard({ state, d, today, go, ai, months, recentStories, groups, review, onCheck, onRevive, onAddHabit, rescue, onRescue, goalReminders = [], goalActions, onAskMolt, moltWaiting = 0 }) {
-  const lastStory = [...recentStories].reverse().find((s) => s.story);
-  // the closest thing Molt can still earn, as one line on its card
-  const next = nextReward(d.facts, state.unlocked);
-  const reward = next ? { name: next.item.name, text: hintFor(next.item, d.facts).text, ratio: next.progress.ratio } : null;
+export default function Dashboard({ state, d, today, go, ai, months, recentStories, groups, review, onFocus, onCheck, onRevive, onAddHabit, rescue, onRescue, goalReminders = [], goalActions, onAskMolt, moltWaiting = 0 }) {
   const chestOpen = d.missions.total > 0 && d.missions.done === d.missions.total;
   return (
     <div className="grid gap-5 lg:grid-cols-12">
       <div className="min-w-0 space-y-5 lg:col-span-8">
-        <Hero state={state} d={d} today={today} />
+        <Hero state={state} d={d} today={today} onFocus={onFocus} />
         {/* one notice at a time, the most urgent first */}
         {d.revive.offer ? <ReviveBanner d={d} onRevive={onRevive} /> : d.resetRisk ? <ResetWarning d={d} /> : <RescueCard rescue={rescue} onRescue={onRescue} />}
 
@@ -154,7 +152,7 @@ export default function Dashboard({ state, d, today, go, ai, months, recentStori
       </div>
 
       <div className="min-w-0 space-y-5 lg:col-span-4">
-        <CompanionCard c={d.companion} path={state.profile.path} lastStory={lastStory} ai={ai} waiting={moltWaiting} reward={reward} onReward={() => go("molt", "wardrobe")} onAsk={onAskMolt} onOpen={() => go("companion")} onChat={() => go("molt", "chat")} />
+        <CompanionCard c={d.companion} path={state.profile.path} ai={ai} waiting={moltWaiting} onAsk={onAskMolt} onChat={() => go("molt", "chat")} />
         <ReviewCard d={d} state={state} months={months} review={review} ai={ai} today={today} />
       </div>
     </div>

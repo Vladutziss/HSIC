@@ -6,11 +6,10 @@
 // single workbench on the right, styled as Molt speaking (its tail points at the character). Inside it the question,
 // the action button and the answer are one block, so nothing needs hunting for.
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { BookOpen, Bot, Loader2, CalendarCheck, CalendarRange, Check, Egg, History, Lock, MessageSquare, NotebookPen, Pencil, Shirt, Sparkles, Target, Wand2 } from "lucide-react";
-import { Bar, Button, Chip, Panel } from "../components/ui.jsx";
+import { Bar, Button, Panel } from "../components/ui.jsx";
 import { Sprite, eggCrack } from "../components/Sprite.jsx";
-import { moodLine } from "../components/Cards.jsx";
 import { AgentLog } from "../components/AgentLog.jsx";
 import { ExperimentsPanel, NotesPanel, PlanPanel } from "../components/CoachAgent.jsx";
 import { InsightsPanel, ReflectionPanel, useAiJobs } from "../components/AiCoach.jsx";
@@ -38,26 +37,22 @@ const SKILLS = [
   { id: "evolution", label: tr("Evoluție"), icon: Egg, group: tr("Molt"), title: () => tr("Evoluția mea"), say: tr("Cresc odată cu obiceiurile pe care le bifezi: fiecare bifă aduce puncte de evoluție după dificultate, dar în aceeași zi fiecare nouă bifă adaugă tot mai puțin.") },
 ];
 
+// What the menu shows: four entries, the abilities of each one in a second row. Only the abilities that need no account
+// work offline; the rest say so when opened.
+const GROUPS = [
+  { id: "chat", label: tr("Vorbește"), icon: MessageSquare, skills: ["chat"] },
+  { id: "plan", label: tr("Planifică"), icon: CalendarCheck, skills: ["day", "week", "school", "goal"] },
+  { id: "mind", label: tr("Înțelege"), icon: BookOpen, skills: ["mirror", "patterns"] },
+  { id: "about", label: tr("Despre Molt"), icon: Egg, skills: ["wardrobe", "memory", "log", "evolution"] },
+];
+
 /** The name of an ability, for messages elsewhere in the app. */
 export const skillLabel = (id) => SKILLS.find((s) => s.id === id)?.label || "";
 
 const ALIAS = { ai: "day" }; // the old "Ajutor AI" tab, still reachable from other screens
 export const MOLT_TABS = [...SKILLS.map((s) => s.id), ...Object.keys(ALIAS)];
 
-const WIDE = "(min-width: 1024px)";
-function useWide() {
-  const [wide, setWide] = useState(() => window.matchMedia?.(WIDE).matches ?? true);
-  useEffect(() => {
-    const m = window.matchMedia?.(WIDE);
-    if (!m) return undefined;
-    const on = () => setWide(m.matches);
-    m.addEventListener("change", on);
-    return () => m.removeEventListener("change", on);
-  }, []);
-  return wide;
-}
-
-function MoltCard({ state, d, ai, wide, waiting, onWaiting, onRename }) {
+function MoltHeader({ state, d, ai, waiting, onWaiting, onRename }) {
   const c = d.companion;
   const path = state.profile?.path || "sport";
   const p = PATHS[path];
@@ -65,134 +60,98 @@ function MoltCard({ state, d, ai, wide, waiting, onWaiting, onRename }) {
   const [name, setName] = useState(c.name || "");
   const label = c.name || tr("Moltul tău");
   return (
-    <Panel tone="violet" className="overflow-hidden">
-      <div className="flex items-center gap-3 p-3 lg:flex-col lg:items-stretch lg:gap-0 lg:p-0">
-        <div className="pedestal flex h-[84px] w-[84px] shrink-0 items-end justify-center rounded-xl lg:h-auto lg:w-auto lg:rounded-none lg:px-4 lg:pt-2">
-          <Sprite path={path} stage={c.stage.id} mood={c.mood} size={wide ? 92 : 64} crack={eggCrack(c.ep)} look={c.look} label={`${label}, ${c.stage.name}`} />
-        </div>
-        <div className="min-w-0 flex-1 space-y-1.5 lg:p-3 lg:pt-2">
-          {renaming ? (
-            <form
-              className="flex gap-2"
-              onSubmit={(e) => {
-                e.preventDefault();
-                if (name.trim()) onRename(name.trim().slice(0, 20));
-                setRenaming(false);
-              }}
-            >
-              <input className="field" value={name} maxLength={20} onChange={(e) => setName(e.target.value)} aria-label={tr("Numele personajului")} autoFocus />
-              <Button type="submit" size="sm" icon={Check} aria-label={tr("Salvează numele")} />
-            </form>
-          ) : (
-            <div>
-              <div className="flex items-center gap-1.5">
-                <h1 className="truncate font-pixel text-2xl leading-tight text-ink lg:text-2xl">{label}</h1>
-                {c.stage.id !== "egg" && (
-                  <button type="button" onClick={() => setRenaming(true)} className="focus-ring shrink-0 rounded-lg p-1.5 text-dim hover:bg-panel-hi hover:text-ink" aria-label={tr("Redenumește")}>
-                    <Pencil size={15} aria-hidden="true" />
-                  </button>
-                )}
-              </div>
-              <p className="text-sm font-extrabold text-violet-hi">
-                {c.stage.name} · {p.cls}
-              </p>
-            </div>
-          )}
-          <p className="hidden text-sm font-semibold leading-snug text-body lg:block">{moodLine(c, c.name)}</p>
-          {c.next ? (
-            <div>
-              <Bar value={c.progress} tone="violet" label={tr("Progres spre evoluția următoare")} />
-              <p className="mt-1 flex justify-between gap-2 text-[11px] font-extrabold text-dim">
-                <span className="truncate">{tr("Spre {name}", { name: c.next.name })}</span>
-                <span className="tabular shrink-0">{tr("{ep} / {min} PE", { ep: c.ep, min: c.next.min })}</span>
-              </p>
-            </div>
-          ) : (
-            <Chip tone="gold" icon={Sparkles}>{tr("Evoluție completă")}</Chip>
-          )}
-          {!ai?.server && (
-            <Chip tone="dim" icon={Bot}>{tr("AI indisponibil aici")}</Chip>
-          )}
-          {waiting > 0 && (
-            <button type="button" onClick={onWaiting} className="focus-ring flex w-full items-center gap-2 rounded-xl bg-gold/15 px-2.5 py-1.5 text-left text-xs font-extrabold text-ink ring-1 ring-gold/40 hover:bg-gold/20">
-              <Sparkles size={14} className="shrink-0 text-gold-ink" aria-hidden="true" />{tr("Molt așteaptă {waiting} {v}", { waiting, v: waiting === 1 ? tr("propunere") : tr("propuneri") })}</button>
-          )}
-        </div>
+    <div className="flex items-center gap-4">
+      <div className="pedestal shrink-0 rounded-xl px-2 pt-1">
+        <Sprite path={path} stage={c.stage.id} mood={c.mood} size={64} crack={eggCrack(c.ep)} look={c.look} label={`${label}, ${c.stage.name}`} />
       </div>
-    </Panel>
+      <div className="min-w-0 flex-1 space-y-1.5">
+        {renaming ? (
+          <form
+            className="flex gap-2"
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (name.trim()) onRename(name.trim().slice(0, 20));
+              setRenaming(false);
+            }}
+          >
+            <input className="field" value={name} maxLength={20} onChange={(e) => setName(e.target.value)} aria-label={tr("Numele personajului")} autoFocus />
+            <Button type="submit" size="sm" icon={Check} aria-label={tr("Salvează numele")} />
+          </form>
+        ) : (
+          <div className="flex items-center gap-1.5">
+            <h1 className="truncate font-pixel text-xl leading-tight text-ink">{label}</h1>
+            {c.stage.id !== "egg" && (
+              <button type="button" onClick={() => setRenaming(true)} className="focus-ring shrink-0 rounded-lg p-1.5 text-dim hover:bg-panel-hi hover:text-ink" aria-label={tr("Redenumește")}>
+                <Pencil size={15} aria-hidden="true" />
+              </button>
+            )}
+            <span className="truncate text-sm font-extrabold text-violet-hi">
+              {c.stage.name} · {p.cls}
+            </span>
+          </div>
+        )}
+        {c.next && <Bar value={c.progress} tone="violet" height={8} segmented={false} label={tr("Progres spre evoluția următoare")} />}
+        {!ai?.server && <p className="text-xs font-semibold text-dim">{tr("AI indisponibil aici")}</p>}
+        {waiting > 0 && (
+          <button type="button" onClick={onWaiting} className="focus-ring inline-flex items-center gap-1.5 text-xs font-extrabold text-gold-ink">
+            <Sparkles size={13} aria-hidden="true" />
+            {tr("Molt așteaptă {waiting} {v}", { waiting, v: waiting === 1 ? tr("propunere") : tr("propuneri") })}
+          </button>
+        )}
+      </div>
+    </div>
   );
 }
 
-// The list of abilities: a column beside the workbench on wide screens, a strip you swipe on phones.
-function SkillNav({ active, setTab, wide, waiting, locked }) {
+// The menu: one row of four, and a second row with the abilities of the one that is open (when it has more than one).
+function MoltNav({ active, setTab, waiting }) {
   const jobs = useAiJobs(); // an ability can be thinking, or have an answer waiting, while you are on another one
-  useEffect(() => {
-    if (!wide) document.getElementById(`molt-tab-${active}`)?.scrollIntoView({ inline: "center", block: "nearest" });
-  }, [active, wide]);
-
-  const onKeyDown = (e) => {
-    const step = { ArrowDown: 1, ArrowRight: 1, ArrowUp: -1, ArrowLeft: -1 }[e.key];
-    const at = SKILLS.findIndex((s) => s.id === active);
-    let next;
-    if (step) next = (at + step + SKILLS.length) % SKILLS.length;
-    else if (e.key === "Home") next = 0;
-    else if (e.key === "End") next = SKILLS.length - 1;
-    else return;
-    e.preventDefault();
-    setTab(SKILLS[next].id);
-    document.getElementById(`molt-tab-${SKILLS[next].id}`)?.focus();
-  };
-
-  let prev;
+  const group = GROUPS.find((g) => g.skills.includes(active)) || GROUPS[0];
+  const pill = (on) => `focus-ring inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-extrabold transition ${on ? "bg-violet text-on-violet" : "bg-well text-dim ring-1 ring-edge hover:text-ink"}`;
+  const state = (ids) => (ids.some((i) => jobs.busy.includes(i)) ? "busy" : ids.some((i) => jobs.ready.includes(i)) ? "ready" : "");
   return (
-    <nav aria-label={tr("Ce poate face Molt")}>
-      <div
-        role="tablist"
-        aria-orientation={wide ? "vertical" : "horizontal"}
-        onKeyDown={onKeyDown}
-        className="-mx-3 flex gap-1.5 overflow-x-auto px-3 py-1 [scrollbar-width:none] sm:-mx-4 sm:px-4 lg:mx-0 lg:flex-col lg:gap-0.5 lg:overflow-visible lg:px-0 [&::-webkit-scrollbar]:hidden"
-      >
-        {SKILLS.map((sk) => {
-          const on = sk.id === active;
-          const Icon = sk.icon;
-          const head = sk.group && sk.group !== prev;
-          prev = sk.group || prev;
-          const count = sk.id === "log" ? waiting : 0;
+    <nav aria-label={tr("Ce poate face Molt")} className="space-y-2">
+      <div role="tablist" className="-mx-3 flex gap-1.5 overflow-x-auto px-3 [scrollbar-width:none] sm:mx-0 sm:px-0 [&::-webkit-scrollbar]:hidden">
+        {GROUPS.map((g) => {
+          const Icon = g.icon;
+          const on = g.id === group.id;
+          const st = !on ? state(g.skills) : "";
           return (
-            <React.Fragment key={sk.id}>
-              {head && (
-                <>
-                  <span role="presentation" className="hidden px-2 pb-0.5 pt-2.5 text-xs font-extrabold text-faint lg:block">
-                    {sk.group}
-                  </span>
-                  <span role="presentation" aria-hidden="true" className="mx-0.5 h-7 w-px shrink-0 self-center bg-edge lg:hidden" />
-                </>
-              )}
+            <button key={g.id} id={`molt-tab-${g.skills[0]}`} type="button" role="tab" aria-selected={on} onClick={() => setTab(g.skills.includes(active) ? active : g.skills[0])} className={pill(on)}>
+              <Icon size={15} strokeWidth={2.5} className="hidden sm:block" aria-hidden="true" />
+              {g.label}
+              {g.skills.includes("log") && waiting > 0 && <span className="rounded-full bg-rose px-1.5 text-[10px] text-on-rose">{waiting}</span>}
+              {st === "busy" && <Loader2 size={13} className="anim-spin shrink-0" role="img" aria-label={tr("Molt se gândește…")} />}
+              {st === "ready" && <span className="h-2 w-2 shrink-0 rounded-full bg-mint" role="img" aria-label={tr("Molt are un răspuns pentru tine")} />}
+            </button>
+          );
+        })}
+      </div>
+      {group.skills.length > 1 && (
+        <div role="tablist" className="-mx-3 flex gap-4 overflow-x-auto px-3 [scrollbar-width:none] sm:mx-0 sm:px-0 [&::-webkit-scrollbar]:hidden">
+          {group.skills.map((id) => {
+            const sk = SKILLS.find((x) => x.id === id);
+            const on = id === active;
+            return (
               <button
-                id={`molt-tab-${sk.id}`}
+                key={id}
+                id={`molt-tab-${id}`}
                 type="button"
                 role="tab"
                 aria-selected={on}
                 aria-controls="molt-panel"
-                tabIndex={on ? 0 : -1}
-                onClick={() => setTab(sk.id)}
-                className={`focus-ring flex shrink-0 items-center gap-2 rounded-full py-1 pl-1 pr-3 text-left text-sm font-extrabold transition lg:w-full lg:rounded-xl lg:py-1 lg:pl-1.5 ${
-                  on ? "bg-violet/15 text-ink ring-1 ring-violet/50" : "bg-well text-dim ring-1 ring-edge hover:text-ink lg:bg-transparent lg:ring-0 lg:hover:bg-panel-hi"
-                }`}
+                onClick={() => setTab(id)}
+                className={`focus-ring inline-flex shrink-0 items-center gap-1.5 border-b-2 pb-1 text-sm font-extrabold transition ${on ? "border-violet text-ink" : "border-transparent text-dim hover:text-ink"}`}
               >
-                <span className={`grid h-7 w-7 shrink-0 place-items-center rounded-full ring-1 lg:h-8 lg:w-8 lg:rounded-lg ${on ? "bg-violet text-on-violet ring-violet-hi" : "bg-panel-hi text-violet-hi ring-edge lg:bg-well"}`}>
-                  <Icon size={15} strokeWidth={2.5} aria-hidden="true" />
-                </span>
-                <span className="whitespace-nowrap lg:flex-1 lg:truncate">{sk.label}</span>
-                {count > 0 && <span className="rounded-full bg-rose px-1.5 text-[10px] text-on-rose">{count}</span>}
-                {jobs.busy.includes(sk.id) && <Loader2 size={13} className="anim-spin shrink-0 text-violet-hi" role="img" aria-label={tr("Molt se gândește…")} />}
-                {!on && jobs.ready.includes(sk.id) && <span className="h-2 w-2 shrink-0 rounded-full bg-mint" role="img" aria-label={tr("Molt are un răspuns pentru tine")} title={tr("Molt are un răspuns pentru tine")} />}
-                {locked && sk.ai && <Lock size={12} className="hidden shrink-0 text-faint lg:block" aria-label={tr("cere un cont")} />}
+                {sk.label}
+                {id === "log" && waiting > 0 && <span className="rounded-full bg-rose px-1.5 text-[10px] text-on-rose">{waiting}</span>}
+                {jobs.busy.includes(id) && <Loader2 size={12} className="anim-spin shrink-0 text-violet-hi" role="img" aria-label={tr("Molt se gândește…")} />}
+                {!on && jobs.ready.includes(id) && <span className="h-2 w-2 shrink-0 rounded-full bg-mint" role="img" aria-label={tr("Molt are un răspuns pentru tine")} />}
               </button>
-            </React.Fragment>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      )}
     </nav>
   );
 }
@@ -237,7 +196,6 @@ function MemoryBody({ props }) {
 
 export default function Molt(props) {
   const { state, d, ai, agent, tab, setTab, prompt, onPromptUsed, onRename, loadMonth, months, today, go, goals, todo, onAddHabit, onEdit, onStateChange, onLook } = props;
-  const wide = useWide();
   const [expKey, setExpKey] = useState(0);
   const waiting = useMemo(() => (agent?.log ? pendingConfirm(agent.log).length : 0), [agent?.log]);
   const wanted = ALIAS[tab] || tab;
@@ -291,15 +249,13 @@ export default function Molt(props) {
   }
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[272px,minmax(0,1fr)] lg:items-start lg:gap-6">
-      <div className="min-w-0 space-y-3 lg:space-y-4">
-        <MoltCard state={state} d={d} ai={ai} wide={wide} waiting={waiting} onWaiting={() => setTab("log")} onRename={onRename} />
-        <SkillNav active={active} setTab={setTab} wide={wide} waiting={waiting} locked={!server} />
-      </div>
-      <Panel tone="violet" id="molt-panel" role="tabpanel" aria-labelledby={`molt-tab-${active}`} className="speech min-w-0 p-4 sm:p-6">
+    <div className="space-y-4">
+      <MoltHeader state={state} d={d} ai={ai} waiting={waiting} onWaiting={() => setTab("log")} onRename={onRename} />
+      <MoltNav active={active} setTab={setTab} waiting={waiting} />
+      <Panel tone="violet" id="molt-panel" role="tabpanel" aria-labelledby={`molt-tab-${active}`} className="min-w-0 p-4 sm:p-6">
         <header className="mb-5">
-          <h2 className="font-pixel text-2xl leading-tight text-ink">{skill.title(name)}</h2>
-          <p className="mt-1.5 max-w-prose text-[15px] font-semibold leading-relaxed text-body">{skill.say}</p>
+          <h2 className="font-pixel text-xl leading-tight text-ink">{skill.title(name)}</h2>
+          <p className="mt-1.5 max-w-prose text-sm font-semibold leading-relaxed text-body">{skill.say}</p>
         </header>
         <div key={active} className="anim-slide">
           {body}

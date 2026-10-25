@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Bot, Check, ChevronDown, Database, Download, FlaskConical, Globe, LogOut, Moon, Palette, Shield, Sun, Trash2, User, UserX } from "lucide-react";
+import { Bot, Check, ChevronDown, Database, Download, FlaskConical, LogOut, Moon, Palette, Shield, Sun, Trash2, User, UserX } from "lucide-react";
 import { Button, Chip, Field, LevelBadge, Panel, SectionTitle, Toggle } from "../components/ui.jsx";
 import { Select } from "../components/Select.jsx";
 import { PATHS } from "../lib/catalog.js";
@@ -129,11 +129,6 @@ export default function Settings({ state, d, ai, mode, env, onChange, onWipe, on
 
   return (
     <div className="space-y-4">
-      <div>
-        <h1 className="font-pixel text-3xl text-ink">{tr("Setări")}</h1>
-        <p className="text-sm font-semibold text-dim">{tr("Profilul, raportul de seară, aspectul, notificările și datele tale.")}</p>
-      </div>
-
       <div className="grid gap-4 lg:grid-cols-2 [&>*]:min-w-0">
         {/* who you are */}
         <Panel className="space-y-3 p-4">
@@ -215,15 +210,13 @@ export default function Settings({ state, d, ai, mode, env, onChange, onWipe, on
           </p>
         </Panel>
 
-        {/* language */}
-        <Panel className="space-y-3 p-4 lg:col-span-2">
-          <SectionTitle icon={Globe} sub={tr("Interfața aplicației. Textele scrise de AI (rapoarte, povești) urmează aceeași limbă.")} className="!mb-1">{tr("Limbă")}</SectionTitle>
-          <LanguageSwitch account />
-        </Panel>
-
-        {/* how it looks */}
-        <Panel className="space-y-3 p-4 lg:col-span-2">
-          <SectionTitle icon={Palette} sub={tr("Se păstrează pe acest dispozitiv.")} className="!mb-1">{tr("Aspect")}</SectionTitle>
+        {/* language and look: one panel */}
+        <Panel className="space-y-4 p-4 lg:col-span-2">
+          <SectionTitle icon={Palette} className="!mb-1">{tr("Aspect")}</SectionTitle>
+          <div className="space-y-2">
+            <p className="text-xs font-semibold text-dim">{tr("Interfața aplicației. Textele scrise de AI (rapoarte, povești) urmează aceeași limbă.")}</p>
+            <LanguageSwitch account />
+          </div>
           <ThemePicker onPick={(id) => set({ theme: id })} />
         </Panel>
 

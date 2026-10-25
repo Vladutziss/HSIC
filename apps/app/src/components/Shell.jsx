@@ -12,31 +12,25 @@ import {
   House,
   Loader2,
   Moon,
-  ScrollText,
-  Settings,
   Sparkles,
   Timer,
-  Users,
+  User,
 } from "lucide-react";
 import { Bar, LevelBadge } from "./ui.jsx";
 import { useAiJobs } from "./AiCoach.jsx";
-import { Sprite, eggCrack } from "./Sprite.jsx";
-import { PATHS } from "../lib/catalog.js";
 import { parseHM } from "../lib/dates.js";
 import { c as tc } from "../lib/themes.js";
 import { usePref } from "../lib/prefs.js";
 import { tr } from "../lib/i18n.js";
 
-// Six places, grouped by what you do there. `also`: other views that belong to the same place
-// (Obiective is a tab of Plan). `ai`: the place where the AI features live, drawn to stand out.
+// Five places. `also`: other views that belong to the same place (Obiective and Obiceiuri are parts of Plan, Grup is
+// part of Tu). `ai`: the place where the AI features live, drawn to stand out.
 export const NAV = [
   { id: "home", label: tr("Acasă"), icon: House },
+  { id: "plan", label: tr("Plan"), icon: CalendarDays, also: ["goals", "habits"] },
   { id: "molt", label: tr("Molt"), icon: Egg, ai: true },
-  { id: "habits", label: tr("Obiceiuri"), icon: ScrollText },
-  { id: "plan", label: tr("Plan și obiective"), short: tr("Plan"), icon: CalendarDays, also: ["goals"] },
-  { id: "group", label: tr("Grup"), icon: Users },
-  { id: "stats", label: tr("Statistici"), icon: ChartLine },
-  { id: "settings", label: tr("Setări"), icon: Settings },
+  { id: "stats", label: tr("Progres"), icon: ChartLine },
+  { id: "settings", label: tr("Tu"), icon: User, also: ["group"] },
 ];
 const isHere = (n, view) => view === n.id || !!n.also?.includes(view);
 
@@ -45,13 +39,6 @@ const aim = (e) => {
   const r = e.currentTarget.getBoundingClientRect();
   e.currentTarget.style.setProperty("--x", `${e.clientX - r.left}px`);
   e.currentTarget.style.setProperty("--y", `${e.clientY - r.top}px`);
-};
-
-export const MOOD_LABEL = {
-  sleep: tr("doarme§stare"),
-  joy: tr("se bucură"),
-  happy: tr("e fericit"),
-  idle: tr("e treaz"),
 };
 
 function Logo({ compact = false }) {
@@ -125,9 +112,6 @@ function Hud({ d, setView, mode, saveStatus }) {
             <span className="sr-only">{tr("zile la rând")}</span>
           </span>
           <SaveIndicator mode={mode} saveStatus={saveStatus} />
-          <button type="button" onClick={() => setView("settings")} className="focus-ring grid h-9 w-9 place-items-center rounded-xl text-dim hover:bg-panel-hi hover:text-ink lg:hidden" aria-label={tr("Setări")}>
-            <Settings size={18} aria-hidden="true" />
-          </button>
         </div>
       </div>
     </header>
@@ -138,8 +122,6 @@ export function Shell({ view, setView, onFocus, d, state, unread, goalsDue = 0, 
   const jobs = useAiJobs(); // Molt is thinking / has an answer waiting (shown on its menu item)
   const aiThinking = jobs.busy.length > 0;
   const aiWaiting = !aiThinking && jobs.ready.length > 0;
-  const c = d.companion;
-  const path = state.profile?.path || "sport";
   // the evening report is waiting: its time has come and today's is not written yet (Acasă shows a badge, like Grup)
   const reviewDue = now >= parseHM(state.settings?.reviewTime || "21:00") && !state.reviews?.[d.today];
   // the Acasă badge comes from the "Raportul zilei" card: opening Acasă while it is due takes you to that card and
@@ -203,7 +185,7 @@ export function Shell({ view, setView, onFocus, d, state, unread, goalsDue = 0, 
                 {n.id === "molt" && aiWaiting && <span className="h-2.5 w-2.5 rounded-full bg-mint" role="img" aria-label={tr("Molt are un răspuns pentru tine")} title={tr("Molt are un răspuns pentru tine")} />}
                 {n.id === "plan" && goalsDue > 0 && (folded ? <span className="absolute right-2 top-1.5 h-2.5 w-2.5 rounded-full bg-ember" /> : <span className="ml-auto rounded-full bg-ember px-1.5 text-[11px] font-black text-night">{goalsDue}</span>)}
                 {n.id === "home" && reviewDue && (folded ? <span className="absolute right-2 top-1.5 h-2.5 w-2.5 rounded-full bg-rose" /> : <span className="ml-auto grid h-5 w-5 place-items-center rounded-full bg-rose text-on-rose" title={tr("Raportul zilei te așteaptă")} role="img" aria-label={tr("Raportul zilei te așteaptă")}><Moon size={11} strokeWidth={3} aria-hidden="true" /></span>)}
-                {n.id === "group" && unread > 0 && (folded ? <span className="absolute right-2 top-1.5 h-2.5 w-2.5 rounded-full bg-rose" /> : <span className="ml-auto rounded-full bg-rose px-1.5 text-[11px] font-black text-on-rose">{unread}</span>)}
+                {n.id === "settings" && unread > 0 && (folded ? <span className="absolute right-2 top-1.5 h-2.5 w-2.5 rounded-full bg-rose" /> : <span className="ml-auto rounded-full bg-rose px-1.5 text-[11px] font-black text-on-rose">{unread}</span>)}
               </button>
             );
           })}
@@ -218,24 +200,6 @@ export function Shell({ view, setView, onFocus, d, state, unread, goalsDue = 0, 
           <Timer size={19} strokeWidth={2.25} aria-hidden="true" />
           {!folded && <span>Focus</span>}
         </button>
-        <button
-          type="button"
-          onClick={() => setView("molt")}
-          aria-label={folded ? c.name || tr("Oul tău") : undefined}
-          title={folded ? c.name || tr("Oul tău") : undefined}
-          className={`panel panel-violet focus-ring mt-auto flex items-center text-left transition hover:brightness-110 ${folded ? "justify-center p-1.5" : "gap-3 p-3"}`}
-        >
-          <span className={`pedestal grid shrink-0 place-items-center rounded-xl ${folded ? "h-12 w-12" : "h-16 w-16"}`}>
-            <Sprite path={path} stage={c.stage.id} mood={c.mood} size={folded ? 48 : 64} crack={eggCrack(c.ep)} look={c.look} />
-          </span>
-          <span className={`min-w-0 ${folded ? "hidden" : ""}`}>
-            <span className="block truncate font-pixel text-base text-ink">{c.name || tr("Oul tău")}</span>
-            <span className="block text-[11px] font-extrabold uppercase tracking-wider text-violet-hi">
-              {c.stage.name} · {PATHS[path]?.cls}
-            </span>
-            <span className="block text-xs font-semibold text-dim">{c.stage.id === "egg" ? tr("așteaptă bifări") : MOOD_LABEL[c.mood]}</span>
-          </span>
-        </button>
       </aside>
 
       <div className={`transition-[padding] duration-200 ${folded ? "lg:pl-[76px]" : "lg:pl-64"}`}>
@@ -244,11 +208,11 @@ export function Shell({ view, setView, onFocus, d, state, unread, goalsDue = 0, 
       </div>
 
       <nav
-        className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-7 border-t border-edge bg-deep/95 backdrop-blur lg:hidden"
+        className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t border-edge bg-deep/95 backdrop-blur lg:hidden"
         style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
         aria-label={tr("Navigare")}
       >
-        {[...NAV.filter((n) => n.id !== "settings" && n.id !== "molt"), ...NAV.filter((n) => n.id === "molt")].map((n) => { /* on the phone Molt sits on the right, next to Focus */
+        {NAV.map((n) => {
           const Icon = n.icon;
           return (
             <button
@@ -264,14 +228,10 @@ export function Shell({ view, setView, onFocus, d, state, unread, goalsDue = 0, 
               {n.id === "molt" && (aiThinking || aiWaiting) && <span className={`absolute right-[22%] top-1 h-2 w-2 rounded-full ${aiThinking ? "animate-pulse bg-violet-hi" : "bg-mint"}`} aria-label={aiThinking ? tr("Molt se gândește…") : tr("Molt are un răspuns pentru tine")} />}
               {n.id === "plan" && goalsDue > 0 && <span className="absolute right-[22%] top-1 h-2 w-2 rounded-full bg-ember" />}
               {n.id === "home" && reviewDue && <span className="absolute right-[22%] top-1 h-2 w-2 rounded-full bg-rose" aria-label={tr("Raportul zilei te așteaptă")} />}
-              {n.id === "group" && unread > 0 && <span className="absolute right-[22%] top-1 h-2 w-2 rounded-full bg-rose" />}
+              {n.id === "settings" && unread > 0 && <span className="absolute right-[22%] top-1 h-2 w-2 rounded-full bg-rose" />}
             </button>
           );
         })}
-        <button type="button" onClick={onFocus} className="focus-ring flex flex-col items-center gap-0.5 py-2 text-[10px] font-extrabold text-violet-hi">
-          <Timer size={20} strokeWidth={2.25} aria-hidden="true" />
-          Focus
-        </button>
       </nav>
     </div>
   );
