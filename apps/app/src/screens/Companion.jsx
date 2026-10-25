@@ -77,7 +77,7 @@ export default function Companion({ state, d, today, months, loadMonth, onRename
                   </form>
                 ) : (
                   <div className="mt-1 flex items-center gap-2">
-                    <h1 className="font-pixel text-4xl text-ink">{c.name || tr("Oul tău")}</h1>
+                    <h1 className="font-display text-4xl text-ink">{c.name || tr("Oul tău")}</h1>
                     {c.stage.id !== "egg" && (
                       <button type="button" onClick={() => setRenaming(true)} className="focus-ring rounded-lg p-1.5 text-dim hover:bg-panel-hi hover:text-ink" aria-label={tr("Redenumește")}>
                         <Pencil size={16} aria-hidden="true" />
@@ -85,7 +85,7 @@ export default function Companion({ state, d, today, months, loadMonth, onRename
                     )}
                   </div>
                 )}
-                <p className="mt-2 text-[15px] font-semibold text-body">{moodLine(c, c.name)}</p>
+                <p className="mt-2 text-sm font-semibold text-body">{moodLine(c, c.name)}</p>
                 <div className="mt-3">
                   <Button variant="violet" size="sm" icon={MessageSquare} onClick={() => go?.("chat")}>{tr("Vorbește cu {v} (Chat AI)", { v: c.name || tr("Moltul") })}</Button>
                 </div>
@@ -123,10 +123,10 @@ export default function Companion({ state, d, today, months, loadMonth, onRename
                 }`}
               >
                 <Sprite path={path} stage={s.id} size={64} still silhouette={!reached} />
-                <span className={`font-pixel text-base ${reached ? "text-ink" : "text-faint"}`}>{s.name}</span>
-                <span className="inline-flex items-center gap-1 text-[11px] font-extrabold text-dim">
+                <span className={`font-display text-base ${reached ? "text-ink" : "text-faint"}`}>{s.name}</span>
+                <span className="inline-flex items-center gap-1 text-xs font-extrabold text-dim">
                   {reached ? <Check size={12} className="text-mint" aria-hidden="true" /> : <Lock size={11} aria-hidden="true" />}{tr("{min} PE", { min: s.min })}</span>
-                <span className="hidden text-[11px] font-semibold leading-snug text-faint sm:block">{STAGE_TEXT[s.id]}</span>
+                <span className="hidden text-xs font-semibold leading-snug text-faint sm:block">{STAGE_TEXT[s.id]}</span>
               </li>
             );
           })}
@@ -157,7 +157,7 @@ export default function Companion({ state, d, today, months, loadMonth, onRename
                   <span>· {relDay(s.day, today)}</span>
                   {s.stage && <Chip tone="gold">{tr("evoluție: {stage}", { stage: s.stage })}</Chip>}
                 </div>
-                <p className="mt-1.5 text-[15px] leading-relaxed text-ink">{s.story}</p>
+                <p className="mt-1.5 text-sm leading-relaxed text-ink">{s.story}</p>
               </li>
             ))}
           </ol>

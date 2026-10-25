@@ -96,33 +96,27 @@
 }
 
 /* ------------------------------------------------------------ panels */
+/* the app has no starry sky: the page is one flat colour (the landing keeps its own) */
+.app-bg {
+  background-image: none;
+}
+
 .panel {
   position: relative;
-  background: linear-gradient(180deg, rgb(255 255 255 / var(--gloss-a)), rgb(255 255 255 / 0) 38%), rgb(var(--c-panel));
+  background: rgb(var(--c-panel));
   border: 1px solid rgb(var(--c-edge));
-  border-radius: 18px;
-  box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / calc(var(--gloss-a) * 1.25)),
-    0 14px 34px -16px rgb(var(--c-shadow) / var(--shadow-a));
+  border-radius: 16px;
+  box-shadow: 0 1px 2px rgb(var(--c-shadow) / calc(var(--shadow-a) * 0.5));
 }
+/* the tones only tint the border: gold = the one thing to look at, violet = Molt and AI, mint = good news */
 .panel-gold {
-  border-color: color-mix(in srgb, rgb(var(--c-gold)) 38%, rgb(var(--c-night)));
-  box-shadow:
-    inset 0 1px 0 rgb(var(--c-gold-hi) / 0.14),
-    0 0 0 1px rgb(var(--c-gold) / 0.06),
-    0 16px 36px -16px rgb(var(--c-gold) / calc(0.3 * var(--glow)));
+  border-color: color-mix(in srgb, rgb(var(--c-gold)) 45%, rgb(var(--c-edge)));
 }
 .panel-violet {
-  border-color: color-mix(in srgb, rgb(var(--c-violet)) 50%, rgb(var(--c-night)));
-  box-shadow:
-    inset 0 1px 0 rgb(var(--c-violet-hi) / 0.14),
-    0 16px 36px -16px rgb(var(--c-violet) / calc(0.4 * var(--glow)));
+  border-color: color-mix(in srgb, rgb(var(--c-violet)) 45%, rgb(var(--c-edge)));
 }
 .panel-mint {
-  border-color: color-mix(in srgb, rgb(var(--c-mint)) 42%, rgb(var(--c-night)));
-  box-shadow:
-    inset 0 1px 0 rgb(var(--c-mint) / 0.12),
-    0 16px 36px -16px rgb(var(--c-mint) / calc(0.3 * var(--glow)));
+  border-color: color-mix(in srgb, rgb(var(--c-mint)) 45%, rgb(var(--c-edge)));
 }
 .inset {
   background: rgb(var(--c-well));
@@ -130,7 +124,7 @@
   border-radius: 14px;
 }
 
-/* ------------------------------------------------------------ chunky buttons */
+/* ------------------------------------------------------------ buttons (flat) */
 .btn {
   position: relative;
   display: inline-flex;
@@ -143,8 +137,6 @@
   user-select: none;
   border-radius: 12px;
   transition:
-    transform 0.08s ease,
-    box-shadow 0.08s ease,
     filter 0.15s ease,
     background-color 0.15s ease;
 }
@@ -154,7 +146,7 @@
   outline-offset: 3px;
 }
 .btn:active:not(:disabled) {
-  transform: translateY(3px);
+  filter: brightness(0.92);
 }
 .btn-sm {
   height: 34px;
@@ -163,66 +155,39 @@
   border-radius: 10px;
 }
 .btn-md {
-  height: 44px;
+  height: 42px;
   padding: 0 18px;
   font-size: 15px;
 }
 .btn-lg {
-  height: 54px;
+  height: 50px;
   padding: 0 26px;
-  font-size: 17px;
+  font-size: 16px;
   border-radius: 14px;
 }
 .btn-gold {
   color: rgb(var(--c-on-gold));
-  background: linear-gradient(180deg, rgb(var(--c-gold-hi)) 0%, rgb(var(--c-gold)) 55%, color-mix(in srgb, rgb(var(--c-gold)) 85%, rgb(var(--c-gold-deep))) 100%);
-  box-shadow:
-    0 4px 0 rgb(var(--c-gold-deep)),
-    inset 0 1px 0 rgb(255 255 255 / 0.6);
-}
-.btn-gold:active:not(:disabled) {
-  box-shadow:
-    0 1px 0 rgb(var(--c-gold-deep)),
-    inset 0 1px 0 rgb(255 255 255 / 0.6);
+  background: rgb(var(--c-gold));
 }
 .btn-violet {
   color: rgb(var(--c-on-violet));
-  background: linear-gradient(180deg, rgb(var(--c-violet-hi)) 0%, rgb(var(--c-violet)) 55%, color-mix(in srgb, rgb(var(--c-violet)) 80%, rgb(var(--c-violet-deep))) 100%);
-  box-shadow:
-    0 4px 0 rgb(var(--c-violet-key)),
-    inset 0 1px 0 rgb(255 255 255 / 0.35);
-}
-.btn-violet:active:not(:disabled) {
-  box-shadow:
-    0 1px 0 rgb(var(--c-violet-key)),
-    inset 0 1px 0 rgb(255 255 255 / 0.35);
+  background: rgb(var(--c-violet-deep));
 }
 .btn-mint {
   color: rgb(var(--c-on-mint));
-  background: linear-gradient(180deg, color-mix(in srgb, rgb(var(--c-mint)) 55%, white) 0%, rgb(var(--c-mint)) 60%, color-mix(in srgb, rgb(var(--c-mint)) 80%, rgb(var(--c-mint-deep))) 100%);
-  box-shadow:
-    0 4px 0 rgb(var(--c-mint-key)),
-    inset 0 1px 0 rgb(255 255 255 / 0.5);
-}
-.btn-mint:active:not(:disabled) {
-  box-shadow: 0 1px 0 rgb(var(--c-mint-key));
+  background: rgb(var(--c-mint));
 }
 .btn-ghost {
   color: rgb(var(--c-ink));
-  background: rgb(var(--c-panel-hi));
-  border: 1px solid color-mix(in srgb, rgb(var(--c-edge)) 50%, rgb(var(--c-edge-hi)));
-  box-shadow: 0 4px 0 rgb(var(--c-key));
+  background: transparent;
+  border: 1px solid rgb(var(--c-edge-hi));
 }
 .btn-ghost:hover:not(:disabled) {
-  background: color-mix(in srgb, rgb(var(--c-panel-hi)) 88%, rgb(var(--c-violet)));
-}
-.btn-ghost:active:not(:disabled) {
-  box-shadow: 0 1px 0 rgb(var(--c-key));
+  background: rgb(var(--c-panel-hi));
 }
 .btn-rose {
   color: rgb(var(--c-on-rose));
-  background: linear-gradient(180deg, color-mix(in srgb, rgb(var(--c-rose)) 65%, white), rgb(var(--c-rose)));
-  box-shadow: 0 4px 0 rgb(var(--c-rose-key));
+  background: rgb(var(--c-rose));
 }
 .btn-flat {
   color: rgb(var(--c-dim));
@@ -235,14 +200,11 @@
 .btn-violet:hover:not(:disabled),
 .btn-mint:hover:not(:disabled),
 .btn-rose:hover:not(:disabled) {
-  filter: brightness(1.06);
+  filter: brightness(1.08);
 }
 .btn:disabled {
-  filter: grayscale(0.7) brightness(0.65);
+  opacity: 0.45;
   cursor: not-allowed;
-}
-[data-mode="light"] .btn:disabled {
-  filter: grayscale(0.7) opacity(0.55);
 }
 
 /* ------------------------------------------------------------ progress bars */
@@ -268,34 +230,16 @@
   background: repeating-linear-gradient(90deg, transparent 0 10px, rgb(var(--c-well) / 0.75) 10px 12px);
 }
 .fill-gold {
-  background: linear-gradient(90deg, color-mix(in srgb, rgb(var(--c-gold)) 55%, rgb(var(--c-ember))), rgb(var(--c-gold)) 60%, rgb(var(--c-gold-hi)));
-  box-shadow: 0 0 14px rgb(var(--c-gold) / calc(0.55 * var(--glow)));
+  background: rgb(var(--c-gold));
 }
 .fill-violet {
-  background: linear-gradient(90deg, color-mix(in srgb, rgb(var(--c-violet)) 82%, rgb(var(--c-violet-deep))), rgb(var(--c-violet-hi)));
-  box-shadow: 0 0 14px rgb(var(--c-violet) / calc(0.55 * var(--glow)));
+  background: rgb(var(--c-violet));
 }
 .fill-mint {
-  background: linear-gradient(90deg, rgb(var(--c-mint-deep)), color-mix(in srgb, rgb(var(--c-mint)) 60%, white));
-  box-shadow: 0 0 14px rgb(var(--c-mint) / calc(0.5 * var(--glow)));
+  background: rgb(var(--c-mint));
 }
 .fill-ember {
-  background: linear-gradient(90deg, color-mix(in srgb, rgb(var(--c-ember)) 80%, rgb(var(--c-rose))), color-mix(in srgb, rgb(var(--c-ember)) 70%, rgb(var(--c-gold))));
-  box-shadow: 0 0 14px rgb(var(--c-ember) / calc(0.5 * var(--glow)));
-}
-
-/* on light themes the bars start from a deeper tone so the fill stands out from the track */
-[data-mode="light"] .fill-gold {
-  background: linear-gradient(90deg, color-mix(in srgb, rgb(var(--c-gold)) 45%, rgb(var(--c-gold-deep))), rgb(var(--c-gold)));
-}
-[data-mode="light"] .fill-violet {
-  background: linear-gradient(90deg, color-mix(in srgb, rgb(var(--c-violet)) 45%, rgb(var(--c-violet-deep))), rgb(var(--c-violet)));
-}
-[data-mode="light"] .fill-mint {
-  background: linear-gradient(90deg, rgb(var(--c-mint-deep)), rgb(var(--c-mint)));
-}
-[data-mode="light"] .fill-ember {
-  background: linear-gradient(90deg, color-mix(in srgb, rgb(var(--c-ember)) 50%, rgb(var(--c-ember-ink))), rgb(var(--c-ember)));
+  background: rgb(var(--c-ember));
 }
 
 /* ------------------------------------------------------------ navigation */
@@ -317,71 +261,26 @@
 }
 .nav-item[aria-current="page"] {
   color: rgb(var(--c-gold-text));
-  background: linear-gradient(90deg, rgb(var(--c-gold) / 0.18), rgb(var(--c-gold) / 0));
+  background: rgb(var(--c-gold) / 0.1);
   box-shadow: inset 3px 0 0 rgb(var(--c-gold));
 }
 .tabbar-item[aria-current="page"] {
   color: rgb(var(--c-gold-text));
 }
 
-/* The AI entry of the menu: a slow gradient that drifts all the time, speeds up on hover and, when pressed,
-   shrinks a little and lights up where it was touched (--x/--y are set by the pointer handler). */
+/* The AI entry of the menu: a violet tint, nothing moves. */
 .nav-item.nav-ai,
 .tabbar-item.nav-ai {
-  position: relative;
-  isolation: isolate;
-  overflow: hidden;
-  background-image: linear-gradient(115deg, rgb(var(--c-violet) / 0.34), rgb(var(--c-sky) / 0.26), rgb(var(--c-gold) / 0.3), rgb(var(--c-violet) / 0.34));
-  background-size: 300% 100%;
-  box-shadow: inset 0 0 0 1px rgb(var(--c-violet) / 0.45);
-  animation: ai-flow 8s ease-in-out infinite;
-  transition:
-    transform 0.15s,
-    filter 0.2s,
-    box-shadow 0.2s;
+  background: rgb(var(--c-violet) / 0.14);
+  box-shadow: inset 0 0 0 1px rgb(var(--c-violet) / 0.35);
 }
-.nav-item.nav-ai:hover,
-.tabbar-item.nav-ai:hover {
-  animation-duration: 3.5s;
-  filter: brightness(1.12);
-}
-.nav-item.nav-ai[aria-current="page"],
-.tabbar-item.nav-ai[aria-current="page"] {
+.nav-item.nav-ai[aria-current="page"] {
   box-shadow:
-    inset 0 0 0 1px rgb(var(--c-violet) / 0.7),
+    inset 0 0 0 1px rgb(var(--c-violet) / 0.6),
     inset 3px 0 0 rgb(var(--c-gold));
 }
-.nav-item.nav-ai::after,
-.tabbar-item.nav-ai::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  background: radial-gradient(circle 70px at var(--x, 50%) var(--y, 50%), rgb(255 255 255 / 0.55), transparent 70%);
-  opacity: 0;
-  transition: opacity 0.5s;
-}
-.nav-item.nav-ai:active,
-.tabbar-item.nav-ai:active {
-  transform: scale(0.96);
-  animation-duration: 1.2s;
-  filter: brightness(1.25);
-}
-.nav-item.nav-ai:active::after,
-.tabbar-item.nav-ai:active::after {
-  opacity: 1;
-  transition: none;
-}
-@keyframes ai-flow {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
+.tabbar-item.nav-ai[aria-current="page"] {
+  box-shadow: inset 0 0 0 1px rgb(var(--c-violet) / 0.6);
 }
 
 /* ------------------------------------------------------------ form fields */

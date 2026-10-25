@@ -27,7 +27,7 @@ function Hero({ state, d, today, onFocus }) {
   return (
     <Panel className="p-5 sm:p-6">
       <p className="text-xs font-extrabold uppercase tracking-[0.2em] text-dim">{fmtLong(today)}</p>
-      <h1 className="font-pixel mt-1 text-2xl leading-tight text-ink sm:text-3xl">
+      <h1 className="font-display mt-1 text-2xl leading-tight text-ink sm:text-3xl">
         {greeting()}, {nick}!
       </h1>
       <p className="mt-2 max-w-xl text-sm font-semibold leading-relaxed text-body">{sub}</p>

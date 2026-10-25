@@ -160,7 +160,7 @@ export default function Onboarding({ onDone, store, today, legacy }) {
             <Sprite path={eggPath} stage="egg" size={96} mood={path ? "joy" : "idle"} label={tr("Un ou misterios")} />
           </div>
           <div className="min-w-0 flex-1">
-            <h1 className="font-pixel text-3xl leading-tight text-ink">{tr("Fiecare erou începe cu un ou.")}</h1>
+            <h1 className="font-display text-3xl leading-tight text-ink">{tr("Fiecare erou începe cu un ou.")}</h1>
             <p className="text-sm text-body">{tr("Drumul hotărăște ce personaj iese din ou. Obiceiurile le poți amesteca oricum.")}</p>
           </div>
         </div>
@@ -201,7 +201,7 @@ export default function Onboarding({ onDone, store, today, legacy }) {
                   <span className="flex items-center gap-1.5 font-extrabold text-ink">
                     <Icon size={15} style={{ color: p.color }} aria-hidden="true" /> {p.label}
                   </span>
-                  <span className="block font-pixel text-lg leading-tight" style={{ color: p.color }}>
+                  <span className="block font-display text-lg leading-tight" style={{ color: p.color }}>
                     {p.cls}
                   </span>
                   <span className="block text-xs font-semibold text-dim">{p.pitch}</span>
@@ -218,7 +218,7 @@ export default function Onboarding({ onDone, store, today, legacy }) {
     content = (
       <div className="space-y-8">
         <div className="space-y-3">
-        <h1 className="font-pixel text-3xl text-ink">{tr("Care e obiectivul tău?")}</h1>
+        <h1 className="font-display text-3xl text-ink">{tr("Care e obiectivul tău?")}</h1>
         <p className="text-sm text-body">{tr("O propoziție. AI-ul o folosește în rapoartele de seară.")}</p>
         <textarea id="ob-goal" className="field min-h-[110px] text-base" value={goal} maxLength={160} placeholder={GOAL_EXAMPLES[path]} onChange={(e) => setGoal(e.target.value)} />
         <button type="button" className="text-xs font-bold text-dim underline hover:text-ink" onClick={() => setGoal(GOAL_EXAMPLES[path])}>{tr("Folosește exemplul")}</button>
@@ -226,7 +226,7 @@ export default function Onboarding({ onDone, store, today, legacy }) {
         <div className="space-y-4">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h1 className="font-pixel text-3xl text-ink">{tr("Primele misiuni")}</h1>
+            <h1 className="font-display text-3xl text-ink">{tr("Primele misiuni")}</h1>
             <p className="text-sm text-body">{tr("Alege din catalog sau creează unele proprii. Le poți schimba oricând.")}</p>
           </div>
           <Chip tone="gold">{tr("{length} / {MAX_HABITS} alese", { length: habits.length, MAX_HABITS })}</Chip>
@@ -261,7 +261,7 @@ export default function Onboarding({ onDone, store, today, legacy }) {
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-sm font-extrabold text-ink">{c.name}</span>
-                  <span className="flex items-center gap-2 text-[11px] font-bold text-dim">
+                  <span className="flex items-center gap-2 text-xs font-bold text-dim">
                     <Gems n={c.diff} size={10} /> {scheduleLabel(c.days)}
                   </span>
                 </span>
@@ -306,7 +306,7 @@ export default function Onboarding({ onDone, store, today, legacy }) {
             <Moon size={24} aria-hidden="true" />
           </span>
           <div>
-            <h1 className="font-pixel text-3xl text-ink">{tr("Ritualul de seară")}</h1>
+            <h1 className="font-display text-3xl text-ink">{tr("Ritualul de seară")}</h1>
             <p className="text-sm text-body">{tr("La ora aleasă, AI-ul face un rezumat al zilei și îi dă un scor care intră în momentum.")}</p>
           </div>
         </div>
@@ -317,7 +317,7 @@ export default function Onboarding({ onDone, store, today, legacy }) {
               type="button"
               aria-pressed={reviewTime === t}
               onClick={() => setReviewTime(t)}
-              className={`focus-ring rounded-xl px-4 py-2.5 font-pixel text-lg transition ${reviewTime === t ? "bg-gold text-on-gold shadow-key-gold" : "bg-well text-body ring-1 ring-edge hover:text-ink"}`}
+              className={`focus-ring rounded-xl px-4 py-2.5 font-display text-lg transition ${reviewTime === t ? "bg-gold text-on-gold shadow-key-gold" : "bg-well text-body ring-1 ring-edge hover:text-ink"}`}
             >
               {fmt12(t)}
             </button>
@@ -342,7 +342,7 @@ export default function Onboarding({ onDone, store, today, legacy }) {
       <div className="relative w-full max-w-3xl">
         <div className="panel panel-gold p-5 sm:p-8">
           <div className="mb-6 flex items-center justify-between gap-4">
-            <div className="font-pixel text-lg font-bold tracking-wide text-gold">MOLTED</div>
+            <div className="font-display text-lg font-bold tracking-wide text-gold">MOLTED</div>
             <StepDots step={step} />
           </div>
           {content}

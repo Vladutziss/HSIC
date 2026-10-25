@@ -250,7 +250,7 @@ export default function Chat({ state, d, today, ai, goals, todo, agent, onAddHab
               </span>
               <div>
                 <div className="flex items-center gap-2">
-                  <h1 className="font-pixel text-lg sm:text-xl text-ink">{moltName}</h1>
+                  <h1 className="font-display text-lg sm:text-xl text-ink">{moltName}</h1>
                   <Chip tone="violet">{pInfo.cls}</Chip>
                 </div>
                 <p className="text-xs font-semibold text-dim">{tr("Asistentul tău personal AI · Întreabă orice despre școală, obiective și rutină")}</p>
@@ -283,7 +283,7 @@ export default function Chat({ state, d, today, ai, goals, todo, agent, onAddHab
                     <Sprite path={path} stage={companion.stage?.id || "egg"} mood={companion.mood || "idle"} size={64} crack={eggCrack(companion.ep || 0)} look={companion.look} />
                   </div>
                   <div className="max-w-md">
-                    <h2 className="font-pixel text-lg text-ink">{tr("Salut! Eu sunt {moltName}.", { moltName })}</h2>
+                    <h2 className="font-display text-lg text-ink">{tr("Salut! Eu sunt {moltName}.", { moltName })}</h2>
                     <p className="mt-1 text-sm font-semibold text-dim">{tr("Sunt aici să te ajut să îți organizezi învățatul, să pregătești examenele sau să-ți construiești obiceiuri solide. Despre ce vrei să vorbim?")}</p>
                   </div>
                 </>
@@ -315,7 +315,7 @@ export default function Chat({ state, d, today, ai, goals, todo, agent, onAddHab
 
               return (
                 <div key={m.id || idx} className={`flex flex-col ${isUser ? "items-end" : "items-start"}`}>
-                  <div className="mb-1 flex items-center gap-1.5 px-1 text-[11px] font-bold text-dim">
+                  <div className="mb-1 flex items-center gap-1.5 px-1 text-xs font-bold text-dim">
                     {isUser ? (
                       <span>{tr("Tu")}</span>
                     ) : (
@@ -339,8 +339,8 @@ export default function Chat({ state, d, today, ai, goals, todo, agent, onAddHab
                     {m.plan && (
                       <div className="mt-3 space-y-3 rounded-xl border border-violet/30 bg-well/80 p-3 sm:p-4">
                         <div className="border-b border-edge/60 pb-2">
-                          <span className="text-[10px] font-black uppercase tracking-wider text-violet-hi">{tr("Plan structurat de Molt")}</span>
-                          <h3 className="font-pixel text-base text-ink">{m.plan.title}</h3>
+                          <span className="text-xs font-black uppercase tracking-wider text-violet-hi">{tr("Plan structurat de Molt")}</span>
+                          <h3 className="font-display text-base text-ink">{m.plan.title}</h3>
                           {m.plan.why && (
                             <p className="mt-0.5 text-xs font-medium text-dim italic">„{m.plan.why}”</p>
                           )}
@@ -349,16 +349,16 @@ export default function Chat({ state, d, today, ai, goals, todo, agent, onAddHab
                         {/* Steps */}
                         {m.plan.steps?.length > 0 && (
                           <div>
-                            <div className="mb-1.5 flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wider text-violet-hi">
+                            <div className="mb-1.5 flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-violet-hi">
                               <Target size={13} aria-hidden="true" />{" "}{tr("Etape (Obiective): {length}", { length: m.plan.steps.length })}</div>
                             <ul className="space-y-1">
                               {m.plan.steps.map((st, sIdx) => (
                                 <li key={sIdx} className="inset flex items-baseline gap-2 p-2 text-xs">
-                                  <span className="font-pixel font-bold text-violet">{sIdx + 1}.</span>
+                                  <span className="font-display font-bold text-violet">{sIdx + 1}.</span>
                                   <div className="min-w-0 flex-1">
                                     <span className="font-bold text-ink">{st.text}</span>
                                     {st.criteria && (
-                                      <span className="block text-[11px] text-dim font-medium">{tr("Criteriu: {criteria}", { criteria: st.criteria })}</span>
+                                      <span className="block text-xs text-dim font-medium">{tr("Criteriu: {criteria}", { criteria: st.criteria })}</span>
                                     )}
                                   </div>
                                   {st.due && <Chip tone="sky">{st.due}</Chip>}
@@ -371,14 +371,14 @@ export default function Chat({ state, d, today, ai, goals, todo, agent, onAddHab
                         {/* Habits */}
                         {m.plan.habits?.length > 0 && (
                           <div>
-                            <div className="mb-1.5 flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wider text-gold">
+                            <div className="mb-1.5 flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-gold">
                               <Flame size={13} aria-hidden="true" />{" "}{tr("Obiceiuri propuse: {length}", { length: m.plan.habits.length })}</div>
                             <div className="flex flex-wrap gap-2">
                               {m.plan.habits.map((h, hIdx) => (
                                 <div key={hIdx} className="inset flex items-center gap-2 px-2.5 py-1.5 text-xs">
                                   <span className="font-bold text-ink">{h.name}</span>
                                   <Chip tone="gold">{tr("Dificultate {diff}", { diff: h.diff })}</Chip>
-                                  <span className="text-[10px] text-dim">{tr("{length} zile/săpt", { length: h.days?.length })}</span>
+                                  <span className="text-xs text-dim">{tr("{length} zile/săpt", { length: h.days?.length })}</span>
                                 </div>
                               ))}
                             </div>
@@ -388,7 +388,7 @@ export default function Chat({ state, d, today, ai, goals, todo, agent, onAddHab
                         {/* To-dos */}
                         {m.plan.todos?.length > 0 && (
                           <div>
-                            <div className="mb-1.5 flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wider text-mint">
+                            <div className="mb-1.5 flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-mint">
                               <Clock size={13} aria-hidden="true" />{" "}{tr("To-do-uri imediate: {length}", { length: m.plan.todos.length })}</div>
                             <ul className="space-y-1">
                               {m.plan.todos.map((t, tIdx) => (
@@ -396,7 +396,7 @@ export default function Chat({ state, d, today, ai, goals, todo, agent, onAddHab
                                   <span className="font-bold text-ink">{t.title}</span>
                                   <div className="flex items-center gap-2">
                                     <Chip tone="mint">{t.dur} min</Chip>
-                                    <span className="text-[10px] text-dim">{t.date}</span>
+                                    <span className="text-xs text-dim">{t.date}</span>
                                   </div>
                                 </li>
                               ))}
@@ -427,7 +427,7 @@ export default function Chat({ state, d, today, ai, goals, todo, agent, onAddHab
 
           {busy && (
             <div className="flex flex-col items-start gap-1">
-              <span className="text-[11px] font-bold text-violet-hi">{tr("{moltName} se gândește…", { moltName })}</span>
+              <span className="text-xs font-bold text-violet-hi">{tr("{moltName} se gândește…", { moltName })}</span>
               <div className="rounded-2xl rounded-tl-xs bg-panel p-3.5 ring-1 ring-edge">
                 <Skeleton className="h-6 w-48" />
               </div>

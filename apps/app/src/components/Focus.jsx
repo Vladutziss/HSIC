@@ -192,7 +192,7 @@ function DigitalClock({ ms, dim }) {
                 <Digits value={p.v} tone={p.tone} />
               </span>
             </div>
-            <span className="text-[11px] font-extrabold uppercase tracking-[0.25em] text-faint">{p.label}</span>
+            <span className="text-xs font-extrabold uppercase tracking-[0.25em] text-faint">{p.label}</span>
           </div>
         </React.Fragment>
       ))}
@@ -248,7 +248,7 @@ function BreakScreen({ v, quoteSeed, onSkip, onEnd }) {
         </div>
       </div>
       <figure className="anim-pop relative w-full max-w-xl rounded-3xl border border-gold/30 bg-gradient-to-b from-gold/10 to-transparent px-6 pb-5 pt-6 shadow-[0_18px_44px_-24px_rgb(var(--c-gold)/0.55)]">
-        <span className="absolute -top-3 left-1/2 inline-flex -translate-x-1/2 items-center gap-1.5 whitespace-nowrap rounded-full bg-night px-3 py-0.5 text-[11px] font-extrabold uppercase tracking-[0.2em] text-gold-ink ring-1 ring-gold/40">
+        <span className="absolute -top-3 left-1/2 inline-flex -translate-x-1/2 items-center gap-1.5 whitespace-nowrap rounded-full bg-night px-3 py-0.5 text-xs font-extrabold uppercase tracking-[0.2em] text-gold-ink ring-1 ring-gold/40">
           <Sparkles size={12} aria-hidden="true" />{" "}{tr("Ai ajuns până aici")}</span>
         <blockquote className="text-[clamp(1.2rem,3vmin,1.65rem)] font-bold italic leading-snug text-ink">
           <span className="text-gold" aria-hidden="true">„</span>
@@ -304,7 +304,7 @@ function FocusTodos({ todos, today, actions }) {
         aria-expanded="false"
         aria-label={tr("Deschide to-do-urile{v}", { v: left ? tr(", {left} rămase", { left }) : "" })}
       >
-        <ListTodo size={16} aria-hidden="true" />{" "}{tr("To-do")}{left > 0 && <span className="rounded-full bg-gold px-1.5 text-[11px] font-black text-on-gold">{left}</span>}
+        <ListTodo size={16} aria-hidden="true" />{" "}{tr("To-do")}{left > 0 && <span className="rounded-full bg-gold px-1.5 text-xs font-black text-on-gold">{left}</span>}
       </button>
     );
   }
@@ -471,7 +471,7 @@ export function FocusMode({ session, onChange, onFinish, todos = [], today, todo
         </Button>
         <Button size="lg" variant="ghost" onClick={() => setConfirming(true)}>{tr("Termină")}</Button>
       </div>
-      <span className="text-[11px] font-semibold text-faint">{tr("Spațiu = pauză · Esc = termină · atinge ceasul ca să-l schimbi")}</span>
+      <span className="text-xs font-semibold text-faint">{tr("Spațiu = pauză · Esc = termină · atinge ceasul ca să-l schimbi")}</span>
     </>
   );
 

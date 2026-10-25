@@ -79,7 +79,7 @@ function ProgressTrack({ o, today, big = false }) {
   return (
     <div>
       <div className="mb-1.5 flex items-end justify-between gap-2">
-        <span className={`font-pixel tabular leading-none text-ink ${big ? "text-4xl" : "text-2xl"}`}>{value}%</span>
+        <span className={`font-display tabular leading-none text-ink ${big ? "text-4xl" : "text-2xl"}`}>{value}%</span>
         <span className="text-xs font-bold text-dim">{o.doneOn ? tr("atins {fmtDay}", { fmtDay: fmtDay(o.doneOn) }) : p.daysLeft != null ? daysLeftLabel(p) : tr("fără termen")}</span>
       </div>
       <div className="relative">
@@ -97,7 +97,7 @@ function ProgressTrack({ o, today, big = false }) {
         )}
       </div>
       {big && p.timeShare != null && p.status !== "late" && (
-        <p className="mt-1.5 flex items-center gap-1.5 text-[11px] font-bold text-dim">
+        <p className="mt-1.5 flex items-center gap-1.5 text-xs font-bold text-dim">
           <span className="inline-block h-2.5 w-0.5 rounded bg-sky" aria-hidden="true" />{" "}{tr("linia albastră: cât din timp a trecut ({round}%)", { round: Math.round(p.timeShare * 100) })}</p>
       )}
     </div>
@@ -140,7 +140,7 @@ function GoalCard({ o, today, onOpen, onStep, onSub }) {
             onClick={() => (n.sub ? onSub(o.id, n.step.id, n.sub.id) : onStep(o.id, n.step.id))}
           />
           <div className="min-w-0">
-            <div className="text-[10px] font-extrabold uppercase tracking-wider text-gold-hi">{tr("Următorul pas")}</div>
+            <div className="text-xs font-extrabold uppercase tracking-wider text-gold-hi">{tr("Următorul pas")}</div>
             <div className="truncate text-sm font-bold text-ink">{n.sub ? `${n.step.title} → ${n.sub.title}` : n.step.title}</div>
           </div>
         </div>
@@ -372,7 +372,7 @@ export function Celebration({ data, state, onClose }) {
         </span>
         <div>
           <div className="text-xs font-extrabold uppercase tracking-widest text-gold-hi">{done ? tr("Obiectiv atins") : tr("{mark}% din drum", { mark })}</div>
-          <h2 className="mt-1 font-pixel text-2xl text-ink">{o.title}</h2>
+          <h2 className="mt-1 font-display text-2xl text-ink">{o.title}</h2>
         </div>
         <p className="max-w-sm text-sm font-semibold text-body">
           {done
@@ -423,7 +423,7 @@ function StepRow({ o, s, i, count, today, act }) {
         <CheckButton size="sm" checked={!!s.done} label={`${s.done ? tr("Debifează") : tr("Bifează")}: ${s.title}`} onClick={() => act.toggleStep(o.id, s.id)} />
         <button type="button" className="focus-ring min-w-0 flex-1 rounded text-left" onClick={() => setOpen((v) => !v)} aria-expanded={open}>
           <span className={`block text-sm font-bold ${s.done ? "text-dim line-through" : "text-ink"}`}>{s.title}</span>
-          <span className="flex flex-wrap gap-x-2 text-[11px] font-bold text-dim">
+          <span className="flex flex-wrap gap-x-2 text-xs font-bold text-dim">
             {subs.length > 0 && <span>{tr("{doneSubs}/{length} sub-pași", { doneSubs, length: subs.length })}</span>}
             {s.date && <span>{tr("în plan: {relDay}", { relDay: relDay(s.date, today) })}</span>}
             {s.done && s.doneOn && <span>{tr("gata {fmtDay}", { fmtDay: fmtDay(s.doneOn) })}</span>}
@@ -502,7 +502,7 @@ function MetricPanel({ o, act }) {
     <Panel className="p-4 sm:p-5">
       <SectionTitle icon={TrendingUp} sub={tr("de la {start} la {target} {unit}", { start: m.start, target: m.target, unit: m.unit })}>{tr("Numărul tău")}</SectionTitle>
       <div className="flex items-end gap-2">
-        <span className="font-pixel tabular text-4xl leading-none text-ink">{m.value ?? m.start}</span>
+        <span className="font-display tabular text-4xl leading-none text-ink">{m.value ?? m.start}</span>
         <span className="pb-1 text-sm font-bold text-dim">
           / {m.target} {m.unit}
         </span>
@@ -546,7 +546,7 @@ function Journal({ o, today, act }) {
         <ol className="mt-4 space-y-2.5">
           {notes.map((e) => (
             <li key={e.id} className="border-l-2 border-violet/50 pl-3">
-              <div className="text-[11px] font-extrabold uppercase tracking-wider text-dim">{relDay(e.day, today)}</div>
+              <div className="text-xs font-extrabold uppercase tracking-wider text-dim">{relDay(e.day, today)}</div>
               <p className="text-sm font-semibold text-body">{e.text}</p>
             </li>
           ))}
@@ -603,7 +603,7 @@ function Detail({ o, state, d, today, act, onBack, onEdit, go }) {
         <div className="flex min-w-0 items-start gap-4">
           <GoalIcon o={o} size={56} />
           <div className="min-w-0">
-            <h1 className="font-pixel text-2xl leading-tight text-ink sm:text-3xl">{o.title}</h1>
+            <h1 className="font-display text-2xl leading-tight text-ink sm:text-3xl">{o.title}</h1>
             {o.deadline && <div className="mt-0.5 text-xs font-bold text-dim">{tr("până {fmtLong}", { fmtLong: fmtLong(o.deadline) })}</div>}
             {o.why && (
               <p className="mt-2 flex gap-2 text-sm font-semibold text-body">

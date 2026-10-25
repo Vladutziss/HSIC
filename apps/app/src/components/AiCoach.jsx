@@ -192,7 +192,7 @@ function HistoryList({ history, summary }) {
         {history.items.map((it) => (
           <li key={it.id} className={`flex items-center gap-2 rounded-xl px-2 py-1.5 ring-1 ${it.id === history.activeId ? "bg-violet/10 ring-violet/40" : "bg-well ring-edge"}`}>
             <button type="button" onClick={() => history.pick(it)} className="focus-ring min-w-0 flex-1 rounded-lg text-left">
-              <span className="block text-[11px] font-bold text-dim">{stamp(it.createdAt)}{it.label ? ` · ${it.label}` : ""}</span>
+              <span className="block text-xs font-bold text-dim">{stamp(it.createdAt)}{it.label ? ` · ${it.label}` : ""}</span>
               <span className="block truncate text-sm font-semibold text-body">{summary?.(it.data) || ""}</span>
             </button>
             <button type="button" onClick={() => history.remove(it)} className="focus-ring shrink-0 rounded-lg p-1.5 text-faint hover:text-rose" aria-label={tr("Șterge din istoric")}>
@@ -241,7 +241,7 @@ export function Shell({ state, run, label, children, always, input, hint, idle, 
         {state.status === "error" && <p className="mt-4 rounded-xl bg-rose/10 p-3 text-sm font-semibold text-body ring-1 ring-rose/30">{state.error}</p>}
         {state.status === "done" && (
           <div className="anim-slide mt-4 border-t border-edge/60 pt-4">
-            {state.at && history && <p className="mb-2 text-[11px] font-bold text-dim">{tr("Răspuns din {when}", { when: stamp(state.at) })}</p>}
+            {state.at && history && <p className="mb-2 text-xs font-bold text-dim">{tr("Răspuns din {when}", { when: stamp(state.at) })}</p>}
             {children}
           </div>
         )}
@@ -362,10 +362,10 @@ const shortCite = (cite) => {
 };
 
 export function Sources({ sources }) {
-  if (!sources.length) return <p className="mt-1 text-[11px] font-bold text-faint">{tr("Fără sursă din cercetare: propunerea vine doar din datele tale.")}</p>;
+  if (!sources.length) return <p className="mt-1 text-xs font-bold text-faint">{tr("Fără sursă din cercetare: propunerea vine doar din datele tale.")}</p>;
   return (
     <details className="mt-1.5">
-      <summary className="cursor-pointer text-[11px] font-extrabold text-dim hover:text-ink">
+      <summary className="cursor-pointer text-xs font-extrabold text-dim hover:text-ink">
         <BookOpen size={12} className="mr-1 inline" aria-hidden="true" />
         {sources.map((s) => `${shortCite(s.cite)} (${STRENGTH[s.strength] || s.strength})`).join(" · ")}
       </summary>

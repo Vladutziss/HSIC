@@ -215,7 +215,7 @@ export function TimeSelect({ id, value, onChange, disabled, clearable = true, pl
         {value ? fmt12(value) : null}
       </Trigger>
       <Menu pop={pop} minWidth={236} aria-label={tr("Alege ora")}>
-        <div className="mb-1 grid grid-cols-3 px-1 text-center text-[10px] font-extrabold uppercase tracking-wider text-dim">
+        <div className="mb-1 grid grid-cols-3 px-1 text-center text-xs font-extrabold uppercase tracking-wider text-dim">
           <span>{tr("Ora")}</span>
           <span>{tr("Minut")}</span>
           <span>{tr("AM / PM")}</span>
@@ -280,14 +280,14 @@ export function DateSelect({ id, value, onChange, disabled, clearable = true, pl
           <button type="button" aria-label={tr("Luna trecută")} className="focus-ring grid h-8 w-8 place-items-center rounded-lg text-dim hover:bg-violet/10 hover:text-ink" onClick={() => shift(-1)}>
             <ChevronLeft size={16} aria-hidden="true" />
           </button>
-          <div className="flex-1 text-center font-pixel text-base capitalize text-ink">
+          <div className="flex-1 text-center font-display text-base capitalize text-ink">
             {RO_MONTHS[mo - 1]} {y}
           </div>
           <button type="button" aria-label={tr("Luna viitoare")} className="focus-ring grid h-8 w-8 place-items-center rounded-lg text-dim hover:bg-violet/10 hover:text-ink" onClick={() => shift(1)}>
             <ChevronRight size={16} aria-hidden="true" />
           </button>
         </div>
-        <div className="grid grid-cols-7 gap-0.5 text-center text-[10px] font-extrabold uppercase text-dim">
+        <div className="grid grid-cols-7 gap-0.5 text-center text-xs font-extrabold uppercase text-dim">
           {[1, 2, 3, 4, 5, 6, 0].map((d) => (
             <span key={d} className="py-1">
               {RO_DAYS_MIN[d]}

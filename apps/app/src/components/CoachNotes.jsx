@@ -58,7 +58,7 @@ export function CoachNotes({ notes, onAdd, onRemove, busy = false, error = "" })
         </div>
       </form>
 
-      <p className="mt-3 text-[11px] font-bold text-faint">{tr("Notele sunt trimise modelului AI când ceri un plan. Nu scrie date personale sensibile.")}</p>
+      <p className="mt-3 text-xs font-bold text-faint">{tr("Notele sunt trimise modelului AI când ceri un plan. Nu scrie date personale sensibile.")}</p>
       {error && (
         <p role="alert" className="mt-2 text-sm font-semibold text-dim">
           {error}

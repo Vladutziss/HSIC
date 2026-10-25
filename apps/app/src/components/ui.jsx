@@ -30,7 +30,7 @@ export function SectionTitle({ icon: Icon, children, sub, action, className = ""
     <div className={`mb-4 flex items-center gap-3 ${className}`}>
       {Icon && <Icon size={18} strokeWidth={2.25} className="shrink-0 text-dim" aria-hidden="true" />}
       <div className="min-w-0">
-        <Tag className="font-pixel text-base leading-tight text-ink">{children}</Tag>
+        <Tag className="font-display text-base leading-tight text-ink">{children}</Tag>
         {sub && <p className="text-xs font-semibold text-dim">{sub}</p>}
       </div>
       {action && <div className="ml-auto shrink-0">{action}</div>}
@@ -86,7 +86,7 @@ export function Tabs({ value, onChange, items, className = "", size = "md" }) {
             {Icon && <Icon size={14} strokeWidth={2.5} aria-hidden="true" />}
             {it.label}
             {it.count != null && it.count > 0 && (
-              <span className={`rounded-full px-1.5 text-[10px] ${on ? "bg-on-gold/15" : "bg-rose text-on-rose"}`}>{it.count}</span>
+              <span className={`rounded-full px-1.5 text-xs ${on ? "bg-on-gold/15" : "bg-rose text-on-rose"}`}>{it.count}</span>
             )}
           </button>
         );
@@ -214,7 +214,7 @@ const CHIP = {
 
 export function Chip({ tone = "dim", icon: Icon, children, className = "" }) {
   return (
-    <span className={`inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-extrabold ring-1 ${CHIP[tone]} ${className}`}>
+    <span className={`inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-extrabold ring-1 ${CHIP[tone]} ${className}`}>
       {Icon && <Icon size={12} strokeWidth={2.5} aria-hidden="true" />}
       {children}
     </span>
@@ -254,8 +254,8 @@ export function Stat({ icon: Icon, label, value, sub, tone = "gold" }) {
         </span>
       )}
       <div className="min-w-0">
-        <div className="text-[11px] font-extrabold uppercase tracking-wider text-dim">{label}</div>
-        <div className="font-pixel tabular text-2xl leading-tight text-ink">{value}</div>
+        <div className="text-xs font-extrabold uppercase tracking-wider text-dim">{label}</div>
+        <div className="font-display tabular text-2xl leading-tight text-ink">{value}</div>
         {sub && <div className="text-xs font-semibold text-faint">{sub}</div>}
       </div>
     </div>
@@ -416,7 +416,7 @@ export function Modal({ open, onClose, title, icon: Icon, tone = "violet", wide 
                   <Icon size={16} strokeWidth={2.5} aria-hidden="true" />
                 </span>
               )}
-              <h2 className="font-pixel text-xl text-ink">{title}</h2>
+              <h2 className="font-display text-xl text-ink">{title}</h2>
               {dismissable && (
                 <button type="button" onClick={onClose} aria-label={tr("Închide")} className="focus-ring ml-auto rounded-lg p-1.5 text-dim hover:bg-panel-hi hover:text-ink">
                   <X size={18} aria-hidden="true" />

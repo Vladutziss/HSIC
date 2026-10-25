@@ -56,7 +56,7 @@ export function QuestCard({ h, code, scheduled, runMult, doneBases, onCheck, onO
         </div>
       </div>
       <CheckButton checked={done} onClick={click} label={done ? tr("Anulează bifa pentru {name}", { name: h.name }) : tr("Bifează {name}", { name: h.name })} />
-      {burst > 0 && <span className="anim-rise font-pixel pointer-events-none absolute right-6 top-0 text-lg font-bold text-gold">+{burst}</span>}
+      {burst > 0 && <span className="anim-rise font-display pointer-events-none absolute right-6 top-0 text-lg font-bold text-gold">+{burst}</span>}
     </div>
   );
 }
@@ -96,7 +96,7 @@ export function CompanionCard({ c, path, ai, waiting = 0, onAsk, onChat }) {
           <Sprite path={path} stage={c.stage.id} mood={c.mood} size={72} crack={eggCrack(c.ep)} look={c.look} label={`${label}, ${c.stage.name}`} />
         </button>
         <div className="min-w-0 flex-1">
-          <div className="truncate font-pixel text-lg text-ink">{label}</div>
+          <div className="truncate font-display text-lg text-ink">{label}</div>
           <p className="text-sm font-semibold leading-snug text-body">{moodLine(c, c.name)}</p>
           {c.next && <Bar className="mt-2" value={c.progress} tone="violet" height={8} segmented={false} label={tr("Progres spre evoluția următoare")} />}
         </div>
@@ -150,7 +150,7 @@ export function ReviewCard({ d, state, months, review, ai, today }) {
       <div>
         <div className="flex items-center gap-4">
           <Ring value={(entry?.score || 0) / 100} size={56} stroke={6} color={tc("gold-ink")}>
-            <span className="font-pixel text-lg text-ink">{entry?.score ?? 0}</span>
+            <span className="font-display text-lg text-ink">{entry?.score ?? 0}</span>
           </Ring>
           <div className="min-w-0 flex-1">
             <div className="font-extrabold text-ink">{tr("Ziua de azi e închisă")}</div>

@@ -52,7 +52,7 @@ function Logo({ compact = false }) {
       </svg>
       {!compact && (
         <div className="leading-none">
-          <div className="font-pixel text-xl font-bold tracking-wide text-ink">MOLTED</div>
+          <div className="font-display text-xl font-bold tracking-wide text-ink">MOLTED</div>
           <div className="mt-1 text-[10px] font-extrabold uppercase tracking-[0.2em] text-gold">self-improvement RPG</div>
         </div>
       )}
@@ -108,7 +108,7 @@ function Hud({ d, setView, mode, saveStatus }) {
         <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
           <span className="flex items-center gap-1.5 px-1.5" title={tr("Serie de {current} {v}", { current: streak.current, v: streak.current === 1 ? tr("zi") : tr("zile") })}>
             <Flame size={18} className={streak.todayDone ? "anim-flicker text-ember" : "text-faint"} fill={streak.todayDone ? tc("ember") : "none"} aria-hidden="true" />
-            <span className="font-pixel tabular text-lg leading-none text-ink">{streak.current}</span>
+            <span className="font-display tabular text-lg leading-none text-ink">{streak.current}</span>
             <span className="sr-only">{tr("zile la rând")}</span>
           </span>
           <SaveIndicator mode={mode} saveStatus={saveStatus} />
@@ -183,9 +183,9 @@ export function Shell({ view, setView, onFocus, d, state, unread, goalsDue = 0, 
                 )}
                 {n.id === "molt" && aiThinking && <Loader2 size={14} className="anim-spin text-violet-hi" role="img" aria-label={tr("Molt se gândește…")} />}
                 {n.id === "molt" && aiWaiting && <span className="h-2.5 w-2.5 rounded-full bg-mint" role="img" aria-label={tr("Molt are un răspuns pentru tine")} title={tr("Molt are un răspuns pentru tine")} />}
-                {n.id === "plan" && goalsDue > 0 && (folded ? <span className="absolute right-2 top-1.5 h-2.5 w-2.5 rounded-full bg-ember" /> : <span className="ml-auto rounded-full bg-ember px-1.5 text-[11px] font-black text-night">{goalsDue}</span>)}
+                {n.id === "plan" && goalsDue > 0 && (folded ? <span className="absolute right-2 top-1.5 h-2.5 w-2.5 rounded-full bg-ember" /> : <span className="ml-auto rounded-full bg-ember px-1.5 text-xs font-black text-night">{goalsDue}</span>)}
                 {n.id === "home" && reviewDue && (folded ? <span className="absolute right-2 top-1.5 h-2.5 w-2.5 rounded-full bg-rose" /> : <span className="ml-auto grid h-5 w-5 place-items-center rounded-full bg-rose text-on-rose" title={tr("Raportul zilei te așteaptă")} role="img" aria-label={tr("Raportul zilei te așteaptă")}><Moon size={11} strokeWidth={3} aria-hidden="true" /></span>)}
-                {n.id === "settings" && unread > 0 && (folded ? <span className="absolute right-2 top-1.5 h-2.5 w-2.5 rounded-full bg-rose" /> : <span className="ml-auto rounded-full bg-rose px-1.5 text-[11px] font-black text-on-rose">{unread}</span>)}
+                {n.id === "settings" && unread > 0 && (folded ? <span className="absolute right-2 top-1.5 h-2.5 w-2.5 rounded-full bg-rose" /> : <span className="ml-auto rounded-full bg-rose px-1.5 text-xs font-black text-on-rose">{unread}</span>)}
               </button>
             );
           })}

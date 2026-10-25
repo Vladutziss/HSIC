@@ -15,6 +15,7 @@
 
 - Cinci locuri în meniu (`components/Shell.jsx`, `NAV`): Acasă, Plan (Calendar / Obiceiuri / Obiective, `screens/PlanHub.jsx`), Molt (Vorbește / Planifică / Înțelege / Despre Molt, `screens/Molt.jsx`), Progres, Tu (Setări / Grup, `screens/TuHub.jsx`). Id-urile de vedere (`home`, `plan`, `goals`, `habits`, `molt`, `stats`, `settings`, `group`) rămân cele din `App.jsx`; hub-urile doar le grupează.
 - Reguli: fără titluri de pagină (meniul spune unde ești), titluri de secțiune neutre (`SectionTitle` nu mai are `tone`), fără colțuri decorative, un singur banner contextual pe Acasă, raportul de seară apare doar când e ora lui sau e gata. Culoarea are sens: gold = acțiunea principală, violet = Molt/AI, restul doar pentru stare.
+- Aspect plat: fără cer înstelat, fără gradiente și fără butoane „3D" (stilurile `.btn`, `.panel`, `.fill-*` din `apps/app/src/styles.css`; `shadow-key-*` din preset sunt `none`). Textul nu coboară sub 12 px (excepție: etichetele barei de jos). Clasa `font-display` a înlocuit `font-pixel` în aplicație (landing-ul o folosește încă pe cea veche).
 - Teme: doar `noapte` (dark) și `ceata` (light, afișată „Lumină"); id-urile vechi cad pe cea de același mod (`RETIRED` în `lib/themes.js`).
 - Auditul și planul: `docs/FRONTEND_CLEANUP_PROMPT.md`.
 

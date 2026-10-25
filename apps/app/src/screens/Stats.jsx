@@ -84,8 +84,8 @@ export default function Stats({ state, d, today, go, mode, saveStatus, ai, agent
           { label: tr("Scor mediu"), value: s.avg, sub: tr("ultimele 30 de zile") },
         ].map((x) => (
           <div key={x.label} className="inset min-w-0 p-3">
-            <div className="text-[11px] font-extrabold uppercase leading-tight tracking-wider text-dim">{x.label}</div>
-            <div className="font-pixel tabular text-2xl leading-tight text-ink">{x.value}</div>
+            <div className="text-xs font-extrabold uppercase leading-tight tracking-wider text-dim">{x.label}</div>
+            <div className="font-display tabular text-2xl leading-tight text-ink">{x.value}</div>
             <div className="text-xs font-semibold text-dim">{x.sub}</div>
           </div>
         ))}
@@ -110,7 +110,7 @@ export default function Stats({ state, d, today, go, mode, saveStatus, ai, agent
           <summary className="cursor-pointer text-xs font-extrabold uppercase tracking-wider text-dim hover:text-ink">{tr("Vezi ca tabel (ultimele 14 zile)")}</summary>
           <div className="mt-2 overflow-x-auto">
             <table className="w-full min-w-[480px] text-left text-sm">
-              <thead className="text-[11px] uppercase tracking-wider text-dim">
+              <thead className="text-xs uppercase tracking-wider text-dim">
                 <tr>
                   <th className="py-1.5 pr-3 font-extrabold">{tr("Zi")}</th>
                   <th className="py-1.5 pr-3 font-extrabold">{tr("Scor")}</th>
@@ -169,7 +169,7 @@ export default function Stats({ state, d, today, go, mode, saveStatus, ai, agent
         <Panel className="min-w-0 p-4 sm:p-5">
           <SectionTitle icon={BarChart3} sub={tr("60% activitate bifată + 40% evaluarea AI de seară")}>{tr("Scorul zilei")}</SectionTitle>
           <ScoreBars days={days.slice(-30)} />
-          <div className="mt-2 flex flex-wrap gap-3 text-[11px] font-bold text-dim">
+          <div className="mt-2 flex flex-wrap gap-3 text-xs font-bold text-dim">
             <span className="inline-flex items-center gap-1.5">
               <span className="h-3 w-3 rounded-sm bg-violet" />{" "}{tr("cu raport AI")}</span>
             <span className="inline-flex items-center gap-1.5">
@@ -205,7 +205,7 @@ export default function Stats({ state, d, today, go, mode, saveStatus, ai, agent
                   {q && (
                     <>
                       <p className="text-sm italic text-ink">„{q.text}”</p>
-                      <p className="mt-1 text-[11px] font-bold text-dim">
+                      <p className="mt-1 text-xs font-bold text-dim">
                         {q.author} · {q.source}
                       </p>
                     </>

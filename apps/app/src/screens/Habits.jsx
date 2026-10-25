@@ -33,7 +33,7 @@ function HabitDetail({ h, state, d, today, onBack, onEdit, onArchive }) {
             <Icon size={30} aria-hidden="true" />
           </span>
           <div className="min-w-[200px] flex-1">
-            <h1 className="font-pixel text-3xl text-ink">{h.name}</h1>
+            <h1 className="font-display text-3xl text-ink">{h.name}</h1>
             <div className="mt-1 flex flex-wrap items-center gap-2 text-sm font-semibold text-dim">
               <Chip tone="gold">{PATHS[h.cat]?.label}</Chip>
               <Gems n={h.diff} />
@@ -79,7 +79,7 @@ function HabitDetail({ h, state, d, today, onBack, onEdit, onArchive }) {
             legend={false}
             label={tr("Istoricul obiceiului {name}", { name: h.name })}
           />
-          <div className="mt-3 flex flex-wrap gap-3 text-[11px] font-bold text-dim">
+          <div className="mt-3 flex flex-wrap gap-3 text-xs font-bold text-dim">
             <span className="inline-flex items-center gap-1.5">
               <span className="h-3 w-3 rounded-[3px] bg-gold" />{" "}{tr("bifat")}</span>
             <span className="inline-flex items-center gap-1.5">
@@ -112,7 +112,7 @@ function HabitRow({ h, stats, code, today, onOpen, onEdit, onDelete }) {
           {h.time ? ` · ${fmt12(h.time)}` : ""}
         </div>
       </div>
-      <span className="font-pixel tabular text-lg text-ink" title={tr("Momentum")}>
+      <span className="font-display tabular text-lg text-ink" title={tr("Momentum")}>
         {stats.momentum}
       </span>
       <div className="flex shrink-0 items-center gap-1">

@@ -18,7 +18,7 @@ function Zzz({ size }) {
       {[0, 1, 2].map((i) => (
         <span
           key={i}
-          className="zzz font-pixel absolute font-bold text-violet-hi"
+          className="zzz font-display absolute font-bold text-violet-hi"
           style={{ fontSize: fs * (1 - i * 0.18), animationDelay: `${i * 0.9}s`, left: i * 3, top: -i * 2 }}
         >
           z

@@ -79,7 +79,7 @@ function MoltHeader({ state, d, ai, waiting, onWaiting, onRename }) {
           </form>
         ) : (
           <div className="flex items-center gap-1.5">
-            <h1 className="truncate font-pixel text-xl leading-tight text-ink">{label}</h1>
+            <h1 className="truncate font-display text-xl leading-tight text-ink">{label}</h1>
             {c.stage.id !== "egg" && (
               <button type="button" onClick={() => setRenaming(true)} className="focus-ring shrink-0 rounded-lg p-1.5 text-dim hover:bg-panel-hi hover:text-ink" aria-label={tr("Redenumește")}>
                 <Pencil size={15} aria-hidden="true" />
@@ -120,7 +120,7 @@ function MoltNav({ active, setTab, waiting }) {
             <button key={g.id} id={`molt-tab-${g.skills[0]}`} type="button" role="tab" aria-selected={on} onClick={() => setTab(g.skills.includes(active) ? active : g.skills[0])} className={pill(on)}>
               <Icon size={15} strokeWidth={2.5} className="hidden sm:block" aria-hidden="true" />
               {g.label}
-              {g.skills.includes("log") && waiting > 0 && <span className="rounded-full bg-rose px-1.5 text-[10px] text-on-rose">{waiting}</span>}
+              {g.skills.includes("log") && waiting > 0 && <span className="rounded-full bg-rose px-1.5 text-xs text-on-rose">{waiting}</span>}
               {st === "busy" && <Loader2 size={13} className="anim-spin shrink-0" role="img" aria-label={tr("Molt se gândește…")} />}
               {st === "ready" && <span className="h-2 w-2 shrink-0 rounded-full bg-mint" role="img" aria-label={tr("Molt are un răspuns pentru tine")} />}
             </button>
@@ -144,7 +144,7 @@ function MoltNav({ active, setTab, waiting }) {
                 className={`focus-ring inline-flex shrink-0 items-center gap-1.5 border-b-2 pb-1 text-sm font-extrabold transition ${on ? "border-violet text-ink" : "border-transparent text-dim hover:text-ink"}`}
               >
                 {sk.label}
-                {id === "log" && waiting > 0 && <span className="rounded-full bg-rose px-1.5 text-[10px] text-on-rose">{waiting}</span>}
+                {id === "log" && waiting > 0 && <span className="rounded-full bg-rose px-1.5 text-xs text-on-rose">{waiting}</span>}
                 {jobs.busy.includes(id) && <Loader2 size={12} className="anim-spin shrink-0 text-violet-hi" role="img" aria-label={tr("Molt se gândește…")} />}
                 {!on && jobs.ready.includes(id) && <span className="h-2 w-2 shrink-0 rounded-full bg-mint" role="img" aria-label={tr("Molt are un răspuns pentru tine")} />}
               </button>
@@ -254,7 +254,7 @@ export default function Molt(props) {
       <MoltNav active={active} setTab={setTab} waiting={waiting} />
       <Panel tone="violet" id="molt-panel" role="tabpanel" aria-labelledby={`molt-tab-${active}`} className="min-w-0 p-4 sm:p-6">
         <header className="mb-5">
-          <h2 className="font-pixel text-xl leading-tight text-ink">{skill.title(name)}</h2>
+          <h2 className="font-display text-xl leading-tight text-ink">{skill.title(name)}</h2>
           <p className="mt-1.5 max-w-prose text-sm font-semibold leading-relaxed text-body">{skill.say}</p>
         </header>
         <div key={active} className="anim-slide">
