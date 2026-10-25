@@ -50,7 +50,7 @@ export default function Companion({ state, d, today, months, loadMonth, onRename
   return (
     <div className={embedded ? "space-y-6" : "space-y-5"}>
       {!embedded && (
-        <Panel tone="violet" corners className="overflow-hidden">
+        <Panel tone="violet" className="overflow-hidden">
           <div className="grid gap-0 lg:grid-cols-[1.1fr,1fr] [&>*]:min-w-0">
             <div className="relative">
               <div className="pedestal flex min-h-[300px] items-end justify-center pt-8">
@@ -109,7 +109,7 @@ export default function Companion({ state, d, today, months, loadMonth, onRename
 
       <Sect embedded={embedded}>
         {!embedded && (
-          <SectionTitle icon={Sparkles} tone="violet" sub={tr("Evoluția vine din obiceiurile pe care le bifezi")}>{tr("Drumul evoluției")}</SectionTitle>
+          <SectionTitle icon={Sparkles} sub={tr("Evoluția vine din obiceiurile pe care le bifezi")}>{tr("Drumul evoluției")}</SectionTitle>
         )}
         <ol className="grid grid-cols-3 gap-3 sm:grid-cols-6">
           {STAGES.map((s, i) => {
@@ -144,7 +144,7 @@ export default function Companion({ state, d, today, months, loadMonth, onRename
       )}
 
       <Sect embedded={embedded} tone="gold">
-        <SectionTitle icon={ScrollText} tone="gold" sub={tr("Un capitol nou la fiecare evoluție")}>{tr("Povestea lui {v}", { v: c.name || tr("Molt-ului tău") })}</SectionTitle>
+        <SectionTitle icon={ScrollText} sub={tr("Un capitol nou la fiecare evoluție")}>{tr("Povestea lui {v}", { v: c.name || tr("Molt-ului tău") })}</SectionTitle>
         {story.length === 0 ? (
           <Empty icon={ScrollText} title={tr("Povestea nu a început încă")}>{tr("Primul capitol apare când oul se deschide. Bifează-ți obiceiurile și ai răbdare.")}</Empty>
         ) : (

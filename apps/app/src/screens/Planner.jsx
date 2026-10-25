@@ -165,7 +165,7 @@ function TodoList({ state, today, todo, onFocusTodo, onSkipDay }) {
 
   return (
     <Panel className="p-4 sm:p-5">
-      <SectionTitle icon={ListTodo} tone="mint" sub={tr("+5 momentum pentru fiecare to-do terminat")}>{tr("To-do")}</SectionTitle>
+      <SectionTitle icon={ListTodo} sub={tr("+5 momentum pentru fiecare to-do terminat")}>{tr("To-do")}</SectionTitle>
       <form
         className="mb-3 flex gap-2"
         onSubmit={(e) => {
@@ -805,7 +805,7 @@ export default function Planner({ state, today, todo, ai, go, onFocusTodo, onMov
   const calendar = (
     <Panel className="p-4 sm:p-5">
       <div className="mb-4 flex flex-wrap items-center gap-3">
-        <SectionTitle icon={CalendarDays} tone="gold" className="mb-0" sub={tr("Obiceiurile cu oră apar automat")}>{tr("Calendar")}</SectionTitle>
+        <SectionTitle icon={CalendarDays} className="mb-0" sub={tr("Obiceiurile cu oră apar automat")}>{tr("Calendar")}</SectionTitle>
         <div className="ml-auto flex flex-wrap items-center gap-2">
           <Tabs
             size="sm"

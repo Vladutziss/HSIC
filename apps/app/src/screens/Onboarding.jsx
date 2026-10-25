@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, ArrowRight, Check, History, Moon, Plus, Sparkles, Wand2 } from "lucide-react";
-import { Button, Chip, Corners, Field, Gems, Toggle } from "../components/ui.jsx";
+import { Button, Chip, Field, Gems, Toggle } from "../components/ui.jsx";
 import { Sprite } from "../components/Sprite.jsx";
 import { HABIT_ICONS, iconFor } from "../components/icons.js";
 import { DayPicker, DifficultyPicker, scheduleLabel } from "../components/HabitEditor.jsx";
@@ -358,7 +358,6 @@ export default function Onboarding({ onDone, store, today, legacy }) {
   return (
     <div className="app-bg flex min-h-screen items-center justify-center px-3 py-8 sm:px-6">
       <div className="relative w-full max-w-3xl">
-        <Corners tone="gold" />
         <div className="panel panel-gold p-5 sm:p-8">
           <div className="mb-6 flex items-center justify-between gap-4">
             <div className="font-pixel text-lg font-bold tracking-wide text-gold">MOLTED</div>

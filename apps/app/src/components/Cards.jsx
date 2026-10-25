@@ -98,7 +98,7 @@ export function CompanionCard({ c, path, lastStory, ai, waiting = 0, reward = nu
     onAsk?.(t);
   };
   return (
-    <Panel tone="violet" corners="gold">
+    <Panel tone="violet">
       <div className="pedestal flex justify-center rounded-t-[18px] pt-5">
         <Sprite path={path} stage={c.stage.id} mood={c.mood} size={160} crack={eggCrack(c.ep)} look={c.look} label={`${label}, ${c.stage.name}`} />
       </div>
@@ -319,10 +319,9 @@ export function ReviewCard({ d, state, months, review, ai, today }) {
   }
 
   return (
-    <Panel id="review-card" tone="gold" corners className="p-4 sm:p-5">
+    <Panel id="review-card" tone="gold" className="p-4 sm:p-5">
       <SectionTitle
         icon={Moon}
-        tone="gold"
         sub={saved ? tr("Ziua de azi e închisă") : tr("Ritualul de seară · {fmt12}", { fmt12: fmt12(time) })}
         action={
           !saved && due ? (
@@ -357,10 +356,9 @@ export function GroupMini({ groups, go }) {
   const top = ranked.slice(0, 3);
   if (myRank >= 3) top.push(ranked[myRank]);
   return (
-    <Panel corners="gold" className="p-4 sm:p-5">
+    <Panel className="p-4 sm:p-5">
       <SectionTitle
         icon={Users}
-        tone="sky"
         sub={g ? (g.info?.kind === "partner" ? tr("Partener de progres") : g.info?.name) : undefined}
         action={
           <Button variant="ghost" size="sm" icon={MessageCircle} onClick={() => go("group")}>

@@ -27,7 +27,7 @@ function Hero({ state, d, today, onFocus }) {
         ? tr("Toate misiunile de azi sunt gata. Cufărul zilei e deschis!")
         : tr("Mai ai {left} {v} azi. {v2}", { left, v: left === 1 ? tr("misiune") : tr("misiuni"), v2: d.companion.stage.id === "egg" ? tr("Prima bifă îți încălzește oul.") : tr("Fiecare bifă îl ajută pe ") + (d.companion.name || tr("personajul tău")) + tr(" să crească.") });
   return (
-    <Panel tone="gold" corners className="overflow-hidden p-5 sm:p-6">
+    <Panel tone="gold" className="overflow-hidden p-5 sm:p-6">
       <div className="pointer-events-none absolute -right-16 -top-24 h-64 w-64 rounded-full bg-gold/10 blur-3xl" aria-hidden="true" />
       <div className="relative flex flex-wrap items-center gap-5 sm:gap-6">
         <div className="min-w-0 basis-full sm:min-w-[240px] sm:flex-1 sm:basis-0">

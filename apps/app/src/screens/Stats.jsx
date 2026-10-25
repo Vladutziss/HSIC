@@ -17,7 +17,7 @@ function AgentImpact({ log }) {
   if (!m.proposals) return null;
   return (
     <Panel className="p-5">
-      <SectionTitle icon={Bot} tone="violet" sub={tr("Doar pe datele tale")}>{tr("Cum te ajută coach-ul")}</SectionTitle>
+      <SectionTitle icon={Bot} sub={tr("Doar pe datele tale")}>{tr("Cum te ajută coach-ul")}</SectionTitle>
       <div className="flex flex-wrap gap-2">
         <Chip tone="dim">{tr("{proposals} propuneri", { proposals: m.proposals })}</Chip>
         <Chip tone="mint">{tr("{applied} aplicate", { applied: m.applied })}</Chip>
@@ -116,10 +116,9 @@ export default function Stats({ state, d, today, go, mode, saveStatus, ai, agent
         </button>
       )}
 
-      <Panel tone="gold" corners className="p-4 sm:p-5">
+      <Panel tone="gold" className="p-4 sm:p-5">
         <SectionTitle
           icon={Zap}
-          tone="gold"
           sub={tr("Liniile punctate sunt pragurile de nivel. Punctele roz marchează resetările după {resetAfter} zile fără activitate.", { resetAfter: s.resetAfter })}
           action={
             <Tabs
@@ -170,7 +169,7 @@ export default function Stats({ state, d, today, go, mode, saveStatus, ai, agent
 
       <div className="grid gap-5 xl:grid-cols-2">
         <Panel className="min-w-0 p-4 sm:p-5">
-          <SectionTitle icon={Activity} tone="mint" sub={tr("Fiecare obicei are propriul momentum")}>{tr("Pe obiceiuri")}</SectionTitle>
+          <SectionTitle icon={Activity} sub={tr("Fiecare obicei are propriul momentum")}>{tr("Pe obiceiuri")}</SectionTitle>
           <div className="mb-3 flex flex-wrap gap-1.5">
             {habits.map((h) => {
               const on = !hidden.includes(h.id);
@@ -191,7 +190,7 @@ export default function Stats({ state, d, today, go, mode, saveStatus, ai, agent
           <HabitLines habits={visible} series={s.habitSeries} days={shown} />
         </Panel>
         <Panel className="min-w-0 p-4 sm:p-5">
-          <SectionTitle icon={BarChart3} tone="violet" sub={tr("60% activitate bifată + 40% evaluarea AI de seară")}>{tr("Scorul zilei")}</SectionTitle>
+          <SectionTitle icon={BarChart3} sub={tr("60% activitate bifată + 40% evaluarea AI de seară")}>{tr("Scorul zilei")}</SectionTitle>
           <ScoreBars days={days.slice(-30)} />
           <div className="mt-2 flex flex-wrap gap-3 text-[11px] font-bold text-dim">
             <span className="inline-flex items-center gap-1.5">
@@ -204,11 +203,11 @@ export default function Stats({ state, d, today, go, mode, saveStatus, ai, agent
 
       <div className="grid gap-5 xl:grid-cols-5">
         <Panel className="min-w-0 p-4 sm:p-5 xl:col-span-3">
-          <SectionTitle icon={CalendarDays} tone="gold" sub={tr("Ultimele 26 de săptămâni, după scorul zilei")}>{tr("Activitate")}</SectionTitle>
+          <SectionTitle icon={CalendarDays} sub={tr("Ultimele 26 de săptămâni, după scorul zilei")}>{tr("Activitate")}</SectionTitle>
           <Heatmap today={today} weeks={26} size={17} cell={cell} label={tr("Activitatea din ultimele 26 de săptămâni")} />
         </Panel>
         <Panel className="min-w-0 p-4 sm:p-5 xl:col-span-2">
-          <SectionTitle icon={Trophy} tone="gold" sub={tr("Nivelurile momentum-ului")}>{tr("Niveluri")}</SectionTitle>
+          <SectionTitle icon={Trophy} sub={tr("Nivelurile momentum-ului")}>{tr("Niveluri")}</SectionTitle>
           <ol className="grid grid-cols-2 gap-1.5">
             {LEVELS.map((l) => (
               <li key={l.lvl} className={`flex items-center gap-2 rounded-xl px-2 py-1.5 ${l.lvl === d.level.lvl ? "bg-gold/10 ring-1 ring-gold/40" : "bg-well"}`}>
@@ -227,7 +226,7 @@ export default function Stats({ state, d, today, go, mode, saveStatus, ai, agent
       <FocusStats sessions={state.focusSessions || []} today={today} onFocus={onFocus} />
 
       <Panel className="p-4 sm:p-5">
-        <SectionTitle icon={Quote} tone="violet" sub={tr("Citatele apar când pierzi momentum sau faci un pas mare")}>{tr("Momente-cheie")}</SectionTitle>
+        <SectionTitle icon={Quote} sub={tr("Citatele apar când pierzi momentum sau faci un pas mare")}>{tr("Momente-cheie")}</SectionTitle>
         {moments.length === 0 ? (
           <p className="text-sm font-semibold text-dim">{tr("Încă niciun moment-cheie. Primul vine odată cu primul nivel nou sau cu ieșirea din ou.")}</p>
         ) : (

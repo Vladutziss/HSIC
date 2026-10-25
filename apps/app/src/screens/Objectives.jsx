@@ -518,7 +518,7 @@ function MetricPanel({ o, act }) {
   const history = (o.log || []).filter((e) => e.kind === "metric").slice(-6);
   return (
     <Panel className="p-4 sm:p-5">
-      <SectionTitle icon={TrendingUp} tone="sky" sub={tr("de la {start} la {target} {unit}", { start: m.start, target: m.target, unit: m.unit })}>{tr("Numărul tău")}</SectionTitle>
+      <SectionTitle icon={TrendingUp} sub={tr("de la {start} la {target} {unit}", { start: m.start, target: m.target, unit: m.unit })}>{tr("Numărul tău")}</SectionTitle>
       <div className="flex items-end gap-2">
         <span className="font-pixel tabular text-4xl leading-none text-ink">{m.value ?? m.start}</span>
         <span className="pb-1 text-sm font-bold text-dim">
@@ -555,7 +555,7 @@ function Journal({ o, today, act }) {
   };
   return (
     <Panel className="p-4 sm:p-5">
-      <SectionTitle icon={NotebookPen} tone="violet" sub={tr("Ce ai învățat, ce te-a blocat, ce urmează")}>{tr("Jurnal")}</SectionTitle>
+      <SectionTitle icon={NotebookPen} sub={tr("Ce ai învățat, ce te-a blocat, ce urmează")}>{tr("Jurnal")}</SectionTitle>
       <form onSubmit={submit} className="space-y-2">
         <textarea className="field min-h-[70px]" maxLength={280} value={text} onChange={(e) => setText(e.target.value)} placeholder={tr("Azi am…")} aria-label={tr("Notă nouă")} />
         <Button size="sm" variant="violet" type="submit" disabled={!text.trim()} icon={Plus}>{tr("Adaugă nota")}</Button>
@@ -618,7 +618,7 @@ function Detail({ o, state, d, today, act, onBack, onEdit, go }) {
         </div>
       </div>
 
-      <Panel tone="gold" corners className="p-5 sm:p-6">
+      <Panel tone="gold" className="p-5 sm:p-6">
         <div className="flex flex-col gap-5 md:flex-row md:items-start">
           <div className="flex min-w-0 flex-1 items-start gap-4">
             <GoalIcon o={o} size={64} />
@@ -701,7 +701,7 @@ function Detail({ o, state, d, today, act, onBack, onEdit, go }) {
         <div className="min-w-0 space-y-5 lg:col-span-5">
           <MetricPanel o={o} act={act} />
           <Panel className="p-4 sm:p-5">
-            <SectionTitle icon={Sparkles} tone="mint" sub={tr("Obiceiurile care te duc spre obiectiv")}>{tr("Obiceiuri legate")}</SectionTitle>
+            <SectionTitle icon={Sparkles} sub={tr("Obiceiurile care te duc spre obiectiv")}>{tr("Obiceiuri legate")}</SectionTitle>
             {habits.length ? (
               <ul className="space-y-2">
                 {habits.map((h) => {
@@ -724,7 +724,7 @@ function Detail({ o, state, d, today, act, onBack, onEdit, go }) {
             )}
           </Panel>
           <Panel className="p-4 sm:p-5">
-            <SectionTitle icon={o.reminder?.on ? BellRing : Bell} tone="ember">{tr("Reminder")}</SectionTitle>
+            <SectionTitle icon={o.reminder?.on ? BellRing : Bell}>{tr("Reminder")}</SectionTitle>
             {o.reminder?.on ? (
               <p className="text-sm font-semibold text-body">
                 {[tr("Du"), tr("Lu"), tr("Ma"), tr("Mi"), tr("Jo"), tr("Vi"), tr("Sâ")].filter((_, i) => o.reminder.days.includes(i)).join(", ") || tr("Nicio zi aleasă")}{" "}{tr("la {time}. Apare pe Acasă dacă n-ai avansat încă în ziua aceea.", { time: o.reminder.time })}</p>
@@ -838,7 +838,7 @@ export default function Objectives({ state, d, today, go, ai, goals, focus, setF
 
       {done.length > 0 && (
         <Panel className="p-4 sm:p-5">
-          <SectionTitle icon={Trophy} tone="mint" sub={tr("Dovada că poți")}>{tr("Atinse")}</SectionTitle>
+          <SectionTitle icon={Trophy} sub={tr("Dovada că poți")}>{tr("Atinse")}</SectionTitle>
           <ul className="grid gap-2 sm:grid-cols-2">
             {done.map((o) => (
               <li key={o.id}>
@@ -895,7 +895,7 @@ export function ObjectivesMini({ state, today, reminders, go, act }) {
   if (!active.length) {
     return (
       <Panel className="p-4">
-        <SectionTitle icon={Target} tone="sky">{tr("Obiective")}</SectionTitle>
+        <SectionTitle icon={Target}>{tr("Obiective")}</SectionTitle>
         <p className="text-sm font-semibold text-dim">{tr("Ai un obiectiv mare? Împarte-l în pași și urmărește-ți progresul.")}</p>
         <Button className="mt-3" size="sm" variant="ghost" icon={Plus} onClick={() => go("goals")}>{tr("Primul obiectiv")}</Button>
       </Panel>
@@ -907,7 +907,6 @@ export function ObjectivesMini({ state, today, reminders, go, act }) {
     <Panel className="p-4">
       <SectionTitle
         icon={Target}
-        tone="sky"
         sub={reminders.length ? tr("{n} {v} azi", { n: reminders.length, v: plural(reminders.length, tr("reminder"), tr("remindere"), tr("de remindere")) }) : tr("Pașii următori")}
         action={
           <Button size="sm" variant="ghost" onClick={() => go("goals")}>{tr("Toate")}</Button>

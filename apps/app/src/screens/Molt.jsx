@@ -65,7 +65,7 @@ function MoltCard({ state, d, ai, wide, waiting, onWaiting, onRename }) {
   const [name, setName] = useState(c.name || "");
   const label = c.name || tr("Moltul tău");
   return (
-    <Panel tone="violet" corners className="overflow-hidden">
+    <Panel tone="violet" className="overflow-hidden">
       <div className="flex items-center gap-3 p-3 lg:flex-col lg:items-stretch lg:gap-0 lg:p-0">
         <div className="pedestal flex h-[84px] w-[84px] shrink-0 items-end justify-center rounded-xl lg:h-auto lg:w-auto lg:rounded-none lg:px-4 lg:pt-2">
           <Sprite path={path} stage={c.stage.id} mood={c.mood} size={wide ? 92 : 64} crack={eggCrack(c.ep)} look={c.look} label={`${label}, ${c.stage.name}`} />

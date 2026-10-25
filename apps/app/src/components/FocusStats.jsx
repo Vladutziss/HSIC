@@ -42,7 +42,6 @@ export function FocusStats({ sessions = [], today, onFocus }) {
     <Panel className="p-4 sm:p-5">
       <SectionTitle
         icon={Timer}
-        tone="violet"
         sub={tr("Timpul în care te-ai concentrat, fără pauze")}
         action={
           <Button variant="ghost" size="sm" icon={Play} onClick={onFocus}>

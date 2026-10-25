@@ -82,7 +82,7 @@ function CreateJoin({ groups }) {
   return (
     <div className="grid gap-4 md:grid-cols-2">
       <Panel className="space-y-4 p-4 sm:p-5">
-        <SectionTitle icon={Users} tone="gold">{tr("Creează")}</SectionTitle>
+        <SectionTitle icon={Users}>{tr("Creează")}</SectionTitle>
         <Tabs
           value={kind}
           onChange={setKind}
@@ -99,7 +99,7 @@ function CreateJoin({ groups }) {
         {groups.limits[kind].used >= groups.limits[kind].max && <p className="text-xs font-semibold text-ember">{limitText(kind)}</p>}
       </Panel>
       <Panel className="space-y-4 p-4 sm:p-5">
-        <SectionTitle icon={UserPlus} tone="sky">{tr("Intră cu un cod")}</SectionTitle>
+        <SectionTitle icon={UserPlus}>{tr("Intră cu un cod")}</SectionTitle>
         <p className="text-sm text-body">{tr("Cere codul de 6 caractere de la cineva din grup. Toți membrii trebuie să poată deschide această aplicație.")}</p>
         <Field label={tr("Cod")} htmlFor="group-code">
           <input id="group-code" className="field font-pixel text-lg uppercase tracking-[0.3em]" value={code} maxLength={6} placeholder="K7P2QX" onChange={(e) => setCode(e.target.value.toUpperCase())} />
@@ -116,8 +116,8 @@ function Leaderboard({ g, loading }) {
   const ranked = useMemo(() => [...g.members].sort((a, b) => (b[by] || 0) - (a[by] || 0)), [g.members, by]);
   const unit = { weekGain: "momentum", momentum: tr("puncte"), streak: tr("zile") }[by];
   return (
-    <Panel tone="gold" corners className="p-4 sm:p-5">
-      <SectionTitle icon={Crown} tone="gold" sub={tr("Se resetează în fiecare luni")} action={null}>{tr("Clasament")}</SectionTitle>
+    <Panel tone="gold" className="p-4 sm:p-5">
+      <SectionTitle icon={Crown} sub={tr("Se resetează în fiecare luni")} action={null}>{tr("Clasament")}</SectionTitle>
       <Tabs
         className="mb-4"
         size="sm"
@@ -252,13 +252,12 @@ function ChatPanel({ g, groups, loading }) {
     <Panel className="p-4 sm:p-5">
       <SectionTitle
         icon={Inbox}
-        tone="violet"
         className="flex-wrap gap-y-2"
         sub={tr("Încurajări între voi, ca într-un chat")}
         action={
           unread ? (
             <div className="flex flex-wrap items-center justify-end gap-2">
-              <Chip tone="violet">{tr("{unread} necitite", { unread })}</Chip>
+              <Chip>{tr("{unread} necitite", { unread })}</Chip>
               <Button size="sm" variant="ghost" icon={CheckCheck} busy={markingAll} disabled={markingAll} onClick={markAll}>{tr("Marchează toate citite")}</Button>
             </div>
           ) : null

@@ -82,7 +82,7 @@ function HabitDetail({ h, state, d, today, onBack, onEdit, onArchive }) {
     <div className="space-y-5">
       <button type="button" onClick={onBack} className="focus-ring inline-flex items-center gap-1.5 rounded-lg text-sm font-extrabold text-dim hover:text-ink">
         <ArrowLeft size={16} aria-hidden="true" />{" "}{tr("Toate obiceiurile")}</button>
-      <Panel tone="gold" corners className="p-5">
+      <Panel tone="gold" className="p-5">
         <div className="flex flex-wrap items-center gap-4">
           <span className="grid h-16 w-16 place-items-center rounded-2xl" style={{ background: `${h.color}26`, color: h.color, boxShadow: `inset 0 0 0 2px ${h.color}88` }}>
             <Icon size={30} aria-hidden="true" />
@@ -122,11 +122,11 @@ function HabitDetail({ h, state, d, today, onBack, onEdit, onArchive }) {
 
       <div className="grid gap-5 lg:grid-cols-5">
         <Panel className="min-w-0 p-4 sm:p-5 lg:col-span-3">
-          <SectionTitle icon={Flame} tone="ember" sub={tr("Crește la fiecare bifă, scade puțin la o zi programată ratată")}>{tr("Momentum-ul obiceiului")}</SectionTitle>
+          <SectionTitle icon={Flame} sub={tr("Crește la fiecare bifă, scade puțin la o zi programată ratată")}>{tr("Momentum-ul obiceiului")}</SectionTitle>
           <HabitArea points={series.slice(-60)} color={h.color} />
         </Panel>
         <Panel className="min-w-0 p-4 sm:p-5 lg:col-span-2">
-          <SectionTitle icon={CalendarDays} tone="gold" sub={tr("Ultimele 16 săptămâni")}>{tr("Istoric")}</SectionTitle>
+          <SectionTitle icon={CalendarDays} sub={tr("Ultimele 16 săptămâni")}>{tr("Istoric")}</SectionTitle>
           <Heatmap
             today={today}
             weeks={16}

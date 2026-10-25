@@ -242,7 +242,7 @@ export default function Chat({ state, d, today, ai, goals, todo, agent, onAddHab
       {!embedded && (
         <>
         {/* Header Panel */}
-        <Panel tone="violet" corners className="p-4 sm:p-5">
+        <Panel tone="violet" className="p-4 sm:p-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-3">
               <span className="pedestal grid h-12 w-12 shrink-0 place-items-center rounded-xl sm:h-14 sm:w-14">

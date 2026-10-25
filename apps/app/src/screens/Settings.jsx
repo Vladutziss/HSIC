@@ -21,7 +21,7 @@ const TIMES = ["18:00", "18:30", "19:00", "19:30", "20:00", "20:30", "21:00", "2
 function ThemePicker({ onPick }) {
   const active = useTheme();
   return (
-    <div role="radiogroup" aria-label={tr("Temă de culori")} className="grid grid-cols-3 gap-2 sm:grid-cols-5 lg:grid-cols-9">
+    <div role="radiogroup" aria-label={tr("Temă de culori")} className="grid max-w-sm grid-cols-2 gap-2">
       {THEMES.map((t) => {
         const on = t.id === active;
         const ModeIcon = t.mode === "dark" ? Moon : Sun;
@@ -137,7 +137,7 @@ export default function Settings({ state, d, ai, mode, env, onChange, onWipe, on
       <div className="grid gap-4 lg:grid-cols-2 [&>*]:min-w-0">
         {/* who you are */}
         <Panel className="space-y-3 p-4">
-          <SectionTitle icon={User} tone="gold" className="!mb-1">{tr("Profil")}</SectionTitle>
+          <SectionTitle icon={User} className="!mb-1">{tr("Profil")}</SectionTitle>
           <Field label={tr("Nume")} htmlFor="set-nick" hint={tr("Apare în grup, lângă personajul tău.")}>
             <input
               id="set-nick"
@@ -174,7 +174,7 @@ export default function Settings({ state, d, ai, mode, env, onChange, onWipe, on
 
         {/* the evening report */}
         <Panel className="space-y-3 p-4">
-          <SectionTitle icon={Moon} tone="violet" className="!mb-1">{tr("Raportul de seară")}</SectionTitle>
+          <SectionTitle icon={Moon} className="!mb-1">{tr("Raportul de seară")}</SectionTitle>
           <Field label={tr("Ora raportului")} htmlFor="set-time">
             <Select id="set-time" value={settings.reviewTime || "21:00"} onChange={(v) => set({ reviewTime: v })} options={TIMES.map((t) => ({ value: t, label: fmt12(t) }))} />
           </Field>
@@ -217,19 +217,19 @@ export default function Settings({ state, d, ai, mode, env, onChange, onWipe, on
 
         {/* language */}
         <Panel className="space-y-3 p-4 lg:col-span-2">
-          <SectionTitle icon={Globe} tone="violet" sub={tr("Interfața aplicației. Textele scrise de AI (rapoarte, povești) urmează aceeași limbă.")} className="!mb-1">{tr("Limbă")}</SectionTitle>
+          <SectionTitle icon={Globe} sub={tr("Interfața aplicației. Textele scrise de AI (rapoarte, povești) urmează aceeași limbă.")} className="!mb-1">{tr("Limbă")}</SectionTitle>
           <LanguageSwitch account />
         </Panel>
 
         {/* how it looks */}
         <Panel className="space-y-3 p-4 lg:col-span-2">
-          <SectionTitle icon={Palette} tone="violet" sub={tr("Se păstrează pe acest dispozitiv.")} className="!mb-1">{tr("Aspect")}</SectionTitle>
+          <SectionTitle icon={Palette} sub={tr("Se păstrează pe acest dispozitiv.")} className="!mb-1">{tr("Aspect")}</SectionTitle>
           <ThemePicker onPick={(id) => set({ theme: id })} />
         </Panel>
 
         {/* the rules: the one setting up front, the explanations folded */}
         <Panel className="space-y-3 p-4">
-          <SectionTitle icon={Shield} tone="ember" className="!mb-1">{tr("Regulile jocului")}</SectionTitle>
+          <SectionTitle icon={Shield} className="!mb-1">{tr("Regulile jocului")}</SectionTitle>
           <Field label={tr("Momentum-ul se resetează după")} htmlFor="set-reset">
             <Select
               id="set-reset"
@@ -265,7 +265,7 @@ export default function Settings({ state, d, ai, mode, env, onChange, onWipe, on
 
         {/* account, notifications and data, with the destructive actions folded away */}
         <Panel className="space-y-3 p-4">
-          <SectionTitle icon={Database} tone="sky" className="!mb-1">{tr("Cont, notificări și date")}</SectionTitle>
+          <SectionTitle icon={Database} className="!mb-1">{tr("Cont, notificări și date")}</SectionTitle>
           <p className="text-sm text-body">
             {storage}
             {(mode === "cloud" || mode === "supabase") && tr(" Grupurile văd doar nivelul, seria, momentum-ul și personajul.")}
