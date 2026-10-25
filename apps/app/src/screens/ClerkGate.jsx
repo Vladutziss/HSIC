@@ -128,7 +128,7 @@ function Gate({ children }) {
             <Leaf className="text-gold" size={28} aria-hidden="true" />
             <div className="font-display text-2xl leading-none text-ink">Molted</div>
           </div>
-          <p className="text-center text-sm text-dim">{tr("Molted este o aplicație de self-improvement gamificată: îți urmărești obiceiurile zilnice, personajul tău evoluează odată cu progresul, poți intra în grupuri cu prietenii și primești rapoarte AI.")}</p>
+          <p className="text-center text-sm text-dim">{tr("Molted este un coach pentru elevi: îți planifici temele și examenele, îți urmărești obiceiurile, personajul tău evoluează odată cu progresul, poți intra în grupuri cu colegii și primești rapoarte AI.")}</p>
           {mode === "in" ? (
             <SignIn key="in" routing="hash" />
           ) : (

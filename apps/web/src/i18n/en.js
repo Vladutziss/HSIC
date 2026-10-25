@@ -10,7 +10,7 @@ export default {
     navAria: "Main",
     legalAria: "Legal",
     openApp: "Open the app",
-    footerTag: "AI coach for habits",
+    footerTag: "AI coach for students",
     team: "Team",
     privacy: "Privacy",
     terms: "Terms",
@@ -22,18 +22,18 @@ export default {
   },
   meta: {
     home: {
-      title: "Molted: an agentic AI coach for your habits",
+      title: "Molted: an AI coach for students",
       description:
-        "Molted has an AI agent that analyzes your habits, proposes concrete changes and measures whether they helped. You confirm. Plus a game with a character that evolves.",
-      ogTitle: "Molted: an agentic AI coach for your habits",
+        "An AI agent that turns a school goal into a plan of small steps, adapts it to what you do and measures whether it helped. You confirm. Plus a character game.",
+      ogTitle: "Molted: an AI coach for students",
       ogDescription: "An AI agent proposes, you confirm, and Molted measures the effect.",
       ogImageAlt: OG_ALT,
     },
     team: {
       title: "The Molted team",
-      description: "The people behind Molted: the team building the habit app where your character evolves.",
+      description: "The people behind Molted: the team building the student coach where your character evolves.",
       ogTitle: "The Molted team",
-      ogDescription: "The people behind Molted: the team building the habit app where your character evolves.",
+      ogDescription: "The people behind Molted: the team building the student coach where your character evolves.",
       ogImageAlt: OG_ALT,
     },
     privacy: {
@@ -67,15 +67,15 @@ export default {
   home: {
     ids: { agent: "agent", faq: "faq" },
     nav: { agent: "AI agent", faq: "FAQ" },
-    kicker: "Agentic AI coach · for habits",
-    h1: "An AI agent that helps you keep your habits",
+    kicker: "Agentic AI coach · for students",
+    h1: "An AI agent that helps you stick to your study plan",
     lead: "Molted does not just log what you ticked. An agent reads your history, looks things up in sources, proposes one concrete change and, two weeks later, checks whether it helped. You always decide.",
     ctaAgent: "How the agent thinks",
     mockAria: "Illustrative example: a proposal from the agent",
     mockTag: "example",
     mockStatus: "Waiting for your confirmation",
-    mockTitle: "Move “Read 15 pages” from evening to 8:00 AM",
-    mockText: "You missed it on 5 of the last 7 evenings, but you kept all of your morning habits.",
+    mockTitle: "Move “Chemistry review” from evening to 4:00 PM",
+    mockText: "You missed it on 5 of the last 7 evenings, but you did all your homework after school.",
     mockMeta: "Data used: last 28 days · Estimated confidence: medium",
     mockConfirm: "Confirm",
     mockNo: "No",
@@ -83,7 +83,7 @@ export default {
     agentIntro: "Not a chatbot that gives generic advice. A loop with real tools, where every step can be checked.",
     steps: [
       { title: "Observe", text: "It gathers the data it needs on its own: habit statistics, context, your feedback, past actions, experiments. It also looks for patterns in your history." },
-      { title: "Research", text: "It searches a knowledge base about habits. It can only cite sources that it found itself in that conversation." },
+      { title: "Research", text: "It searches a knowledge base about learning and habits. It can only cite sources that it found itself in that conversation." },
       { title: "Propose", text: "One concrete action: a to-do, a new habit, a schedule change. The proposal is validated before it reaches you and comes with a “why”." },
       { title: "Measure", text: "After 14 days it compares your rate from before with the one after. It does not claim it caused the difference, it just shows it to you." },
     ],
@@ -123,7 +123,7 @@ export default {
     ctaText: "Pick a path, tick your first habit and see what hatches.",
     eggAlt: "An egg, the beginning of Molt",
     appDescription:
-      "An agentic AI coach for habits: it analyzes your history, proposes actions, applies them after you confirm and measures the effect. Plus gamification, a planner and groups.",
+      "An agentic AI coach for students: it analyzes your history, proposes actions, applies them after you confirm and measures the effect. Plus gamification, a homework and exam planner and groups.",
   },
   team: {
     h1: "Team",

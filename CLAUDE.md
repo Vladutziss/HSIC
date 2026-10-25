@@ -17,6 +17,7 @@
 - Reguli: fără titluri de pagină (meniul spune unde ești), titluri de secțiune neutre (`SectionTitle` nu mai are `tone`), fără colțuri decorative, un singur banner contextual pe Acasă, raportul de seară apare doar când e ora lui sau e gata. Culoarea are sens: gold = acțiunea principală, violet = Molt/AI, restul doar pentru stare.
 - Aspect plat: fără cer înstelat, fără gradiente și fără butoane „3D" (stilurile `.btn`, `.panel`, `.fill-*` din `apps/app/src/styles.css`; `shadow-key-*` din preset sunt `none`). Textul nu coboară sub 12 px (excepție: etichetele barei de jos). Clasa `font-display` a înlocuit `font-pixel` în aplicație (landing-ul o folosește încă pe cea veche).
 - Teme: doar `noapte` (dark) și `ceata` (light, afișată „Lumină"); id-urile vechi cad pe cea de același mod (`RETIRED` în `lib/themes.js`).
+- Poziționare: coach pentru elevi (README, concursul High School Innovation Challenge). Drumul Studiu e primul în `PATHS` și are obiecte școlare în catalog (`homework`, `exam`, `review`, `plan`); promptul AI și landing-ul spun „elevi", nu „self-improvement". Textele legale (`apps/web/content/*`) încă folosesc „self-improvement" și nu au fost schimbate (cer traducere RO/EN și teste).
 - Auditul și planul: `docs/FRONTEND_CLEANUP_PROMPT.md`.
 
 ## Backend (Supabase)

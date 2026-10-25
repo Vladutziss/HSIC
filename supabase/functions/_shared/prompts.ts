@@ -29,7 +29,7 @@ function review(p: any): string {
   const todos = p.todos ?? {};
   const titles = list(todos.titles, 5, 60);
   const level = p.level ?? {};
-  return `You are the evening coach in "Molted", a self-improvement RPG. Review the player's day and score it.
+  return `You are the evening coach in "Molted", a gamified study and habit coach for students. Review the player's day and score it.
 
 Player: ${clip(p.name, 40) || "the player"}. Goal: "${clip(p.goal, 200) || "-"}" (path: ${clip(p.pathLabel, 30) || "-"}).
 Day: ${clip(p.dayLabel, 40)}.
@@ -48,7 +48,7 @@ Reply with only JSON: {"score": <integer 0-100>, "summary": "...", "highlight": 
 
 function moment(p: any): string {
   const quote = p.quote ?? {};
-  return `In one sentence in ${LANG} (at most 170 characters), connect this quote to the player's situation in a self-improvement game. Address the player${TU}, be warm and concrete, and do not repeat the quote.
+  return `In one sentence in ${LANG} (at most 170 characters), connect this quote to the player's situation in a game that coaches students. Address the player${TU}, be warm and concrete, and do not repeat the quote.
 Situation: ${clip(p.situation, 300)}.
 Quote: "${clip(quote.text, 300)}" (${clip(quote.author, 60)}).
 Reply with only JSON: {"line":"..."}`;
@@ -56,7 +56,7 @@ Reply with only JSON: {"line":"..."}`;
 
 function chapter(p: any): string {
   const recent = list(p.recent, 3, 420);
-  return `In "Molted", a self-improvement RPG, the player's companion ${clip(p.name, 30) || "the Molt"} (a ${clip(p.cls, 30) || "hero"}) just evolved from "${clip(p.from, 30)}" to "${clip(p.to, 30)}" thanks to the player's daily check-ins.
+  return `In "Molted", a gamified study and habit coach for students, the player's companion ${clip(p.name, 30) || "the Molt"} (a ${clip(p.cls, 30) || "hero"}) just evolved from "${clip(p.from, 30)}" to "${clip(p.to, 30)}" thanks to the player's daily check-ins.
 Recent story (newest last):
 ${recent.map((s) => `- ${s}`).join("\n") || "- (none yet)"}
 Write a short celebratory chapter: 3 sentences, at most 380 characters, in ${LANG}, third person, present tense, describing the transformation and what the companion can do now. Give it a title of 2-4 words.
@@ -83,7 +83,7 @@ function habitsBlock(p: any): string {
 }
 
 function insights(p: any): string {
-  return `You are the data coach in "Molted", a self-improvement RPG. Below is the last 4 weeks of a player's habits. Find 2 or 3 real patterns (a weekday that always fails, a habit that is much weaker than the others, a habit that is easy to keep) and give one concrete fix for each. Use only the numbers below; never invent data.
+  return `You are the data coach in "Molted", a gamified study and habit coach for students. Below is the last 4 weeks of a player's habits. Find 2 or 3 real patterns (a weekday that always fails, a habit that is much weaker than the others, a habit that is easy to keep) and give one concrete fix for each. Use only the numbers below; never invent data.
 
 Goal: "${clip(p.goal, 200) || "-"}".
 ${habitsBlock(p)}

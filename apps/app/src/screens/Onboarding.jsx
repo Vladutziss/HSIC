@@ -12,9 +12,9 @@ import { tr, legalUrl } from "../lib/i18n.js";
 
 const GOAL_EXAMPLES = {
   sport: tr("Să alerg primul meu semimaraton până în primăvară."),
-  studiu: tr("Să intru în lotul național la olimpiada de matematică."),
-  bani: tr("Să strâng un fond de urgență și să-mi lansez primul proiect."),
-  minte: tr("Să dorm bine și să am mai multă liniște în fiecare zi."),
+  studiu: tr("Să iau cel puțin 9 la Bacalaureat la matematică."),
+  bani: tr("Să strâng bani pentru tabăra de vară și să-mi lansez primul proiect."),
+  minte: tr("Să dorm bine și să am mai puțin stres înainte de teste."),
   creativ: tr("Să termin un album de desene până la vară."),
 };
 const TIMES = ["18:00", "19:00", "20:00", "20:30", "21:00", "21:30", "22:00", "22:30", "23:00"];

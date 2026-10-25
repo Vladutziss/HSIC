@@ -3,6 +3,15 @@ import { tr } from "./i18n.js";
 // predefined catalog or are created by the player.
 
 export const PATHS = {
+  studiu: {
+    id: "studiu",
+    label: tr("Studiu"),
+    cls: tr("Cărturar"),
+    icon: "book",
+    color: "#5cb8ff",
+    pitch: tr("Teme, lecții, examene, concentrare."),
+    egg: tr("Oul tău va deveni un Cărturar."),
+  },
   sport: {
     id: "sport",
     label: tr("Sport"),
@@ -12,22 +21,13 @@ export const PATHS = {
     pitch: tr("Forță, rezistență și energie."),
     egg: tr("Oul tău va deveni un Atlet."),
   },
-  studiu: {
-    id: "studiu",
-    label: tr("Studiu"),
-    cls: tr("Cărturar"),
-    icon: "book",
-    color: "#5cb8ff",
-    pitch: tr("Învățare, concentrare, cunoaștere."),
-    egg: tr("Oul tău va deveni un Cărturar."),
-  },
   bani: {
     id: "bani",
     label: tr("Bani"),
     cls: tr("Negustor"),
     icon: "coins",
     color: "#ffc542",
-    pitch: tr("Economii, investiții, proiecte proprii."),
+    pitch: tr("Bani de buzunar, economii, proiecte proprii."),
     egg: tr("Oul tău va deveni un Negustor."),
   },
   minte: {
@@ -36,7 +36,7 @@ export const PATHS = {
     cls: tr("Înțelept"),
     icon: "brain",
     color: "#3fe0a5",
-    pitch: tr("Calm, somn bun, echilibru."),
+    pitch: tr("Calm, somn bun, mai puțin stres."),
     egg: tr("Oul tău va deveni un Înțelept."),
   },
   creativ: {
@@ -70,6 +70,10 @@ export const CATALOG = [
   { id: "stretch", cat: "sport", name: tr("Stretching"), icon: "person", diff: 1, days: EVERY_DAY, time: "08:00", target: tr("10 minute") },
   { id: "pushups", cat: "sport", name: tr("Flotări și abdomene"), icon: "flame", diff: 2, days: EVERY_DAY, time: null, target: tr("3 serii") },
 
+  { id: "homework", cat: "studiu", name: tr("Teme pentru a doua zi"), icon: "notebook", diff: 2, days: WEEKDAYS, time: "16:30", target: tr("toate temele pentru a doua zi") },
+  { id: "exam", cat: "studiu", name: tr("Pregătire pentru examen"), icon: "target", diff: 3, days: EVERY_DAY, time: "18:00", target: tr("o oră pe materia de examen") },
+  { id: "review", cat: "studiu", name: tr("Recapitulare după ore"), icon: "lightbulb", diff: 1, days: WEEKDAYS, time: null, target: tr("15 minute din ce ai învățat azi") },
+  { id: "plan", cat: "studiu", name: tr("Planifică ziua de mâine"), icon: "pen", diff: 1, days: WEEKDAYS, time: "21:00", target: tr("trei lucruri pentru mâine") },
   { id: "study", cat: "studiu", name: tr("Sesiune de studiu"), icon: "graduation", diff: 3, days: WEEKDAYS, time: "17:00", target: tr("50 de minute fără telefon") },
   { id: "read", cat: "studiu", name: tr("Citit"), icon: "book", diff: 1, days: EVERY_DAY, time: "22:00", target: tr("20 de pagini") },
   { id: "math", cat: "studiu", name: tr("Probleme de matematică"), icon: "sigma", diff: 2, days: EVERY_DAY, time: null, target: tr("3 probleme rezolvate") },
@@ -97,7 +101,7 @@ export const CATALOG = [
 
 export const RECOMMENDED = {
   sport: ["gym", "steps", "sleep", "water"],
-  studiu: ["study", "read", "math", "nophone"],
+  studiu: ["homework", "study", "review", "nophone"],
   bani: ["expenses", "project", "invest", "read"],
   minte: ["meditate", "sleep", "journal", "steps"],
   creativ: ["draw", "write", "read", "meditate"],

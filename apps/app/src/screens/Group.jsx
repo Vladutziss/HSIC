@@ -403,7 +403,7 @@ function GroupView({ g, groups, loading }) {
         <div className="min-w-[200px] flex-1">
           <h2 className="font-display text-2xl text-ink">{g.info.name || tr("Grup")}</h2>
           <div className="flex flex-wrap items-center gap-2 text-xs font-bold text-dim">
-            <Chip tone="sky">{g.info.kind === "partner" ? tr("Partener de progres") : tr("Grup de self-improvement")}</Chip>
+            <Chip tone="sky">{g.info.kind === "partner" ? tr("Partener de progres") : tr("Grup de studiu")}</Chip>
             <span>
               {g.members.length} {g.members.length === 1 ? tr("membru") : tr("membri")}
             </span>

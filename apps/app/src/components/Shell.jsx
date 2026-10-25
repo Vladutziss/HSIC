@@ -53,7 +53,7 @@ function Logo({ compact = false }) {
       {!compact && (
         <div className="leading-none">
           <div className="font-display text-xl font-bold tracking-wide text-ink">MOLTED</div>
-          <div className="mt-1 text-[10px] font-extrabold uppercase tracking-[0.2em] text-gold">self-improvement RPG</div>
+          <div className="mt-1 text-[10px] font-extrabold uppercase tracking-[0.2em] text-gold">{tr("coach pentru elevi")}</div>
         </div>
       )}
     </div>
