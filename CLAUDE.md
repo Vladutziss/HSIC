@@ -13,10 +13,10 @@
 
 ## Interfața aplicației (minimalism)
 
-- Cinci locuri în meniu (`components/Shell.jsx`, `NAV`): Acasă, Plan (Calendar / Obiceiuri / Obiective, `screens/PlanHub.jsx`), Molt (Vorbește / Planifică / Înțelege / Molt, `screens/Molt.jsx`), Progres, Tu (Setări / Grup, `screens/TuHub.jsx`). Id-urile de vedere (`home`, `plan`, `goals`, `habits`, `molt`, `stats`, `settings`, `group`) rămân cele din `App.jsx`; hub-urile doar le grupează.
+- Cinci locuri în meniu (`components/Shell.jsx`, `NAV`): Acasă, Plan (Obiceiuri / Calendar / Obiective, `screens/PlanHub.jsx`), Molt (Vorbește / Planifică / Înțelege / Molt, `screens/Molt.jsx`), Progres, Tu (Grup / Setări, `screens/TuHub.jsx`). Id-urile de vedere (`home`, `plan`, `goals`, `habits`, `molt`, `stats`, `settings`, `group`) rămân cele din `App.jsx`; hub-urile doar le grupează. Intrările „Plan" și „Tu" din meniu au id-ul primei file (`habits`, `group`), ca să se deschidă pe ea.
 - Reguli: fără titluri de pagină (meniul spune unde ești), titluri de secțiune neutre (`SectionTitle` nu mai are `tone`), fără colțuri decorative, un singur banner contextual pe Acasă, raportul de seară apare doar când e ora lui sau e gata. Culoarea are sens: gold = acțiunea principală, violet = Molt/AI, restul doar pentru stare.
 - Aspect plat: fără cer înstelat, fără gradiente și fără butoane „3D" (stilurile `.btn`, `.panel`, `.fill-*` din `apps/app/src/styles.css`; `shadow-key-*` din preset sunt `none`). Textul nu coboară sub 12 px (excepție: etichetele barei de jos). Clasa `font-display` a înlocuit `font-pixel` în aplicație (landing-ul o folosește încă pe cea veche).
-- Teme: doar `noapte` (dark) și `ceata` (light, afișată „Lumină"); id-urile vechi cad pe cea de același mod (`RETIRED` în `lib/themes.js`).
+- Teme (`lib/themes.js`, paletele în `styles.css`, lista de id-uri și în scriptul din `apps/app/index.html`): întunecate `noapte` (implicit), `grafit`; luminoase `ceata` (afișată „Lumină") și `lavanda`. Id-urile șterse (`padure`, `cod`, `nord`, `piersica`, `pergament`) cad pe cea de același mod (`RETIRED`). Selectorul din Setări > Aspect le grupează pe Întunecate și Luminoase.
 - Poziționare: coach pentru elevi (README, concursul High School Innovation Challenge). Drumul Studiu e primul în `PATHS` și are obiecte școlare în catalog (`homework`, `exam`, `review`, `plan`); promptul AI și landing-ul spun „elevi", nu „self-improvement". Textele legale (`apps/web/content/*`) încă folosesc „self-improvement" și nu au fost schimbate (cer traducere RO/EN și teste).
 - Auditul și planul: `docs/FRONTEND_CLEANUP_PROMPT.md`.
 
