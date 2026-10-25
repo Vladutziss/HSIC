@@ -19,9 +19,9 @@ function AgentImpact({ log }) {
     <Panel className="p-5">
       <SectionTitle icon={Bot} sub={tr("Doar pe datele tale")}>{tr("Cum te ajută coach-ul")}</SectionTitle>
       <div className="flex flex-wrap gap-2">
-        <Chip tone="dim">{tr("{proposals} propuneri", { proposals: m.proposals })}</Chip>
-        <Chip tone="mint">{tr("{applied} aplicate", { applied: m.applied })}</Chip>
-        <Chip tone="dim">{tr("{rejected} respinse", { rejected: m.rejected })}</Chip>
+        <Chip tone="dim">{tr("Propuneri: {proposals}", { proposals: m.proposals })}</Chip>
+        <Chip tone="mint">{tr("Aplicate: {applied}", { applied: m.applied })}</Chip>
+        <Chip tone="dim">{tr("Respinse: {rejected}", { rejected: m.rejected })}</Chip>
       </div>
       <p className="mt-3 text-sm font-semibold text-body">
         {m.measured
@@ -118,7 +118,7 @@ export default function Stats({ state, d, today, go, mode, saveStatus, ai, agent
       <div className="grid grid-cols-3 gap-2 sm:gap-3">
         {[
           { label: tr("Momentum"), value: d.entry?.momentum ?? 0, sub: tr("nivel {lvl} · {name}", { lvl: d.level.lvl, name: d.level.name }) },
-          { label: tr("Serie"), value: s.streak.current, sub: tr("record: {best} zile", { best: s.streak.best }) },
+          { label: tr("Serie"), value: s.streak.current, sub: tr("record: {best} {v}", { best: s.streak.best, v: s.streak.best === 1 ? tr("zi") : tr("zile") }) },
           { label: tr("Scor mediu"), value: s.avg, sub: tr("ultimele 30 de zile") },
         ].map((x) => (
           <div key={x.label} className="inset min-w-0 p-3">

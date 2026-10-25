@@ -87,7 +87,7 @@ export function SchoolCard({ state, today, onStateChange }) {
                 type="button"
                 onClick={() => logStudy(r.subject)}
                 className="focus-ring shrink-0 rounded-lg px-2 py-1 text-xs font-extrabold text-dim ring-1 ring-edge hover:text-ink"
-                aria-label={tr("Am învățat {minutes} minute{v}", { minutes: SESSION, v: r.subject ? ` la ${r.subject}` : "" })}
+                aria-label={r.subject ? tr("Am învățat {minutes} minute la {subject}", { minutes: SESSION, subject: r.subject }) : tr("Am învățat {minutes} minute", { minutes: SESSION })}
               >
                 +{SESSION} min
               </button>

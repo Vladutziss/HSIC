@@ -113,7 +113,7 @@ export function PlanPanel({ state, today, ai, onAddHabit, onEdit, onExperiment, 
                       {sg.action === "goal" ? (
                         <>
                           <p className="text-sm font-extrabold text-ink">{tr("Obiectiv nou: {title}", { title: sg.title })}</p>
-                          <p className="text-xs font-bold text-dim">{tr("{n} pași{v} · îl găsești în „Ce a făcut Molt”, de unde îl aplici", { n: sg.steps.length, v: sg.deadline ? tr(" · până la {fmtDay}", { fmtDay: fmtDay(sg.deadline) }) : "" })}</p>
+                          <p className="text-xs font-bold text-dim">{tr("{n} {steps}{v} · îl găsești în „Ce a făcut Molt”, de unde îl aplici", { n: sg.steps.length, steps: sg.steps.length === 1 ? tr("pas") : tr("pași"), v: sg.deadline ? tr(" · până la {fmtDay}", { fmtDay: fmtDay(sg.deadline) }) : "" })}</p>
                           <ul className="mt-1 list-disc pl-5 text-xs font-semibold text-body">
                             {sg.steps.map((t) => (
                               <li key={t}>{t}</li>

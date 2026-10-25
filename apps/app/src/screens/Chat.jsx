@@ -378,7 +378,7 @@ export default function Chat({ state, d, today, ai, goals, todo, agent, onAddHab
                                 <div key={hIdx} className="inset flex items-center gap-2 px-2.5 py-1.5 text-xs">
                                   <span className="font-bold text-ink">{h.name}</span>
                                   <Chip tone="gold">{tr("Dificultate {diff}", { diff: h.diff })}</Chip>
-                                  <span className="text-xs text-dim">{tr("{length} zile/săpt", { length: h.days?.length })}</span>
+                                  <span className="text-xs text-dim">{h.days?.length === 1 ? tr("1 zi/săpt") : tr("{length} zile/săpt", { length: h.days?.length })}</span>
                                 </div>
                               ))}
                             </div>

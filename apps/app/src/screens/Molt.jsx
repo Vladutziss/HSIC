@@ -43,7 +43,7 @@ const GROUPS = [
   { id: "chat", label: tr("Vorbește"), icon: MessageSquare, skills: ["chat"] },
   { id: "plan", label: tr("Planifică"), icon: CalendarCheck, skills: ["day", "week", "school", "goal"] },
   { id: "mind", label: tr("Înțelege"), icon: BookOpen, skills: ["mirror", "patterns"] },
-  { id: "about", label: tr("Despre Molt"), icon: Egg, skills: ["wardrobe", "memory", "log", "evolution"] },
+  { id: "about", label: tr("Molt"), icon: Egg, skills: ["wardrobe", "memory", "log", "evolution"] },
 ];
 
 /** The name of an ability, for messages elsewhere in the app. */

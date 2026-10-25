@@ -662,7 +662,7 @@ export function HomeworkPanel({ state, today, ai, onStateChange }) {
     }));
   };
   const studyBtn = (subject, assignmentId) => (
-    <button type="button" className="focus-ring shrink-0 rounded-lg px-2 py-0.5 text-xs font-extrabold text-dim ring-1 ring-edge hover:text-ink" onClick={() => study(subject, assignmentId)} aria-label={tr("Am învățat {minutes} minute{v}", { minutes, v: subject ? ` la ${subject}` : "" })}>
+    <button type="button" className="focus-ring shrink-0 rounded-lg px-2 py-0.5 text-xs font-extrabold text-dim ring-1 ring-edge hover:text-ink" onClick={() => study(subject, assignmentId)} aria-label={subject ? tr("Am învățat {minutes} minute la {subject}", { minutes, subject }) : tr("Am învățat {minutes} minute", { minutes })}>
       +{minutes} min
     </button>
   );

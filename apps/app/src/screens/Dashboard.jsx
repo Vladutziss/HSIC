@@ -53,7 +53,7 @@ function ReviveBanner({ d, onRevive }) {
         <FlaskConical size={24} aria-hidden="true" />
       </span>
       <div className="min-w-[220px] flex-1">
-        <div className="font-extrabold text-ink">{tr("Seria ta de {streakBefore} zile s-a întrerupt", { streakBefore: offer.streakBefore })}</div>
+        <div className="font-extrabold text-ink">{tr("Seria ta de {streakBefore} {v} s-a întrerupt", { streakBefore: offer.streakBefore, v: offer.streakBefore === 1 ? tr("zi") : tr("zile") })}</div>
         <p className="text-sm text-body">
           {n === 1 ? tr("Ai sărit peste {fmtDay}.", { fmtDay: fmtDay(offer.days[0]) }) : tr("Ai sărit peste {fmtDay} și {fmtDay2}.", { fmtDay: fmtDay(offer.days[0]), fmtDay2: fmtDay(offer.days[1]) })}{" "}
           {offer.affordable
@@ -103,7 +103,7 @@ export default function Dashboard({ state, d, today, go, ai, months, onStateChan
         <Panel className="p-4 sm:p-5">
           <SectionTitle
             icon={Swords}
-            sub={tr("{doneScheduled} din {length} misiuni programate azi", { doneScheduled: d.missions.done, length: d.missions.total })}
+            sub={tr("Programate azi: {doneScheduled} din {length}", { doneScheduled: d.missions.done, length: d.missions.total })}
             action={
               <Button variant="ghost" size="sm" icon={Plus} onClick={onAddHabit}>{tr("Obicei nou")}</Button>
             }

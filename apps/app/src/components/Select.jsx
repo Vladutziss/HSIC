@@ -6,7 +6,7 @@ import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from
 import { createPortal } from "react-dom";
 import { CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight, Clock, X } from "lucide-react";
 import { RO_DAYS_MIN, RO_DAYS_SHORT, RO_MONTHS, addDays, dayKey, fmt12, fmtDay, fmtLong, mondayOf, parseDay, parseHM, todayKey } from "../lib/dates.js";
-import { tr } from "../lib/i18n.js";
+import { isEn, tr } from "../lib/i18n.js";
 
 const pad = (n) => String(n).padStart(2, "0");
 
@@ -179,17 +179,21 @@ export function Select({ id, value, onChange, options, disabled, placeholder = t
 // ------------------------------------------------------------ TimeSelect
 
 const HOURS = Array.from({ length: 12 }, (_, i) => String(i + 1));
+const HOURS24 = Array.from({ length: 24 }, (_, i) => pad(i));
 const MINUTES = Array.from({ length: 12 }, (_, i) => pad(i * 5));
 
-/** value: "HH:MM" (24-hour, as stored) or null. Picked as hour 1-12, minute (5-minute steps) and AM/PM. */
-export function TimeSelect({ id, value, onChange, disabled, clearable = true, placeholder = "--:-- --" }) {
+/** value: "HH:MM" (24-hour, as stored) or null. Romanian: hour 0-23 and minute; English: hour 1-12, minute (5-minute steps) and AM/PM. */
+export function TimeSelect({ id, value, onChange, disabled, clearable = true, placeholder }) {
+  const h24Clock = !isEn();
+  placeholder ??= h24Clock ? "--:--" : "--:-- --";
   const pop = usePopover();
   useFocusOnOpen(pop);
   const min = value ? parseHM(value) : null;
   const h24 = min == null ? null : Math.floor(min / 60) % 24;
-  const sel = { h: h24 == null ? null : String(h24 % 12 || 12), m: min == null ? null : pad(min % 60), pm: h24 == null ? null : h24 >= 12 };
+  const sel = { h: h24 == null ? null : h24Clock ? pad(h24) : String(h24 % 12 || 12), m: min == null ? null : pad(min % 60), pm: h24 == null ? null : h24 >= 12 };
   // an empty field starts from 9:00 AM; each pick changes one part and keeps the others
   const pick = (part) => {
+    if (h24Clock) return onChange(`${part.h ?? sel.h ?? "09"}:${part.m ?? sel.m ?? "00"}`);
     const h = Number(part.h ?? sel.h ?? 9);
     const pm = part.pm ?? sel.pm ?? false;
     onChange(`${pad((h % 12) + (pm ? 12 : 0))}:${part.m ?? sel.m ?? "00"}`);
@@ -215,15 +219,15 @@ export function TimeSelect({ id, value, onChange, disabled, clearable = true, pl
         {value ? fmt12(value) : null}
       </Trigger>
       <Menu pop={pop} minWidth={236} aria-label={tr("Alege ora")}>
-        <div className="mb-1 grid grid-cols-3 px-1 text-center text-xs font-extrabold uppercase tracking-wider text-dim">
+        <div className={`mb-1 grid px-1 text-center text-xs font-extrabold uppercase tracking-wider text-dim ${h24Clock ? "grid-cols-2" : "grid-cols-3"}`}>
           <span>{tr("Ora")}</span>
           <span>{tr("Minut")}</span>
-          <span>{tr("AM / PM")}</span>
+          {!h24Clock && <span>{tr("AM / PM")}</span>}
         </div>
         <div className="flex gap-1.5">
-          {col(HOURS, sel.h, (x) => pick({ h: x }), tr("Ora"))}
+          {col(h24Clock ? HOURS24 : HOURS, sel.h, (x) => pick({ h: x }), tr("Ora"))}
           {col(MINUTES, sel.m, (x) => pick({ m: x }), tr("Minut"))}
-          {col(["AM", "PM"], sel.pm == null ? null : sel.pm ? "PM" : "AM", (x) => pick({ pm: x === "PM" }), tr("AM sau PM"), "!max-h-none")}
+          {!h24Clock && col(["AM", "PM"], sel.pm == null ? null : sel.pm ? "PM" : "AM", (x) => pick({ pm: x === "PM" }), tr("AM sau PM"), "!max-h-none")}
         </div>
         <div className="mt-1.5 flex gap-1.5">
           <button type="button" className="focus-ring flex-1 rounded-lg bg-gold py-1.5 text-xs font-extrabold text-on-gold" onClick={() => pop.close()}>{tr("Gata")}</button>

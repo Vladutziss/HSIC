@@ -329,7 +329,7 @@ export default function Onboarding({ onDone, store, today, legacy }) {
           <Sprite path={path} stage="egg" mood="joy" size={120} label={tr("Oul tău de {cls}", { cls: PATHS[path].cls })} />
         </div>
         <div className="flex flex-wrap justify-center gap-2">
-          <Chip tone="gold" icon={Sparkles}>{tr("{length} misiuni", { length: habits.length })}</Chip>
+          <Chip tone="gold" icon={Sparkles}>{tr("Misiuni: {length}", { length: habits.length })}</Chip>
           <Chip tone="violet">{tr("Raport la {fmt12}", { fmt12: fmt12(reviewTime) })}</Chip>
         </div>
       </div>

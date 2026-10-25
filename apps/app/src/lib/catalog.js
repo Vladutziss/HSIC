@@ -27,7 +27,7 @@ export const PATHS = {
     cls: tr("Negustor"),
     icon: "coins",
     color: "#ffc542",
-    pitch: tr("Educație financiară: buget, economii, primele proiecte."),
+    pitch: tr("Buget, economii și primele proiecte de antreprenoriat."),
     egg: tr("Oul tău va deveni un Negustor."),
   },
   minte: {
