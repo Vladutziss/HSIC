@@ -39,8 +39,9 @@ import { resumeChatRun } from "./lib/chatRun.js";
 import Group from "./screens/Group.jsx";
 import Planner from "./screens/Planner.jsx";
 import PlanHub from "./screens/PlanHub.jsx";
+import TuHub from "./screens/TuHub.jsx";
 import Stats from "./screens/Stats.jsx";
-import Objectives, { Celebration, ObjectiveEditor, ObjectivesMini, blankObjective, objectiveFromTemplate } from "./screens/Objectives.jsx";
+import Objectives, { Celebration, ObjectiveEditor, blankObjective, objectiveFromTemplate } from "./screens/Objectives.jsx";
 import { goalTodoIndex, dueReminders, moveStep, newMarks, toggleStep, toggleSub } from "./lib/objectives.js";
 import SettingsScreen from "./screens/Settings.jsx";
 import { getLocale, tr } from "./lib/i18n.js";
@@ -83,7 +84,7 @@ function Loading() {
     <div className="app-bg grid min-h-screen place-items-center">
       <div className="flex flex-col items-center gap-3 text-dim">
         <Leaf className="anim-flicker text-gold" size={28} aria-hidden="true" />
-        <span className="font-pixel text-lg text-ink">{tr("Se încarcă aventura…")}</span>
+        <span className="font-display text-lg text-ink">{tr("Se încarcă aventura…")}</span>
       </div>
     </div>
   );
@@ -720,7 +721,7 @@ function Game() {
   const reviewInfo = { ...review, run: runReview, reviewMin, now };
 
   return (
-    <Shell view={view} setView={go} onFocus={() => setFocusSetup(true)} onReview={() => !state.reviews?.[today] && runReview(today)} d={d} state={state} unread={groups.unread} goalsDue={goalReminders.length} mode={store.mode} saveStatus={store.saveStatus} now={now}>
+    <Shell view={view} setView={go} onFocus={() => setFocusSetup(true)} d={d} state={state} unread={groups.unread} goalsDue={goalReminders.length} mode={store.mode} saveStatus={store.saveStatus} now={now}>
       {view === "home" && (
         <Dashboard
           {...common}
@@ -752,20 +753,6 @@ function Game() {
           }}
         />
       )}
-      {view === "habits" && (
-        <Habits
-          {...common}
-          focus={focusHabit}
-          setFocus={setFocusHabit}
-          onCheck={checkIn}
-          onAdd={() => setHabitEd({ tab: "catalog" })}
-          onAddHabit={(habit) => saveHabit(habit, { keepOpen: true })}
-          agent={agentActions}
-          onEdit={(habit) => setHabitEd({ habit, tab: "custom" })}
-          onArchive={archiveHabit}
-          onDelete={askDeleteHabit}
-        />
-      )}
       {view === "molt" && (
         <Molt
           {...common}
@@ -784,10 +771,22 @@ function Game() {
           onStateChange={update}
         />
       )}
-      {view === "group" && <Group {...common} groups={groups} />}
-      {(view === "plan" || view === "goals") && (
-        <PlanHub view={view} go={go} state={state} today={today} goalsDue={goalReminders.length}>
-          {view === "goals" ? (
+      {(view === "plan" || view === "goals" || view === "habits") && (
+        <PlanHub view={view} go={go} goalsDue={goalReminders.length}>
+          {view === "habits" ? (
+        <Habits
+          {...common}
+          focus={focusHabit}
+          setFocus={setFocusHabit}
+          onCheck={checkIn}
+          onAdd={() => setHabitEd({ tab: "catalog" })}
+          onAddHabit={(habit) => saveHabit(habit, { keepOpen: true })}
+          agent={agentActions}
+          onEdit={(habit) => setHabitEd({ habit, tab: "custom" })}
+          onArchive={archiveHabit}
+          onDelete={askDeleteHabit}
+        />
+      ) : view === "goals" ? (
             <Objectives
               {...common}
               goals={goalActions}
@@ -811,7 +810,9 @@ function Game() {
         </PlanHub>
       )}
       {view === "stats" && <Stats {...common} agent={agentActions} mode={store.mode} saveStatus={store.saveStatus} onFocus={() => setFocusSetup(true)} />}
-      {view === "settings" && (
+      {(view === "settings" || view === "group") && (
+        <TuHub view={view} go={go} unread={groups.unread}>
+        {view === "group" ? <Group {...common} groups={groups} /> : (
         <SettingsScreen
           {...common}
           mode={store.mode}
@@ -836,6 +837,8 @@ function Game() {
             })
           }
         />
+      )}
+        </TuHub>
       )}
 
       <FocusSetup key={String(focusSetup)} open={focusSetup} initial={focusPrefill} onStart={beginFocus} onClose={() => { setFocusSetup(false); setFocusPrefill(null); }} />

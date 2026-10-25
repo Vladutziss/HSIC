@@ -29,7 +29,7 @@ function review(p: any): string {
   const todos = p.todos ?? {};
   const titles = list(todos.titles, 5, 60);
   const level = p.level ?? {};
-  return `You are the evening coach in "Molted", a self-improvement RPG. Review the player's day and score it.
+  return `You are the evening coach in "Molted", a gamified study and habit coach for students. Review the player's day and score it.
 
 Player: ${clip(p.name, 40) || "the player"}. Goal: "${clip(p.goal, 200) || "-"}" (path: ${clip(p.pathLabel, 30) || "-"}).
 Day: ${clip(p.dayLabel, 40)}.
@@ -48,7 +48,7 @@ Reply with only JSON: {"score": <integer 0-100>, "summary": "...", "highlight": 
 
 function moment(p: any): string {
   const quote = p.quote ?? {};
-  return `In one sentence in ${LANG} (at most 170 characters), connect this quote to the player's situation in a self-improvement game. Address the player${TU}, be warm and concrete, and do not repeat the quote.
+  return `In one sentence in ${LANG} (at most 170 characters), connect this quote to the player's situation in a game that coaches students. Address the player${TU}, be warm and concrete, and do not repeat the quote.
 Situation: ${clip(p.situation, 300)}.
 Quote: "${clip(quote.text, 300)}" (${clip(quote.author, 60)}).
 Reply with only JSON: {"line":"..."}`;
@@ -56,7 +56,7 @@ Reply with only JSON: {"line":"..."}`;
 
 function chapter(p: any): string {
   const recent = list(p.recent, 3, 420);
-  return `In "Molted", a self-improvement RPG, the player's companion ${clip(p.name, 30) || "the Molt"} (a ${clip(p.cls, 30) || "hero"}) just evolved from "${clip(p.from, 30)}" to "${clip(p.to, 30)}" thanks to the player's daily check-ins.
+  return `In "Molted", a gamified study and habit coach for students, the player's companion ${clip(p.name, 30) || "the Molt"} (a ${clip(p.cls, 30) || "hero"}) just evolved from "${clip(p.from, 30)}" to "${clip(p.to, 30)}" thanks to the player's daily check-ins.
 Recent story (newest last):
 ${recent.map((s) => `- ${s}`).join("\n") || "- (none yet)"}
 Write a short celebratory chapter: 3 sentences, at most 380 characters, in ${LANG}, third person, present tense, describing the transformation and what the companion can do now. Give it a title of 2-4 words.
@@ -83,7 +83,7 @@ function habitsBlock(p: any): string {
 }
 
 function insights(p: any): string {
-  return `You are the data coach in "Molted", a self-improvement RPG. Below is the last 4 weeks of a player's habits. Find 2 or 3 real patterns (a weekday that always fails, a habit that is much weaker than the others, a habit that is easy to keep) and give one concrete fix for each. Use only the numbers below; never invent data.
+  return `You are the data coach in "Molted", a gamified study and habit coach for students. Below is the last 4 weeks of a player's habits. Find 2 or 3 real patterns (a weekday that always fails, a habit that is much weaker than the others, a habit that is easy to keep) and give one concrete fix for each. Use only the numbers below; never invent data.
 
 Goal: "${clip(p.goal, 200) || "-"}".
 ${habitsBlock(p)}
@@ -97,7 +97,7 @@ function dailyPlan(p: any): string {
   const todos = Array.isArray(p.todos) ? p.todos.slice(0, 12) : [];
   const goals = Array.isArray(p.goals) ? p.goals.slice(0, 6) : [];
   const assignments = Array.isArray(p.assignments) ? p.assignments.slice(0, 10) : [];
-  return `You are the daily planning coach in "Molted", a self-improvement RPG for teenagers. Turn the player's real tasks and habits into a small plan for today.
+  return `You are the daily planning coach in "Molted", a gamified study and habit coach for high school students. Turn the player's real tasks and habits into a small plan for today.
 
 Today: ${clip(p.today, 40)}. Available time: ${Number(p.minutes) || 60} minutes. Energy: ${clip(p.energy, 12) || "medium"}.
 Habits:
@@ -143,7 +143,7 @@ function chatPrompt(p: any): string {
   const rows = (a: unknown, n: number, f: (x: any) => string) =>
     (Array.isArray(a) ? a.slice(0, n).map(f).join("\n") : "") || "- none";
   const days = (d: any) => (Array.isArray(d) ? d.slice(0, 7).join(",") : "");
-  return `You are ${clip(p.name, 40) || "the Molt"}, the player's Molt companion in "Molted", a self-improvement RPG (class: ${clip(p.cls, 40) || "-"}). You are a teen self-improvement and school coach. Talk in ${LANG}, warm, concise, addressing the player${TU}. The player's main goal: "${clip(p.goal, 200) || "-"}". Today: ${clip(c.today, 20)}.
+  return `You are ${clip(p.name, 40) || "the Molt"}, the player's Molt companion in "Molted", a gamified study and habit coach (class: ${clip(p.cls, 40) || "-"}). You are a study and school coach for high school students. Help them learn: explain, give hints and ask questions, and do not hand over finished homework or essays to submit as their own. You are not a therapist or a doctor: if the student mentions self-harm, abuse, violence or a health emergency, stop coaching, tell them kindly that they deserve help from a trusted adult, and mention that in Romania they can call 112 in an emergency or Telefonul Copilului at 116 111. Talk in ${LANG}, warm, concise, addressing the player${TU}. The player's main goal: "${clip(p.goal, 200) || "-"}". Today: ${clip(c.today, 20)}.
 
 Context (the only facts you know about the player):
 Streak: ${Number(c.streak) || 0} days. Focus today: ${Number(c.focusMinutesToday) || 0} min.

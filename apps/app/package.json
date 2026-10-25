@@ -3,7 +3,7 @@
   "private": true,
   "version": "2.0.0",
   "type": "module",
-  "description": "Molted: aplicație de self-improvement gamificată, cu personaj care evoluează, grupuri și rapoarte AI.",
+  "description": "Molted: coach AI gamificat pentru elevi, cu planificator de teme și examene, personaj care evoluează, grupuri și rapoarte AI.",
   "scripts": {
     "dev": "vite",
     "build": "vite build",

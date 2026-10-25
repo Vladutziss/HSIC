@@ -11,6 +11,15 @@
 - Înainte de commit: `npm test` (regulile jocului) și `npm run build:artifact`.
 - Răspunsuri scurte, în română.
 
+## Interfața aplicației (minimalism)
+
+- Cinci locuri în meniu (`components/Shell.jsx`, `NAV`): Acasă, Plan (Calendar / Obiceiuri / Obiective, `screens/PlanHub.jsx`), Molt (Vorbește / Planifică / Înțelege / Molt, `screens/Molt.jsx`), Progres, Tu (Setări / Grup, `screens/TuHub.jsx`). Id-urile de vedere (`home`, `plan`, `goals`, `habits`, `molt`, `stats`, `settings`, `group`) rămân cele din `App.jsx`; hub-urile doar le grupează.
+- Reguli: fără titluri de pagină (meniul spune unde ești), titluri de secțiune neutre (`SectionTitle` nu mai are `tone`), fără colțuri decorative, un singur banner contextual pe Acasă, raportul de seară apare doar când e ora lui sau e gata. Culoarea are sens: gold = acțiunea principală, violet = Molt/AI, restul doar pentru stare.
+- Aspect plat: fără cer înstelat, fără gradiente și fără butoane „3D" (stilurile `.btn`, `.panel`, `.fill-*` din `apps/app/src/styles.css`; `shadow-key-*` din preset sunt `none`). Textul nu coboară sub 12 px (excepție: etichetele barei de jos). Clasa `font-display` a înlocuit `font-pixel` în aplicație (landing-ul o folosește încă pe cea veche).
+- Teme: doar `noapte` (dark) și `ceata` (light, afișată „Lumină"); id-urile vechi cad pe cea de același mod (`RETIRED` în `lib/themes.js`).
+- Poziționare: coach pentru elevi (README, concursul High School Innovation Challenge). Drumul Studiu e primul în `PATHS` și are obiecte școlare în catalog (`homework`, `exam`, `review`, `plan`); promptul AI și landing-ul spun „elevi", nu „self-improvement". Textele legale (`apps/web/content/*`) încă folosesc „self-improvement" și nu au fost schimbate (cer traducere RO/EN și teste).
+- Auditul și planul: `docs/FRONTEND_CLEANUP_PROMPT.md`.
+
 ## Backend (Supabase)
 
 - Aceeași sursă dă două build-uri: **web** (`npm run build`, Vite, în `apps/app`, `__SUPABASE__=true`, hosting pe Vercel) și **artifact** (`npm run build:artifact`, `__SUPABASE__=false`, fără supabase-js, rămâne demo fără sincronizare). Cod nou care atinge Supabase se ascunde în spatele `getClient()` din `apps/app/src/lib/supabase.js`.
@@ -39,5 +48,6 @@
 - Interfața aplicației e în română și engleză. Textul sursă e în română: orice text vizibil e `tr("text românesc {var}", { var })` din `apps/app/src/lib/i18n.js`; engleza se caută după același text în `apps/app/src/i18n/en.js`. Fără intrare în `en.js` textul rămâne românesc, iar `tests/i18n.test.mjs` pică (acoperire, placeholdere identice, chei rămase fără folosire, text românesc scăpat în afara `tr()`).
 - `"cuvânt§context"`: sufixul după `§` nu se afișează, dar face cheia diferită când același cuvânt românesc cere două traduceri.
 - Limba se alege o dată la încărcarea paginii (`?lang=` → alegerea salvată în `molted.prefs.lang` → `?hl=ro`, pus de `apps/app/middleware.js` pentru IP din RO/MD (fără cookie sau altă stocare, vezi `docs/LOCALIZATION.md`) → limba browserului, `ro-*` = română, altfel engleză); comutatorul din Setări (`LanguageSwitch`) salvează și reîncarcă. Contul păstrează alegerea în `settings.prefs.lang`.
+- Ora: `fmt12`/`fmtHour12` (`lib/dates.js`) scriu 24 de ore în română („21:00") și 12 în engleză; `TimeSelect` are coloană 0–23 în română, fără AM/PM. Plural: evită „{n} zile/misiuni" când n poate fi 1 (folosește `zi`/`zile` sau formulări neutre, ca „Misiuni: {n}").
 - Nu compara niciodată în cod șiruri traduse (ex. „azi”); folosește valori (`diffDays`) sau ID-uri.
 - AI: clientul trimite `lang` către `ai`/`agent`; `weekly` și `push` citesc `profiles.settings.prefs.lang`. Funcțiile Edge folosesc copii ale bibliotecilor aplicației (`_shared/app`) cu un `i18n.js` fără React (`scripts/server-i18n.js`, copiat de `npm run sync:functions`), deci acolo rămâne româna.

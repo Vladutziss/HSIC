@@ -82,7 +82,7 @@ function CreateJoin({ groups }) {
   return (
     <div className="grid gap-4 md:grid-cols-2">
       <Panel className="space-y-4 p-4 sm:p-5">
-        <SectionTitle icon={Users} tone="gold">{tr("Creează")}</SectionTitle>
+        <SectionTitle icon={Users}>{tr("Creează")}</SectionTitle>
         <Tabs
           value={kind}
           onChange={setKind}
@@ -99,10 +99,10 @@ function CreateJoin({ groups }) {
         {groups.limits[kind].used >= groups.limits[kind].max && <p className="text-xs font-semibold text-ember">{limitText(kind)}</p>}
       </Panel>
       <Panel className="space-y-4 p-4 sm:p-5">
-        <SectionTitle icon={UserPlus} tone="sky">{tr("Intră cu un cod")}</SectionTitle>
+        <SectionTitle icon={UserPlus}>{tr("Intră cu un cod")}</SectionTitle>
         <p className="text-sm text-body">{tr("Cere codul de 6 caractere de la cineva din grup. Toți membrii trebuie să poată deschide această aplicație.")}</p>
         <Field label={tr("Cod")} htmlFor="group-code">
-          <input id="group-code" className="field font-pixel text-lg uppercase tracking-[0.3em]" value={code} maxLength={6} placeholder="K7P2QX" onChange={(e) => setCode(e.target.value.toUpperCase())} />
+          <input id="group-code" className="field font-display text-lg uppercase tracking-[0.3em]" value={code} maxLength={6} placeholder="K7P2QX" onChange={(e) => setCode(e.target.value.toUpperCase())} />
         </Field>
         <Button variant="violet" icon={Check} busy={busy === "join"} disabled={code.trim().length < 6} onClick={join}>{tr("Intră în grup")}</Button>
       </Panel>
@@ -116,8 +116,8 @@ function Leaderboard({ g, loading }) {
   const ranked = useMemo(() => [...g.members].sort((a, b) => (b[by] || 0) - (a[by] || 0)), [g.members, by]);
   const unit = { weekGain: "momentum", momentum: tr("puncte"), streak: tr("zile") }[by];
   return (
-    <Panel tone="gold" corners className="p-4 sm:p-5">
-      <SectionTitle icon={Crown} tone="gold" sub={tr("Se resetează în fiecare luni")} action={null}>{tr("Clasament")}</SectionTitle>
+    <Panel tone="gold" className="p-4 sm:p-5">
+      <SectionTitle icon={Crown} sub={tr("Se resetează în fiecare luni")} action={null}>{tr("Clasament")}</SectionTitle>
       <Tabs
         className="mb-4"
         size="sm"
@@ -148,7 +148,7 @@ function Leaderboard({ g, loading }) {
                 ) : rank <= 3 ? (
                   <Medal size={18} className={rank === 2 ? "text-body" : "text-ember"} aria-label={tr("Locul {rank}", { rank })} />
                 ) : (
-                  <span className="font-pixel text-lg text-dim">{rank}</span>
+                  <span className="font-display text-lg text-dim">{rank}</span>
                 )}
               </span>
               <span className="pedestal grid h-11 w-11 shrink-0 place-items-center rounded-xl">
@@ -172,8 +172,8 @@ function Leaderboard({ g, loading }) {
               </div>
               <LevelBadge lvl={m.level || 1} size={30} tone={m.isMe ? "gold" : "violet"} />
               <div className="w-16 shrink-0 text-right sm:w-20">
-                <div className="font-pixel tabular text-xl leading-none text-ink">{m[by] || 0}</div>
-                <div className="text-[10px] font-extrabold uppercase tracking-wider text-dim">{unit}</div>
+                <div className="font-display tabular text-xl leading-none text-ink">{m[by] || 0}</div>
+                <div className="text-xs font-extrabold uppercase tracking-wider text-dim">{unit}</div>
               </div>
             </li>
           );
@@ -252,13 +252,12 @@ function ChatPanel({ g, groups, loading }) {
     <Panel className="p-4 sm:p-5">
       <SectionTitle
         icon={Inbox}
-        tone="violet"
         className="flex-wrap gap-y-2"
         sub={tr("Încurajări între voi, ca într-un chat")}
         action={
           unread ? (
             <div className="flex flex-wrap items-center justify-end gap-2">
-              <Chip tone="violet">{tr("{unread} necitite", { unread })}</Chip>
+              <Chip>{tr("{unread} necitite", { unread })}</Chip>
               <Button size="sm" variant="ghost" icon={CheckCheck} busy={markingAll} disabled={markingAll} onClick={markAll}>{tr("Marchează toate citite")}</Button>
             </div>
           ) : null
@@ -282,7 +281,7 @@ function ChatPanel({ g, groups, loading }) {
               <React.Fragment key={`${n.mine ? "o" : "i"}-${n.id}`}>
                 {divider && (
                   <div className="flex justify-center py-1.5">
-                    <span className="rounded-full bg-panel px-3 py-0.5 text-[11px] font-extrabold uppercase tracking-wider text-dim ring-1 ring-edge">{dayLabel(day)}</span>
+                    <span className="rounded-full bg-panel px-3 py-0.5 text-xs font-extrabold uppercase tracking-wider text-dim ring-1 ring-edge">{dayLabel(day)}</span>
                   </div>
                 )}
                 <div className={`flex items-end gap-2 ${n.mine ? "justify-end" : "justify-start"}`}>
@@ -298,7 +297,7 @@ function ChatPanel({ g, groups, loading }) {
                     >
                       {n.text}
                     </p>
-                    <span className="mt-0.5 flex items-center gap-2 px-1 text-[11px] font-semibold text-faint">
+                    <span className="mt-0.5 flex items-center gap-2 px-1 text-xs font-semibold text-faint">
                       {n.mine && toNames && <span className="truncate">{tr("către {toNames} ·", { toNames })}</span>}
                       {clock(n.at)}
                       {!n.mine && !n.read && (
@@ -402,9 +401,9 @@ function GroupView({ g, groups, loading }) {
           {g.info.kind === "partner" ? <Handshake size={24} aria-hidden="true" /> : <Users size={24} aria-hidden="true" />}
         </span>
         <div className="min-w-[200px] flex-1">
-          <h2 className="font-pixel text-2xl text-ink">{g.info.name || tr("Grup")}</h2>
+          <h2 className="font-display text-2xl text-ink">{g.info.name || tr("Grup")}</h2>
           <div className="flex flex-wrap items-center gap-2 text-xs font-bold text-dim">
-            <Chip tone="sky">{g.info.kind === "partner" ? tr("Partener de progres") : tr("Grup de self-improvement")}</Chip>
+            <Chip tone="sky">{g.info.kind === "partner" ? tr("Partener de progres") : tr("Grup de studiu")}</Chip>
             <span>
               {g.members.length} {g.members.length === 1 ? tr("membru") : tr("membri")}
             </span>
@@ -412,7 +411,7 @@ function GroupView({ g, groups, loading }) {
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <button type="button" onClick={copy} className="focus-ring inline-flex items-center gap-2 rounded-xl bg-well px-3 py-2 ring-1 ring-edge hover:ring-gold/60" aria-label={tr("Copiază codul {code}", { code: g.info.code })}>
-            <span className="font-pixel text-lg tracking-[0.25em] text-gold-hi">{g.info.code}</span>
+            <span className="font-display text-lg tracking-[0.25em] text-gold-hi">{g.info.code}</span>
             <Copy size={15} className="text-dim" aria-hidden="true" />
           </button>
           <DeleteButton icon={LogOut} title={tr("Ieși din grup")} label={tr("Ieși din grupul {v}", { v: g.info.name || "" }).trim()} onClick={() => setLeaving(true)} />
@@ -450,10 +449,7 @@ export default function Group({ groups }) {
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="font-pixel text-3xl text-ink">{tr("Grup")}</h1>
-          <p className="text-sm font-semibold text-dim">{tr("Progres împreună: clasament săptămânal și remindere între prieteni.")}</p>
-        </div>
+        <div />
         {groups.cloud && list.length > 0 && (
           <Button variant="ghost" size="sm" icon={adding ? X : UserPlus} onClick={() => setAdding((x) => !x)}>
             {adding ? tr("Anulează") : tr("Grup nou sau cod")}

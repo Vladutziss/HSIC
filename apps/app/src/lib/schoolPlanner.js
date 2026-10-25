@@ -1,4 +1,4 @@
-import { diffDays } from "./dates.js";
+import { addDays, diffDays } from "./dates.js";
 
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -61,4 +61,76 @@ export function studiedMinutes(state, day, subject) {
   return schoolPlanner(state)
     .sessions.filter((s) => s.day === day && (!key || String(s.subject || "").trim().toLowerCase() === key))
     .reduce((n, s) => n + (Number(s.minutes) || 0), 0);
+}
+
+// ------------------------------------------------------------ writing (the Acasă card; no AI involved)
+// These take the current `schoolPlanner` object and return the next one, so the screen only calls onStateChange.
+
+/** A new assignment or exam typed by the student. `kind` is "assignment" or "exam"; returns the planner unchanged for an empty title. */
+export function addSchoolItem(planner, kind, raw, today, id = `${kind === "exam" ? "e" : "a"}-${Date.now()}`) {
+  const p = { ...planner, assignments: planner.assignments || [], exams: planner.exams || [], sessions: planner.sessions || [] };
+  if (kind === "exam") {
+    const exam = normalizeExams([raw], today)[0];
+    return exam ? { ...p, exams: [...p.exams, { ...exam, id, done: false }] } : planner;
+  }
+  const a = normalizeAssignments([raw], today)[0];
+  return a ? { ...p, assignments: [...p.assignments, { ...a, id, done: false }] } : planner;
+}
+
+/** Ticks (or unticks) one assignment or exam by id. */
+export function setSchoolDone(planner, kind, id, done) {
+  const key = kind === "exam" ? "exams" : "assignments";
+  return { ...planner, [key]: (planner[key] || []).map((x) => (x.id === id ? { ...x, done: !!done } : x)) };
+}
+
+/** One logged study block against a subject / assignment; unchanged when the minutes are not valid. */
+export function addStudySession(planner, raw, today, id = `s-${Date.now()}`) {
+  const s = normalizeSession(raw, today);
+  return s ? { ...planner, sessions: [...(planner.sessions || []), { ...s, id }] } : planner;
+}
+
+/** The seven days ending today: minutes per day and per subject (blank subjects count as "no subject"), for Progres. */
+export function studyWeek(state, today) {
+  const sessions = schoolPlanner(state).sessions;
+  const days = [];
+  for (let i = 6; i >= 0; i--) {
+    const day = addDays(today, -i);
+    days.push({ day, minutes: sessions.filter((s) => s.day === day).reduce((n, s) => n + (Number(s.minutes) || 0), 0) });
+  }
+  const from = days[0].day;
+  const subjects = new Map();
+  for (const s of sessions) {
+    if (s.day < from || s.day > today) continue;
+    const name = String(s.subject || "").trim();
+    subjects.set(name, (subjects.get(name) || 0) + (Number(s.minutes) || 0));
+  }
+  const bySubject = [...subjects.entries()].map(([subject, minutes]) => ({ subject, minutes })).sort((a, b) => b.minutes - a.minutes);
+  return { total: days.reduce((n, d) => n + d.minutes, 0), days, bySubject };
+}
+
+// ------------------------------------------------------------ exam preparation plan
+// Study blocks spread over the days before an exam instead of one evening, the last one a self-test. The two ideas are the
+// ones Dunlosky et al. (2013) rated highest (distributed practice and practice testing); see knowledge/dunlosky-2013.md.
+// No AI: the dates come from the exam date, the titles from the subject the student typed.
+
+export const PLAN_MAX_SESSIONS = 5;
+
+/**
+ * Sessions from today up to the day before the exam: `{ i, n, date, last }`, evenly spaced, at most PLAN_MAX_SESSIONS.
+ * Fewer than two free days (exam today, tomorrow or past) gives an empty plan.
+ */
+export function examPlan(exam, today) {
+  if (!exam?.date || !DATE.test(exam.date)) return [];
+  const free = diffDays(today, exam.date); // today .. the day before the exam
+  if (free < 2) return [];
+  const n = Math.min(PLAN_MAX_SESSIONS, free);
+  return Array.from({ length: n }, (_, i) => ({ i: i + 1, n, date: addDays(today, n === 1 ? 0 : Math.round((i * (free - 1)) / (n - 1))), last: i === n - 1 }));
+}
+
+/** The plan as to-do drafts (no id): `title(session)` builds the text so the screen can translate it. Skips a to-do that already exists on that day. */
+export function examPlanTodos(exam, today, existing, title, dur = 45) {
+  const have = new Set((existing || []).map((t) => `${t.date}|${t.title}`));
+  return examPlan(exam, today)
+    .map((s) => ({ title: title(s), date: s.date, dur }))
+    .filter((t) => !have.has(`${t.date}|${t.title}`));
 }

@@ -97,7 +97,7 @@ export function MomentumChart({ days, height = 280 }) {
               <ChartTip
                 format={{ momentum: (v, p) => tr("{v} (nivel {level})", { v, level: p.level }) }}
                 extra={(p) => (
-                  <div className="mt-1 text-[11px] font-semibold text-dim">{tr("+{gain} în ziua aceea{v}", { gain: p.gain, v: p.closed ? tr(" · scor {score}", { score: p.score }) : tr(" · provizoriu") })}{p.reset && <span className="ml-1 font-extrabold text-rose">{tr("· resetat")}</span>}
+                  <div className="mt-1 text-xs font-semibold text-dim">{tr("+{gain} în ziua aceea{v}", { gain: p.gain, v: p.closed ? tr(" · scor {score}", { score: p.score }) : tr(" · provizoriu") })}{p.reset && <span className="ml-1 font-extrabold text-rose">{tr("· resetat")}</span>}
                   </div>
                 )}
               />
@@ -219,13 +219,13 @@ export function Heatmap({ today, weeks = 20, size = 14, cell, legend = true, lab
       <div className="inline-grid" style={{ gap, gridTemplateColumns: `22px repeat(${weeks}, ${size}px)` }}>
         <span />
         {cols.map((days, w) => (
-          <span key={w} className="h-4 overflow-visible whitespace-nowrap text-[10px] font-extrabold text-dim">
+          <span key={w} className="h-4 overflow-visible whitespace-nowrap text-xs font-extrabold text-dim">
             {labels[w] || ""}
           </span>
         ))}
         {[0, 1, 2, 3, 4, 5, 6].map((row) => (
           <React.Fragment key={row}>
-            <span className="pr-1 text-right text-[10px] font-extrabold text-faint" style={{ lineHeight: `${size}px` }}>
+            <span className="pr-1 text-right text-xs font-extrabold text-faint" style={{ lineHeight: `${size}px` }}>
               {row % 2 === 0 ? RO_DAYS_MIN[(row + 1) % 7] : ""}
             </span>
             {cols.map((days, w) => {
@@ -245,7 +245,7 @@ export function Heatmap({ today, weeks = 20, size = 14, cell, legend = true, lab
         ))}
       </div>
       {legend && (
-        <div className="mt-2 flex items-center gap-1.5 text-[11px] font-bold text-dim">{tr("Mai puțin")}{HEAT.map((c) => (
+        <div className="mt-2 flex items-center gap-1.5 text-xs font-bold text-dim">{tr("Mai puțin")}{HEAT.map((c) => (
             <span key={c} className="h-3 w-3 rounded-[3px]" style={{ background: c }} />
           ))}{tr("Mai mult")}</div>
       )}

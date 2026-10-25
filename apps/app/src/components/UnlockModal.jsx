@@ -56,7 +56,7 @@ export function UnlockModal({ ids, state, d, onWear, onOpen, onClose }) {
           {items.map((i) => (
             <li key={i.id} className="inset flex items-center gap-3 p-3">
               <div className="min-w-0 flex-1">
-                <p className="font-pixel text-lg leading-tight text-ink">{i.name}</p>
+                <p className="font-display text-lg leading-tight text-ink">{i.name}</p>
                 <p className="text-xs font-semibold text-dim">{SLOT_LABEL[i.slot]}</p>
               </div>
               <Chip tone={RARITY_TONE[i.rarity]}>{RARITY_LABEL[i.rarity]}</Chip>
