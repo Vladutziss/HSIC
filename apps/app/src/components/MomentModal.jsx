@@ -70,14 +70,14 @@ export function MomentModal({ moment, state, d, ai, recentStories, onName, onCha
         <div className="anim-pop">
           <LevelBadge lvl={moment.lvl} size={112} />
         </div>
-        <div className="font-pixel text-2xl text-gold-hi">{moment.name}</div>
+        <div className="font-display text-2xl text-gold-hi">{moment.name}</div>
       </div>
     );
   } else if (moment.type === "streak") {
     hero = (
       <div className="flex flex-col items-center gap-1">
         <Flame size={84} className="anim-flicker text-ember" fill={tc("ember")} aria-hidden="true" />
-        <div className="font-pixel text-4xl text-ink">{tr("{n} zile", { n: moment.n })}</div>
+        <div className="font-display text-4xl text-ink">{tr("{n} zile", { n: moment.n })}</div>
       </div>
     );
   } else {
@@ -110,12 +110,12 @@ export function MomentModal({ moment, state, d, ai, recentStories, onName, onCha
     >
       <div className="flex flex-col items-center gap-4 text-center">
         <span className="text-xs font-extrabold uppercase tracking-[0.25em] text-gold">{tr("Moment-cheie")}</span>
-        <h2 id="moment-title" className="font-pixel text-3xl leading-tight text-ink">
+        <h2 id="moment-title" className="font-display text-3xl leading-tight text-ink">
           {meta.title}
         </h2>
         {hero}
         {line.status !== "off" && (
-          <p className="max-w-md text-[15px] font-semibold leading-relaxed text-body" aria-live="polite">
+          <p className="max-w-md text-sm font-semibold leading-relaxed text-body" aria-live="polite">
             {line.status === "ok" ? line.text : line.status === "busy" ? tr("AI-ul scrie…") : tr("AI-ul nu a răspuns de data asta.")}
           </p>
         )}
@@ -149,7 +149,7 @@ export function MomentModal({ moment, state, d, ai, recentStories, onName, onCha
         {quote && (
           <figure className="panel panel-gold w-full p-4 text-left">
             <Quote size={20} className="mb-1 text-gold" aria-hidden="true" />
-            <blockquote className="text-[15px] font-semibold italic leading-relaxed text-ink">„{quote.text}”</blockquote>
+            <blockquote className="text-sm font-semibold italic leading-relaxed text-ink">„{quote.text}”</blockquote>
             <figcaption className="mt-2 text-xs font-bold text-dim">
               <span className="text-gold-hi">{quote.author}</span> · {quote.source}
             </figcaption>

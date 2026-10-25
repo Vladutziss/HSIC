@@ -75,7 +75,7 @@ export function DifficultyPicker({ value, onChange }) {
         >
           <Gems n={n} size={13} />
           <span className="text-sm font-extrabold text-ink">{DIFF[n].label}</span>
-          <span className="text-[11px] font-bold text-gold-hi">{tr("+{xp} momentum", { xp: DIFF[n].xp })}</span>
+          <span className="text-xs font-bold text-gold-hi">{tr("+{xp} momentum", { xp: DIFF[n].xp })}</span>
         </button>
       ))}
     </div>
@@ -115,7 +115,7 @@ function CatalogTab({ state, today, onAdd }) {
               </span>
               <div className="min-w-0 flex-1">
                 <div className="truncate text-sm font-extrabold text-ink">{c.name}</div>
-                <div className="flex items-center gap-2 text-[11px] font-bold text-dim">
+                <div className="flex items-center gap-2 text-xs font-bold text-dim">
                   <Gems n={c.diff} size={10} />
                   <span className="truncate">{scheduleLabel(c.days)}</span>
                 </div>

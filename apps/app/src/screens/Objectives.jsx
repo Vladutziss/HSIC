@@ -8,7 +8,6 @@ import {
   ArrowUp,
   Archive,
   Bell,
-  BellRing,
   CalendarClock,
   CalendarPlus,
   CheckCircle2,
@@ -17,7 +16,6 @@ import {
   Flame,
   Gift,
   Heart,
-  Lightbulb,
   Mountain,
   NotebookPen,
   Pencil,
@@ -48,7 +46,6 @@ import {
   nextStep,
   pace,
   pct,
-  recentActivity,
   statusLabel,
 } from "../lib/objectives.js";
 import { tr } from "../lib/i18n.js";
@@ -82,7 +79,7 @@ function ProgressTrack({ o, today, big = false }) {
   return (
     <div>
       <div className="mb-1.5 flex items-end justify-between gap-2">
-        <span className={`font-pixel tabular leading-none text-ink ${big ? "text-4xl" : "text-2xl"}`}>{value}%</span>
+        <span className={`font-display tabular leading-none text-ink ${big ? "text-4xl" : "text-2xl"}`}>{value}%</span>
         <span className="text-xs font-bold text-dim">{o.doneOn ? tr("atins {fmtDay}", { fmtDay: fmtDay(o.doneOn) }) : p.daysLeft != null ? daysLeftLabel(p) : tr("fără termen")}</span>
       </div>
       <div className="relative">
@@ -100,24 +97,9 @@ function ProgressTrack({ o, today, big = false }) {
         )}
       </div>
       {big && p.timeShare != null && p.status !== "late" && (
-        <p className="mt-1.5 flex items-center gap-1.5 text-[11px] font-bold text-dim">
+        <p className="mt-1.5 flex items-center gap-1.5 text-xs font-bold text-dim">
           <span className="inline-block h-2.5 w-0.5 rounded bg-sky" aria-hidden="true" />{" "}{tr("linia albastră: cât din timp a trecut ({round}%)", { round: Math.round(p.timeShare * 100) })}</p>
       )}
-    </div>
-  );
-}
-
-function ActivityStrip({ o, today }) {
-  const days = recentActivity(o, today, 14);
-  return (
-    <div className="flex items-end gap-1" aria-label={tr("Activitate în ultimele 14 zile")}>
-      {days.map(({ day, count }) => (
-        <span
-          key={day}
-          title={`${fmtDay(day)}: ${count ? `${count} ${plural(count, tr("pas"), tr("pași"), tr("de pași"))}` : tr("nimic")}`}
-          className={`h-4 flex-1 rounded-sm ${count >= 3 ? "bg-gold" : count === 2 ? "bg-gold/70" : count === 1 ? "bg-gold/40" : "bg-well ring-1 ring-edge"}`}
-        />
-      ))}
     </div>
   );
 }
@@ -127,8 +109,8 @@ function ActivityStrip({ o, today }) {
 function GoalCard({ o, today, onOpen, onStep, onSub }) {
   const n = nextStep(o);
   const p = pace(o, today);
-  const streak = goalStreak(o, today);
   const idle = idleDays(o, today);
+  const streak = goalStreak(o, today);
   return (
     <Panel className="flex flex-col gap-4 p-4 sm:p-5">
       <div className="flex items-start gap-3">
@@ -158,7 +140,7 @@ function GoalCard({ o, today, onOpen, onStep, onSub }) {
             onClick={() => (n.sub ? onSub(o.id, n.step.id, n.sub.id) : onStep(o.id, n.step.id))}
           />
           <div className="min-w-0">
-            <div className="text-[10px] font-extrabold uppercase tracking-wider text-gold-hi">{tr("Următorul pas")}</div>
+            <div className="text-xs font-extrabold uppercase tracking-wider text-gold-hi">{tr("Următorul pas")}</div>
             <div className="truncate text-sm font-bold text-ink">{n.sub ? `${n.step.title} → ${n.sub.title}` : n.step.title}</div>
           </div>
         </div>
@@ -390,7 +372,7 @@ export function Celebration({ data, state, onClose }) {
         </span>
         <div>
           <div className="text-xs font-extrabold uppercase tracking-widest text-gold-hi">{done ? tr("Obiectiv atins") : tr("{mark}% din drum", { mark })}</div>
-          <h2 className="mt-1 font-pixel text-2xl text-ink">{o.title}</h2>
+          <h2 className="mt-1 font-display text-2xl text-ink">{o.title}</h2>
         </div>
         <p className="max-w-sm text-sm font-semibold text-body">
           {done
@@ -441,7 +423,7 @@ function StepRow({ o, s, i, count, today, act }) {
         <CheckButton size="sm" checked={!!s.done} label={`${s.done ? tr("Debifează") : tr("Bifează")}: ${s.title}`} onClick={() => act.toggleStep(o.id, s.id)} />
         <button type="button" className="focus-ring min-w-0 flex-1 rounded text-left" onClick={() => setOpen((v) => !v)} aria-expanded={open}>
           <span className={`block text-sm font-bold ${s.done ? "text-dim line-through" : "text-ink"}`}>{s.title}</span>
-          <span className="flex flex-wrap gap-x-2 text-[11px] font-bold text-dim">
+          <span className="flex flex-wrap gap-x-2 text-xs font-bold text-dim">
             {subs.length > 0 && <span>{tr("{doneSubs}/{length} sub-pași", { doneSubs, length: subs.length })}</span>}
             {s.date && <span>{tr("în plan: {relDay}", { relDay: relDay(s.date, today) })}</span>}
             {s.done && s.doneOn && <span>{tr("gata {fmtDay}", { fmtDay: fmtDay(s.doneOn) })}</span>}
@@ -518,9 +500,9 @@ function MetricPanel({ o, act }) {
   const history = (o.log || []).filter((e) => e.kind === "metric").slice(-6);
   return (
     <Panel className="p-4 sm:p-5">
-      <SectionTitle icon={TrendingUp} tone="sky" sub={tr("de la {start} la {target} {unit}", { start: m.start, target: m.target, unit: m.unit })}>{tr("Numărul tău")}</SectionTitle>
+      <SectionTitle icon={TrendingUp} sub={tr("de la {start} la {target} {unit}", { start: m.start, target: m.target, unit: m.unit })}>{tr("Numărul tău")}</SectionTitle>
       <div className="flex items-end gap-2">
-        <span className="font-pixel tabular text-4xl leading-none text-ink">{m.value ?? m.start}</span>
+        <span className="font-display tabular text-4xl leading-none text-ink">{m.value ?? m.start}</span>
         <span className="pb-1 text-sm font-bold text-dim">
           / {m.target} {m.unit}
         </span>
@@ -555,7 +537,7 @@ function Journal({ o, today, act }) {
   };
   return (
     <Panel className="p-4 sm:p-5">
-      <SectionTitle icon={NotebookPen} tone="violet" sub={tr("Ce ai învățat, ce te-a blocat, ce urmează")}>{tr("Jurnal")}</SectionTitle>
+      <SectionTitle icon={NotebookPen} sub={tr("Ce ai învățat, ce te-a blocat, ce urmează")}>{tr("Jurnal")}</SectionTitle>
       <form onSubmit={submit} className="space-y-2">
         <textarea className="field min-h-[70px]" maxLength={280} value={text} onChange={(e) => setText(e.target.value)} placeholder={tr("Azi am…")} aria-label={tr("Notă nouă")} />
         <Button size="sm" variant="violet" type="submit" disabled={!text.trim()} icon={Plus}>{tr("Adaugă nota")}</Button>
@@ -564,7 +546,7 @@ function Journal({ o, today, act }) {
         <ol className="mt-4 space-y-2.5">
           {notes.map((e) => (
             <li key={e.id} className="border-l-2 border-violet/50 pl-3">
-              <div className="text-[11px] font-extrabold uppercase tracking-wider text-dim">{relDay(e.day, today)}</div>
+              <div className="text-xs font-extrabold uppercase tracking-wider text-dim">{relDay(e.day, today)}</div>
               <p className="text-sm font-semibold text-body">{e.text}</p>
             </li>
           ))}
@@ -579,7 +561,6 @@ function Journal({ o, today, act }) {
 function Detail({ o, state, d, today, act, onBack, onEdit, go }) {
   const [step, setStep] = useState("");
   const p = pace(o, today);
-  const streak = goalStreak(o, today);
   const steps = o.steps || [];
   const doneSteps = steps.filter((s) => s.done).length;
   const habits = (state.habits || []).filter((h) => (o.habitIds || []).includes(h.id));
@@ -618,91 +599,70 @@ function Detail({ o, state, d, today, act, onBack, onEdit, go }) {
         </div>
       </div>
 
-      <Panel tone="gold" corners className="p-5 sm:p-6">
-        <div className="flex flex-col gap-5 md:flex-row md:items-start">
-          <div className="flex min-w-0 flex-1 items-start gap-4">
-            <GoalIcon o={o} size={64} />
-            <div className="min-w-0">
-              <div className="text-[11px] font-extrabold uppercase tracking-widest text-gold-hi">{tr("Obiectiv{v}", { v: o.deadline ? tr(" · până {fmtLong}", { fmtLong: fmtLong(o.deadline) }) : "" })}</div>
-              <h1 className="font-pixel text-3xl leading-tight text-ink">{o.title}</h1>
-              {o.why && (
-                <p className="mt-2 flex gap-2 text-sm font-semibold text-body">
-                  <Heart size={16} className="mt-0.5 shrink-0 text-rose" aria-hidden="true" />
-                  <span className="italic">„{o.why}”</span>
-                </p>
-              )}
-              {o.reward && (
-                <p className="mt-1.5 flex gap-2 text-sm font-semibold text-body">
-                  <Gift size={16} className="mt-0.5 shrink-0 text-gold" aria-hidden="true" />
-                  <span>{tr("La final: {reward}", { reward: o.reward })}</span>
-                </p>
-              )}
-            </div>
-          </div>
-          <div className="grid shrink-0 grid-cols-3 gap-2 text-center md:w-72">
-            <div className="inset px-2 py-2">
-              <div className="font-pixel text-xl text-ink">
-                {doneSteps}/{steps.length}
-              </div>
-              <div className="text-[10px] font-extrabold uppercase tracking-wider text-dim">{tr("pași")}</div>
-            </div>
-            <div className="inset px-2 py-2">
-              <div className="font-pixel text-xl text-ink">{streak}</div>
-              <div className="text-[10px] font-extrabold uppercase tracking-wider text-dim">{tr("zile la rând")}</div>
-            </div>
-            <div className="inset px-2 py-2">
-              <div className={`font-pixel text-xl ${PACE_TONE[p.status] === "rose" ? "text-rose" : "text-ink"}`}>{p.daysLeft == null ? "–" : Math.abs(p.daysLeft)}</div>
-              <div className="text-[10px] font-extrabold uppercase tracking-wider text-dim">{p.status === "late" ? tr("zile peste") : tr("zile rămase")}</div>
-            </div>
+      <Panel className="p-5 sm:p-6">
+        <div className="flex min-w-0 items-start gap-4">
+          <GoalIcon o={o} size={56} />
+          <div className="min-w-0">
+            <h1 className="font-display text-2xl leading-tight text-ink sm:text-3xl">{o.title}</h1>
+            {o.deadline && <div className="mt-0.5 text-xs font-bold text-dim">{tr("până {fmtLong}", { fmtLong: fmtLong(o.deadline) })}</div>}
+            {o.why && (
+              <p className="mt-2 flex gap-2 text-sm font-semibold text-body">
+                <Heart size={16} className="mt-0.5 shrink-0 text-rose" aria-hidden="true" />
+                <span className="italic">„{o.why}”</span>
+              </p>
+            )}
+            {o.reward && (
+              <p className="mt-1.5 flex gap-2 text-sm font-semibold text-body">
+                <Gift size={16} className="mt-0.5 shrink-0 text-gold" aria-hidden="true" />
+                <span>{tr("La final: {reward}", { reward: o.reward })}</span>
+              </p>
+            )}
           </div>
         </div>
         <div className="mt-5">
           <ProgressTrack o={o} today={today} big />
         </div>
-        <div className="mt-4 flex flex-wrap items-center gap-2">
+        <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm font-bold text-dim">
+          <span>
+            {doneSteps}/{steps.length} {tr("pași")}
+          </span>
           <Chip tone={PACE_TONE[p.status]} icon={TrendingUp}>
             {statusLabel[p.status]}
           </Chip>
-          {MARKS.map((m) => (
-            <Chip key={m} tone={pct(o) >= m ? "gold" : "dim"} icon={Flag}>
-              {m}%
-            </Chip>
-          ))}
-        </div>
-        <div className="mt-4">
-          <div className="mb-1 text-[10px] font-extrabold uppercase tracking-wider text-dim">{tr("Ultimele 14 zile")}</div>
-          <ActivityStrip o={o} today={today} />
         </div>
       </Panel>
 
-      <div className="grid gap-5 lg:grid-cols-12">
-        <div className="min-w-0 space-y-5 lg:col-span-7">
-          <Panel className="p-4 sm:p-5">
-            <SectionTitle icon={Flag} sub={tr("Bifează pașii mici; fiecare bifă aduce momentum ca un to-do (+5)")}>{tr("Pașii")}</SectionTitle>
-            {steps.length > 0 ? (
-              <ol className="space-y-2">
-                {steps.map((s, i) => (
-                  <StepRow key={s.id} o={o} s={s} i={i} count={steps.length} today={today} act={act} />
-                ))}
-              </ol>
-            ) : (
-              <p className="inset p-4 text-center text-sm font-semibold text-dim">{tr("Împarte obiectivul în pași mici, de o zi sau două fiecare.")}</p>
-            )}
-            {steps.length < MAX_STEPS && (
-              <form onSubmit={addStep} className="mt-3 flex gap-2">
-                <input className="field flex-1" value={step} maxLength={MAX_TITLE} onChange={(e) => setStep(e.target.value)} placeholder={tr("Pas nou")} aria-label={tr("Pas nou")} />
-                <Button type="submit" icon={Plus}>{tr("Adaugă")}</Button>
-              </form>
-            )}
-          </Panel>
-          <Journal o={o} today={today} act={act} />
-        </div>
+      <Panel className="p-4 sm:p-5">
+        <SectionTitle icon={Flag}>{tr("Pașii")}</SectionTitle>
+        {steps.length > 0 ? (
+          <ol className="space-y-2">
+            {steps.map((s, i) => (
+              <StepRow key={s.id} o={o} s={s} i={i} count={steps.length} today={today} act={act} />
+            ))}
+          </ol>
+        ) : (
+          <p className="inset p-4 text-center text-sm font-semibold text-dim">{tr("Împarte obiectivul în pași mici, de o zi sau două fiecare.")}</p>
+        )}
+        {steps.length < MAX_STEPS && (
+          <form onSubmit={addStep} className="mt-3 flex gap-2">
+            <input className="field flex-1" value={step} maxLength={MAX_TITLE} onChange={(e) => setStep(e.target.value)} placeholder={tr("Pas nou")} aria-label={tr("Pas nou")} />
+            <Button type="submit" icon={Plus}>{tr("Adaugă")}</Button>
+          </form>
+        )}
+      </Panel>
 
-        <div className="min-w-0 space-y-5 lg:col-span-5">
-          <MetricPanel o={o} act={act} />
-          <Panel className="p-4 sm:p-5">
-            <SectionTitle icon={Sparkles} tone="mint" sub={tr("Obiceiurile care te duc spre obiectiv")}>{tr("Obiceiuri legate")}</SectionTitle>
-            {habits.length ? (
+      <MetricPanel o={o} act={act} />
+
+      <details className="group">
+        <summary className="focus-ring flex cursor-pointer list-none items-center justify-between rounded-xl bg-well px-4 py-3 text-sm font-extrabold text-body ring-1 ring-edge hover:text-ink">
+          {tr("Mai multe detalii")}
+          <ChevronDown size={16} className="transition-transform group-open:rotate-180" aria-hidden="true" />
+        </summary>
+        <div className="mt-4 space-y-4">
+          <Journal o={o} today={today} act={act} />
+          {habits.length > 0 && (
+            <Panel className="p-4 sm:p-5">
+              <SectionTitle icon={Sparkles}>{tr("Obiceiuri legate")}</SectionTitle>
               <ul className="space-y-2">
                 {habits.map((h) => {
                   const Icon = iconFor(h.icon);
@@ -719,28 +679,16 @@ function Detail({ o, state, d, today, act, onBack, onEdit, go }) {
                   );
                 })}
               </ul>
-            ) : (
-              <p className="text-sm font-semibold text-dim">{tr("Leagă obiceiuri din „Editează”: un obiectiv mare se atinge prin ce faci zilnic.")}</p>
-            )}
-          </Panel>
-          <Panel className="p-4 sm:p-5">
-            <SectionTitle icon={o.reminder?.on ? BellRing : Bell} tone="ember">{tr("Reminder")}</SectionTitle>
-            {o.reminder?.on ? (
-              <p className="text-sm font-semibold text-body">
-                {[tr("Du"), tr("Lu"), tr("Ma"), tr("Mi"), tr("Jo"), tr("Vi"), tr("Sâ")].filter((_, i) => o.reminder.days.includes(i)).join(", ") || tr("Nicio zi aleasă")}{" "}{tr("la {time}. Apare pe Acasă dacă n-ai avansat încă în ziua aceea.", { time: o.reminder.time })}</p>
-            ) : (
-              <p className="text-sm font-semibold text-dim">{tr("Oprit. Te anunțăm totuși dacă obiectivul stă pe loc 4 zile.")}</p>
-            )}
-            <Button className="mt-3" size="sm" variant="ghost" icon={Pencil} onClick={onEdit}>{tr("Schimbă")}</Button>
-          </Panel>
-          <Panel className="flex items-center justify-between gap-3 p-4">
+            </Panel>
+          )}
+          <div className="flex items-center justify-between gap-3 px-1">
             <Button size="sm" variant="ghost" icon={Archive} onClick={() => act.archive(o.id, !o.archived)}>
               {o.archived ? tr("Scoate din arhivă") : tr("Arhivează")}
             </Button>
             <HoldToDelete label={tr("Ține apăsat ca să ștergi obiectivul")} onConfirm={() => act.remove(o.id)} />
-          </Panel>
+          </div>
         </div>
-      </div>
+      </details>
     </div>
   );
 }
@@ -757,50 +705,12 @@ export default function Objectives({ state, d, today, go, ai, goals, focus, setF
   const done = all.filter((o) => !o.archived && o.doneOn);
   const archived = all.filter((o) => o.archived);
   const full = active.length >= MAX_OBJECTIVES;
-  const avg = active.length ? Math.round(active.reduce((a, o) => a + pct(o), 0) / active.length) : 0;
-  const stepsThisWeek = all.reduce((a, o) => a + recentActivity(o, today, 7).reduce((x, y) => x + y.count, 0), 0);
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h2 className="font-pixel text-2xl text-ink">{tr("Obiective")}</h2>
-          <p className="text-sm font-semibold text-dim">{tr("Ținte mari, împărțite în pași mici. Fiecare pas bifat aduce momentum.")}</p>
-        </div>
-        <Button icon={Plus} disabled={full} onClick={() => onCreate()} title={full ? tr("Maxim {MAX_OBJECTIVES} obiective active", { MAX_OBJECTIVES }) : undefined}>{tr("Obiectiv nou")}</Button>
+      <div className="flex justify-end">
+        <Button icon={Plus} size="sm" disabled={full} onClick={() => onCreate()} title={full ? tr("Maxim {MAX_OBJECTIVES} obiective active", { MAX_OBJECTIVES }) : undefined}>{tr("Obiectiv nou")}</Button>
       </div>
-
-      {ai?.server && (
-        <button
-          type="button"
-          onClick={() => go?.("molt", "chat")}
-          className="focus-ring flex w-full items-center gap-3 rounded-2xl bg-violet/10 p-3 text-left ring-1 ring-violet/30 transition hover:bg-violet/15"
-        >
-          <Sparkles size={18} className="shrink-0 text-violet-hi" aria-hidden="true" />
-          <span className="min-w-0 flex-1">
-            <span className="block text-sm font-extrabold text-ink">{tr("Nu știi cum să-ți împarți obiectivul?")}</span>
-            <span className="block text-xs font-semibold text-dim">{tr("Spune-i lui Molt ce vrei să atingi: îți face un plan cu etape, obiceiuri și to-do-uri, pe care îl aplici dintr-un click.")}</span>
-          </span>
-          <span className="shrink-0 text-xs font-extrabold text-violet-hi">{tr("Vorbește cu Molt →")}</span>
-        </button>
-      )}
-
-      {active.length > 0 && (
-        <div className="grid grid-cols-3 gap-2 sm:gap-3">
-          <Panel className="p-3 text-center">
-            <div className="font-pixel text-2xl text-ink">{active.length}</div>
-            <div className="text-[10px] font-extrabold uppercase tracking-wider text-dim">{tr("active")}</div>
-          </Panel>
-          <Panel className="p-3 text-center">
-            <div className="font-pixel text-2xl text-ink">{avg}%</div>
-            <div className="text-[10px] font-extrabold uppercase tracking-wider text-dim">{tr("progres mediu")}</div>
-          </Panel>
-          <Panel className="p-3 text-center">
-            <div className="font-pixel text-2xl text-ink">{stepsThisWeek}</div>
-            <div className="text-[10px] font-extrabold uppercase tracking-wider text-dim">{tr("mișcări în 7 zile")}</div>
-          </Panel>
-        </div>
-      )}
 
       {active.length === 0 ? (
         <Panel className="p-5 sm:p-6">
@@ -824,9 +734,6 @@ export default function Objectives({ state, d, today, go, ai, goals, focus, setF
               );
             })}
           </div>
-          <div className="mt-4 flex justify-center">
-            <Button icon={Plus} onClick={() => onCreate()}>{tr("Obiectiv de la zero")}</Button>
-          </div>
         </Panel>
       ) : (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -838,7 +745,7 @@ export default function Objectives({ state, d, today, go, ai, goals, focus, setF
 
       {done.length > 0 && (
         <Panel className="p-4 sm:p-5">
-          <SectionTitle icon={Trophy} tone="mint" sub={tr("Dovada că poți")}>{tr("Atinse")}</SectionTitle>
+          <SectionTitle icon={Trophy} sub={tr("Dovada că poți")}>{tr("Atinse")}</SectionTitle>
           <ul className="grid gap-2 sm:grid-cols-2">
             {done.map((o) => (
               <li key={o.id}>
@@ -873,76 +780,17 @@ export default function Objectives({ state, d, today, go, ai, goals, focus, setF
       )}
 
       {goals && (
-        <section className="space-y-3 pt-2">
-          <div>
-            <h2 className="font-pixel text-2xl text-ink">{tr("Scopuri pe termen scurt")}</h2>
-            <p className="text-sm font-semibold text-dim">{tr("Ce vrei să faci în săptămâna asta și în luna asta.")}</p>
+        <details className="group">
+          <summary className="focus-ring flex cursor-pointer list-none items-center justify-between rounded-xl bg-well px-4 py-3 text-sm font-extrabold text-body ring-1 ring-edge hover:text-ink">
+            {tr("Scopuri pe termen scurt")}
+            <ChevronDown size={16} className="transition-transform group-open:rotate-180" aria-hidden="true" />
+          </summary>
+          <div className="mt-4">
+            <GoalsCard state={state} today={today} goals={goals} />
           </div>
-          <GoalsCard state={state} today={today} goals={goals} />
-        </section>
+        </details>
       )}
-
-      <p className="flex items-center gap-2 text-xs font-semibold text-dim">
-        <Lightbulb size={14} className="shrink-0 text-gold" aria-hidden="true" />{tr("Sfat: pune pașii în plan (calendar). Când bifezi to-do-ul, se bifează și pasul.")}</p>
     </div>
-  );
-}
-
-// ------------------------------------------------------------ dashboard card
-
-export function ObjectivesMini({ state, today, reminders, go, act }) {
-  const active = (state.objectives || []).filter((o) => !o.archived && !o.doneOn);
-  if (!active.length) {
-    return (
-      <Panel className="p-4">
-        <SectionTitle icon={Target} tone="sky">{tr("Obiective")}</SectionTitle>
-        <p className="text-sm font-semibold text-dim">{tr("Ai un obiectiv mare? Împarte-l în pași și urmărește-ți progresul.")}</p>
-        <Button className="mt-3" size="sm" variant="ghost" icon={Plus} onClick={() => go("goals")}>{tr("Primul obiectiv")}</Button>
-      </Panel>
-    );
-  }
-  const due = new Set(reminders.map((r) => r.o.id));
-  const list = [...active].sort((a, b) => (due.has(b.id) ? 1 : 0) - (due.has(a.id) ? 1 : 0)).slice(0, 3);
-  return (
-    <Panel className="p-4">
-      <SectionTitle
-        icon={Target}
-        tone="sky"
-        sub={reminders.length ? tr("{n} {v} azi", { n: reminders.length, v: plural(reminders.length, tr("reminder"), tr("remindere"), tr("de remindere")) }) : tr("Pașii următori")}
-        action={
-          <Button size="sm" variant="ghost" onClick={() => go("goals")}>{tr("Toate")}</Button>
-        }
-      >{tr("Obiective")}</SectionTitle>
-      <ul className="space-y-3">
-        {list.map((o) => {
-          const n = nextStep(o);
-          const r = reminders.find((x) => x.o.id === o.id);
-          return (
-            <li key={o.id} className={`rounded-xl p-2.5 ring-1 ${r ? "bg-ember/10 ring-ember/40" : "bg-well/60 ring-edge"}`}>
-              <button type="button" onClick={() => go("goals", o.id)} className="focus-ring block w-full rounded text-left">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="truncate text-sm font-extrabold text-ink">{o.title}</span>
-                  <span className="font-pixel text-sm text-gold-hi">{pct(o)}%</span>
-                </div>
-                <Bar className="mt-1.5" value={pct(o) / 100} height={8} label={tr("Progres {title}", { title: o.title })} />
-              </button>
-              {r && (
-                <p className="mt-1.5 flex items-center gap-1.5 text-xs font-bold text-ember">
-                  <BellRing size={13} aria-hidden="true" />
-                  {r.reason === "idle" ? tr("Stă pe loc de {idle} zile. Un pas mic azi?", { idle: r.idle }) : tr("E ziua lui. Fă un pas, cât de mic.")}
-                </p>
-              )}
-              {n && (
-                <div className="mt-2 flex items-center gap-2">
-                  <CheckButton size="sm" checked={false} label={tr("Bifează: {v}", { v: n.sub ? n.sub.title : n.step.title })} onClick={() => (n.sub ? act.toggleSub(o.id, n.step.id, n.sub.id) : act.toggleStep(o.id, n.step.id))} />
-                  <span className="min-w-0 truncate text-xs font-bold text-body">{n.sub ? n.sub.title : n.step.title}</span>
-                </div>
-              )}
-            </li>
-          );
-        })}
-      </ul>
-    </Panel>
   );
 }
 

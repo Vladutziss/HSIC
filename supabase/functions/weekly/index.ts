@@ -30,7 +30,7 @@ const reply = (status: number, body: unknown) => new Response(JSON.stringify(bod
 const dayIn = (tz: string) => new Intl.DateTimeFormat("en-CA", { timeZone: tz }).format(new Date());
 
 const nudgeSystem = (en: boolean) =>
-  `You write one push notification for "Molted", a habit app used by teenagers. The player has a streak that breaks if they do nothing today. Write ONE sentence in ${en ? "English" : "Romanian"}, at most 120 characters,${en ? "" : ' addressing the player as "tu",'} warm, no guilt, no emojis, naming the habit as given and the streak length. Use only the numbers given.${en ? "" : ` ${RO_WORDING}`} Answer with the sentence only.`;
+  `You write one push notification for "Molted", a study and habit coach used by high school students. The player has a streak that breaks if they do nothing today. Write ONE sentence in ${en ? "English" : "Romanian"}, at most 120 characters,${en ? "" : ' addressing the player as "tu",'} warm, no guilt, no emojis, naming the habit as given and the streak length. Use only the numbers given.${en ? "" : ` ${RO_WORDING}`} Answer with the sentence only.`;
 
 /** One short message from the model, or null (no key, no answer, nonsense): then nothing is sent. */
 async function nudgeText(facts: { nick: string; streak: number; habit: string }, en: boolean): Promise<string | null> {

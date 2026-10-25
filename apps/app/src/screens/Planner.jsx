@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { CalendarDays, CalendarPlus, CalendarX, Target, X, CalendarRange, Check, ChevronLeft, ChevronRight, Clock, GripVertical, ListTodo, Timer, Plus, Repeat, Sparkles } from "lucide-react";
+import { CalendarDays, CalendarPlus, CalendarX, Target, X, CalendarRange, Check, ChevronLeft, ChevronRight, Clock, GripVertical, ListTodo, Timer, Plus, Repeat } from "lucide-react";
 import { Button, CheckButton, Choice, Chip, Panel, SectionTitle, Tabs } from "../components/ui.jsx";
 import { Shell, useCoach } from "../components/AiCoach.jsx";
 import { aiErrorCopy, dailyPlan, decomposeGoal, parseHomework } from "../lib/ai.js";
@@ -86,7 +86,7 @@ function TodoRow({ t, today, habits, todo, onFocusTodo, goal, onSkipDay }) {
           <GoalMark g={goal} size={13} />
           <span className="truncate">{t.title}</span>
         </span>
-        <span className="flex flex-wrap items-center gap-x-2 text-[11px] font-bold text-dim">
+        <span className="flex flex-wrap items-center gap-x-2 text-xs font-bold text-dim">
           {t.repeat ? (
             <span className="inline-flex items-center gap-0.5">
               <Repeat size={10} aria-hidden="true" />
@@ -165,7 +165,7 @@ function TodoList({ state, today, todo, onFocusTodo, onSkipDay }) {
 
   return (
     <Panel className="p-4 sm:p-5">
-      <SectionTitle icon={ListTodo} tone="mint" sub={tr("+5 momentum pentru fiecare to-do terminat")}>{tr("To-do")}</SectionTitle>
+      <SectionTitle icon={ListTodo} sub={tr("+5 momentum pentru fiecare to-do terminat")}>{tr("To-do")}</SectionTitle>
       <form
         className="mb-3 flex gap-2"
         onSubmit={(e) => {
@@ -194,7 +194,7 @@ function TodoList({ state, today, todo, onFocusTodo, onSkipDay }) {
       />
       {overdue.length > 0 && (
         <>
-          <div className="mb-1.5 mt-2 text-[11px] font-extrabold uppercase tracking-wider text-ember">{tr("Rămase din zilele trecute")}</div>
+          <div className="mb-1.5 mt-2 text-xs font-extrabold uppercase tracking-wider text-ember">{tr("Rămase din zilele trecute")}</div>
           <ul className="space-y-1.5">
             {overdue.map((t) => (
               <TodoRow key={t.id} t={t} today={today} habits={habits} todo={todo} onFocusTodo={onFocusTodo} goal={gIdx[t.id]} onSkipDay={onSkipDay} />
@@ -212,7 +212,7 @@ function TodoList({ state, today, todo, onFocusTodo, onSkipDay }) {
       {!overdue.length && !open.length && <p className="py-4 text-center text-sm font-semibold text-dim">{tr("Nimic aici.")}</p>}
       {done.length > 0 && (
         <details className="mt-3">
-          <summary className="cursor-pointer text-[11px] font-extrabold uppercase tracking-wider text-dim hover:text-ink">{tr("Gata ({length})", { length: done.length })}</summary>
+          <summary className="cursor-pointer text-xs font-extrabold uppercase tracking-wider text-dim hover:text-ink">{tr("Gata ({length})", { length: done.length })}</summary>
           <ul className="mt-2 space-y-1.5">
             {done.slice(0, 30).map((t) => (
               <TodoRow key={t.id} t={t} today={today} habits={habits} todo={todo} onFocusTodo={onFocusTodo} goal={gIdx[t.id]} onSkipDay={onSkipDay} />
@@ -220,7 +220,7 @@ function TodoList({ state, today, todo, onFocusTodo, onSkipDay }) {
           </ul>
         </details>
       )}
-      <p className="mt-3 hidden text-[11px] font-semibold text-faint sm:block">{tr("Trage un to-do în calendar ca să-i dai o zi și o oră.")}</p>
+      <p className="mt-3 hidden text-xs font-semibold text-faint sm:block">{tr("Trage un to-do în calendar ca să-i dai o zi și o oră.")}</p>
     </Panel>
   );
 }
@@ -268,8 +268,8 @@ function WeekView({ state, today, anchor, todo, onMoveHabit, onSkipDay }) {
             const sched = habits.filter((h) => isScheduled(h, day)).length;
             return (
               <div key={day} className="px-1 pb-2 text-center">
-                <div className={`text-[11px] font-extrabold uppercase tracking-wider ${isToday ? "text-gold" : "text-dim"}`}>{RO_DAYS_SHORT[d.getDay()]}</div>
-                <div className={`mx-auto mt-0.5 grid h-8 w-8 place-items-center rounded-lg font-pixel text-lg ${isToday ? "bg-gold text-on-gold" : "text-ink"}`}>{d.getDate()}</div>
+                <div className={`text-xs font-extrabold uppercase tracking-wider ${isToday ? "text-gold" : "text-dim"}`}>{RO_DAYS_SHORT[d.getDay()]}</div>
+                <div className={`mx-auto mt-0.5 grid h-8 w-8 place-items-center rounded-lg font-display text-lg ${isToday ? "bg-gold text-on-gold" : "text-ink"}`}>{d.getDate()}</div>
                 {sched > 0 && day <= today && (
                   <div className="mx-auto mt-1 h-1 w-10 overflow-hidden rounded-full bg-edge" title={tr("{done}/{sched} obiceiuri bifate", { done, sched })}>
                     <div className="h-full bg-mint" style={{ width: `${Math.min(100, (done / sched) * 100)}%` }} />
@@ -282,7 +282,7 @@ function WeekView({ state, today, anchor, todo, onMoveHabit, onSkipDay }) {
 
         {/* untimed to-dos */}
         <div className="grid border-y border-edge" style={{ gridTemplateColumns: "48px repeat(7, 1fr)" }}>
-          <span className="py-2 pr-2 text-right text-[10px] font-extrabold uppercase leading-tight text-faint">{tr("fără oră")}</span>
+          <span className="py-2 pr-2 text-right text-xs font-extrabold uppercase leading-tight text-faint">{tr("fără oră")}</span>
           {days.map((day) => (
             <div
               key={day}
@@ -307,7 +307,7 @@ function WeekView({ state, today, anchor, todo, onMoveHabit, onSkipDay }) {
                     draggable={!t.repeat}
                     onDragStart={(e) => e.dataTransfer.setData("text/plain", t.id)}
                     onClick={() => todo.edit(t)}
-                    className={`flex w-full items-center gap-1 rounded-md px-1.5 py-1 text-left text-[11px] font-bold ${t.done ? "bg-ink/5 text-faint line-through" : "bg-violet/20 text-ink ring-1 ring-violet/40"}`}
+                    className={`flex w-full items-center gap-1 rounded-md px-1.5 py-1 text-left text-xs font-bold ${t.done ? "bg-ink/5 text-faint line-through" : "bg-violet/20 text-ink ring-1 ring-violet/40"}`}
                   >
                     {t.repeat && <Repeat size={10} className="shrink-0" aria-label={tr("se repetă")} />}
                     <GoalMark g={gIdx[t.id]} />
@@ -319,7 +319,7 @@ function WeekView({ state, today, anchor, todo, onMoveHabit, onSkipDay }) {
                 .map((h) => (
                   <span
                     key={h.id}
-                    className="group flex w-full items-center gap-1 rounded-md px-1.5 py-1 text-[11px] font-bold text-ink"
+                    className="group flex w-full items-center gap-1 rounded-md px-1.5 py-1 text-xs font-bold text-ink"
                     style={{ background: `${h.color}26`, boxShadow: `inset 3px 0 0 ${h.color}` }}
                   >
                     {state.log?.[day]?.[h.id] ? <Check size={10} className="shrink-0" aria-hidden="true" /> : null}
@@ -339,7 +339,7 @@ function WeekView({ state, today, anchor, todo, onMoveHabit, onSkipDay }) {
           <div className="relative grid" style={{ gridTemplateColumns: "48px repeat(7, 1fr)", height: ((END - START) / 60) * ROW }}>
             <div className="relative">
               {Array.from({ length: (END - START) / 60 }, (_, i) => (
-                <span key={i} className="absolute right-2 -translate-y-1/2 text-[10px] font-extrabold text-faint" style={{ top: i * ROW }}>
+                <span key={i} className="absolute right-2 -translate-y-1/2 text-xs font-extrabold text-faint" style={{ top: i * ROW }}>
                   {i === 0 ? "" : fmtHour12(START + i * 60)}
                 </span>
               ))}
@@ -396,7 +396,7 @@ function WeekView({ state, today, anchor, todo, onMoveHabit, onSkipDay }) {
                             e.dataTransfer.setData("text/plain", `habit:${it.h.id}:${day}`);
                             e.dataTransfer.effectAllowed = "move";
                           }}
-                          className="absolute cursor-grab overflow-hidden rounded-lg px-1.5 py-1 text-[11px] font-extrabold active:cursor-grabbing"
+                          className="absolute cursor-grab overflow-hidden rounded-lg px-1.5 py-1 text-xs font-extrabold active:cursor-grabbing"
                           style={{
                             top,
                             height,
@@ -433,7 +433,7 @@ function WeekView({ state, today, anchor, todo, onMoveHabit, onSkipDay }) {
                         draggable={!t.repeat}
                         onDragStart={(e) => e.dataTransfer.setData("text/plain", t.id)}
                         onClick={() => todo.edit(t)}
-                        className={`absolute overflow-hidden rounded-lg px-1.5 py-1 text-left text-[11px] font-extrabold ring-1 ${
+                        className={`absolute overflow-hidden rounded-lg px-1.5 py-1 text-left text-xs font-extrabold ring-1 ${
                           t.done ? "bg-panel-lo text-faint line-through ring-edge" : "bg-violet/30 text-ink ring-violet/60 hover:bg-violet/40"
                         }`}
                         style={{ top, height, width, left }}
@@ -443,7 +443,7 @@ function WeekView({ state, today, anchor, todo, onMoveHabit, onSkipDay }) {
                           <GoalMark g={gIdx[t.id]} />
                           <span className="truncate">{t.title}</span>
                         </span>
-                        {height > 34 && <span className="block text-[10px] font-bold text-dim">{fmt12(t.time)}</span>}
+                        {height > 34 && <span className="block text-xs font-bold text-dim">{fmt12(t.time)}</span>}
                       </button>
                     );
                   })}
@@ -475,7 +475,7 @@ function MonthView({ state, today, anchor, onPick }) {
     <div className="overflow-x-auto">
       <div className="grid min-w-[640px] grid-cols-7 gap-1.5">
         {[1, 2, 3, 4, 5, 6, 0].map((w) => (
-          <div key={w} className="pb-1 text-center text-[11px] font-extrabold uppercase tracking-wider text-dim">
+          <div key={w} className="pb-1 text-center text-xs font-extrabold uppercase tracking-wider text-dim">
             {RO_DAYS_SHORT[w]}
           </div>
         ))}
@@ -495,20 +495,20 @@ function MonthView({ state, today, anchor, onPick }) {
               }`}
             >
               <span className="flex items-center justify-between">
-                <span className={`font-pixel text-base ${inMonth ? "text-ink" : "text-faint"}`}>{d.getDate()}</span>
+                <span className={`font-display text-base ${inMonth ? "text-ink" : "text-faint"}`}>{d.getDate()}</span>
                 {sched > 0 && day <= today && (
-                  <span className={`text-[10px] font-black ${done >= sched ? "text-mint" : done ? "text-gold" : "text-faint"}`}>
+                  <span className={`text-xs font-black ${done >= sched ? "text-mint" : done ? "text-gold" : "text-faint"}`}>
                     {done}/{sched}
                   </span>
                 )}
               </span>
               {todos.slice(0, 3).map((t) => (
-                <span key={t.id} className={`truncate rounded px-1 py-0.5 text-[10px] font-bold ${t.done ? "text-faint line-through" : "bg-violet/20 text-ink"}`}>
+                <span key={t.id} className={`truncate rounded px-1 py-0.5 text-xs font-bold ${t.done ? "text-faint line-through" : "bg-violet/20 text-ink"}`}>
                   {t.time ? `${fmt12(t.time)} ` : ""}
                   {t.title}
                 </span>
               ))}
-              {todos.length > 3 && <span className="text-[10px] font-bold text-dim">+{todos.length - 3}</span>}
+              {todos.length > 3 && <span className="text-xs font-bold text-dim">+{todos.length - 3}</span>}
             </button>
           );
         })}
@@ -599,14 +599,14 @@ export function DailyPlanPanel({ state, today, ai, agent }) {
           const added = hasOpenTodo(state, step.title, today);
           return (
             <li key={`${step.title}-${i}`} className="inset flex flex-wrap items-start gap-3 p-3">
-              <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-violet/15 font-pixel text-violet-hi">{i + 1}</span>
+              <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-violet/15 font-display text-violet-hi">{i + 1}</span>
               <div className="min-w-0 flex-1 basis-48">
                 <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                   <p className="text-sm font-extrabold text-ink">{step.title}</p>
                   <Chip tone="dim">{step.minutes} min</Chip>
                 </div>
                 <p className="mt-1 text-sm font-semibold text-body">{step.reason}</p>
-                <details className="mt-1 text-[11px] font-bold text-dim">
+                <details className="mt-1 text-xs font-bold text-dim">
                   <summary className="cursor-pointer">{tr("De ce?")}</summary>
                   <p className="mt-1">{tr("Încredere {v}{v2}.", { v: CONFIDENCE[step.confidence] || CONFIDENCE.unknown, v2: step.dataUsed.length ? ` · ${step.dataUsed.join(" · ")}` : "" })}</p>
                 </details>
@@ -662,7 +662,7 @@ export function HomeworkPanel({ state, today, ai, onStateChange }) {
     }));
   };
   const studyBtn = (subject, assignmentId) => (
-    <button type="button" className="focus-ring shrink-0 rounded-lg px-2 py-0.5 text-[11px] font-extrabold text-dim ring-1 ring-edge hover:text-ink" onClick={() => study(subject, assignmentId)} aria-label={tr("Am învățat {minutes} minute{v}", { minutes, v: subject ? ` la ${subject}` : "" })}>
+    <button type="button" className="focus-ring shrink-0 rounded-lg px-2 py-0.5 text-xs font-extrabold text-dim ring-1 ring-edge hover:text-ink" onClick={() => study(subject, assignmentId)} aria-label={subject ? tr("Am învățat {minutes} minute la {subject}", { minutes, subject }) : tr("Am învățat {minutes} minute", { minutes })}>
       +{minutes} min
     </button>
   );
@@ -684,7 +684,7 @@ export function HomeworkPanel({ state, today, ai, onStateChange }) {
           <div className="mt-5 border-t border-edge/60 pt-4">
             <div className="mb-2 flex flex-wrap items-center gap-x-3 gap-y-2">
               <p className="text-sm font-extrabold text-ink">{tr("Ce ai de făcut")}</p>
-              <span className="ml-auto text-[11px] font-bold text-dim">{tr("{v}o sesiune de studiu (min):", { v: studiedToday > 0 ? tr("Azi ai învățat {studiedToday} min · ", { studiedToday }) : "" })}</span>
+              <span className="ml-auto text-xs font-bold text-dim">{tr("{v}o sesiune de studiu (min):", { v: studiedToday > 0 ? tr("Azi ai învățat {studiedToday} min · ", { studiedToday }) : "" })}</span>
               <Choice label={tr("Durata unei sesiuni de studiu, în minute")} value={minutes} onChange={setMinutes} options={[15, 25, 45, 60].map((m) => ({ value: m, label: `${m}` }))} />
             </div>
             <ul className="space-y-1.5">
@@ -805,8 +805,7 @@ export default function Planner({ state, today, todo, ai, go, onFocusTodo, onMov
   const calendar = (
     <Panel className="p-4 sm:p-5">
       <div className="mb-4 flex flex-wrap items-center gap-3">
-        <SectionTitle icon={CalendarDays} tone="gold" className="mb-0" sub={tr("Obiceiurile cu oră apar automat")}>{tr("Calendar")}</SectionTitle>
-        <div className="ml-auto flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Tabs
             size="sm"
             value={mode}
@@ -827,7 +826,7 @@ export default function Planner({ state, today, todo, ai, go, onFocusTodo, onMov
           </div>
         </div>
       </div>
-      <div className="mb-3 font-pixel text-lg text-ink">{label}</div>
+      <div className="mb-3 font-display text-lg text-ink">{label}</div>
       {mode === "week" ? (
         <WeekView state={state} today={today} anchor={anchor} todo={todo} onMoveHabit={onMoveHabit} onSkipDay={onSkipDay} />
       ) : (
@@ -841,13 +840,6 @@ export default function Planner({ state, today, todo, ai, go, onFocusTodo, onMov
           }}
         />
       )}
-      <div className="mt-3 flex flex-wrap items-center gap-3 text-[11px] font-bold text-dim">
-        <span className="inline-flex items-center gap-1.5">
-          <span className="h-3 w-3 rounded bg-violet/40 ring-1 ring-violet/60" />{" "}{tr("to-do")}</span>
-        <span className="inline-flex items-center gap-1.5">
-          <span className="h-3 w-3 rounded" style={{ background: `repeating-linear-gradient(135deg, ${c("gold", 0.4)} 0 3px, ${c("gold", 0.2)} 3px 6px)` }} />{" "}{tr("obicei programat")}</span>
-        <span>{tr("Apasă pe un loc liber ca să adaugi un to-do la ora aceea.")}</span>
-      </div>
     </Panel>
   );
 
@@ -858,25 +850,11 @@ export default function Planner({ state, today, todo, ai, go, onFocusTodo, onMov
           value={tab}
           onChange={setTab}
           items={[
-            { value: "calendar", label: tr("Calendar"), icon: CalendarDays },
+            { value: "calendar", label: tr("Program"), icon: CalendarDays },
             { value: "list", label: tr("Listă"), icon: ListTodo },
           ]}
         />
       </div>
-      {ai?.server && (
-        <button
-          type="button"
-          onClick={() => go?.("molt", "ai")}
-          className="focus-ring flex w-full items-center gap-3 rounded-2xl bg-violet/10 p-3 text-left ring-1 ring-violet/30 transition hover:bg-violet/15"
-        >
-          <Sparkles size={18} className="shrink-0 text-violet-hi" aria-hidden="true" />
-          <span className="min-w-0 flex-1">
-            <span className="block text-sm font-extrabold text-ink">{tr("Lasă-l pe Molt să-ți facă planul")}</span>
-            <span className="block text-xs font-semibold text-dim">{tr("Planul de azi, temele și examenele, pașii pentru un scop: alege din ce ai deja programat, în funcție de timp și energie.")}</span>
-          </span>
-          <span className="shrink-0 text-xs font-extrabold text-violet-hi">{tr("Cere un plan →")}</span>
-        </button>
-      )}
       <div className="grid gap-5 lg:grid-cols-[minmax(300px,360px),1fr]">
         <div className={tab === "list" ? "min-w-0" : "hidden min-w-0 lg:block"}>
           <TodoList state={state} today={today} todo={todo} onFocusTodo={onFocusTodo} onSkipDay={onSkipDay} />

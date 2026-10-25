@@ -50,7 +50,7 @@ export default function Wardrobe({ state, d, onLook }) {
           {detail ? (
             <>
               <div className="flex flex-wrap items-center gap-2">
-                <p className="font-pixel text-lg leading-tight text-ink">{detail.name}</p>
+                <p className="font-display text-lg leading-tight text-ink">{detail.name}</p>
                 <Chip tone={RARITY_TONE[detail.rarity]}>{RARITY_LABEL[detail.rarity]}</Chip>
               </div>
               {picked ? (
@@ -122,7 +122,7 @@ export default function Wardrobe({ state, d, onLook }) {
                   <span className="pedestal flex h-[72px] w-[72px] items-end justify-center rounded-xl">
                     <Sprite path={path} stage={c.stage.id} mood="idle" size={64} crack={eggCrack(c.ep)} look={{ ...d.look, [slot]: item.id }} still silhouette={!owned} />
                   </span>
-                  <span className={`line-clamp-2 min-h-[2.1em] text-[11px] font-extrabold leading-tight ${owned ? "text-ink" : "text-dim"}`}>{item.name}</span>
+                  <span className={`line-clamp-2 min-h-[2.1em] text-xs font-extrabold leading-tight ${owned ? "text-ink" : "text-dim"}`}>{item.name}</span>
                   {isWorn && (
                     <span className="absolute right-1.5 top-1.5 grid h-5 w-5 place-items-center rounded-full bg-gold text-on-gold" aria-hidden="true">
                       <Check size={12} strokeWidth={3.5} />

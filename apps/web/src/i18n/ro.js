@@ -10,7 +10,7 @@ export default {
     navAria: "Principal",
     legalAria: "Legal",
     openApp: "Deschide aplicația",
-    footerTag: "coach AI pentru obiceiuri",
+    footerTag: "coach AI pentru elevi",
     team: "Echipa",
     privacy: "Confidențialitate",
     terms: "Termeni",
@@ -22,18 +22,18 @@ export default {
   },
   meta: {
     home: {
-      title: "Molted: coach AI agentic pentru obiceiuri",
+      title: "Molted: coach AI pentru elevi",
       description:
-        "Molted are un agent AI care îți analizează obiceiurile, propune schimbări concrete și măsoară dacă au ajutat. Tu confirmi. Plus un joc cu un personaj care evoluează.",
-      ogTitle: "Molted: coach AI agentic pentru obiceiuri",
+        "Un agent AI care transformă un obiectiv școlar într-un plan de pași mici, îl adaptează după ce faci și măsoară dacă a ajutat. Tu confirmi. Plus un joc cu personaj.",
+      ogTitle: "Molted: coach AI pentru elevi",
       ogDescription: "Un agent AI propune, tu confirmi, iar Molted măsoară efectul.",
       ogImageAlt: OG_ALT,
     },
     team: {
       title: "Echipa Molted",
-      description: "Oamenii din spatele Molted: echipa care construiește aplicația de obiceiuri în care personajul tău evoluează.",
+      description: "Oamenii din spatele Molted: echipa care construiește coach-ul pentru elevi în care personajul tău evoluează.",
       ogTitle: "Echipa Molted",
-      ogDescription: "Oamenii din spatele Molted: echipa care construiește aplicația de obiceiuri în care personajul tău evoluează.",
+      ogDescription: "Oamenii din spatele Molted: echipa care construiește coach-ul pentru elevi în care personajul tău evoluează.",
       ogImageAlt: OG_ALT,
     },
     privacy: {
@@ -67,15 +67,15 @@ export default {
   home: {
     ids: { agent: "agentul", faq: "intrebari" },
     nav: { agent: "Agentul AI", faq: "Întrebări" },
-    kicker: "Coach AI agentic · pentru obiceiuri",
-    h1: "Un agent AI care te ajută să-ți ții obiceiurile",
+    kicker: "Coach AI agentic · pentru elevi",
+    h1: "Un agent AI care te ajută să-ți ții planul de studiu",
     lead: "Molted nu doar notează ce ai bifat. Un agent îți citește istoricul, caută în surse, propune o schimbare concretă și, după două săptămâni, verifică dacă a ajutat. Tu hotărăști mereu.",
     ctaAgent: "Cum gândește agentul",
     mockAria: "Exemplu ilustrativ: o propunere a agentului",
     mockTag: "exemplu",
     mockStatus: "Așteaptă confirmarea ta",
-    mockTitle: "Mută „Citit 15 pagini” de seara la 8:00",
-    mockText: "Ai ratat-o în 5 din ultimele 7 seri, dar ți-ai ținut toate obiceiurile de dimineață.",
+    mockTitle: "Mută „Recapitulare chimie” de seara la 16:00",
+    mockText: "Ai ratat-o în 5 din ultimele 7 seri, dar ți-ai făcut toate temele după școală.",
     mockMeta: "Date folosite: ultimele 28 de zile · Siguranță estimată: medie",
     mockConfirm: "Confirmă",
     mockNo: "Nu",
@@ -83,7 +83,7 @@ export default {
     agentIntro: "Nu un chatbot care dă sfaturi generale. O buclă cu unelte reale, în care fiecare pas se poate verifica.",
     steps: [
       { title: "Observă", text: "Își ia singur datele de care are nevoie: statistici pe obiceiuri, context, feedback-ul tău, acțiuni trecute, experimente. Caută și tipare în istoric." },
-      { title: "Documentează", text: "Caută într-o bază de cunoștințe despre obiceiuri. Poate cita doar surse pe care le-a găsit chiar el în acea conversație." },
+      { title: "Documentează", text: "Caută într-o bază de cunoștințe despre învățare și obiceiuri. Poate cita doar surse pe care le-a găsit chiar el în acea conversație." },
       { title: "Propune", text: "O acțiune concretă: un to-do, un obicei nou, o schimbare de program. Propunerea e validată înainte să ajungă la tine și vine cu „de ce”." },
       { title: "Măsoară", text: "Peste 14 zile compară rata ta de dinainte cu cea de după. Nu pretinde că a cauzat diferența, doar ți-o arată." },
     ],
@@ -123,7 +123,7 @@ export default {
     ctaText: "Alege un drum, bifează primul obicei și vezi ce iese.",
     eggAlt: "Un ou, începutul lui Molt",
     appDescription:
-      "Coach AI agentic pentru obiceiuri: analizează istoricul, propune acțiuni, le aplică după confirmare și măsoară efectul. Plus gamificare, planificator și grupuri.",
+      "Coach AI agentic pentru elevi: analizează istoricul, propune acțiuni, le aplică după confirmare și măsoară efectul. Plus gamificare, planificator de teme și examene și grupuri.",
   },
   team: {
     h1: "Echipa",

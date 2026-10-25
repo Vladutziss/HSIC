@@ -42,7 +42,6 @@ export function FocusStats({ sessions = [], today, onFocus }) {
     <Panel className="p-4 sm:p-5">
       <SectionTitle
         icon={Timer}
-        tone="violet"
         sub={tr("Timpul în care te-ai concentrat, fără pauze")}
         action={
           <Button variant="ghost" size="sm" icon={Play} onClick={onFocus}>
@@ -62,7 +61,7 @@ export function FocusStats({ sessions = [], today, onFocus }) {
           </div>
 
           <div>
-            <div className="mb-2 text-[11px] font-extrabold uppercase tracking-wider text-dim">{tr("Ultimele 14 zile")}</div>
+            <div className="mb-2 text-xs font-extrabold uppercase tracking-wider text-dim">{tr("Ultimele 14 zile")}</div>
             <div className="flex h-28 items-end gap-1.5" role="img" aria-label={tr("Minute de concentrare pe fiecare dintre ultimele 14 zile")}>
               {bars.map((b) => (
                 <div key={b.day} className="flex h-full min-w-0 flex-1 flex-col items-center justify-end gap-1" title={`${relDay(b.day, today)}: ${b.seconds ? fmtSpan(b.seconds) : tr("nimic")}`}>
@@ -70,7 +69,7 @@ export function FocusStats({ sessions = [], today, onFocus }) {
                     className="w-full rounded-t-md"
                     style={{ height: `${Math.max(b.seconds ? 6 : 2, b.ratio * 100)}%`, background: b.seconds ? (b.day === today ? c("gold-ink") : c("violet-ink")) : c("edge") }}
                   />
-                  <span className={`text-[10px] font-extrabold ${b.day === today ? "text-gold-hi" : "text-faint"}`}>{Number(b.day.slice(8))}</span>
+                  <span className={`text-xs font-extrabold ${b.day === today ? "text-gold-hi" : "text-faint"}`}>{Number(b.day.slice(8))}</span>
                 </div>
               ))}
             </div>
@@ -85,7 +84,7 @@ export function FocusStats({ sessions = [], today, onFocus }) {
                     {timeOf(s.start)} – {timeOf(s.end)}
                   </div>
                 </div>
-                <div className="font-pixel tabular text-xl text-ink">{fmtSpan(s.work)}</div>
+                <div className="font-display tabular text-xl text-ink">{fmtSpan(s.work)}</div>
                 <div className="ml-auto flex flex-wrap items-center gap-1.5">
                   {s.pomodoro ? (
                     <Chip tone="violet" icon={Timer}>{tr("Pomodoro {work}/{brk}", { work: s.pomodoro.work, brk: s.pomodoro.brk })}{s.cycles ? ` · ${s.cycles} ${s.cycles === 1 ? "ciclu" : "cicluri"}` : ""}
