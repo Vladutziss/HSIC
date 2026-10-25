@@ -1,5 +1,5 @@
 import React from "react";
-import { AlertTriangle, CalendarCheck, ChevronDown, FlaskConical, Gift, Plus, Swords, Timer } from "lucide-react";
+import { AlertTriangle, CalendarCheck, ChevronDown, FlaskConical, Gift, Plus, Swords } from "lucide-react";
 import { Button, Panel, SectionTitle } from "../components/ui.jsx";
 import { CompanionCard, QuestCard, ReviewCard } from "../components/Cards.jsx";
 import { fmtDay, fmtLong } from "../lib/dates.js";
@@ -15,7 +15,7 @@ function greeting() {
   return tr("Bună seara");
 }
 
-function Hero({ state, d, today, onFocus }) {
+function Hero({ state, d, today }) {
   const { entry, week, streak } = d;
   const nick = state.profile?.nick || "aventurierule";
   const left = d.missions.left;
@@ -37,9 +37,6 @@ function Hero({ state, d, today, onFocus }) {
         <span>{tr("Săptămâna asta")} <b className="tabular text-ink">+{week}</b></span>
         <span>{tr("Serie")} <b className="tabular text-ink">{streak.current} {streak.current === 1 ? tr("zi") : tr("zile")}</b></span>
       </p>
-      <Button variant="violet" size="sm" icon={Timer} className="mt-4" onClick={onFocus}>
-        Focus
-      </Button>
     </Panel>
   );
 }
@@ -91,7 +88,7 @@ function RescueCard({ rescue, onRescue, goalReminders = [], goalActions }) {
   );
 }
 
-export default function Dashboard({ state, d, today, go, ai, months, recentStories, groups, review, onFocus, onCheck, onRevive, onAddHabit, rescue, onRescue, goalReminders = [], goalActions, onAskMolt, moltWaiting = 0 }) {
+export default function Dashboard({ state, d, today, go, ai, months, recentStories, groups, review, onCheck, onRevive, onAddHabit, rescue, onRescue, goalReminders = [], goalActions, onAskMolt, moltWaiting = 0 }) {
   const lastStory = [...recentStories].reverse().find((s) => s.story);
   // the closest thing Molt can still earn, as one line on its card
   const next = nextReward(d.facts, state.unlocked);
@@ -100,7 +97,7 @@ export default function Dashboard({ state, d, today, go, ai, months, recentStori
   return (
     <div className="grid gap-5 lg:grid-cols-12">
       <div className="min-w-0 space-y-5 lg:col-span-8">
-        <Hero state={state} d={d} today={today} onFocus={onFocus} />
+        <Hero state={state} d={d} today={today} />
         {/* one notice at a time, the most urgent first */}
         {d.revive.offer ? <ReviveBanner d={d} onRevive={onRevive} /> : d.resetRisk ? <ResetWarning d={d} /> : <RescueCard rescue={rescue} onRescue={onRescue} />}
 

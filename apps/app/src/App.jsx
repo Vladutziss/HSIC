@@ -726,7 +726,6 @@ function Game() {
           {...common}
           groups={groups}
           review={reviewInfo}
-          onFocus={() => setFocusSetup(true)}
           onCheck={checkIn}
           onRevive={applyRevive}
           todo={todoActions}
