@@ -41,7 +41,7 @@ import Planner from "./screens/Planner.jsx";
 import PlanHub from "./screens/PlanHub.jsx";
 import TuHub from "./screens/TuHub.jsx";
 import Stats from "./screens/Stats.jsx";
-import Objectives, { Celebration, ObjectiveEditor, ObjectivesMini, blankObjective, objectiveFromTemplate } from "./screens/Objectives.jsx";
+import Objectives, { Celebration, ObjectiveEditor, blankObjective, objectiveFromTemplate } from "./screens/Objectives.jsx";
 import { goalTodoIndex, dueReminders, moveStep, newMarks, toggleStep, toggleSub } from "./lib/objectives.js";
 import SettingsScreen from "./screens/Settings.jsx";
 import { getLocale, tr } from "./lib/i18n.js";

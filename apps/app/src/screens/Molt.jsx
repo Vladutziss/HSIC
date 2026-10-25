@@ -7,7 +7,7 @@
 // the action button and the answer are one block, so nothing needs hunting for.
 
 import React, { useMemo, useState } from "react";
-import { BookOpen, Bot, Loader2, CalendarCheck, CalendarRange, Check, Egg, History, Lock, MessageSquare, NotebookPen, Pencil, Shirt, Sparkles, Target, Wand2 } from "lucide-react";
+import { BookOpen, Loader2, CalendarCheck, CalendarRange, Check, Egg, History, Lock, MessageSquare, NotebookPen, Pencil, Shirt, Sparkles, Target, Wand2 } from "lucide-react";
 import { Bar, Button, Panel } from "../components/ui.jsx";
 import { Sprite, eggCrack } from "../components/Sprite.jsx";
 import { AgentLog } from "../components/AgentLog.jsx";

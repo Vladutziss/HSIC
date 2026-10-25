@@ -1,9 +1,9 @@
 import React, { useState } from "react";
-import { Bot, Check, ChevronDown, Database, Download, FlaskConical, LogOut, Moon, Palette, Shield, Sun, Trash2, User, UserX } from "lucide-react";
-import { Button, Chip, Field, LevelBadge, Panel, SectionTitle, Toggle } from "../components/ui.jsx";
+import { Bot, Check, ChevronDown, Database, Download, FlaskConical, LogOut, Moon, Palette, Sun, Trash2, User, UserX } from "lucide-react";
+import { Button, Chip, Field, Panel, SectionTitle, Toggle } from "../components/ui.jsx";
 import { Select } from "../components/Select.jsx";
 import { PATHS } from "../lib/catalog.js";
-import { LEVELS, RULES } from "../lib/engine.js";
+import { RULES } from "../lib/engine.js";
 import { exportData, signOut } from "../lib/account.js";
 import { THEMES, setTheme, useTheme } from "../lib/themes.js";
 import { fmt12 } from "../lib/dates.js";
@@ -129,7 +129,7 @@ export default function Settings({ state, d, ai, mode, env, onChange, onWipe, on
 
   return (
     <div className="space-y-4">
-      <div className="grid gap-4 lg:grid-cols-2 [&>*]:min-w-0">
+      <div className="grid max-w-2xl gap-4 [&>*]:min-w-0">
         {/* who you are */}
         <Panel className="space-y-3 p-4">
           <SectionTitle icon={User} className="!mb-1">{tr("Profil")}</SectionTitle>
@@ -211,7 +211,7 @@ export default function Settings({ state, d, ai, mode, env, onChange, onWipe, on
         </Panel>
 
         {/* language and look: one panel */}
-        <Panel className="space-y-4 p-4 lg:col-span-2">
+        <Panel className="space-y-4 p-4">
           <SectionTitle icon={Palette} className="!mb-1">{tr("Aspect")}</SectionTitle>
           <div className="space-y-2">
             <p className="text-xs font-semibold text-dim">{tr("Interfața aplicației. Textele scrise de AI (rapoarte, povești) urmează aceeași limbă.")}</p>
@@ -221,8 +221,9 @@ export default function Settings({ state, d, ai, mode, env, onChange, onWipe, on
         </Panel>
 
         {/* the rules: the one setting up front, the explanations folded */}
-        <Panel className="space-y-3 p-4">
-          <SectionTitle icon={Shield} className="!mb-1">{tr("Regulile jocului")}</SectionTitle>
+        <Panel className="p-4">
+          <Fold title={tr("Regulile jocului")}>
+            <div className="space-y-3">
           <Field label={tr("Momentum-ul se resetează după")} htmlFor="set-reset">
             <Select
               id="set-reset"
@@ -245,13 +246,6 @@ export default function Settings({ state, d, ai, mode, env, onChange, onWipe, on
               <li>{tr("· O zi fără nimic păstrează 85% din momentum; una incompletă, cel puțin 92%.")}</li>
             </ul>
           </Fold>
-          <Fold title={tr("Nivelurile")}>
-            <div className="flex flex-wrap gap-1.5">
-              {LEVELS.map((l) => (
-                <span key={l.lvl} className="inline-flex items-center gap-1 rounded-full bg-panel py-0.5 pl-0.5 pr-2 text-[11px] font-bold text-dim ring-1 ring-edge">
-                  <LevelBadge lvl={l.lvl} size={20} tone={l.lvl <= d.level.lvl ? "gold" : "dim"} /> {l.name} · {l.min}
-                </span>
-              ))}
             </div>
           </Fold>
         </Panel>

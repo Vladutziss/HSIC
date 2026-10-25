@@ -805,8 +805,7 @@ export default function Planner({ state, today, todo, ai, go, onFocusTodo, onMov
   const calendar = (
     <Panel className="p-4 sm:p-5">
       <div className="mb-4 flex flex-wrap items-center gap-3">
-        <SectionTitle icon={CalendarDays} className="mb-0" sub={tr("Obiceiurile cu oră apar automat")}>{tr("Calendar")}</SectionTitle>
-        <div className="ml-auto flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Tabs
             size="sm"
             value={mode}
@@ -841,13 +840,6 @@ export default function Planner({ state, today, todo, ai, go, onFocusTodo, onMov
           }}
         />
       )}
-      <div className="mt-3 flex flex-wrap items-center gap-3 text-[11px] font-bold text-dim">
-        <span className="inline-flex items-center gap-1.5">
-          <span className="h-3 w-3 rounded bg-violet/40 ring-1 ring-violet/60" />{" "}{tr("to-do")}</span>
-        <span className="inline-flex items-center gap-1.5">
-          <span className="h-3 w-3 rounded" style={{ background: `repeating-linear-gradient(135deg, ${c("gold", 0.4)} 0 3px, ${c("gold", 0.2)} 3px 6px)` }} />{" "}{tr("obicei programat")}</span>
-        <span>{tr("Apasă pe un loc liber ca să adaugi un to-do la ora aceea.")}</span>
-      </div>
     </Panel>
   );
 
@@ -863,20 +855,6 @@ export default function Planner({ state, today, todo, ai, go, onFocusTodo, onMov
           ]}
         />
       </div>
-      {ai?.server && (
-        <button
-          type="button"
-          onClick={() => go?.("molt", "ai")}
-          className="focus-ring flex w-full items-center gap-3 rounded-2xl bg-violet/10 p-3 text-left ring-1 ring-violet/30 transition hover:bg-violet/15"
-        >
-          <Sparkles size={18} className="shrink-0 text-violet-hi" aria-hidden="true" />
-          <span className="min-w-0 flex-1">
-            <span className="block text-sm font-extrabold text-ink">{tr("Lasă-l pe Molt să-ți facă planul")}</span>
-            <span className="block text-xs font-semibold text-dim">{tr("Planul de azi, temele și examenele, pașii pentru un scop: alege din ce ai deja programat, în funcție de timp și energie.")}</span>
-          </span>
-          <span className="shrink-0 text-xs font-extrabold text-violet-hi">{tr("Cere un plan →")}</span>
-        </button>
-      )}
       <div className="grid gap-5 lg:grid-cols-[minmax(300px,360px),1fr]">
         <div className={tab === "list" ? "min-w-0" : "hidden min-w-0 lg:block"}>
           <TodoList state={state} today={today} todo={todo} onFocusTodo={onFocusTodo} onSkipDay={onSkipDay} />

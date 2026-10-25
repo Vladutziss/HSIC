@@ -14,6 +14,16 @@ export function Panel({ as: Tag = "section", tone, className = "", children, ...
   );
 }
 
+// Tinted icon chips (stat tiles, modal headers): the tones say what the thing is about.
+const TITLE_TONE = {
+  gold: "bg-gold/10 text-gold ring-gold/30",
+  violet: "bg-violet/10 text-violet-hi ring-violet/30",
+  mint: "bg-mint/10 text-mint ring-mint/30",
+  ember: "bg-ember/10 text-ember ring-ember/30",
+  sky: "bg-sky/10 text-sky ring-sky/30",
+  rose: "bg-rose/10 text-rose ring-rose/30",
+};
+
 // Section headings are neutral: colour is kept for meaning (Molt/AI = violet, the main action = gold, state), not decoration.
 export function SectionTitle({ icon: Icon, children, sub, action, className = "", as: Tag = "h2" }) {
   return (

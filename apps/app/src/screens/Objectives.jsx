@@ -17,7 +17,6 @@ import {
   Flame,
   Gift,
   Heart,
-  Lightbulb,
   Mountain,
   NotebookPen,
   Pencil,
@@ -757,50 +756,12 @@ export default function Objectives({ state, d, today, go, ai, goals, focus, setF
   const done = all.filter((o) => !o.archived && o.doneOn);
   const archived = all.filter((o) => o.archived);
   const full = active.length >= MAX_OBJECTIVES;
-  const avg = active.length ? Math.round(active.reduce((a, o) => a + pct(o), 0) / active.length) : 0;
-  const stepsThisWeek = all.reduce((a, o) => a + recentActivity(o, today, 7).reduce((x, y) => x + y.count, 0), 0);
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h2 className="font-pixel text-2xl text-ink">{tr("Obiective")}</h2>
-          <p className="text-sm font-semibold text-dim">{tr("Ținte mari, împărțite în pași mici. Fiecare pas bifat aduce momentum.")}</p>
-        </div>
-        <Button icon={Plus} disabled={full} onClick={() => onCreate()} title={full ? tr("Maxim {MAX_OBJECTIVES} obiective active", { MAX_OBJECTIVES }) : undefined}>{tr("Obiectiv nou")}</Button>
+      <div className="flex justify-end">
+        <Button icon={Plus} size="sm" disabled={full} onClick={() => onCreate()} title={full ? tr("Maxim {MAX_OBJECTIVES} obiective active", { MAX_OBJECTIVES }) : undefined}>{tr("Obiectiv nou")}</Button>
       </div>
-
-      {ai?.server && (
-        <button
-          type="button"
-          onClick={() => go?.("molt", "chat")}
-          className="focus-ring flex w-full items-center gap-3 rounded-2xl bg-violet/10 p-3 text-left ring-1 ring-violet/30 transition hover:bg-violet/15"
-        >
-          <Sparkles size={18} className="shrink-0 text-violet-hi" aria-hidden="true" />
-          <span className="min-w-0 flex-1">
-            <span className="block text-sm font-extrabold text-ink">{tr("Nu știi cum să-ți împarți obiectivul?")}</span>
-            <span className="block text-xs font-semibold text-dim">{tr("Spune-i lui Molt ce vrei să atingi: îți face un plan cu etape, obiceiuri și to-do-uri, pe care îl aplici dintr-un click.")}</span>
-          </span>
-          <span className="shrink-0 text-xs font-extrabold text-violet-hi">{tr("Vorbește cu Molt →")}</span>
-        </button>
-      )}
-
-      {active.length > 0 && (
-        <div className="grid grid-cols-3 gap-2 sm:gap-3">
-          <Panel className="p-3 text-center">
-            <div className="font-pixel text-2xl text-ink">{active.length}</div>
-            <div className="text-[10px] font-extrabold uppercase tracking-wider text-dim">{tr("active")}</div>
-          </Panel>
-          <Panel className="p-3 text-center">
-            <div className="font-pixel text-2xl text-ink">{avg}%</div>
-            <div className="text-[10px] font-extrabold uppercase tracking-wider text-dim">{tr("progres mediu")}</div>
-          </Panel>
-          <Panel className="p-3 text-center">
-            <div className="font-pixel text-2xl text-ink">{stepsThisWeek}</div>
-            <div className="text-[10px] font-extrabold uppercase tracking-wider text-dim">{tr("mișcări în 7 zile")}</div>
-          </Panel>
-        </div>
-      )}
 
       {active.length === 0 ? (
         <Panel className="p-5 sm:p-6">
@@ -823,9 +784,6 @@ export default function Objectives({ state, d, today, go, ai, goals, focus, setF
                 </button>
               );
             })}
-          </div>
-          <div className="mt-4 flex justify-center">
-            <Button icon={Plus} onClick={() => onCreate()}>{tr("Obiectiv de la zero")}</Button>
           </div>
         </Panel>
       ) : (
@@ -873,75 +831,17 @@ export default function Objectives({ state, d, today, go, ai, goals, focus, setF
       )}
 
       {goals && (
-        <section className="space-y-3 pt-2">
-          <div>
-            <h2 className="font-pixel text-2xl text-ink">{tr("Scopuri pe termen scurt")}</h2>
-            <p className="text-sm font-semibold text-dim">{tr("Ce vrei să faci în săptămâna asta și în luna asta.")}</p>
+        <details className="group">
+          <summary className="focus-ring flex cursor-pointer list-none items-center justify-between rounded-xl bg-well px-4 py-3 text-sm font-extrabold text-body ring-1 ring-edge hover:text-ink">
+            {tr("Scopuri pe termen scurt")}
+            <ChevronDown size={16} className="transition-transform group-open:rotate-180" aria-hidden="true" />
+          </summary>
+          <div className="mt-4">
+            <GoalsCard state={state} today={today} goals={goals} />
           </div>
-          <GoalsCard state={state} today={today} goals={goals} />
-        </section>
+        </details>
       )}
-
-      <p className="flex items-center gap-2 text-xs font-semibold text-dim">
-        <Lightbulb size={14} className="shrink-0 text-gold" aria-hidden="true" />{tr("Sfat: pune pașii în plan (calendar). Când bifezi to-do-ul, se bifează și pasul.")}</p>
     </div>
-  );
-}
-
-// ------------------------------------------------------------ dashboard card
-
-export function ObjectivesMini({ state, today, reminders, go, act }) {
-  const active = (state.objectives || []).filter((o) => !o.archived && !o.doneOn);
-  if (!active.length) {
-    return (
-      <Panel className="p-4">
-        <SectionTitle icon={Target}>{tr("Obiective")}</SectionTitle>
-        <p className="text-sm font-semibold text-dim">{tr("Ai un obiectiv mare? Împarte-l în pași și urmărește-ți progresul.")}</p>
-        <Button className="mt-3" size="sm" variant="ghost" icon={Plus} onClick={() => go("goals")}>{tr("Primul obiectiv")}</Button>
-      </Panel>
-    );
-  }
-  const due = new Set(reminders.map((r) => r.o.id));
-  const list = [...active].sort((a, b) => (due.has(b.id) ? 1 : 0) - (due.has(a.id) ? 1 : 0)).slice(0, 3);
-  return (
-    <Panel className="p-4">
-      <SectionTitle
-        icon={Target}
-        sub={reminders.length ? tr("{n} {v} azi", { n: reminders.length, v: plural(reminders.length, tr("reminder"), tr("remindere"), tr("de remindere")) }) : tr("Pașii următori")}
-        action={
-          <Button size="sm" variant="ghost" onClick={() => go("goals")}>{tr("Toate")}</Button>
-        }
-      >{tr("Obiective")}</SectionTitle>
-      <ul className="space-y-3">
-        {list.map((o) => {
-          const n = nextStep(o);
-          const r = reminders.find((x) => x.o.id === o.id);
-          return (
-            <li key={o.id} className={`rounded-xl p-2.5 ring-1 ${r ? "bg-ember/10 ring-ember/40" : "bg-well/60 ring-edge"}`}>
-              <button type="button" onClick={() => go("goals", o.id)} className="focus-ring block w-full rounded text-left">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="truncate text-sm font-extrabold text-ink">{o.title}</span>
-                  <span className="font-pixel text-sm text-gold-hi">{pct(o)}%</span>
-                </div>
-                <Bar className="mt-1.5" value={pct(o) / 100} height={8} label={tr("Progres {title}", { title: o.title })} />
-              </button>
-              {r && (
-                <p className="mt-1.5 flex items-center gap-1.5 text-xs font-bold text-ember">
-                  <BellRing size={13} aria-hidden="true" />
-                  {r.reason === "idle" ? tr("Stă pe loc de {idle} zile. Un pas mic azi?", { idle: r.idle }) : tr("E ziua lui. Fă un pas, cât de mic.")}
-                </p>
-              )}
-              {n && (
-                <div className="mt-2 flex items-center gap-2">
-                  <CheckButton size="sm" checked={false} label={tr("Bifează: {v}", { v: n.sub ? n.sub.title : n.step.title })} onClick={() => (n.sub ? act.toggleSub(o.id, n.step.id, n.sub.id) : act.toggleStep(o.id, n.step.id))} />
-                  <span className="min-w-0 truncate text-xs font-bold text-body">{n.sub ? n.sub.title : n.step.title}</span>
-                </div>
-              )}
-            </li>
-          );
-        })}
-      </ul>
-    </Panel>
   );
 }
 

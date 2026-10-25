@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
-import { Activity, BarChart3, Bot, CalendarDays, ChevronDown, Flame, Gauge, Quote, Zap } from "lucide-react";
-import { Chip, Empty, Panel, SectionTitle, Skeleton, Stat, Tabs } from "../components/ui.jsx";
+import { Activity, BarChart3, Bot, CalendarDays, ChevronDown, Quote, Zap } from "lucide-react";
+import { Chip, Empty, Panel, SectionTitle, Skeleton, Tabs } from "../components/ui.jsx";
 import { HEAT, HabitLines, Heatmap, MomentumChart, ScoreBars, heatLevel } from "../components/Charts.jsx";
 import { MOMENT_META } from "../lib/moments.js";
 import { quoteById } from "../lib/quotes.js";
@@ -77,30 +77,34 @@ export default function Stats({ state, d, today, go, mode, saveStatus, ai, agent
 
   return (
     <div className="space-y-5">
-      <div className="grid grid-cols-3 gap-3">
-        <Stat icon={Zap} tone="gold" label={tr("Momentum")} value={d.entry?.momentum ?? 0} sub={tr("nivel {lvl} · {name}", { lvl: d.level.lvl, name: d.level.name })} />
-        <Stat icon={Flame} tone="ember" label={tr("Serie")} value={s.streak.current} sub={tr("record: {best} zile", { best: s.streak.best })} />
-        <Stat icon={Gauge} tone="sky" label={tr("Scor mediu")} value={s.avg} sub={tr("ultimele 30 de zile")} />
+      <div className="grid grid-cols-3 gap-2 sm:gap-3">
+        {[
+          { label: tr("Momentum"), value: d.entry?.momentum ?? 0, sub: tr("nivel {lvl} · {name}", { lvl: d.level.lvl, name: d.level.name }) },
+          { label: tr("Serie"), value: s.streak.current, sub: tr("record: {best} zile", { best: s.streak.best }) },
+          { label: tr("Scor mediu"), value: s.avg, sub: tr("ultimele 30 de zile") },
+        ].map((x) => (
+          <div key={x.label} className="inset min-w-0 p-3">
+            <div className="text-[11px] font-extrabold uppercase leading-tight tracking-wider text-dim">{x.label}</div>
+            <div className="font-pixel tabular text-2xl leading-tight text-ink">{x.value}</div>
+            <div className="text-xs font-semibold text-dim">{x.sub}</div>
+          </div>
+        ))}
       </div>
 
       <Panel className="p-4 sm:p-5">
-        <SectionTitle
-          icon={Zap}
-          sub={tr("Liniile punctate sunt pragurile de nivel. Punctele roz marchează resetările după {resetAfter} zile fără activitate.", { resetAfter: s.resetAfter })}
-          action={
-            <Tabs
-              size="sm"
-              value={range}
-              onChange={setRange}
-              items={[
-                { value: 30, label: tr("30 z") },
-                { value: 60, label: tr("60 z") },
-                { value: 90, label: tr("90 z") },
-                { value: 0, label: tr("Tot") },
-              ]}
-            />
-          }
-        >{tr("Momentum general")}</SectionTitle>
+        <SectionTitle icon={Zap} sub={tr("Liniile punctate sunt pragurile de nivel. Punctele roz marchează resetările după {resetAfter} zile fără activitate.", { resetAfter: s.resetAfter })}>{tr("Momentum general")}</SectionTitle>
+        <Tabs
+          size="sm"
+          className="mb-3"
+          value={range}
+          onChange={setRange}
+          items={[
+            { value: 30, label: tr("30 z") },
+            { value: 60, label: tr("60 z") },
+            { value: 90, label: tr("90 z") },
+            { value: 0, label: tr("Tot") },
+          ]}
+        />
         <MomentumChart days={shown} />
         <details className="mt-3">
           <summary className="cursor-pointer text-xs font-extrabold uppercase tracking-wider text-dim hover:text-ink">{tr("Vezi ca tabel (ultimele 14 zile)")}</summary>
