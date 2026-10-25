@@ -1,4 +1,4 @@
-import { diffDays } from "./dates.js";
+import { addDays, diffDays } from "./dates.js";
 
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -61,4 +61,49 @@ export function studiedMinutes(state, day, subject) {
   return schoolPlanner(state)
     .sessions.filter((s) => s.day === day && (!key || String(s.subject || "").trim().toLowerCase() === key))
     .reduce((n, s) => n + (Number(s.minutes) || 0), 0);
+}
+
+// ------------------------------------------------------------ writing (the Acasă card; no AI involved)
+// These take the current `schoolPlanner` object and return the next one, so the screen only calls onStateChange.
+
+/** A new assignment or exam typed by the student. `kind` is "assignment" or "exam"; returns the planner unchanged for an empty title. */
+export function addSchoolItem(planner, kind, raw, today, id = `${kind === "exam" ? "e" : "a"}-${Date.now()}`) {
+  const p = { ...planner, assignments: planner.assignments || [], exams: planner.exams || [], sessions: planner.sessions || [] };
+  if (kind === "exam") {
+    const exam = normalizeExams([raw], today)[0];
+    return exam ? { ...p, exams: [...p.exams, { ...exam, id, done: false }] } : planner;
+  }
+  const a = normalizeAssignments([raw], today)[0];
+  return a ? { ...p, assignments: [...p.assignments, { ...a, id, done: false }] } : planner;
+}
+
+/** Ticks (or unticks) one assignment or exam by id. */
+export function setSchoolDone(planner, kind, id, done) {
+  const key = kind === "exam" ? "exams" : "assignments";
+  return { ...planner, [key]: (planner[key] || []).map((x) => (x.id === id ? { ...x, done: !!done } : x)) };
+}
+
+/** One logged study block against a subject / assignment; unchanged when the minutes are not valid. */
+export function addStudySession(planner, raw, today, id = `s-${Date.now()}`) {
+  const s = normalizeSession(raw, today);
+  return s ? { ...planner, sessions: [...(planner.sessions || []), { ...s, id }] } : planner;
+}
+
+/** The seven days ending today: minutes per day and per subject (blank subjects count as "no subject"), for Progres. */
+export function studyWeek(state, today) {
+  const sessions = schoolPlanner(state).sessions;
+  const days = [];
+  for (let i = 6; i >= 0; i--) {
+    const day = addDays(today, -i);
+    days.push({ day, minutes: sessions.filter((s) => s.day === day).reduce((n, s) => n + (Number(s.minutes) || 0), 0) });
+  }
+  const from = days[0].day;
+  const subjects = new Map();
+  for (const s of sessions) {
+    if (s.day < from || s.day > today) continue;
+    const name = String(s.subject || "").trim();
+    subjects.set(name, (subjects.get(name) || 0) + (Number(s.minutes) || 0));
+  }
+  const bySubject = [...subjects.entries()].map(([subject, minutes]) => ({ subject, minutes })).sort((a, b) => b.minutes - a.minutes);
+  return { total: days.reduce((n, d) => n + d.minutes, 0), days, bySubject };
 }

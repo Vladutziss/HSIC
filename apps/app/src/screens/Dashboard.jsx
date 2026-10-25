@@ -2,6 +2,7 @@ import React from "react";
 import { AlertTriangle, CalendarCheck, ChevronDown, FlaskConical, Gift, Plus, Swords, Timer } from "lucide-react";
 import { Button, Panel, SectionTitle } from "../components/ui.jsx";
 import { CompanionCard, QuestCard, ReviewCard } from "../components/Cards.jsx";
+import { SchoolCard } from "../components/SchoolCard.jsx";
 import { fmtDay, fmtLong } from "../lib/dates.js";
 import { RULES } from "../lib/engine.js";
 import { tr } from "../lib/i18n.js";
@@ -90,7 +91,7 @@ function RescueCard({ rescue, onRescue, goalReminders = [], goalActions }) {
   );
 }
 
-export default function Dashboard({ state, d, today, go, ai, months, recentStories, groups, review, onFocus, onCheck, onRevive, onAddHabit, rescue, onRescue, goalReminders = [], goalActions, onAskMolt, moltWaiting = 0 }) {
+export default function Dashboard({ state, d, today, go, ai, months, onStateChange, recentStories, groups, review, onFocus, onCheck, onRevive, onAddHabit, rescue, onRescue, goalReminders = [], goalActions, onAskMolt, moltWaiting = 0 }) {
   const chestOpen = d.missions.total > 0 && d.missions.done === d.missions.total;
   return (
     <div className="grid gap-5 lg:grid-cols-12">
@@ -149,6 +150,8 @@ export default function Dashboard({ state, d, today, go, ai, months, recentStori
             </div>
           </div>
         </Panel>
+
+        <SchoolCard state={state} today={today} onStateChange={onStateChange} />
       </div>
 
       <div className="min-w-0 space-y-5 lg:col-span-4">

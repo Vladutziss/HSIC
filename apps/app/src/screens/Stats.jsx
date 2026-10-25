@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { Activity, BarChart3, Bot, CalendarDays, ChevronDown, Quote, Zap } from "lucide-react";
+import { Activity, BarChart3, Bot, CalendarDays, ChevronDown, GraduationCap, Quote, Zap } from "lucide-react";
 import { Chip, Empty, Panel, SectionTitle, Skeleton, Tabs } from "../components/ui.jsx";
 import { HEAT, HabitLines, Heatmap, MomentumChart, ScoreBars, heatLevel } from "../components/Charts.jsx";
 import { MOMENT_META } from "../lib/moments.js";
@@ -7,7 +7,8 @@ import { quoteById } from "../lib/quotes.js";
 import { FocusStats } from "../components/FocusStats.jsx";
 import { useStats } from "../lib/useStats.js";
 import { agentImpact } from "../lib/agentActions.js";
-import { fmtDay, relDay } from "../lib/dates.js";
+import { fmtDay, relDay, RO_DAYS_MIN, weekday } from "../lib/dates.js";
+import { studyWeek } from "../lib/schoolPlanner.js";
 import { tr } from "../lib/i18n.js";
 
 /** The coach, measured on this player: what it proposed, what they did with it, and the before/after of the accepted changes. */
@@ -28,6 +29,42 @@ function AgentImpact({ log }) {
           : tr("Efectul schimbărilor aplicate se măsoară după 14 zile.")}
       </p>
       <p className="mt-1 text-xs font-semibold text-dim">{tr("Comparație înainte/după pe tine. Nu dovedește că schimbarea a cauzat diferența.")}</p>
+    </Panel>
+  );
+}
+
+/** Study time of the last seven days: the total, a bar per day and the subjects, from the blocks logged on Acasă. */
+function StudyWeek({ state, today }) {
+  const w = studyWeek(state, today);
+  if (w.total === 0) return null;
+  const max = Math.max(...w.days.map((d) => d.minutes), 1);
+  const hours = Math.floor(w.total / 60);
+  return (
+    <Panel className="p-4 sm:p-5">
+      <SectionTitle icon={GraduationCap} sub={tr("Ultimele 7 zile")}>{tr("Timp de studiu")}</SectionTitle>
+      <div className="flex flex-wrap items-end gap-x-8 gap-y-4">
+        <div>
+          <div className="font-display tabular text-3xl leading-none text-ink">{hours > 0 ? `${hours} h ${w.total % 60} min` : `${w.total} min`}</div>
+          <div className="mt-1 text-xs font-semibold text-dim">{tr("în total")}</div>
+        </div>
+        <div className="flex h-16 flex-1 items-end gap-1.5" role="img" aria-label={tr("Minute de studiu pe zi, ultimele 7 zile")}>
+          {w.days.map((d) => (
+            <div key={d.day} className="flex flex-1 flex-col items-center gap-1" title={`${fmtDay(d.day)}: ${d.minutes} min`}>
+              <div className="w-full rounded-sm bg-violet" style={{ height: `${Math.max(d.minutes ? 8 : 2, Math.round((d.minutes / max) * 44))}px`, opacity: d.minutes ? 1 : 0.25 }} />
+              <span className="text-xs font-semibold text-dim">{RO_DAYS_MIN[weekday(d.day)]}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+      {w.bySubject.some((x) => x.subject) && (
+        <ul className="mt-4 flex flex-wrap gap-2">
+          {w.bySubject.filter((x) => x.subject).slice(0, 6).map((x) => (
+            <li key={x.subject}>
+              <Chip tone="dim">{x.subject} · {x.minutes} min</Chip>
+            </li>
+          ))}
+        </ul>
+      )}
     </Panel>
   );
 }
@@ -72,6 +109,7 @@ export default function Stats({ state, d, today, go, mode, saveStatus, ai, agent
         <Panel>
           <Empty icon={BarChart3} title={tr("Încă nu sunt statistici")}>{tr("Bifează primul obicei sau termină un to-do și graficele apar aici.")}</Empty>
         </Panel>
+        <StudyWeek state={state} today={today} />
       </div>
     );
 
@@ -90,6 +128,8 @@ export default function Stats({ state, d, today, go, mode, saveStatus, ai, agent
           </div>
         ))}
       </div>
+
+      <StudyWeek state={state} today={today} />
 
       <Panel className="p-4 sm:p-5">
         <SectionTitle icon={Zap} sub={tr("Liniile punctate sunt pragurile de nivel. Punctele roz marchează resetările după {resetAfter} zile fără activitate.", { resetAfter: s.resetAfter })}>{tr("Momentum general")}</SectionTitle>
