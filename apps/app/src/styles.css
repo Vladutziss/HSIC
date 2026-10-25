@@ -760,3 +760,39 @@ select.field {
 .anim-aura-spin { animation: aura-spin 9s linear infinite; }
 .anim-aura-spin-slow { animation: aura-spin 24s linear infinite; }
 .anim-aura-comet { animation: aura-comet 2.8s ease-in-out infinite; }
+
+/* ------------------------------------------------------------ touch screens
+   A finger needs about 40px; the compact controls made for a mouse are bigger only where the main pointer is coarse.
+   Text fields stay at 16px there, because iOS zooms the page into any field smaller than that. */
+@media (pointer: coarse) {
+  .tap {
+    min-height: 40px;
+    min-width: 40px;
+  }
+  .btn-sm,
+  [role="tab"],
+  [role="radio"],
+  button[aria-pressed].rounded-full:not(.swatch) {
+    min-height: 40px;
+  }
+  /* controls that must stay small to look right get a bigger hit area, without moving anything */
+  .hit {
+    position: relative;
+  }
+  .hit::after,
+  [role="switch"]::after {
+    content: "";
+    position: absolute;
+    inset: -8px -4px;
+  }
+  button.underline,
+  a.underline {
+    display: inline-block;
+    padding-block: 11px;
+  }
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  textarea,
+  select {
+    font-size: 16px;
+  }
+}

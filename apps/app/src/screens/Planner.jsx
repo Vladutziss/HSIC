@@ -325,7 +325,7 @@ function WeekView({ state, today, anchor, todo, onMoveHabit, onSkipDay }) {
                     {state.log?.[day]?.[h.id] ? <Check size={10} className="shrink-0" aria-hidden="true" /> : null}
                     <span className="min-w-0 flex-1 truncate">{h.name}</span>
                     {onSkipDay && (
-                      <button type="button" onClick={() => onSkipDay("habit", h.id, day)} className="focus-ring shrink-0 rounded text-faint hover:text-rose" aria-label={tr("Scoate {name} doar din ziua asta", { name: h.name })}>
+                      <button type="button" onClick={() => onSkipDay("habit", h.id, day)} className="hit focus-ring shrink-0 rounded text-faint hover:text-rose" aria-label={tr("Scoate {name} doar din ziua asta", { name: h.name })}>
                         <X size={11} aria-hidden="true" />
                       </button>
                     )}
@@ -414,7 +414,7 @@ function WeekView({ state, today, anchor, todo, onMoveHabit, onSkipDay }) {
                               <button
                                 type="button"
                                 onClick={() => onSkipDay("habit", it.h.id, day)}
-                                className="focus-ring shrink-0 rounded text-faint hover:text-rose"
+                                className="hit focus-ring shrink-0 rounded text-faint hover:text-rose"
                                 aria-label={tr("Scoate {name} doar din ziua asta", { name: it.h.name })}
                                 title={tr("Scoate doar din ziua asta")}
                               >
@@ -662,7 +662,7 @@ export function HomeworkPanel({ state, today, ai, onStateChange }) {
     }));
   };
   const studyBtn = (subject, assignmentId) => (
-    <button type="button" className="focus-ring shrink-0 rounded-lg px-2 py-0.5 text-xs font-extrabold text-dim ring-1 ring-edge hover:text-ink" onClick={() => study(subject, assignmentId)} aria-label={subject ? tr("Am învățat {minutes} minute la {subject}", { minutes, subject }) : tr("Am învățat {minutes} minute", { minutes })}>
+    <button type="button" className="tap focus-ring shrink-0 rounded-lg px-2 py-0.5 text-xs font-extrabold text-dim ring-1 ring-edge hover:text-ink" onClick={() => study(subject, assignmentId)} aria-label={subject ? tr("Am învățat {minutes} minute la {subject}", { minutes, subject }) : tr("Am învățat {minutes} minute", { minutes })}>
       +{minutes} min
     </button>
   );

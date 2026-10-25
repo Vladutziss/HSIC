@@ -25,7 +25,7 @@ function HabitDetail({ h, state, d, today, onBack, onEdit, onArchive }) {
 
   return (
     <div className="space-y-5">
-      <button type="button" onClick={onBack} className="focus-ring inline-flex items-center gap-1.5 rounded-lg text-sm font-extrabold text-dim hover:text-ink">
+      <button type="button" onClick={onBack} className="tap focus-ring inline-flex items-center gap-1.5 rounded-lg text-sm font-extrabold text-dim hover:text-ink">
         <ArrowLeft size={16} aria-hidden="true" />{" "}{tr("Toate obiceiurile")}</button>
       <Panel tone="gold" className="p-5">
         <div className="flex flex-wrap items-center gap-4">
@@ -102,7 +102,7 @@ function HabitRow({ h, stats, code, today, onOpen, onEdit, onDelete }) {
       </span>
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
-          <button type="button" onClick={onOpen} className="focus-ring truncate text-left font-extrabold text-ink hover:underline">
+          <button type="button" onClick={onOpen} className="tap focus-ring truncate text-left font-extrabold text-ink hover:underline">
             {h.name}
           </button>
           {code ? <Chip tone="mint">{tr("azi ✓")}</Chip> : isScheduled(h, today) ? <Chip tone="gold">{tr("azi")}</Chip> : null}

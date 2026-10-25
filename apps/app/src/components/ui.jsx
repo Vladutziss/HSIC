@@ -289,7 +289,7 @@ export function CheckButton({ checked, onClick, label, size = "md", tone = "mint
       aria-pressed={checked}
       aria-label={label}
       onClick={onClick}
-      className={`focus-ring grid shrink-0 place-items-center rounded-xl border-2 transition active:translate-y-0.5 ${dim} ${
+      className={`tap focus-ring grid shrink-0 place-items-center rounded-xl border-2 transition active:translate-y-0.5 ${dim} ${
         checked
           ? tone === "mint"
             ? "border-mint bg-mint text-on-mint shadow-key-mint"
@@ -418,7 +418,7 @@ export function Modal({ open, onClose, title, icon: Icon, tone = "violet", wide 
               )}
               <h2 className="font-display text-xl text-ink">{title}</h2>
               {dismissable && (
-                <button type="button" onClick={onClose} aria-label={tr("Închide")} className="focus-ring ml-auto rounded-lg p-1.5 text-dim hover:bg-panel-hi hover:text-ink">
+                <button type="button" onClick={onClose} aria-label={tr("Închide")} className="tap focus-ring ml-auto grid place-items-center rounded-lg p-1.5 text-dim hover:bg-panel-hi hover:text-ink">
                   <X size={18} aria-hidden="true" />
                 </button>
               )}

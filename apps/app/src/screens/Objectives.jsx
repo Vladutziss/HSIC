@@ -277,7 +277,7 @@ export function ObjectiveEditor({ initial, state, onSave, onClose }) {
                   aria-label={tr("Culoarea {col}", { col })}
                   aria-pressed={o.color === col}
                   onClick={() => set({ color: col })}
-                  className={`focus-ring h-7 w-7 rounded-full ring-2 ring-offset-2 ring-offset-panel transition ${o.color === col ? "ring-ink" : "ring-transparent"}`}
+                  className={`swatch hit focus-ring h-7 w-7 rounded-full ring-2 ring-offset-2 ring-offset-panel transition ${o.color === col ? "ring-ink" : "ring-transparent"}`}
                   style={{ background: col }}
                 />
               ))}
@@ -421,7 +421,7 @@ function StepRow({ o, s, i, count, today, act }) {
     <li className={`rounded-xl ring-1 ${s.done ? "bg-mint/5 ring-mint/25" : "bg-well/60 ring-edge"}`}>
       <div className="flex items-center gap-3 p-2.5">
         <CheckButton size="sm" checked={!!s.done} label={`${s.done ? tr("Debifează") : tr("Bifează")}: ${s.title}`} onClick={() => act.toggleStep(o.id, s.id)} />
-        <button type="button" className="focus-ring min-w-0 flex-1 rounded text-left" onClick={() => setOpen((v) => !v)} aria-expanded={open}>
+        <button type="button" className="tap focus-ring min-w-0 flex-1 rounded text-left" onClick={() => setOpen((v) => !v)} aria-expanded={open}>
           <span className={`block text-sm font-bold ${s.done ? "text-dim line-through" : "text-ink"}`}>{s.title}</span>
           <span className="flex flex-wrap gap-x-2 text-xs font-bold text-dim">
             {subs.length > 0 && <span>{tr("{doneSubs}/{length} sub-pași", { doneSubs, length: subs.length })}</span>}
