@@ -18,7 +18,7 @@ const GOAL_EXAMPLES = {
   creativ: tr("Să termin un album de desene până la vară."),
 };
 const TIMES = ["18:00", "19:00", "20:00", "20:30", "21:00", "21:30", "22:00", "22:30", "23:00"];
-const STEPS = [tr("Bun venit"), tr("Drumul"), tr("Obiectivul"), tr("Misiunile"), tr("Ritualul"), tr("Oul")];
+const STEPS = [tr("Drumul"), tr("Misiunile"), tr("Oul")];
 
 function StepDots({ step }) {
   return (
@@ -144,7 +144,7 @@ export default function Onboarding({ onDone, store, today, legacy }) {
     return CATALOG.filter((c) => filter === "all" || c.cat === filter);
   }, [path, filter]);
 
-  const canNext = [nick.trim().length > 0, !!path, goal.trim().length >= 4, habits.length > 0, true, true][step];
+  const canNext = [nick.trim().length > 0 && !!path, goal.trim().length >= 4 && habits.length > 0, true][step];
   const next = () =>
     step < STEPS.length - 1
       ? setStep(step + 1)
@@ -154,43 +154,33 @@ export default function Onboarding({ onDone, store, today, legacy }) {
   let content;
   if (step === 0) {
     content = (
-      <div className="grid items-center gap-6 sm:grid-cols-[auto,1fr]">
-        <div className="pedestal mx-auto rounded-full p-4">
-          <Sprite path={eggPath} stage="egg" size={160} label={tr("Un ou misterios")} />
-        </div>
-        <div className="space-y-4">
-          <h1 className="font-pixel text-3xl leading-tight text-ink sm:text-4xl">{tr("Fiecare erou începe cu un ou.")}</h1>
-          <p className="text-[15px] leading-relaxed text-body">{tr("Bifezi obiceiuri și îți crești {span}. Din ou iese un personaj care evoluează cu fiecare bifă, doarme când lipsești și se bucură când revii.", { span: <span className="font-extrabold text-gold-hi">{tr("momentum-ul")}</span> })}</p>
-          <Field label={tr("Cum să-ți spunem?")} htmlFor="ob-nick">
-            <input id="ob-nick" className="field" value={nick} maxLength={24} placeholder={tr("Numele sau porecla ta")} onChange={(e) => setNick(e.target.value)} />
-          </Field>
-          {old && (
-            <label htmlFor="ob-import" className="flex items-start justify-between gap-4 rounded-2xl bg-mint/10 p-4 ring-1 ring-mint/30">
-              <span className="flex gap-3">
-                <History size={20} className="mt-0.5 shrink-0 text-mint" aria-hidden="true" />
-                <span>
-                  <span className="block font-extrabold text-ink">{tr("Am găsit datele din prima versiune")}</span>
-                  <span className="block text-xs font-semibold text-body">{tr("{todos} to-do-uri ({open} nefăcute), {habits} obiceiuri{v}. Le aducem în aplicația nouă; istoricul vechi de bife nu se mută.", { todos: old.todos, open: old.open, habits: old.habits, v: old.goal ? tr(" și obiectivul tău") : "" })}</span>
-                </span>
-              </span>
-              <Toggle id="ob-import" checked={importOld} onChange={setImportOld} label={tr("Importă datele vechi")} />
-            </label>
-          )}
-        </div>
-      </div>
-    );
-  } else if (step === 1) {
-    content = (
-      <div className="space-y-5">
+      <div className="space-y-6">
         <div className="flex flex-wrap items-center gap-4">
           <div className="pedestal rounded-full p-2">
-            <Sprite path={eggPath} stage="egg" size={96} mood="joy" />
+            <Sprite path={eggPath} stage="egg" size={96} mood={path ? "joy" : "idle"} label={tr("Un ou misterios")} />
           </div>
-          <div>
-            <h1 className="font-pixel text-3xl text-ink">{tr("Alege-ți drumul")}</h1>
+          <div className="min-w-0 flex-1">
+            <h1 className="font-pixel text-3xl leading-tight text-ink">{tr("Fiecare erou începe cu un ou.")}</h1>
             <p className="text-sm text-body">{tr("Drumul hotărăște ce personaj iese din ou. Obiceiurile le poți amesteca oricum.")}</p>
           </div>
         </div>
+        <Field label={tr("Cum să-ți spunem?")} htmlFor="ob-nick">
+          <input id="ob-nick" className="field" value={nick} maxLength={24} placeholder={tr("Numele sau porecla ta")} onChange={(e) => setNick(e.target.value)} />
+        </Field>
+        {old && (
+          <label htmlFor="ob-import" className="flex items-start justify-between gap-4 rounded-2xl bg-mint/10 p-4 ring-1 ring-mint/30">
+            <span className="flex gap-3">
+              <History size={20} className="mt-0.5 shrink-0 text-mint" aria-hidden="true" />
+              <span>
+                <span className="block font-extrabold text-ink">{tr("Am găsit datele din prima versiune")}</span>
+                <span className="block text-xs font-semibold text-body">{tr("{todos} to-do-uri ({open} nefăcute), {habits} obiceiuri{v}. Le aducem în aplicația nouă; istoricul vechi de bife nu se mută.", { todos: old.todos, open: old.open, habits: old.habits, v: old.goal ? tr(" și obiectivul tău") : "" })}</span>
+              </span>
+            </span>
+            <Toggle id="ob-import" checked={importOld} onChange={setImportOld} label={tr("Importă datele vechi")} />
+          </label>
+        )}
+        <div className="space-y-2">
+          <h2 className="text-sm font-extrabold text-ink">{tr("Alege-ți drumul")}</h2>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {PATH_LIST.map((p) => {
             const Icon = iconFor(p.icon === "book" ? "book" : p.icon);
@@ -221,20 +211,19 @@ export default function Onboarding({ onDone, store, today, legacy }) {
             );
           })}
         </div>
+        </div>
       </div>
     );
-  } else if (step === 2) {
+  } else if (step === 1) {
     content = (
-      <div className="space-y-4">
+      <div className="space-y-8">
+        <div className="space-y-3">
         <h1 className="font-pixel text-3xl text-ink">{tr("Care e obiectivul tău?")}</h1>
         <p className="text-sm text-body">{tr("O propoziție. AI-ul o folosește în rapoartele de seară.")}</p>
         <textarea id="ob-goal" className="field min-h-[110px] text-base" value={goal} maxLength={160} placeholder={GOAL_EXAMPLES[path]} onChange={(e) => setGoal(e.target.value)} />
         <button type="button" className="text-xs font-bold text-dim underline hover:text-ink" onClick={() => setGoal(GOAL_EXAMPLES[path])}>{tr("Folosește exemplul")}</button>
-      </div>
-    );
-  } else if (step === 3) {
-    content = (
-      <div className="space-y-4">
+        </div>
+        <div className="space-y-4">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <h1 className="font-pixel text-3xl text-ink">{tr("Primele misiuni")}</h1>
@@ -305,11 +294,13 @@ export default function Onboarding({ onDone, store, today, legacy }) {
         ) : (
           <Button variant="ghost" size="sm" icon={Plus} disabled={habits.length >= MAX_HABITS} onClick={() => setCustom(true)}>{tr("Creează un obicei personalizat")}</Button>
         )}
+        </div>
       </div>
     );
-  } else if (step === 4) {
+  } else {
     content = (
-      <div className="space-y-5">
+      <div className="space-y-8">
+        <div className="space-y-5">
         <div className="flex items-center gap-3">
           <span className="grid h-12 w-12 place-items-center rounded-2xl bg-violet/15 text-violet-hi ring-1 ring-violet/30">
             <Moon size={24} aria-hidden="true" />
@@ -332,25 +323,16 @@ export default function Onboarding({ onDone, store, today, legacy }) {
             </button>
           ))}
         </div>
-        <div className="inset space-y-2 p-4 text-sm text-body">
-          <p>{tr("{span} fiecare misiune bifată aduce puncte, iar zilele la rând adaugă până la +40%.", { span: <span className="font-extrabold text-ink">{tr("Cum crește momentum-ul:")}</span> })}</p>
-          <p>{tr("{span} o zi ratată scade puțin. După 3 zile la rând fără nicio activitate, momentum-ul pornește din nou de la zero. Personajul nu moare niciodată: doar doarme până revii.", { span: <span className="font-extrabold text-ink">{tr("Cum scade:")}</span> })}</p>
-          <p>{tr("{span} ai 2 revive-uri pe lună ca s-o salvezi după o zi ratată.", { span: <span className="font-extrabold text-ink">{tr("Seria:")}</span> })}</p>
         </div>
-      </div>
-    );
-  } else {
-    content = (
-      <div className="flex flex-col items-center gap-4 text-center">
+        <div className="flex flex-col items-center gap-3 text-center">
         <div className="pedestal rounded-full px-10 pt-4">
-          <Sprite path={path} stage="egg" mood="joy" size={192} label={tr("Oul tău de {cls}", { cls: PATHS[path].cls })} />
+          <Sprite path={path} stage="egg" mood="joy" size={120} label={tr("Oul tău de {cls}", { cls: PATHS[path].cls })} />
         </div>
-        <h1 className="font-pixel text-3xl text-ink">{tr("Acesta e oul tău")}</h1>
-        <p className="max-w-md text-[15px] leading-relaxed text-body">{tr("{egg} Se deschide după primele bifări, iar apoi evoluează: Pui, Ucenic, Adept, Maestru și, într-o zi, Legendă.", { egg: PATHS[path].egg })}</p>
         <div className="flex flex-wrap justify-center gap-2">
           <Chip tone="gold" icon={Sparkles}>{tr("{length} misiuni", { length: habits.length })}</Chip>
           <Chip tone="violet">{tr("Raport la {fmt12}", { fmt12: fmt12(reviewTime) })}</Chip>
         </div>
+      </div>
       </div>
     );
   }
@@ -371,7 +353,7 @@ export default function Onboarding({ onDone, store, today, legacy }) {
               <LanguageSwitch />
             )}
             <Button id="ob-next" size="lg" iconRight={step === STEPS.length - 1 ? Sparkles : ArrowRight} disabled={!canNext} onClick={next}>
-              {step === 0 ? tr("Începe aventura") : step === STEPS.length - 1 ? tr("Intră în joc") : tr("Continuă")}
+              {step === STEPS.length - 1 ? tr("Intră în joc") : tr("Continuă")}
             </Button>
           </div>
           {step === STEPS.length - 1 && (
