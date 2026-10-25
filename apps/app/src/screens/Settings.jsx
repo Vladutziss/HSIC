@@ -20,52 +20,57 @@ const TIMES = ["18:00", "18:30", "19:00", "19:30", "20:00", "20:30", "21:00", "2
 // `onPick` saves the choice with the account (settings.theme), so it follows the player to every device
 function ThemePicker({ onPick }) {
   const active = useTheme();
-  return (
-    <div role="radiogroup" aria-label={tr("Temă de culori")} className="grid max-w-sm grid-cols-2 gap-2">
-      {THEMES.map((t) => {
-        const on = t.id === active;
-        const ModeIcon = t.mode === "dark" ? Moon : Sun;
-        return (
-          <button
-            key={t.id}
-            type="button"
-            role="radio"
-            aria-checked={on}
-            aria-label={`${t.name}, ${t.mode === "dark" ? tr("întunecat") : tr("luminos")}. ${t.blurb}`}
-            title={t.blurb}
-            onClick={() => {
-              setTheme(t.id);
-              onPick?.(t.id);
-            }}
-            data-theme={t.id}
-            data-mode={t.mode}
-            className={`focus-ring flex flex-col rounded-xl bg-night p-1.5 text-left ring-2 transition ${on ? "ring-gold-deep" : "ring-edge hover:ring-edge-hi"}`}
-          >
-            <div className="flex h-9 overflow-hidden rounded-lg ring-1 ring-edge">
-              <div className="flex w-1/3 flex-col gap-0.5 bg-deep p-1">
-                <span className="h-1 w-full rounded-full bg-gold" />
-                <span className="h-1 w-2/3 rounded-full bg-edge" />
-              </div>
-              <div className="flex flex-1 flex-col justify-between bg-night p-1">
-                <span className="block h-1 w-3/4 rounded-full bg-ink" />
-                <div className="flex gap-0.5">
-                  <span className="h-2 w-4 rounded-sm bg-violet" />
-                  <span className="h-2 w-3 rounded-sm bg-gold" />
-                  <span className="h-2 w-2 rounded-sm bg-mint" />
+  const group = (mode, title) => (
+    <div className="space-y-2">
+      <p className="text-xs font-extrabold uppercase tracking-wider text-dim">{title}</p>
+      <div role="radiogroup" aria-label={title} className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+        {THEMES.filter((t) => t.mode === mode).map((t) => {
+          const on = t.id === active;
+          const ModeIcon = t.mode === "dark" ? Moon : Sun;
+          return (
+            <button
+              key={t.id}
+              type="button"
+              role="radio"
+              aria-checked={on}
+              aria-label={`${t.name}, ${t.mode === "dark" ? tr("întunecat") : tr("luminos")}. ${t.blurb}`}
+              title={t.blurb}
+              onClick={() => {
+                setTheme(t.id);
+                onPick?.(t.id);
+              }}
+              data-theme={t.id}
+              data-mode={t.mode}
+              className={`focus-ring flex flex-col rounded-xl bg-night p-1.5 text-left ring-2 transition ${on ? "ring-gold-deep" : "ring-edge hover:ring-edge-hi"}`}
+            >
+              <div className="flex h-9 overflow-hidden rounded-lg ring-1 ring-edge">
+                <div className="flex w-1/3 flex-col gap-0.5 bg-deep p-1">
+                  <span className="h-1 w-full rounded-full bg-gold" />
+                  <span className="h-1 w-2/3 rounded-full bg-edge" />
+                </div>
+                <div className="flex flex-1 flex-col justify-between bg-night p-1">
+                  <span className="block h-1 w-3/4 rounded-full bg-ink" />
+                  <div className="flex gap-0.5">
+                    <span className="h-2 w-4 rounded-sm bg-violet" />
+                    <span className="h-2 w-3 rounded-sm bg-gold" />
+                    <span className="h-2 w-2 rounded-sm bg-mint" />
+                  </div>
                 </div>
               </div>
-            </div>
-            <span className="mt-1 flex items-center justify-between gap-1 px-0.5">
-              <span className="truncate text-xs font-extrabold text-ink">{t.name}</span>
-              {on ? (
-                <Check size={12} strokeWidth={3} className="shrink-0 text-ink" aria-hidden="true" />
-              ) : (
-                <ModeIcon size={11} className="shrink-0 text-dim" aria-hidden="true" />
-              )}
-            </span>
-          </button>
-        );
-      })}
+              <span className="mt-1 flex items-center justify-between gap-1 px-0.5">
+                <span className="truncate text-xs font-extrabold text-ink">{t.name}</span>
+                {on ? <Check size={12} strokeWidth={3} className="shrink-0 text-ink" aria-hidden="true" /> : <ModeIcon size={11} className="shrink-0 text-dim" aria-hidden="true" />}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+  return (
+    <div className="space-y-4">
+      {group("dark", tr("Teme întunecate"))}
+      {group("light", tr("Teme luminoase"))}
     </div>
   );
 }
@@ -212,7 +217,7 @@ export default function Settings({ state, d, ai, mode, env, onChange, onWipe, on
 
         {/* language and look: one panel */}
         <Panel className="space-y-4 p-4">
-          <SectionTitle icon={Palette} className="!mb-1">{tr("Aspect")}</SectionTitle>
+          <SectionTitle icon={Palette} className="!mb-1" sub={tr("Limba și tema de culori; alegerea te urmează pe toate dispozitivele.")}>{tr("Aspect")}</SectionTitle>
           <div className="space-y-2">
             <p className="text-xs font-semibold text-dim">{tr("Interfața aplicației. Textele scrise de AI (rapoarte, povești) urmează aceeași limbă.")}</p>
             <LanguageSwitch account />
