@@ -143,3 +143,36 @@ Verificat din magazinele de aplicații la 25 oct 2026:
 - Nu am testat aplicația cu elevi reali, nici cu cont real și AI activ după ultimele modificări; faceți o trecere completă înainte de filmare.
 - Textele legale (termeni, confidențialitate) încă folosesc „self-improvement", iar cu minori (cerința de vârstă 16 ani sau acord parental) e nevoie de o verificare juridică, nu doar de schimbarea unui cuvânt. Juriul poate întreba.
 - AI-ul se bazează pe OpenRouter: dacă pică în timpul demonstrației sau filmării, nu aveți un plan B scris de mână (regulă a proiectului). Filmați din timp, cu un moment în care știți că funcționează.
+
+## 10. Actualizare: ce am mai aflat (platforma Igodemy și ghidul) și ce s-a adăugat
+
+Surse: [liceeni-ura.igodemy.ai](https://liceeni-ura.igodemy.ai/) (aceeași competiție, pagini /, /ghid-participare, /inscriere), plus o căutare publică.
+
+**Două grile, nu una.** Pagina /semifinale are grila din secțiunea 2 (20/20/20/20/15 + 5 bonus). Ghidul participantului (secțiunea 8) dă o grilă generală, „aceeași pentru toate proiectele", cu 100 de puncte: Inovație și originalitate 25 · Impact și relevanță 20 · Fezabilitate 20 · Calitatea proiectului 15 · Prezentarea și susținerea 10 · Potențial de dezvoltare 10. Departajare în ordinea: inovație, impact, fezabilitate, deliberare. Nu știm care se aplică în finală; pregătiți-vă pentru ambele.
+
+| Criteriu din ghid | Ce să arătați |
+|---|---|
+| Inovație și originalitate (25) | Agentul care măsoară efectul propriilor propuneri; planul de pregătire bazat pe cercetare; diferențierea față de MyStudyLife și Habitica (secțiunea 5) |
+| Impact și relevanță (20) | Elevi reali și cifre reale (secțiunea 6); timpul de studiu din Progres; legătura cu BAC |
+| Fezabilitate (20) | Aplicația funcționează azi; ce rămâne în lucru; costuri de AI reale, dacă le aveți |
+| Calitatea proiectului (15) | Surse corecte și cu limite (baza de cunoștințe), structură clară, fără afirmații de cauzalitate |
+| Prezentare și susținere (10) | Repetiții, răspunsuri la întrebări, rolurile în echipă |
+| Potențial de dezvoltare (10) | Pilot într-o școală, extindere pe materii, rapoarte pentru părinți sau profesori (idei, nu promisiuni) |
+
+**Reguli care contează și nu erau în prima versiune:**
+- **Copierea unui startup existent duce la descalificare.** Formulați deci diferențierea cu grijă: nu „RPG de obiceiuri" (Habitica există), ci un coach pentru elevi care leagă teme și examene, obiceiuri și un agent AI ce își măsoară eficiența.
+- Echipa trebuie să aibă un **Team Lead** pentru comunicarea cu organizatorii; schimbările de componență se anunță în scris în 5 zile lucrătoare.
+- Elevii sub 16 ani au nevoie de acordul părintelui sau al tutorelui (și pentru interviurile și materialele voastre de validare).
+- Juriul și mentorii vin din marketing, strategie, antreprenoriat, AI și mediul corporate (de exemplu un CEO de asigurări, un dezvoltator AI de la TotalSoft, Google România ca invitat). Așteptați întrebări despre fezabilitate, diferențiere, model de business (în finală), date personale și etica AI. Pregătiți câte un răspuns scurt pentru fiecare.
+- Programul subliniază gândirea critică, creativitatea, colaborarea, comunicarea și **utilizarea etică și responsabilă a AI** (din presă; verificați în regulament). Ghidul nu fixează reguli de folosire a AI.
+
+**Ce s-a adăugat în produs pentru asta:**
+- **Plan de pregătire pentru examene** (cardul Școală, butonul „Plan"): din data examenului, 2–5 sesiuni distribuite pe zilele rămase, ultima de autotestare, create ca to-do-uri în calendar. Fără AI, fără dubluri la a doua apăsare. Se bazează pe exersarea distribuită și testarea activă (Dunlosky et al., 2013; vezi `knowledge/dunlosky-2013.md`). Limită spusă și în produs: planul e o împărțire regulată a zilelor, nu o garanție de notă.
+- **„Cum folosesc AI-ul"** în Molt, la „Ce știe Molt": confirmarea ta, motivul și datele folosite, surse cu limite, ajutor pentru a înțelege (nu temele făcute), nu e terapeut sau medic, 112 și Telefonul Copilului 116 111.
+- **Prompturile Edge** spun acum „coach pentru elevi de liceu" și cer lui Molt să explice și să dea indicii, nu să predea teme gata făcute, și să trimită spre un adult de încredere, 112 sau 116 111 dacă elevul vorbește despre autovătămare, abuz, violență sau urgență medicală. **Funcțiile Edge trebuie redeployate** (`ai`, `agent`, `weekly`), altfel aceste reguli nu sunt active. Nu le-am testat cu un model real.
+
+**Idei care ar mai ajuta, neimplementate (decideți voi):**
+- Pe landing, o secțiune „Pentru elevi" cu direcțiile E3, F2 și G1 din /teme și cu sursele.
+- „Molted în cifre" cu minute de studiu agregate (necesită o modificare în baza de date).
+- Un raport lunar exportabil pentru elev, părinte sau diriginte.
+- Un pilot într-o clasă, cu acord parental: ar fi cea mai puternică dovadă pentru Impact, Validare și Pașii următori.

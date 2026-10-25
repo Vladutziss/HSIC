@@ -2,10 +2,11 @@
 // add them by hand. It works without the server (no AI), so the school side of the app is always in reach.
 
 import React, { useState } from "react";
-import { GraduationCap, Plus, X } from "lucide-react";
-import { Button, CheckButton, Chip, Panel, SectionTitle, Tabs } from "./ui.jsx";
-import { addSchoolItem, addStudySession, nextAssignments, nextExams, schoolPlanner, setSchoolDone, studiedMinutes } from "../lib/schoolPlanner.js";
+import { CalendarCheck, CalendarPlus, GraduationCap, Plus, X } from "lucide-react";
+import { Button, CheckButton, Chip, Panel, SectionTitle, Tabs, useToast } from "./ui.jsx";
+import { addSchoolItem, addStudySession, examPlan, examPlanTodos, nextAssignments, nextExams, schoolPlanner, setSchoolDone, studiedMinutes } from "../lib/schoolPlanner.js";
 import { addDays, diffDays } from "../lib/dates.js";
+import { uid } from "../lib/catalog.js";
 import { tr } from "../lib/i18n.js";
 
 const dayLabel = (n) => (n === 0 ? tr("azi") : n === 1 ? tr("mâine") : tr("în {n} zile", { n }));
@@ -47,15 +48,26 @@ function AddForm({ today, onAdd, onClose }) {
 }
 
 export function SchoolCard({ state, today, onStateChange }) {
+  const toast = useToast();
   const [adding, setAdding] = useState(false);
   const exams = nextExams(state, today);
   const assignments = nextAssignments(state, today);
   const studied = studiedMinutes(state, today);
   const update = (fn) => onStateChange?.((s) => ({ ...s, schoolPlanner: fn(schoolPlanner(s)) }));
   const rows = [
-    ...exams.slice(0, 2).map((e) => ({ kind: "exam", id: e.id, title: e.title, subject: e.subject, left: e.daysLeft })),
+    ...exams.slice(0, 2).map((e) => ({ kind: "exam", id: e.id, title: e.title, subject: e.subject, left: e.daysLeft, date: e.date })),
     ...assignments.slice(0, 4 - Math.min(2, exams.length)).map((a) => ({ kind: "assignment", id: a.id, title: a.title, subject: a.subject, left: Math.max(0, diffDays(today, a.due)) })),
   ];
+  // study blocks spread over the days before the exam, the last one a self-test (lib/schoolPlanner.js examPlan)
+  const prepare = (r) => {
+    const topic = r.subject || r.title;
+    const title = (x) => (x.last ? tr("Autotestare {topic} ({i}/{n})", { topic, i: x.i, n: x.n }) : tr("Pregătire {topic} ({i}/{n})", { topic, i: x.i, n: x.n }));
+    if (examPlan({ date: r.date }, today).length === 0) return toast({ title: tr("Nu e loc pentru un plan"), text: tr("Examenul e prea aproape: ai nevoie de cel puțin două zile libere."), icon: CalendarCheck });
+    const drafts = examPlanTodos({ date: r.date }, today, state.todos, title);
+    if (drafts.length === 0) return toast({ title: tr("Planul e deja în calendar"), icon: CalendarCheck });
+    onStateChange?.((s) => ({ ...s, todos: [...(s.todos || []), ...drafts.map((d) => ({ id: uid("t"), time: null, done: false, doneOn: null, createdAt: today, ...d }))] }));
+    toast({ title: tr("Plan de pregătire adăugat"), text: tr("{n} sesiuni până la examen, în calendar. Sesiuni pe mai multe zile, nu într-o singură seară: exersarea distribuită și autotestarea au primit cele mai bune evaluări (Dunlosky et al., 2013).", { n: drafts.length }), icon: CalendarCheck, tone: "mint", ms: 7000 });
+  };
   const logStudy = (subject) => update((p) => addStudySession(p, { subject, minutes: SESSION, day: today }, today));
   return (
     <Panel className="p-4 sm:p-5">
@@ -83,6 +95,17 @@ export function SchoolCard({ state, today, onStateChange }) {
                   {[r.subject, dayLabel(r.left)].filter(Boolean).join(" · ")}
                 </span>
               </span>
+              {r.kind === "exam" && r.left >= 2 && (
+                <button
+                  type="button"
+                  onClick={() => prepare(r)}
+                  className="focus-ring inline-flex shrink-0 items-center gap-1 rounded-lg px-2 py-1 text-xs font-extrabold text-dim ring-1 ring-edge hover:text-ink"
+                  aria-label={tr("Creează un plan de pregătire pentru {title}", { title: r.title })}
+                >
+                  <CalendarPlus size={13} aria-hidden="true" />
+                  {tr("Plan")}
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => logStudy(r.subject)}

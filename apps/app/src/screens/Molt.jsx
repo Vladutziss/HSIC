@@ -187,6 +187,16 @@ function MemoryBody({ props }) {
         </ul>
       </div>
       <div className="border-t border-edge/60 pt-5">
+        <p className="mb-2 text-sm font-extrabold text-ink">{tr("Cum folosesc AI-ul")}</p>
+        <ul className="space-y-1 text-sm font-semibold text-body">
+          <li>{tr("· Tu decizi: schimbările de program sau de obiceiuri așteaptă confirmarea ta.")}</li>
+          <li>{tr("· Pentru fiecare propunere vezi motivul și datele folosite, în „Ce a făcut Molt”.")}</li>
+          <li>{tr("· Citez doar surse pe care le-am găsit în baza de cunoștințe, cu limitele lor.")}</li>
+          <li>{tr("· Te ajut să înțelegi: explic, dau indicii, pun întrebări. Nu îți scriu temele ca să le dai drept ale tale.")}</li>
+          <li>{tr("· Nu sunt terapeut sau medic. Dacă ai o problemă serioasă, vorbește cu un adult de încredere; în România poți suna la 112 sau la Telefonul Copilului, 116 111.")}</li>
+        </ul>
+      </div>
+      <div className="border-t border-edge/60 pt-5">
         <p className="mb-3 text-sm font-extrabold text-ink">{tr("Spune-mi ce nu se vede în bifări")}</p>
         {ai?.server ? <NotesPanel ai={ai} today={today} /> : <Locked />}
       </div>

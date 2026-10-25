@@ -97,7 +97,7 @@ function dailyPlan(p: any): string {
   const todos = Array.isArray(p.todos) ? p.todos.slice(0, 12) : [];
   const goals = Array.isArray(p.goals) ? p.goals.slice(0, 6) : [];
   const assignments = Array.isArray(p.assignments) ? p.assignments.slice(0, 10) : [];
-  return `You are the daily planning coach in "Molted", a self-improvement RPG for teenagers. Turn the player's real tasks and habits into a small plan for today.
+  return `You are the daily planning coach in "Molted", a gamified study and habit coach for high school students. Turn the player's real tasks and habits into a small plan for today.
 
 Today: ${clip(p.today, 40)}. Available time: ${Number(p.minutes) || 60} minutes. Energy: ${clip(p.energy, 12) || "medium"}.
 Habits:
@@ -143,7 +143,7 @@ function chatPrompt(p: any): string {
   const rows = (a: unknown, n: number, f: (x: any) => string) =>
     (Array.isArray(a) ? a.slice(0, n).map(f).join("\n") : "") || "- none";
   const days = (d: any) => (Array.isArray(d) ? d.slice(0, 7).join(",") : "");
-  return `You are ${clip(p.name, 40) || "the Molt"}, the player's Molt companion in "Molted", a self-improvement RPG (class: ${clip(p.cls, 40) || "-"}). You are a teen self-improvement and school coach. Talk in ${LANG}, warm, concise, addressing the player${TU}. The player's main goal: "${clip(p.goal, 200) || "-"}". Today: ${clip(c.today, 20)}.
+  return `You are ${clip(p.name, 40) || "the Molt"}, the player's Molt companion in "Molted", a gamified study and habit coach (class: ${clip(p.cls, 40) || "-"}). You are a study and school coach for high school students. Help them learn: explain, give hints and ask questions, and do not hand over finished homework or essays to submit as their own. You are not a therapist or a doctor: if the student mentions self-harm, abuse, violence or a health emergency, stop coaching, tell them kindly that they deserve help from a trusted adult, and mention that in Romania they can call 112 in an emergency or Telefonul Copilului at 116 111. Talk in ${LANG}, warm, concise, addressing the player${TU}. The player's main goal: "${clip(p.goal, 200) || "-"}". Today: ${clip(c.today, 20)}.
 
 Context (the only facts you know about the player):
 Streak: ${Number(c.streak) || 0} days. Focus today: ${Number(c.focusMinutesToday) || 0} min.

@@ -107,3 +107,30 @@ export function studyWeek(state, today) {
   const bySubject = [...subjects.entries()].map(([subject, minutes]) => ({ subject, minutes })).sort((a, b) => b.minutes - a.minutes);
   return { total: days.reduce((n, d) => n + d.minutes, 0), days, bySubject };
 }
+
+// ------------------------------------------------------------ exam preparation plan
+// Study blocks spread over the days before an exam instead of one evening, the last one a self-test. The two ideas are the
+// ones Dunlosky et al. (2013) rated highest (distributed practice and practice testing); see knowledge/dunlosky-2013.md.
+// No AI: the dates come from the exam date, the titles from the subject the student typed.
+
+export const PLAN_MAX_SESSIONS = 5;
+
+/**
+ * Sessions from today up to the day before the exam: `{ i, n, date, last }`, evenly spaced, at most PLAN_MAX_SESSIONS.
+ * Fewer than two free days (exam today, tomorrow or past) gives an empty plan.
+ */
+export function examPlan(exam, today) {
+  if (!exam?.date || !DATE.test(exam.date)) return [];
+  const free = diffDays(today, exam.date); // today .. the day before the exam
+  if (free < 2) return [];
+  const n = Math.min(PLAN_MAX_SESSIONS, free);
+  return Array.from({ length: n }, (_, i) => ({ i: i + 1, n, date: addDays(today, n === 1 ? 0 : Math.round((i * (free - 1)) / (n - 1))), last: i === n - 1 }));
+}
+
+/** The plan as to-do drafts (no id): `title(session)` builds the text so the screen can translate it. Skips a to-do that already exists on that day. */
+export function examPlanTodos(exam, today, existing, title, dur = 45) {
+  const have = new Set((existing || []).map((t) => `${t.date}|${t.title}`));
+  return examPlan(exam, today)
+    .map((s) => ({ title: title(s), date: s.date, dur }))
+    .filter((t) => !have.has(`${t.date}|${t.title}`));
+}

@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { addSchoolItem, addStudySession, nextAssignments, nextExams, normalizeAssignments, normalizeExams, normalizeSession, setSchoolDone, studiedMinutes, studyWeek } from "../src/lib/schoolPlanner.js";
+import { addSchoolItem, addStudySession, examPlan, examPlanTodos, nextAssignments, nextExams, normalizeAssignments, normalizeExams, normalizeSession, setSchoolDone, studiedMinutes, studyWeek } from "../src/lib/schoolPlanner.js";
 
 const today = "2026-10-12";
 
@@ -98,4 +98,28 @@ test("addStudySession keeps valid blocks only, and studyWeek sums seven days by 
   assert.equal(w.total, 70);
   assert.deepEqual(w.bySubject, [{ subject: "Chimie", minutes: 45 }, { subject: "Mate", minutes: 25 }]);
   assert.deepEqual(studyWeek({}, today).bySubject, []);
+});
+
+test("examPlan spreads sessions over the days before the exam and ends with the self-test", () => {
+  const plan = examPlan({ date: "2026-10-22" }, today); // 10 free days
+  assert.equal(plan.length, 5);
+  assert.deepEqual(plan.map((s) => s.date), ["2026-10-12", "2026-10-14", "2026-10-17", "2026-10-19", "2026-10-21"]);
+  assert.deepEqual(plan.map((s) => s.last), [false, false, false, false, true]);
+  assert.deepEqual(examPlan({ date: "2026-10-15" }, today).map((s) => s.date), ["2026-10-12", "2026-10-13", "2026-10-14"]);
+  assert.deepEqual(examPlan({ date: "2026-10-14" }, today).map((s) => s.date), ["2026-10-12", "2026-10-13"]);
+});
+
+test("examPlan gives nothing when there is no room, and examPlanTodos skips what is already there", () => {
+  assert.deepEqual(examPlan({ date: "2026-10-13" }, today), []);
+  assert.deepEqual(examPlan({ date: today }, today), []);
+  assert.deepEqual(examPlan({ date: "2026-10-01" }, today), []);
+  assert.deepEqual(examPlan({}, today), []);
+  const title = (s) => `${s.last ? "Test" : "Invata"} ${s.i}/${s.n}`;
+  const first = examPlanTodos({ date: "2026-10-15" }, today, [], title);
+  assert.deepEqual(first, [
+    { title: "Invata 1/3", date: "2026-10-12", dur: 45 },
+    { title: "Invata 2/3", date: "2026-10-13", dur: 45 },
+    { title: "Test 3/3", date: "2026-10-14", dur: 45 },
+  ]);
+  assert.equal(examPlanTodos({ date: "2026-10-15" }, today, first, title).length, 0);
 });
