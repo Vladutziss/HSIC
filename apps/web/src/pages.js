@@ -65,6 +65,16 @@ function homeBody(route, locale, t) {
           </details>`;
     })
     .join("\n");
+  const quotes = locale === "ro" ? ["„", "”"] : ["“", "”"];
+  const testimonials = h.testimonials
+    .map(
+      (q) => `          <li class="mock">
+            <p class="text-gold" role="img" aria-label="${esc(h.ratingAria.replace("{n}", String(q.rating)))}">${"★".repeat(q.rating)}</p>
+            <blockquote class="mt-3 text-ink">${quotes[0]}${esc(q.text)}${quotes[1]}</blockquote>
+            <p class="mt-4 text-sm font-bold text-dim">${q.name ? `${esc(q.name)} · ` : ""}${esc(q.role)}</p>
+          </li>`,
+    )
+    .join("\n");
   const sprites = ["egg", "apprentice", "master"];
   return `  <body class="app-bg min-h-screen font-sans text-body">
     <a href="#continut" class="skip">${esc(t.common.skip)}</a>
@@ -151,6 +161,14 @@ ${[["decided", "c-decided"], ["applied", "c-applied"], ["improved", "c-improved"
         <ol class="grid grid-cols-3 gap-3" aria-label="${esc(h.stagesAria)}">
 ${h.stages.map((s, i) => `          <li class="stage"><span class="spr" data-sprite="sport,${sprites[i]},idle" role="img" aria-label="${esc(s.alt)}"></span><b>${esc(s.label)}</b></li>`).join("\n")}
         </ol>
+      </section>
+
+      <section class="mx-auto max-w-6xl px-5 py-16" aria-labelledby="t-testimoniale">
+        <h2 id="t-testimoniale" class="font-pixel text-3xl font-bold text-ink">${esc(h.testimonialsH2)}</h2>
+        <p class="mt-3 max-w-2xl">${esc(h.testimonialsIntro)}</p>
+        <ul class="mt-8 grid gap-5 md:grid-cols-2" aria-label="${esc(h.testimonialsAria)}">
+${testimonials}
+        </ul>
       </section>
 
       <section id="${h.ids.faq}" class="mx-auto max-w-3xl scroll-mt-6 px-5 py-16" aria-labelledby="t-faq">

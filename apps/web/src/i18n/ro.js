@@ -111,6 +111,16 @@ export default {
       { label: "Ucenic", alt: "Molt ca ucenic" },
       { label: "Maestru", alt: "Molt ca maestru" },
     ],
+    testimonialsH2: "Ce spun elevii",
+    testimonialsIntro: "Păreri de la elevi care au încercat Molted, publicate cu acordul lor. Numele apare doar acolo unde elevul a ales să apară.",
+    testimonialsAria: "Păreri ale elevilor",
+    ratingAria: "Nota {n} din 5",
+    testimonials: [
+      { text: "O aplicatie buna care ma ajuta sa mi organizez timpul de invatat in principiu dar si restul activitatilor din zi", name: "Brian P.", role: "Elev de liceu", rating: 5 },
+      { text: "Mă ajută să mă concentrez mai bine și simt ca evoluez mai repede atunci când îl folosesc", name: null, role: "Elev de liceu", rating: 5 },
+      { text: "Animăluțul a cărui evoluție o urmărim si o încurajăm face parte din motivația suplimentară de care unii dintre noi ar putea beneficia pentru finalizarea unei sarcini.", name: null, role: "Elev de liceu", rating: 5 },
+      { text: "Mi a placut layout ul siteului, culorile si continutul per total", name: "Stefania F.", role: "Elev de liceu", rating: 5 },
+    ],
     faqH2: "Întrebări frecvente",
     faq: [
       { q: "De unde primesc personajul?", a: "La început primești un ou. Drumul pe care îl alegi (Sport, Studiu, Bani, Minte sau Creativitate) decide ce creatură iese din el: Atlet, Cărturar, Negustor, Înțelept sau Bard." },
