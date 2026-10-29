@@ -23,6 +23,14 @@
    Adding a theme: copy a block, change the values, add it to THEMES in themes.js and to the id list in index.html. */
 
 /* Noapte (default) is in packages/ui/base.css, shared with the landing. */
+/* Same palette, with the text on violet and rose fills and the faintest text made readable (4.5:1) in the app only: the
+   landing keeps the shared values. It sits before the other blocks so that theirs win when one is active. */
+:root,
+[data-theme="noapte"] {
+  --c-on-violet: 20 14 36;
+  --c-on-rose: 20 14 36;
+  --c-faint: 133 125 180;
+}
 
 [data-theme="grafit"] {
   --c-night: 24 24 27; /* #18181B */
@@ -39,7 +47,7 @@
   --c-ink: 244 244 245;
   --c-body: 212 212 216;
   --c-dim: 161 161 170;
-  --c-faint: 128 128 138;
+  --c-faint: 140 140 149;
   --c-gold: 228 228 231; /* accent alb-gri */
   --c-gold-hi: 250 250 250;
   --c-gold-deep: 113 113 122;
@@ -89,7 +97,7 @@
   --c-ink: 45 35 75;
   --c-body: 65 55 98;
   --c-dim: 95 84 130;
-  --c-faint: 125 114 160;
+  --c-faint: 109 98 143;
   --c-gold: 167 148 255; /* #A594F9 */
   --c-gold-hi: 205 193 255;
   --c-gold-deep: 110 90 210;
@@ -111,10 +119,10 @@
   --c-rose: 225 95 130;
   --c-rose-key: 150 50 80;
   --c-rose-ink: 175 45 85;
-  --c-on-gold: 255 255 255;
-  --c-on-violet: 255 255 255;
-  --c-on-mint: 255 255 255;
-  --c-on-rose: 255 255 255;
+  --c-on-gold: 45 35 75;
+  --c-on-violet: 45 35 75;
+  --c-on-mint: 45 35 75;
+  --c-on-rose: 20 14 36;
   --c-shadow: 90 70 150;
   --c-star: 150 130 210;
   --shadow-a: 0.2;
@@ -139,7 +147,7 @@
   --c-ink: 31 33 37;
   --c-body: 55 60 68;
   --c-dim: 90 97 108;
-  --c-faint: 120 127 138;
+  --c-faint: 100 106 116;
   --c-gold: 75 85 99; /* accent gri-închis */
   --c-gold-hi: 107 114 128;
   --c-gold-deep: 31 41 55;
@@ -162,8 +170,8 @@
   --c-rose-key: 140 40 45;
   --c-rose-ink: 170 40 48;
   --c-on-gold: 255 255 255;
-  --c-on-violet: 255 255 255;
-  --c-on-mint: 255 255 255;
+  --c-on-violet: 20 14 36;
+  --c-on-mint: 31 33 37;
   --c-on-rose: 255 255 255;
   --c-shadow: 60 66 76;
   --c-star: 120 126 136;
@@ -190,7 +198,7 @@
   --c-ink: 74 40 40;
   --c-body: 98 62 60;
   --c-dim: 124 84 78;
-  --c-faint: 156 118 108;
+  --c-faint: 136 99 92;
   --c-gold: 255 204 184; /* #FFCCB8 */
   --c-gold-hi: 255 222 206;
   --c-gold-deep: 214 130 100;
