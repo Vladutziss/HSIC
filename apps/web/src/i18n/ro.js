@@ -116,10 +116,10 @@ export default {
     testimonialsAria: "Păreri ale elevilor",
     ratingAria: "Nota {n} din 5",
     testimonials: [
-      { text: "O aplicatie buna care ma ajuta sa mi organizez timpul de invatat in principiu dar si restul activitatilor din zi", name: "Brian P.", role: "Elev de liceu", rating: 5 },
-      { text: "Mă ajută să mă concentrez mai bine și simt ca evoluez mai repede atunci când îl folosesc", name: null, role: "Elev de liceu", rating: 5 },
-      { text: "Animăluțul a cărui evoluție o urmărim si o încurajăm face parte din motivația suplimentară de care unii dintre noi ar putea beneficia pentru finalizarea unei sarcini.", name: null, role: "Elev de liceu", rating: 5 },
-      { text: "Mi a placut layout ul siteului, culorile si continutul per total", name: "Stefania F.", role: "Elev de liceu", rating: 5 },
+      { text: "O aplicație bună care mă ajută să-mi organizez timpul de învățat, în principiu, dar și restul activităților din zi.", name: "Brian P.", role: "Elev de liceu", rating: 5 },
+      { text: "Mă ajută să mă concentrez mai bine și simt că evoluez mai repede atunci când îl folosesc.", name: null, role: "Elev de liceu", rating: 5 },
+      { text: "Animăluțul a cărui evoluție o urmărim și o încurajăm face parte din motivația suplimentară de care unii dintre noi ar putea beneficia pentru finalizarea unei sarcini.", name: null, role: "Elev de liceu", rating: 5 },
+      { text: "Mi-a plăcut layout-ul site-ului, culorile și conținutul per total.", name: "Stefania F.", role: "Elev de liceu", rating: 5 },
     ],
     faqH2: "Întrebări frecvente",
     faq: [
