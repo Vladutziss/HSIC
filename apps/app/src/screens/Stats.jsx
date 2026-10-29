@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from "react";
-import { Activity, BarChart3, Bot, CalendarDays, ChevronDown, GraduationCap, Quote, Zap } from "lucide-react";
-import { Chip, Empty, Panel, SectionTitle, Skeleton, Tabs } from "../components/ui.jsx";
+import { Activity, BarChart3, Bot, CalendarDays, ChevronDown, FileText, GraduationCap, Quote, Zap } from "lucide-react";
+import { Button, Chip, Empty, Panel, SectionTitle, Skeleton, Tabs } from "../components/ui.jsx";
+import { MonthReport } from "../components/MonthReport.jsx";
 import { HEAT, HabitLines, Heatmap, MomentumChart, ScoreBars, heatLevel } from "../components/Charts.jsx";
 import { MOMENT_META } from "../lib/moments.js";
 import { quoteById } from "../lib/quotes.js";
@@ -45,7 +46,7 @@ function StudyWeek({ state, today }) {
       <div className="flex flex-wrap items-end gap-x-8 gap-y-4">
         <div>
           <div className="font-display tabular text-3xl leading-none text-ink">{hours > 0 ? `${hours} h ${w.total % 60} min` : `${w.total} min`}</div>
-          <div className="mt-1 text-xs font-semibold text-dim">{tr("în total")}</div>
+          <div className="mt-1 text-xs font-semibold text-dim">{w.focus > 0 ? tr("în total, din care Focus: {n} min", { n: w.focus }) : tr("în total")}</div>
         </div>
         <div className="flex h-16 flex-1 items-end gap-1.5" role="img" aria-label={tr("Minute de studiu pe zi, ultimele 7 zile")}>
           {w.days.map((d) => (
@@ -65,6 +66,18 @@ function StudyWeek({ state, today }) {
           ))}
         </ul>
       )}
+    </Panel>
+  );
+}
+
+/** The way into the monthly report (a dialog that can also be printed). */
+function ReportLink({ state, days, today }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <Panel className="flex flex-wrap items-center justify-between gap-3 p-4 sm:p-5">
+      <SectionTitle icon={FileText} sub={tr("Pentru tine, pentru părinți sau pentru diriginte")} className="!mb-0">{tr("Raport lunar")}</SectionTitle>
+      <Button variant="ghost" size="sm" icon={FileText} onClick={() => setOpen(true)}>{tr("Deschide raportul")}</Button>
+      <MonthReport open={open} onClose={() => setOpen(false)} state={state} days={days} today={today} />
     </Panel>
   );
 }
@@ -110,6 +123,7 @@ export default function Stats({ state, d, today, go, mode, saveStatus, ai, agent
           <Empty icon={BarChart3} title={tr("Încă nu sunt statistici")}>{tr("Bifează primul obicei sau termină un to-do și graficele apar aici.")}</Empty>
         </Panel>
         <StudyWeek state={state} today={today} />
+        <ReportLink state={state} days={days} today={today} />
       </div>
     );
 
@@ -130,6 +144,8 @@ export default function Stats({ state, d, today, go, mode, saveStatus, ai, agent
       </div>
 
       <StudyWeek state={state} today={today} />
+
+      <ReportLink state={state} days={days} today={today} />
 
       <Panel className="p-4 sm:p-5">
         <SectionTitle icon={Zap} sub={tr("Liniile punctate sunt pragurile de nivel. Punctele roz marchează resetările după {resetAfter} zile fără activitate.", { resetAfter: s.resetAfter })}>{tr("Momentum general")}</SectionTitle>

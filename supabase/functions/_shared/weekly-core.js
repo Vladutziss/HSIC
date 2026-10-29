@@ -173,3 +173,37 @@ export function streakAlert({ state, today, minStreak = 3 } = {}) {
   const left = (state?.habits || []).filter((h) => !h.archivedAt && isScheduled(h, today) && !state.log?.[today]?.[h.id]);
   return left.length ? { streak: streak.current, habit: left[0] } : null;
 }
+
+/**
+ * Daily exam reminder (a push, no model involved: the numbers and the sentence template are all there is). The nearest
+ * exam in 1..`within` days. The day before it always gets one; two or three days before only when no study was logged
+ * for its subject in the last three days (with no subject on the exam, any logged study counts). Returns
+ * {exam, daysLeft, studied, title, body} in the player's language, or null when nothing is due.
+ */
+export function examReminder({ state, today, lang = "ro", within = 3 } = {}) {
+  const en = lang === "en";
+  const L = (ro, eng) => (en ? eng : ro);
+  const exam = nextExams(state || {}, today).find((e) => e.daysLeft >= 1 && e.daysLeft <= within);
+  if (!exam) return null;
+  const subject = String(exam.subject || "").trim();
+  const key = subject.toLowerCase();
+  const from = addDays(today, -2);
+  const studied = schoolPlanner(state).sessions
+    .filter((s) => s.day >= from && s.day <= today && (!key || String(s.subject || "").trim().toLowerCase() === key))
+    .reduce((n, s) => n + (Number(s.minutes) || 0), 0);
+  if (exam.daysLeft > 1 && studied > 0) return null;
+  const name = String(exam.title).slice(0, 60);
+  const at = subject ? L(` la ${subject}`, ` for ${subject}`) : "";
+  let title;
+  let body;
+  if (exam.daysLeft === 1) {
+    title = L(`Mâine: ${name}`, `Tomorrow: ${name}`);
+    body = studied > 0
+      ? L(`Ai notat ${studied} min de studiu în ultimele 3 zile${at}. Un ultim test din memorie, apoi odihnește-te.`, `You logged ${studied} min of study in the last 3 days${at}. One last test from memory, then rest.`)
+      : L(`N-ai notat studiu${at} în ultimele 3 zile. Un test din memorie de 25 de minute e un început bun.`, `You have not logged study${at} in the last 3 days. A 25-minute test from memory is a good start.`);
+  } else {
+    title = L(`${name} peste ${exam.daysLeft} zile`, `${name} in ${exam.daysLeft} days`);
+    body = L(`N-ai notat studiu${at} în ultimele 3 zile. Un plan de pregătire în Molt împarte zilele rămase.`, `You have not logged study${at} in the last 3 days. A study plan in Molted splits the days that are left.`);
+  }
+  return { exam: { id: exam.id, title: exam.title, subject, date: exam.date }, daysLeft: exam.daysLeft, studied, title, body };
+}
