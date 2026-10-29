@@ -214,6 +214,8 @@ function ChatPanel({ g, groups, loading }) {
     try {
       await groups.send(g.id, to, text.trim());
       setText("");
+      // answering a chat means you have read it: what was waiting in this group counts as read (best effort, no error shown)
+      if (unread > 0) groups.markAllRead(g.id).catch(() => {});
     } catch {
       toast({ title: tr("Nu am putut trimite mesajul"), tone: "rose", icon: Bell });
     }

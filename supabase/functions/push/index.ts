@@ -6,6 +6,7 @@
 //
 // Body {action: "tick"}      : called every minute by pg_cron. Sends the daily-report push to the devices
 //                              due_report_pushes() returns (once per local day). Takes no input, so no auth.
+// Body {action: "exam_reminder", userId, title, text} : the daily run of `weekly` (secret-protected), one exam reminder.
 // Body {action: "nudge", id} : called by the client after it inserts a group reminder. Only the sender can
 //                              trigger it, only for a recent nudge, and it goes to the recipients' devices.
 
@@ -64,7 +65,7 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   if (req.method !== "POST") return reply(405, { code: "bad_request" });
 
-  let input: { action?: string; id?: string; userId?: string; count?: number; text?: string };
+  let input: { action?: string; id?: string; userId?: string; count?: number; text?: string; title?: string };
   try {
     input = await req.json();
   } catch {
@@ -117,6 +118,20 @@ Deno.serve(async (req) => {
       const sent = await sendLocalized(admin, subs ?? [], {
         ro: { title: "Molt îți ține seria", body, url: "/", tag: "coach-nudge" },
         en: { title: "Molt is guarding your streak", body, url: "/", tag: "coach-nudge" },
+      });
+      return reply(200, { sent });
+    }
+
+    // the daily exam reminder of the same function: title and text come from a fixed template, already in the player's language
+    if (input.action === "exam_reminder" && typeof input.userId === "string" && typeof input.text === "string") {
+      const secret = Deno.env.get("AGENT_CRON_SECRET");
+      if (!secret || req.headers.get("x-cron-secret") !== secret) return reply(401, { code: "session_expired" });
+      const { data: subs } = await admin.from("push_subscriptions").select("endpoint,p256dh,auth").eq("user_id", input.userId);
+      const title = String(input.title ?? "Molted").slice(0, 80);
+      const body = input.text.slice(0, 200);
+      const sent = await sendLocalized(admin, subs ?? [], {
+        ro: { title, body, url: "/", tag: "exam-reminder" },
+        en: { title, body, url: "/", tag: "exam-reminder" },
       });
       return reply(200, { sent });
     }

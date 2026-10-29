@@ -13,6 +13,9 @@
 // Body {mode: "streak"} (daily, evening, for players with settings.agentNudge): if a streak of 3+ days is about
 // to break, the model writes one short message and one push goes out; at most one per player per day. No text from
 // the model means no push. It is logged as an applied `set_reminder` so the player sees it in "Ce a făcut Molt".
+// The same daily run (the cron body still says "streak") also sends the exam reminders to the players whose account has
+// notifications on (settings.pushOn, and settings.pushExams not false): see examReminder in weekly-core.js. No model, no
+// log row, one push per player per run.
 // It never edits the player's state itself: the app is the only writer of habits and to-dos.
 
 import { RO_WORDING } from "../_shared/prompts.ts";
@@ -21,7 +24,7 @@ import { loadState } from "../_shared/app/remote.js";
 import { analyzePatterns } from "../_shared/app/patterns.js";
 import { activeContext, summarizeFeedback } from "../_shared/app/memory.js";
 import { isOutcomeDue, measureOutcome } from "../_shared/app/outcomes.js";
-import { planWeek, streakAlert } from "../_shared/weekly-core.js";
+import { examReminder, planWeek, streakAlert } from "../_shared/weekly-core.js";
 
 const TZ = "Europe/Bucharest"; // the app's audience; per-player time zones would come from push_subscriptions
 const MAX_USERS = 500;
@@ -55,6 +58,41 @@ async function nudgeText(facts: { nick: string; streak: number; habit: string },
   return null;
 }
 
+/** Exam reminders: a push for each player with notifications on whose nearest exam is 1-3 days away (examReminder decides). */
+async function sendExamReminders(admin: ReturnType<typeof createClient>, url: string, secret: string, today: string) {
+  const out = { players: 0, sent: 0, skipped: 0, failed: 0 };
+  const { data: players, error } = await admin.from("profiles").select("id, settings").eq("settings->>pushOn", "true").limit(MAX_USERS);
+  if (error) throw error;
+  const wanting = (players ?? []).filter((p: { settings?: { pushExams?: unknown } }) => p.settings?.pushExams !== false);
+  const { data: subs } = wanting.length ? await admin.from("push_subscriptions").select("user_id").in("user_id", wanting.map((p: { id: string }) => p.id)) : { data: [] };
+  const withDevice = new Set((subs ?? []).map((s: { user_id: string }) => s.user_id));
+  out.players = wanting.length;
+  for (const { id, settings } of wanting) {
+    if (!withDevice.has(id)) {
+      out.skipped++;
+      continue;
+    }
+    try {
+      const state = await loadState(admin, id);
+      const r = state ? examReminder({ state, today, lang: settings?.prefs?.lang === "en" ? "en" : "ro" }) : null;
+      if (!r) {
+        out.skipped++;
+        continue;
+      }
+      await fetch(`${url}/functions/v1/push`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-cron-secret": secret, Authorization: `Bearer ${Deno.env.get("SUPABASE_ANON_KEY") ?? ""}` },
+        body: JSON.stringify({ action: "exam_reminder", userId: id, title: r.title, text: r.body }),
+      });
+      out.sent++;
+    } catch (e) {
+      out.failed++;
+      console.error("exam reminder", id, e);
+    }
+  }
+  return out;
+}
+
 Deno.serve(async (req) => {
   if (req.method !== "POST") return reply(405, { code: "bad_request" });
   const secret = Deno.env.get("AGENT_CRON_SECRET");
@@ -67,6 +105,7 @@ Deno.serve(async (req) => {
 
   const mode = (await req.json().catch(() => ({})))?.mode;
   if (mode === "streak") {
+    // players that did not opt into the streak check still get the exam reminders below
     const { data: nudgees, error: nErr } = await admin.from("profiles").select("id, name, settings").eq("settings->>agentNudge", "true").limit(MAX_USERS);
     if (nErr) {
       console.error("nudge users", nErr);
@@ -112,7 +151,13 @@ Deno.serve(async (req) => {
         console.error("nudge player", id, e);
       }
     }
-    return reply(200, out);
+    let exams = null;
+    try {
+      exams = await sendExamReminders(admin, url, secret, today);
+    } catch (e) {
+      console.error("exam reminders", e);
+    }
+    return reply(200, { ...out, exams });
   }
 
   const { data: users, error } = await admin.from("profiles").select("id, settings").eq("settings->>agentWeekly", "true").limit(MAX_USERS);

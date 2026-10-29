@@ -11,7 +11,7 @@ export default function NotificationsPanel({ settings, set }) {
   const [status, setStatus] = useState(null); // null while checking
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
-  // notifications are the account's (settings.pushOn, pushReport, pushNudges, reviewTime); the server reads them from the
+  // notifications are the account's (settings.pushOn, pushReport, pushNudges, pushExams, reviewTime); the server reads them from the
   // profile. Only the browser permission and this device's subscription are local.
   const accountOn = !!settings.pushOn;
 
@@ -82,6 +82,13 @@ export default function NotificationsPanel({ settings, set }) {
               <span className="block text-xs font-semibold text-dim">{tr("La ora raportului, dacă nu l-ai primit deja.")}</span>
             </span>
             <Toggle id="set-push-report" checked={settings.pushReport !== false} onChange={(v) => set({ pushReport: v })} label={tr("Raportul zilei")} />
+          </label>
+          <label className="flex items-center justify-between gap-4" htmlFor="set-push-exams">
+            <span>
+              <span className="block font-extrabold text-ink">{tr("Remindere pentru examene")}</span>
+              <span className="block text-xs font-semibold text-dim">{tr("Cu o zi înainte, și cu 2-3 zile înainte dacă n-ai notat studiu.")}</span>
+            </span>
+            <Toggle id="set-push-exams" checked={settings.pushExams !== false} onChange={(v) => set({ pushExams: v })} label={tr("Remindere pentru examene")} />
           </label>
           <label className="flex items-center justify-between gap-4" htmlFor="set-push-nudges">
             <span>
