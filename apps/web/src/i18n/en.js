@@ -111,6 +111,16 @@ export default {
       { label: "Apprentice", alt: "Molt as an apprentice" },
       { label: "Master", alt: "Molt as a master" },
     ],
+    testimonialsH2: "What students say",
+    testimonialsIntro: "Opinions from students who tried Molted, published with their consent. A name appears only where the student chose to show it. Translated from Romanian.",
+    testimonialsAria: "Student testimonials",
+    ratingAria: "Rated {n} out of 5",
+    testimonials: [
+      { text: "A good app that helps me organize my study time mainly, but also the rest of my activities during the day.", name: "Brian P.", role: "High school student", rating: 5 },
+      { text: "It helps me focus better and I feel I progress faster when I use it.", name: null, role: "High school student", rating: 5 },
+      { text: "The little creature whose evolution we follow and encourage is part of the extra motivation that some of us could benefit from to finish a task.", name: null, role: "High school student", rating: 5 },
+      { text: "I liked the site's layout, the colors and the content overall.", name: "Stefania F.", role: "High school student", rating: 5 },
+    ],
     faqH2: "Frequently asked questions",
     faq: [
       { q: "Where do I get my character?", a: "You start with an egg. The path you choose (Sport, Study, Money, Mind or Creativity) decides which creature hatches from it: Athlete, Scholar, Merchant, Sage or Bard." },
