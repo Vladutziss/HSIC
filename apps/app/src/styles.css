@@ -173,6 +173,108 @@
   --glow: 0.2;
   color-scheme: light;
 }
+
+/* Piersică: pale butter, peach and blush, rosewood ink. Base palette #FFFAD3 #FFDBB0 #FFCCB8 #FFB1B1 */
+[data-theme="piersica"] {
+  --c-night: 255 250 211; /* #FFFAD3 */
+  --c-deep: 255 240 190;
+  --c-panel: 255 252 232;
+  --c-panel-hi: 255 255 246;
+  --c-panel-lo: 255 243 204;
+  --c-edge: 255 219 176; /* #FFDBB0 */
+  --c-edge-hi: 240 176 140;
+  --c-well: 255 240 200;
+  --c-mark: 226 168 140;
+  --c-key: 240 200 160;
+  --c-scrim: 74 40 40;
+  --c-ink: 74 40 40;
+  --c-body: 98 62 60;
+  --c-dim: 124 84 78;
+  --c-faint: 156 118 108;
+  --c-gold: 255 204 184; /* #FFCCB8 */
+  --c-gold-hi: 255 222 206;
+  --c-gold-deep: 214 130 100;
+  --c-gold-ink: 160 70 36;
+  --c-gold-text: 160 70 36;
+  --c-violet: 255 177 177; /* #FFB1B1 */
+  --c-violet-hi: 255 208 208;
+  --c-violet-deep: 208 104 110;
+  --c-violet-key: 214 112 118;
+  --c-violet-ink: 168 48 62;
+  --c-mint: 168 214 168;
+  --c-mint-deep: 100 160 108;
+  --c-mint-key: 84 140 92;
+  --c-mint-ink: 40 106 58;
+  --c-ember: 255 168 128;
+  --c-ember-ink: 184 78 36;
+  --c-sky: 166 205 230;
+  --c-sky-ink: 36 94 138;
+  --c-rose: 192 56 70;
+  --c-rose-key: 138 38 52;
+  --c-rose-ink: 170 34 52;
+  --c-on-gold: 80 36 24;
+  --c-on-violet: 74 30 34;
+  --c-on-mint: 24 52 30;
+  --c-on-rose: 255 250 240;
+  --c-shadow: 150 80 60;
+  --c-star: 170 100 80;
+  --shadow-a: 0.28;
+  --gloss-a: 0.6;
+  --star-a: 0.16;
+  --glow: 0.45;
+  color-scheme: light;
+}
+
+/* Pădure: deep forest teal with sage accents. Base palette #092328 #12544F #2A835F #8BBB92 */
+[data-theme="padure"] {
+  --c-night: 9 35 40; /* #092328 */
+  --c-deep: 6 27 31;
+  --c-panel: 14 48 53;
+  --c-panel-hi: 19 63 67;
+  --c-panel-lo: 11 41 46;
+  --c-edge: 18 84 79; /* #12544F */
+  --c-edge-hi: 42 131 95; /* #2A835F */
+  --c-well: 7 30 34;
+  --c-mark: 72 140 112;
+  --c-key: 4 22 26;
+  --c-scrim: 2 13 15;
+  --c-ink: 233 246 236;
+  --c-body: 201 226 206;
+  --c-dim: 156 196 166;
+  --c-faint: 130 174 146;
+  --c-gold: 139 187 146; /* #8BBB92 */
+  --c-gold-hi: 181 217 186;
+  --c-gold-deep: 62 120 82;
+  --c-gold-ink: 139 187 146;
+  --c-gold-text: 181 217 186;
+  --c-violet: 66 158 114;
+  --c-violet-hi: 122 198 150;
+  --c-violet-deep: 42 131 95; /* #2A835F */
+  --c-violet-key: 28 98 70;
+  --c-violet-ink: 122 198 150;
+  --c-mint: 74 214 150;
+  --c-mint-deep: 30 150 100;
+  --c-mint-key: 20 112 74;
+  --c-mint-ink: 74 214 150;
+  --c-ember: 255 156 96;
+  --c-ember-ink: 255 156 96;
+  --c-sky: 112 198 222;
+  --c-sky-ink: 112 198 222;
+  --c-rose: 255 122 134;
+  --c-rose-key: 163 38 62;
+  --c-rose-ink: 255 122 134;
+  --c-on-gold: 8 36 38;
+  --c-on-violet: 4 30 30;
+  --c-on-mint: 3 32 22;
+  --c-on-rose: 45 6 16;
+  --c-shadow: 0 0 0;
+  --c-star: 220 255 232;
+  --shadow-a: 0.7;
+  --gloss-a: 0.04;
+  --star-a: 0.3;
+  --glow: 1;
+  color-scheme: dark;
+}
 /* On light themes text-<accent> has to be the dark variant to stay readable. */
 [data-mode="light"] .text-gold,
 [data-mode="light"] .text-gold-hi {
