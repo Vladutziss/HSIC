@@ -4,12 +4,13 @@
 import React, { useState } from "react";
 import { CalendarCheck, CalendarPlus, GraduationCap, Plus, X } from "lucide-react";
 import { Button, CheckButton, Chip, Panel, SectionTitle, Tabs, useToast } from "./ui.jsx";
-import { addSchoolItem, addStudySession, examPlan, examPlanTodos, nextAssignments, nextExams, schoolPlanner, setSchoolDone, studiedMinutes } from "../lib/schoolPlanner.js";
+import { addSchoolItem, addStudySession, examPlan, examPlanTodos, nextAssignments, nextExams, overdueAssignments, removeSchoolItem, schoolPlanner, setSchoolDone, studiedMinutes } from "../lib/schoolPlanner.js";
 import { addDays, diffDays } from "../lib/dates.js";
 import { uid } from "../lib/catalog.js";
 import { tr } from "../lib/i18n.js";
 
 const dayLabel = (n) => (n === 0 ? tr("azi") : n === 1 ? tr("mâine") : tr("în {n} zile", { n }));
+const lateLabel = (n) => (n === 1 ? tr("ieri") : tr("acum {n} zile", { n }));
 const SESSION = 25; // minutes logged by the one-tap button
 
 function AddForm({ today, onAdd, onClose }) {
@@ -50,14 +51,19 @@ function AddForm({ today, onAdd, onClose }) {
 export function SchoolCard({ state, today, onStateChange }) {
   const toast = useToast();
   const [adding, setAdding] = useState(false);
+  const [showAll, setShowAll] = useState(false);
   const exams = nextExams(state, today);
   const assignments = nextAssignments(state, today);
   const studied = studiedMinutes(state, today);
   const update = (fn) => onStateChange?.((s) => ({ ...s, schoolPlanner: fn(schoolPlanner(s)) }));
-  const rows = [
-    ...exams.slice(0, 2).map((e) => ({ kind: "exam", id: e.id, title: e.title, subject: e.subject, left: e.daysLeft, date: e.date })),
-    ...assignments.slice(0, 4 - Math.min(2, exams.length)).map((a) => ({ kind: "assignment", id: a.id, title: a.title, subject: a.subject, left: Math.max(0, diffDays(today, a.due)) })),
-  ];
+  const late = overdueAssignments(state, today);
+  // overdue work comes first and always shows: it used to vanish once the deadline had passed
+  const lateRows = late.map((a) => ({ kind: "assignment", id: a.id, title: a.title, subject: a.subject, late: a.daysLate }));
+  const examRows = exams.map((e) => ({ kind: "exam", id: e.id, title: e.title, subject: e.subject, left: e.daysLeft, date: e.date }));
+  const dueRows = assignments.map((a) => ({ kind: "assignment", id: a.id, title: a.title, subject: a.subject, left: Math.max(0, diffDays(today, a.due)) }));
+  const all = [...lateRows, ...examRows, ...dueRows];
+  const rows = showAll ? all : [...lateRows, ...examRows.slice(0, 2), ...dueRows.slice(0, 4 - Math.min(2, examRows.length))];
+  const remove = (r) => update((p) => removeSchoolItem(p, r.kind, r.id));
   // study blocks spread over the days before the exam, the last one a self-test (lib/schoolPlanner.js examPlan)
   const prepare = (r) => {
     const topic = r.subject || r.title;
@@ -89,10 +95,11 @@ export function SchoolCard({ state, today, onStateChange }) {
               <span className="min-w-0 flex-1 basis-32">
                 <span className="flex flex-wrap items-center gap-x-2">
                   {r.kind === "exam" && <Chip tone="gold">{tr("Examen")}</Chip>}
+                  {r.late > 0 && <Chip tone="rose">{tr("Întârziată")}</Chip>}
                   <span className="min-w-0 break-words text-sm font-extrabold text-ink">{r.title}</span>
                 </span>
                 <span className="block truncate text-xs font-semibold text-dim">
-                  {[r.subject, dayLabel(r.left)].filter(Boolean).join(" · ")}
+                  {[r.subject, r.late > 0 ? lateLabel(r.late) : dayLabel(r.left)].filter(Boolean).join(" · ")}
                 </span>
               </span>
               <span className="ml-auto flex shrink-0 items-center gap-2">
@@ -115,10 +122,24 @@ export function SchoolCard({ state, today, onStateChange }) {
                 >
                   +{SESSION} min
                 </button>
+                <button
+                  type="button"
+                  onClick={() => remove(r)}
+                  className="tap focus-ring grid h-7 w-7 shrink-0 place-items-center rounded-lg text-dim ring-1 ring-edge hover:text-rose"
+                  aria-label={tr("Șterge: {v}", { v: r.title })}
+                  title={tr("Șterge")}
+                >
+                  <X size={14} aria-hidden="true" />
+                </button>
               </span>
             </li>
           ))}
         </ul>
+      )}
+      {(showAll ? all.length > 4 : all.length > rows.length) && (
+        <button type="button" onClick={() => setShowAll((v) => !v)} className="focus-ring mt-2 rounded-lg px-1 text-xs font-extrabold text-dim hover:text-ink">
+          {showAll ? tr("Arată mai puține") : tr("Vezi tot ({n})", { n: all.length })}
+        </button>
       )}
       {adding && <AddForm today={today} onClose={() => setAdding(false)} onAdd={(kind, raw) => update((p) => addSchoolItem(p, kind, raw, today))} />}
     </Panel>
