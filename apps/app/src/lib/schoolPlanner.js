@@ -24,6 +24,14 @@ export function nextAssignments(state, today) {
     .sort((a, b) => String(a.due || "9999").localeCompare(String(b.due || "9999")));
 }
 
+/** Not done and past their deadline, the most overdue first; `daysLate` counts local calendar days (1 = yesterday). nextAssignments leaves these out, so the card shows them apart. */
+export function overdueAssignments(state, today) {
+  return schoolPlanner(state)
+    .assignments.filter((a) => !a.done && a.due && a.due < today)
+    .sort((a, b) => a.due.localeCompare(b.due))
+    .map((a) => ({ ...a, daysLate: diffDays(a.due, today) }));
+}
+
 /** AI/user exams -> {title, subject, date}; `date` may arrive as `due` (parseHomework items). A missing date falls back to today. */
 export function normalizeExams(raw, today) {
   return (Array.isArray(raw) ? raw : [])
@@ -81,6 +89,12 @@ export function addSchoolItem(planner, kind, raw, today, id = `${kind === "exam"
 export function setSchoolDone(planner, kind, id, done) {
   const key = kind === "exam" ? "exams" : "assignments";
   return { ...planner, [key]: (planner[key] || []).map((x) => (x.id === id ? { ...x, done: !!done } : x)) };
+}
+
+/** Deletes one assignment or exam by id (a typo, a test that was cancelled); logged study blocks stay. */
+export function removeSchoolItem(planner, kind, id) {
+  const key = kind === "exam" ? "exams" : "assignments";
+  return { ...planner, [key]: (planner[key] || []).filter((x) => x.id !== id) };
 }
 
 /** One logged study block against a subject / assignment; unchanged when the minutes are not valid. */

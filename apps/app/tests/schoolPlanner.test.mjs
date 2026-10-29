@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { addSchoolItem, addStudySession, examPlan, examPlanTodos, nextAssignments, nextExams, normalizeAssignments, normalizeExams, normalizeSession, setSchoolDone, studiedMinutes, studyWeek } from "../src/lib/schoolPlanner.js";
+import { addSchoolItem, addStudySession, examPlan, examPlanTodos, nextAssignments, nextExams, normalizeAssignments, normalizeExams, normalizeSession, overdueAssignments, removeSchoolItem, setSchoolDone, studiedMinutes, studyWeek } from "../src/lib/schoolPlanner.js";
 
 const today = "2026-10-12";
 
@@ -122,4 +122,26 @@ test("examPlan gives nothing when there is no room, and examPlanTodos skips what
     { title: "Test 3/3", date: "2026-10-14", dur: 45 },
   ]);
   assert.equal(examPlanTodos({ date: "2026-10-15" }, today, first, title).length, 0);
+});
+
+test("overdueAssignments lists unfinished work past its deadline, oldest first, with the days late", () => {
+  const state = { schoolPlanner: { assignments: [
+    { id: "a", title: "Ieri", due: "2026-10-11", done: false },
+    { id: "b", title: "Acum o saptamana", due: "2026-10-05", done: false },
+    { id: "c", title: "Azi", due: today, done: false },
+    { id: "d", title: "Gata", due: "2026-10-01", done: true },
+    { id: "e", title: "Viitor", due: "2026-10-20", done: false },
+  ] } };
+  assert.deepEqual(overdueAssignments(state, today).map((a) => [a.id, a.daysLate]), [["b", 7], ["a", 1]]);
+  assert.deepEqual(overdueAssignments({}, today), []);
+});
+
+test("removeSchoolItem deletes one assignment or exam and keeps the rest and the study blocks", () => {
+  const p = { assignments: [{ id: "a", title: "A" }, { id: "b", title: "B" }], exams: [{ id: "a", title: "E" }], sessions: [{ id: "s", minutes: 25, assignmentId: "a" }] };
+  const noA = removeSchoolItem(p, "assignment", "a");
+  assert.deepEqual(noA.assignments.map((x) => x.id), ["b"]);
+  assert.equal(noA.exams.length, 1);
+  assert.equal(noA.sessions.length, 1);
+  assert.deepEqual(removeSchoolItem(p, "exam", "a").exams, []);
+  assert.equal(removeSchoolItem(p, "exam", "nope").exams.length, 1);
 });
