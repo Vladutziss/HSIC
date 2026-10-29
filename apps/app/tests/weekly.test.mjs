@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { planWeek, streakAlert } from "../../../supabase/functions/_shared/weekly-core.js";
+import { examReminder, planWeek, streakAlert } from "../../../supabase/functions/_shared/weekly-core.js";
 
 const TODAY = "2026-10-11"; // Sunday; next week is 2026-10-12 (Mon) .. 2026-10-18 (Sun)
 const habit = (id, extra = {}) => ({ id, name: `Obicei ${id}`, diff: 2, days: [0, 1, 2, 3, 4, 5, 6], createdAt: "2026-01-01", ...extra });
@@ -169,4 +169,39 @@ test("lang en: the to-do title and the reason are written in English; the defaul
   assert.equal(a.payload.title, "Tomorrow: Obicei a (your harder day). Pick now when you will do it.");
   assert.match(a.reason, /harder on Wednesdays/);
   assert.equal(plan({ patterns: { findings: [wk("a", 3)] } }).actions[0].payload.title, TITLE);
+});
+
+const D = (n) => new Date(Date.UTC(2026, 9, 11 + n)).toISOString().slice(0, 10); // TODAY plus n days
+
+test("examReminder: the day before always, two or three days before only without study, nearest exam only", () => {
+  const sp = (exams, sessions = []) => ({ schoolPlanner: { exams, sessions } });
+  const ex = (id, subject, date) => ({ id, title: `Test ${subject}`, subject, date, done: false });
+  // 1 day left, nothing studied: nudge to start
+  const a = examReminder({ state: sp([ex("e1", "Mate", D(1))]), today: TODAY });
+  assert.equal(a.daysLeft, 1);
+  assert.equal(a.studied, 0);
+  assert.equal(a.title, "Mâine: Test Mate");
+  assert.match(a.body, /N-ai notat studiu la Mate/);
+  // 1 day left with study for that subject: still a reminder, with the minutes
+  const b = examReminder({ state: sp([ex("e1", "Mate", D(1))], [{ day: D(-1), subject: "mate", minutes: 40 }, { day: D(-1), subject: "Fizică", minutes: 90 }]), today: TODAY });
+  assert.equal(b.studied, 40);
+  assert.match(b.body, /Ai notat 40 min/);
+  // 2 days left: only when nothing was studied for the subject in the last 3 days
+  assert.equal(examReminder({ state: sp([ex("e2", "Mate", D(2))]), today: TODAY }).title, "Test Mate peste 2 zile");
+  assert.equal(examReminder({ state: sp([ex("e2", "Mate", D(2))], [{ day: TODAY, subject: "Mate", minutes: 25 }]), today: TODAY }), null);
+  assert.equal(examReminder({ state: sp([ex("e2", "Mate", D(2))], [{ day: D(-4), subject: "Mate", minutes: 25 }]), today: TODAY }).studied, 0); // too old to count
+  // too far, today, past, done
+  assert.equal(examReminder({ state: sp([ex("e3", "Mate", D(4)), ex("e4", "Mate", TODAY), ex("e5", "Mate", D(-10))]), today: TODAY }), null);
+  assert.equal(examReminder({ state: sp([{ ...ex("e6", "Mate", D(1)), done: true }]), today: TODAY }), null);
+  assert.equal(examReminder({ state: {}, today: TODAY }), null);
+  // the nearest one wins; an exam without a subject counts any study
+  assert.equal(examReminder({ state: sp([ex("far", "Chimie", D(2)), ex("near", "Fizică", D(1))]), today: TODAY }).exam.id, "near");
+  assert.equal(examReminder({ state: sp([{ id: "x", title: "Teză", date: D(2), done: false }], [{ day: TODAY, subject: "Orice", minutes: 20 }]), today: TODAY }), null);
+});
+
+test("examReminder in English", () => {
+  const state = { schoolPlanner: { exams: [{ id: "e", title: "Math test", subject: "Math", date: D(1), done: false }], sessions: [] } };
+  const r = examReminder({ state, today: TODAY, lang: "en" });
+  assert.equal(r.title, "Tomorrow: Math test");
+  assert.match(r.body, /You have not logged study for Math/);
 });

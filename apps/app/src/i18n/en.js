@@ -871,6 +871,8 @@ export default {
   "Seria ta de {streakBefore} {v} s-a întrerupt": "Your streak of {streakBefore} {v} was broken",
   "Programate azi: {doneScheduled} din {length}": "Scheduled today: {doneScheduled} of {length}",
   "Am învățat": "I studied",
+  "Remindere pentru examene": "Exam reminders",
+  "Cu o zi înainte, și cu 2-3 zile înainte dacă n-ai notat studiu.": "The day before, and 2-3 days before if you have not logged study.",
   "Am învățat {minutes} minute la {subject}": "I studied {minutes} minutes of {subject}",
   "Am învățat {minutes} minute": "I studied {minutes} minutes",
   "Notează studiu la {subject}": "Log study for {subject}",
