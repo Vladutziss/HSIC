@@ -7,11 +7,52 @@ import { Button, CheckButton, Chip, Panel, SectionTitle, Tabs, useToast } from "
 import { addSchoolItem, addStudySession, examPlan, examPlanTodos, nextAssignments, nextExams, overdueAssignments, removeSchoolItem, schoolPlanner, setSchoolDone, studiedMinutes } from "../lib/schoolPlanner.js";
 import { addDays, diffDays } from "../lib/dates.js";
 import { uid } from "../lib/catalog.js";
+import { usePref } from "../lib/prefs.js";
 import { tr } from "../lib/i18n.js";
 
 const dayLabel = (n) => (n === 0 ? tr("azi") : n === 1 ? tr("mâine") : tr("în {n} zile", { n }));
 const lateLabel = (n) => (n === 1 ? tr("ieri") : tr("acum {n} zile", { n }));
-const SESSION = 25; // minutes logged by the one-tap button
+const MINUTES = [15, 25, 45, 60]; // quick choices; any number from 1 to 600 can be typed
+
+/** Logs a study block: quick minutes or a typed number (the last one is remembered), the subject when it is not known. Focus time counts by itself. */
+function StudyForm({ subject, askSubject, onAdd, onClose }) {
+  const [last, setLast] = usePref("studyMinutes", 25);
+  const [minutes, setMinutes] = useState(String(last));
+  const [name, setName] = useState(subject || "");
+  const n = Math.round(Number(minutes));
+  const valid = n >= 1 && n <= 600;
+  const submit = (e) => {
+    e.preventDefault();
+    if (!valid) return;
+    setLast(n);
+    onAdd(name, n);
+    onClose();
+  };
+  return (
+    <form onSubmit={submit} className="inset mt-3 basis-full space-y-3 p-3">
+      <div className="flex flex-wrap items-center gap-2" role="group" aria-label={tr("Minute de studiu")}>
+        {MINUTES.map((m) => (
+          <button
+            key={m}
+            type="button"
+            onClick={() => setMinutes(String(m))}
+            aria-pressed={n === m}
+            className={`tap focus-ring rounded-lg px-2.5 py-1 text-xs font-extrabold ring-1 ${n === m ? "bg-gold/15 text-gold-hi ring-gold" : "text-dim ring-edge hover:text-ink"}`}
+          >
+            {m} min
+          </button>
+        ))}
+        <input className="field !w-24 !py-1 text-sm" type="number" inputMode="numeric" min={1} max={600} value={minutes} onChange={(e) => setMinutes(e.target.value)} aria-label={tr("Minute")} autoFocus />
+      </div>
+      {askSubject && <input className="field" value={name} maxLength={60} onChange={(e) => setName(e.target.value)} placeholder={tr("Materia (opțional)")} aria-label={tr("Materia")} />}
+      <p className="text-xs font-semibold text-dim">{tr("Timpul din Focus se adaugă singur, nu-l nota și aici.")}</p>
+      <div className="flex justify-end gap-2">
+        <Button variant="ghost" size="sm" icon={X} onClick={onClose}>{tr("Renunță")}</Button>
+        <Button type="submit" size="sm" icon={Plus} disabled={!valid}>{tr("Adaugă")}</Button>
+      </div>
+    </form>
+  );
+}
 
 function AddForm({ today, onAdd, onClose }) {
   const [kind, setKind] = useState("assignment");
@@ -52,6 +93,7 @@ export function SchoolCard({ state, today, onStateChange }) {
   const toast = useToast();
   const [adding, setAdding] = useState(false);
   const [showAll, setShowAll] = useState(false);
+  const [logging, setLogging] = useState(null); // the row (kind-id) or "free" whose study form is open
   const exams = nextExams(state, today);
   const assignments = nextAssignments(state, today);
   const studied = studiedMinutes(state, today);
@@ -74,18 +116,24 @@ export function SchoolCard({ state, today, onStateChange }) {
     onStateChange?.((s) => ({ ...s, todos: [...(s.todos || []), ...drafts.map((d) => ({ id: uid("t"), time: null, done: false, doneOn: null, createdAt: today, ...d }))] }));
     toast({ title: tr("Plan de pregătire adăugat"), text: tr("{n} sesiuni până la examen, în calendar. Sesiuni pe mai multe zile, nu într-o singură seară: exersarea distribuită și autotestarea au primit cele mai bune evaluări (Dunlosky et al., 2013).", { n: drafts.length }), icon: CalendarCheck, tone: "mint", ms: 7000 });
   };
-  const logStudy = (subject) => update((p) => addStudySession(p, { subject, minutes: SESSION, day: today }, today));
+  const logStudy = (subject, minutes) => update((p) => addStudySession(p, { subject, minutes, day: today }, today));
   return (
     <Panel className="p-4 sm:p-5">
       <SectionTitle
         icon={GraduationCap}
         sub={studied > 0 ? tr("Azi ai învățat {studied} min", { studied }) : tr("Teme, examene și timp de studiu")}
         action={
-          <Button variant="ghost" size="sm" icon={adding ? X : Plus} onClick={() => setAdding((v) => !v)}>
-            {adding ? tr("Închide") : tr("Adaugă")}
-          </Button>
+          <span className="flex items-center gap-1">
+            <Button variant="ghost" size="sm" icon={GraduationCap} onClick={() => setLogging((v) => (v === "free" ? null : "free"))} aria-expanded={logging === "free"}>
+              {tr("Am învățat")}
+            </Button>
+            <Button variant="ghost" size="sm" icon={adding ? X : Plus} onClick={() => setAdding((v) => !v)}>
+              {adding ? tr("Închide") : tr("Adaugă")}
+            </Button>
+          </span>
         }
       >{tr("Școală")}</SectionTitle>
+      {logging === "free" && <StudyForm askSubject onAdd={logStudy} onClose={() => setLogging(null)} />}
       {rows.length === 0 && !adding && <p className="text-sm font-semibold text-dim">{tr("Adaugă o temă sau un examen și Molt te ajută să le planifici.")}</p>}
       {rows.length > 0 && (
         <ul className="space-y-2">
@@ -116,11 +164,12 @@ export function SchoolCard({ state, today, onStateChange }) {
                 )}
                 <button
                   type="button"
-                  onClick={() => logStudy(r.subject)}
+                  onClick={() => setLogging((v) => (v === `${r.kind}-${r.id}` ? null : `${r.kind}-${r.id}`))}
+                  aria-expanded={logging === `${r.kind}-${r.id}`}
                   className="tap focus-ring shrink-0 rounded-lg px-2 py-1 text-xs font-extrabold text-dim ring-1 ring-edge hover:text-ink"
-                  aria-label={r.subject ? tr("Am învățat {minutes} minute la {subject}", { minutes: SESSION, subject: r.subject }) : tr("Am învățat {minutes} minute", { minutes: SESSION })}
+                  aria-label={r.subject ? tr("Notează studiu la {subject}", { subject: r.subject }) : tr("Notează studiu pentru {title}", { title: r.title })}
                 >
-                  +{SESSION} min
+                  {tr("Studiu")}
                 </button>
                 <button
                   type="button"
@@ -132,6 +181,7 @@ export function SchoolCard({ state, today, onStateChange }) {
                   <X size={14} aria-hidden="true" />
                 </button>
               </span>
+              {logging === `${r.kind}-${r.id}` && <StudyForm subject={r.subject} onAdd={logStudy} onClose={() => setLogging(null)} />}
             </li>
           ))}
         </ul>

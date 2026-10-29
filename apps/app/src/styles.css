@@ -796,3 +796,33 @@ select.field {
     font-size: 16px;
   }
 }
+
+/* Monthly report: a light sheet whatever the theme, shown in a dialog and, alone, on paper (Stats > Raport lunar) */
+.report-sheet {
+  background: #fff;
+  color: #1f2430;
+  border-radius: 12px;
+  padding: 24px;
+  font-size: 14px;
+  line-height: 1.45;
+}
+.report-sheet h3 { font-size: 15px; font-weight: 800; margin: 20px 0 8px; color: #1f2430; }
+.report-sheet .rs-title { font-size: 22px; font-weight: 800; margin: 0; }
+.report-sheet .rs-sub { color: #5b6270; font-weight: 600; margin: 2px 0 0; }
+.report-sheet .rs-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-top: 16px; }
+.report-sheet .rs-tile { border: 1px solid #d9dde5; border-radius: 10px; padding: 10px 12px; }
+.report-sheet .rs-label { font-size: 12px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; color: #5b6270; }
+.report-sheet .rs-value { font-size: 24px; font-weight: 800; line-height: 1.2; font-variant-numeric: tabular-nums; }
+.report-sheet .rs-note { font-size: 12px; color: #5b6270; font-weight: 600; }
+.report-sheet .rs-row { display: flex; justify-content: space-between; gap: 12px; padding: 6px 0; border-top: 1px solid #e6e9ef; }
+.report-sheet .rs-row:first-of-type { border-top: 0; }
+.report-sheet .rs-bar { height: 6px; border-radius: 3px; background: #e6e9ef; margin-top: 4px; overflow: hidden; }
+.report-sheet .rs-bar > i { display: block; height: 100%; background: #3a7d5c; }
+.report-print { display: none; }
+@media print {
+  body.printing-report > *:not(.report-print) { display: none !important; }
+  body.printing-report .report-print { display: block; }
+  body.printing-report { background: #fff !important; }
+  .report-print .report-sheet { border-radius: 0; padding: 0; }
+  .report-print .rs-tile, .report-print .rs-row { break-inside: avoid; }
+}

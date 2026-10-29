@@ -7,6 +7,7 @@
 //   habitsLayout   "compact" | "details" | "large"
 //   habitsSort     { sort, desc }
 //   focus          { setup, todosOpen, clock }
+//   studyMinutes   the minutes last typed in the study form of the Școală card
 
 import { useSyncExternalStore } from "react";
 import { LOCALES, getLocale, setLocale } from "./i18n.js";

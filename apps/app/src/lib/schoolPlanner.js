@@ -1,4 +1,4 @@
-import { addDays, diffDays } from "./dates.js";
+import { addDays, dayKey, diffDays } from "./dates.js";
 
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -63,12 +63,23 @@ export function normalizeSession(raw, today) {
   };
 }
 
-/** Minutes studied on a day, optionally for one subject (case-insensitive). */
+/**
+ * Minutes of Focus on a local day. The Focus timer counts as study time (it has no subject, so it only shows in the
+ * totals, never against one subject). `work` is in seconds; the day is rounded once, not per session.
+ */
+export function focusMinutes(state, day) {
+  let seconds = 0;
+  for (const f of state?.focusSessions || []) if (f?.start && dayKey(new Date(f.start)) === day) seconds += Number(f.work) || 0;
+  return Math.round(seconds / 60);
+}
+
+/** Minutes studied on a day: logged blocks plus Focus. With a subject (case-insensitive) only the blocks logged for it. */
 export function studiedMinutes(state, day, subject) {
   const key = subject && String(subject).trim().toLowerCase();
-  return schoolPlanner(state)
+  const logged = schoolPlanner(state)
     .sessions.filter((s) => s.day === day && (!key || String(s.subject || "").trim().toLowerCase() === key))
     .reduce((n, s) => n + (Number(s.minutes) || 0), 0);
+  return logged + (key ? 0 : focusMinutes(state, day));
 }
 
 // ------------------------------------------------------------ writing (the Acasă card; no AI involved)
@@ -103,13 +114,19 @@ export function addStudySession(planner, raw, today, id = `s-${Date.now()}`) {
   return s ? { ...planner, sessions: [...(planner.sessions || []), { ...s, id }] } : planner;
 }
 
-/** The seven days ending today: minutes per day and per subject (blank subjects count as "no subject"), for Progres. */
+/**
+ * The seven days ending today: minutes per day and per subject (blank subjects count as "no subject"), for Progres.
+ * Focus time is part of every day and of the total (`focus` says how much of it), under no subject.
+ */
 export function studyWeek(state, today) {
   const sessions = schoolPlanner(state).sessions;
   const days = [];
+  let focus = 0;
   for (let i = 6; i >= 0; i--) {
     const day = addDays(today, -i);
-    days.push({ day, minutes: sessions.filter((s) => s.day === day).reduce((n, s) => n + (Number(s.minutes) || 0), 0) });
+    const f = focusMinutes(state, day);
+    focus += f;
+    days.push({ day, minutes: sessions.filter((s) => s.day === day).reduce((n, s) => n + (Number(s.minutes) || 0), 0) + f });
   }
   const from = days[0].day;
   const subjects = new Map();
@@ -118,8 +135,9 @@ export function studyWeek(state, today) {
     const name = String(s.subject || "").trim();
     subjects.set(name, (subjects.get(name) || 0) + (Number(s.minutes) || 0));
   }
+  if (focus > 0) subjects.set("", (subjects.get("") || 0) + focus);
   const bySubject = [...subjects.entries()].map(([subject, minutes]) => ({ subject, minutes })).sort((a, b) => b.minutes - a.minutes);
-  return { total: days.reduce((n, d) => n + d.minutes, 0), days, bySubject };
+  return { total: days.reduce((n, d) => n + d.minutes, 0), focus, days, bySubject };
 }
 
 // ------------------------------------------------------------ exam preparation plan

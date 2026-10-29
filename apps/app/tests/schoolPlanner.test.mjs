@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { addSchoolItem, addStudySession, examPlan, examPlanTodos, nextAssignments, nextExams, normalizeAssignments, normalizeExams, normalizeSession, overdueAssignments, removeSchoolItem, setSchoolDone, studiedMinutes, studyWeek } from "../src/lib/schoolPlanner.js";
+import { addSchoolItem, addStudySession, examPlan, focusMinutes, examPlanTodos, nextAssignments, nextExams, normalizeAssignments, normalizeExams, normalizeSession, overdueAssignments, removeSchoolItem, setSchoolDone, studiedMinutes, studyWeek } from "../src/lib/schoolPlanner.js";
 
 const today = "2026-10-12";
 
@@ -144,4 +144,25 @@ test("removeSchoolItem deletes one assignment or exam and keeps the rest and the
   assert.equal(noA.sessions.length, 1);
   assert.deepEqual(removeSchoolItem(p, "exam", "a").exams, []);
   assert.equal(removeSchoolItem(p, "exam", "nope").exams.length, 1);
+});
+
+test("Focus counts as study time: in the day total and the week, never against one subject", () => {
+  const at = (day, h) => new Date(`${day}T${String(h).padStart(2, "0")}:00:00`).getTime();
+  const state = {
+    schoolPlanner: { sessions: [{ id: "s1", subject: "Mate", day: today, minutes: 25 }] },
+    focusSessions: [
+      { id: "f1", start: at(today, 9), end: at(today, 10), work: 1800 },
+      { id: "f2", start: at(today, 15), end: at(today, 16), work: 1500 },
+      { id: "f3", start: at("2026-10-11", 20), end: at("2026-10-11", 21), work: 3600 },
+    ],
+  };
+  assert.equal(focusMinutes(state, today), 55);
+  assert.equal(studiedMinutes(state, today), 80);
+  assert.equal(studiedMinutes(state, today, "Mate"), 25);
+  const w = studyWeek(state, today);
+  assert.equal(w.focus, 115);
+  assert.equal(w.total, 140);
+  assert.equal(w.days[5].minutes, 60);
+  assert.deepEqual(w.bySubject, [{ subject: "", minutes: 115 }, { subject: "Mate", minutes: 25 }]);
+  assert.equal(focusMinutes({}, today), 0);
 });
