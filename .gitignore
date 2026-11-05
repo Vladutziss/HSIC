@@ -21,3 +21,12 @@ apps/web/public/sitemap.xml
 # email templates: rendered previews and the temporary bundle (scripts/build-emails.mjs)
 scripts/emails/preview/
 scripts/emails/.build/
+
+# Local-only / secrets (labelbox-prep)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+.posthog/
+graphify-out/
