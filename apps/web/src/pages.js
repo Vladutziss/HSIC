@@ -3,6 +3,7 @@
 import { readFileSync } from "node:fs";
 import { APP_URL, LOCALES, absoluteUrl, availableLocales, isAvailable, routeByKey, switchHref, urlPath } from "./i18n/routes.js";
 import RO_ONLY from "./i18n/ro-only.js";
+import { PLANS } from "@molted/ui/plans-core.js";
 import { esc, homeJsonLd, renderHead } from "./seo.js";
 
 const read = (f) => readFileSync(new URL(`../content/${f}`, import.meta.url), "utf8");
@@ -32,7 +33,7 @@ ${extraNav}        ${languageSwitch(route, locale, t)}
 }
 
 function footer(locale, t) {
-  const items = ["team", "giveaways", "privacy", "terms", "cookies"].filter((k) => isAvailable(routeByKey(k), locale));
+  const items = ["team", "pricing", "giveaways", "privacy", "terms", "cookies"].filter((k) => isAvailable(routeByKey(k), locale));
   const label = (k) => (k === "giveaways" ? RO_ONLY.common.giveaways : t.common[k]); // Romania-only: only offered when the route exists in this locale
   return `    <footer class="border-t border-edge">
       <div class="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-5 py-8 text-sm text-dim">
@@ -196,6 +197,52 @@ ${footer(locale, t)}
   </body>`;
 }
 
+// ------------------------------------------------------------------ pricing (no payment provider: plans are granted with codes)
+const CONTACT = "molted.app@gmail.com"; // the address already published in the legal pages
+const fill = (s, vars) => s.replace(/\{(\w+)\}/g, (_, k) => String(vars[k]));
+
+function pricingBody(route, locale, t) {
+  const p = t.pricing;
+  const card = (id, price, sub, features, ctaHref, ctaLabel, accent = false) => `        <li class="panel flex flex-col gap-4 p-6 ${accent ? "ring-2 ring-gold" : ""}">
+          <h2 class="font-pixel text-2xl font-bold text-ink">${esc(p[id].name)}</h2>
+          <p class="text-3xl font-extrabold text-ink">${price}</p>
+          ${sub ? `<p class="-mt-3 text-sm font-semibold text-dim">${sub}</p>` : ""}
+          <p class="text-dim">${esc(p[id].who)}</p>
+          <ul class="space-y-2 text-body">
+${features.map((f) => `            <li>✓ ${esc(f)}</li>`).join("\n")}
+          </ul>
+          <a href="${ctaHref}" class="btn mt-auto text-center">${esc(ctaLabel)}</a>
+        </li>`;
+  const mail = (id) => `mailto:${CONTACT}?subject=${encodeURIComponent(`${p.contactSubject}: ${p[id].name}`)}`;
+  const f = (id, keys, n) => keys.map((k) => fill(p[id][k], { n }));
+  return `  <body class="app-bg min-h-screen font-sans text-body">
+    <a href="#continut" class="skip">${esc(t.common.skip)}</a>
+
+${header(route, locale, t)}
+
+    <main id="continut" class="mx-auto max-w-6xl px-5 pb-24">
+      <h1 class="font-pixel mt-4 text-4xl font-bold text-ink">${esc(p.h1)}</h1>
+      <p class="mt-2 max-w-2xl text-dim">${esc(p.lead)}</p>
+      <p class="mt-3 max-w-2xl text-sm font-semibold text-dim">${esc(p.draft)}</p>
+
+      <ul class="mt-8 grid gap-5 md:grid-cols-3">
+${card("free", esc(p.free.price), "", f("free", ["f1", "f2", "f3", "f4"]), APP_URL, p.free.cta)}
+${card("pro", esc(fill(p.perMonth, { price: PLANS.pro.eurMonth })), esc(fill(p.perYear, { price: PLANS.pro.eurYear })), f("pro", ["f1", "f2", "f3"], PLANS.pro.aiFactor), mail("pro"), p.pro.cta, true)}
+${card("school", esc(fill(p.perStudent, { price: PLANS.school.eurPerStudentMonth })), esc(fill(p.minStudents, { n: PLANS.school.minStudents })), f("school", ["f1", "f2", "f3", "f4"], PLANS.school.aiFactor), mail("school"), p.school.cta)}
+      </ul>
+
+      <section class="mt-14" aria-labelledby="t-plata">
+        <h2 id="t-plata" class="font-pixel text-2xl font-bold text-ink">${esc(p.howH2)}</h2>
+        <ol class="mt-4 max-w-2xl list-decimal space-y-2 pl-5 text-body">
+${["how1", "how2", "how3", "how4"].map((k) => `          <li>${esc(p[k])}</li>`).join("\n")}
+        </ol>
+      </section>
+    </main>
+
+${footer(locale, t)}
+  </body>`;
+}
+
 // ------------------------------------------------------------------ legal (standalone style, text in content/)
 const LEGAL_EXTRA_CSS = `.top{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .lang{font-weight:800;font-size:14px;color:#9a91c9;text-decoration:none;padding:4px 8px;border-radius:8px}
@@ -251,6 +298,7 @@ ${footer(locale, t)}
 export const PAGE_RENDERERS = {
   home: { body: homeBody, script: "/src/main.js", jsonLd: (t, l, r) => homeJsonLd(t, l, r) },
   team: { body: teamBody, script: "/src/team.js" },
+  pricing: { body: pricingBody },
   legal: { body: legalBody, styles: LEGAL_CSS + LEGAL_EXTRA_CSS },
   giveaways: { body: giveawaysBody, script: "/src/giveaways.js", roOnly: true },
   // one shell for every campaign: generic metadata here, the campaign's own is set in the browser (docs/GIVEAWAYS.md)

@@ -108,6 +108,9 @@ export function setLocale(l) {
 
 const LEGAL_PATHS = { terms: ["termeni", "terms"], privacy: ["confidentialitate", "privacy"], cookies: ["cookie-uri", "cookies"] };
 
+/** The public pricing page on molted.eu in the page language. */
+export const pricingUrl = () => `https://www.molted.eu/${current === "en" ? "en/pricing" : "ro/preturi"}/`;
+
 /** The public terms / privacy / cookies pages on molted.eu in the page language. */
 export const legalUrl = (kind) => {
   const en = current === "en";

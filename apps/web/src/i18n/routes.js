@@ -13,6 +13,7 @@ export const DEFAULT_LOCALE = "ro"; // "/" redirects here
 export const ROUTES = [
   { key: "home", paths: { ro: "", en: "" }, page: "home", priority: "1.0" },
   { key: "team", paths: { ro: "echipa", en: "team" }, page: "team", priority: "0.6" },
+  { key: "pricing", paths: { ro: "preturi", en: "pricing" }, page: "pricing", priority: "0.6" },
   { key: "privacy", paths: { ro: "confidentialitate", en: "privacy" }, page: "legal", priority: "0.3" },
   { key: "terms", paths: { ro: "termeni", en: "terms" }, page: "legal", priority: "0.3" },
   { key: "cookies", paths: { ro: "cookie-uri", en: "cookies" }, page: "legal", priority: "0.3" },

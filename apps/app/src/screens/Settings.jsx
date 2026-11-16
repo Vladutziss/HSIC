@@ -9,6 +9,7 @@ import { THEMES, setTheme, useTheme } from "../lib/themes.js";
 import { fmt12 } from "../lib/dates.js";
 import NotificationsPanel from "../components/NotificationsPanel.jsx";
 import EmailsPanel from "../components/EmailsPanel.jsx";
+import PlanPanel from "../components/PlanPanel.jsx";
 import LanguageSwitch from "../components/LanguageSwitch.jsx";
 import { ConsentSetting } from "../components/ConsentBanner.jsx";
 import { tr, legalUrl } from "../lib/i18n.js";
@@ -262,6 +263,8 @@ export default function Settings({ state, d, ai, mode, env, onChange, onWipe, on
             </div>
           </Fold>
         </Panel>
+
+        {mode === "supabase" && <PlanPanel />}
 
         {/* account, notifications and data, with the destructive actions folded away */}
         <Panel className="space-y-3 p-4">
