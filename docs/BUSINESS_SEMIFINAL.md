@@ -75,13 +75,13 @@ Legătura dintre blocuri: problema (planuri abandonate) → valoarea (un pas și
 | Afișe pentru turneu | Costul real tipărit **[de completat]** |
 | Muncă | Neplătită (4 elevi voluntari) |
 
-8 EUR de API acoperă aproximativ 18 luni-utilizator activ pe un model de cost mediu (0,44 EUR/lună) sau ~80 pe unul ieftin (0,10 EUR/lună). Nu e un buget de scară; e pentru pilot.
+8 EUR de API acoperă aproximativ 130 de luni-utilizator activ pe modelul ales, DeepSeek V4 Flash (~0,06 EUR/lună). Nu e un buget de scară; e pentru pilot.
 
 ### Lunar, la funcționare
 
 | Element | Cost |
 |---|---|
-| AI per elev activ / lună | **0** pe modele gratuite; ~**0,10** (ieftin), ~**0,44** (mediu), ~**3,24** (premium) EUR. Calcul din cotele din `ai` (40 apeluri/zi) și `agent` (15 rulări/zi), cu ipoteze de tokeni. |
+| AI per elev activ / lună | ~**0,06** EUR cu **DeepSeek V4 Flash** pe OpenRouter (~0,08 intrare / ~0,16 ieșire per 1M tokeni, 1M context, tool-uri; prețuri din 16 nov. 2026, **[de reverificat]**). Calcul din cotele din `ai` (40 apeluri/zi) și `agent` (15 rulări/zi), cu ipoteze de tokeni: ~480.000 intrare și ~120.000 ieșire pe lună. Cifra reală: OpenRouter → Activity. |
 | Supabase (bază de date, funcții, pgvector) | Plan gratuit sau Pro, ~25 USD/lună **[de verificat planul actual]** |
 | Vercel (două proiecte) | Gratuit sau Pro **[de verificat]** |
 | Clerk (autentificare) | Gratuit până la o limită de utilizatori activi **[de verificat]** |
@@ -89,7 +89,7 @@ Legătura dintre blocuri: problema (planuri abandonate) → valoarea (un pas și
 | Upstash (limită de rată) | Plan gratuit **[de verificat]** |
 | **Total fix estimat la scară mică** | **~0–50 EUR/lună** **[ipoteză]** |
 
-Costul AI crește cu utilizarea, restul rămâne aproape fix. Plafonul de abuz pe utilizator (toate cotele epuizate zilnic) e ~2,5 EUR/lună pe modelul ieftin și ~10,5 pe cel mediu; îl limitează și burst-ul de 8 apeluri pe minut.
+Costul AI crește cu utilizarea, restul rămâne aproape fix. Plafonul de abuz pe utilizator (toate cotele epuizate zilnic) e ~1,6 EUR/lună pe DeepSeek V4 Flash; îl limitează și burst-ul de 8 apeluri pe minut.
 
 ## 6. Venituri și sustenabilitate
 
@@ -109,13 +109,13 @@ Principiu: elevul folosește gratuit, plătește cine primește valoarea măsura
 | Conturi | 1.000 | 3 licee × ~800 = 2.400 |
 | Activi lunar | 20% → 200 (acum 8 din 53 = 15%) | 40% activare → ~960 |
 | Venit lunar | 5% din activi plătesc Pro → 10 × 3 = 30 EUR; un sponsor pe trimestru, ~50 EUR/lună. **Total ~80 EUR** | 960 × 1 = **~960 EUR** (licență) |
-| Cost AI lunar | ieftin: 200 × 0,10 = 20 EUR; mediu: 88 EUR | ieftin: ~96 EUR; mediu: ~422 EUR |
+| Cost AI lunar | 200 × 0,06 = ~12 EUR | 960 × 0,06 = ~58 EUR |
 | Cost fix | ~50 EUR | ~100 EUR |
-| **Rezultat lunar** | ieftin: ~+10 EUR; mediu: **~−58 EUR** | ieftin: **~+764 EUR**; mediu: **~+438 EUR** |
+| **Rezultat lunar** | **~+18 EUR** | **~+802 EUR** |
 
-Concluzia onestă: în faza de pilot proiectul abia acoperă costurile și numai cu un model ieftin sau gratuit. Sustenabilitatea reală vine din licențele pentru școli. Din acest motiv ținta noastră e pilotul în licee, nu abonamentul elevilor, care au disponibilitate mică de plată.
+Concluzia onestă: în faza de pilot proiectul abia acoperă costurile, și numai cât costul AI rămâne mic (DeepSeek V4 Flash, nu un model premium). Sustenabilitatea reală vine din licențele pentru școli. Din acest motiv ținta noastră e pilotul în licee, nu abonamentul elevilor, care au disponibilitate mică de plată.
 
-Prag de rentabilitate pe Pro (fără licențe): cost fix 50 EUR împărțit la contribuția pe utilizator (3 EUR minus ~0,10–0,44 AI minus ~0,35 comision de plată **[de verificat]**), adică **~18–20 de abonați plătitori**.
+Prag de rentabilitate pe Pro (fără licențe): cost fix 50 EUR împărțit la contribuția pe utilizator (3 EUR minus ~0,06 AI minus ~0,35 comision de plată **[de verificat]**), adică **~20 de abonați plătitori**.
 
 Cum continuă pe termen lung: licențe recurente de școală (venit predictibil), sponsori pe sezon (Bac, vacanță), și costul AI ținut mic prin cotele zilnice, limita de burst și modele ieftine.
 
