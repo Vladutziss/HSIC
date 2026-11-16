@@ -7,6 +7,7 @@
     "./base.css": "./base.css",
     "./tailwind-preset.js": "./tailwind-preset.js",
     "./sprites.js": "./sprites.js",
-    "./giveaway-core.js": "./giveaway-core.js"
+    "./giveaway-core.js": "./giveaway-core.js",
+    "./plans-core.js": "./plans-core.js"
   }
 }
