@@ -111,13 +111,18 @@ export function dayMarkdown(f, { tr = trPage, lang = getLocale() } = {}) {
   if (f.focus.sessions) {
     out.push(`## ${tr("Focus")}`, "", f.focus.sessions === 1 ? tr("{min} min de concentrare, într-o sesiune.", { min: f.focus.minutes }) : tr("{min} min de concentrare, în {n} sesiuni.", { min: f.focus.minutes, n: f.focus.sessions }), "");
   }
-  for (const r of f.reflections) {
-    out.push(`## ${tr("Reflecția săptămânii")}${r.week ? ` (${r.week})` : ""}`, "");
-    if (r.answer) out.push(`**${tr("Ce am scris")}:** ${String(r.answer).trim()}`, "");
-    if (r.observation) out.push(`**${tr("Observația lui Molt")}:** ${oneLine(r.observation)}`, "");
-    if (r.nextStep) out.push(`- [ ] ${tr("Pasul următor")}: ${oneLine(r.nextStep)}`, "");
-  }
+  for (const r of f.reflections) out.push(`## ${tr("Reflecția săptămânii")}${r.week ? ` (${r.week})` : ""}`, "", reflectionMarkdown(r, { tr }));
   return out.join("\n").replace(/\n{3,}/g, "\n\n").trimEnd() + "\n";
+}
+
+/** One reflection as Markdown, without a heading: what the player wrote, Molt's observation, the next step as a task. */
+export function reflectionMarkdown(r, { tr = trPage } = {}) {
+  const out = [];
+  const next = r.nextStep ?? r.next_step;
+  if (r.answer) out.push(`**${tr("Ce am scris")}:** ${oneLine(r.answer)}`, "");
+  if (r.observation) out.push(`**${tr("Observația lui Molt")}:** ${oneLine(r.observation)}`, "");
+  if (next) out.push(`- [ ] ${tr("Pasul următor")}: ${oneLine(next)}`, "");
+  return out.join("\n");
 }
 
 export const noteName = (day) => `${day}.md`;

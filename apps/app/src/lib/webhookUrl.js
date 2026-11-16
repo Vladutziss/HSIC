@@ -92,8 +92,8 @@ export function checkWebhookUrl(raw) {
   if (!host || host.startsWith("[") || host.includes(":")) return { ok: false, reason: "host" };
   const v4 = ipv4(host);
   if (v4) return privateV4(v4) ? { ok: false, reason: "private" } : { ok: true, url: u.toString(), host };
-  if (!/^[a-z0-9.-]+$/.test(host) || !host.includes(".") || /^\d+$/.test(host.split(".").pop())) return { ok: false, reason: "host" };
   if (INTERNAL_NAME.test(host)) return { ok: false, reason: "private" };
+  if (!/^[a-z0-9.-]+$/.test(host) || !host.includes(".") || /^\d+$/.test(host.split(".").pop())) return { ok: false, reason: "host" };
   return { ok: true, url: u.toString(), host };
 }
 
