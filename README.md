@@ -49,6 +49,7 @@ Elevul rămâne cel care decide:
 | Raport de seară | AI-ul rezumă ziua și dă un scor. Scorul zilei este 60% activitate bifată și 40% evaluarea AI. |
 | Rulare săptămânală | Opțional, duminică la 18:00 UTC, agentul pregătește un pas mic pentru luni. Se oprește din Setări. |
 | Notificări push | Raportul de seară și remindere între colegi, alese din Setări pentru tot contul. |
+| Integrări | Calendar abonat (Google, Apple, Outlook), notițe Markdown pentru Obsidian, webhook-uri semnate (Zapier, Make), Notion și un server MCP prin care Claude sau ChatGPT citesc datele și propun acțiuni pe care elevul le confirmă. Vezi `docs/INTEGRATIONS.md`. |
 
 ## Baza de cunoștințe
 
@@ -119,6 +120,7 @@ docs/                              emailuri, localizare, giveaway-uri, admin, pl
 - `docs/EMAILS.md`: emailurile de retenție și reactivare
 - `docs/LOCALIZATION.md`: limbile, regulile de traducere și textele legale
 - `docs/GIVEAWAYS.md`: sistemul de giveaway-uri
+- `docs/INTEGRATIONS.md`: calendar, Markdown, webhook-uri, Notion și serverul MCP
 
 ## Echipa
 

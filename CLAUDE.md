@@ -29,6 +29,12 @@
 - Secrete: `OPENROUTER_API_KEY`, `AI_MODEL`, `AGENT_MODEL`, `AGENT_CRON_SECRET` (niciodată în repo).
 - Regulă: textul AI e generat de AI sau deloc (fără fallback-uri scrise de mână).
 
+### Integrări (calendar, Markdown, webhook-uri, Notion, MCP)
+
+- Migrarea 0042 (tabele, RLS, outbox cu declanșatoare), 0043 (cron, cu secret de înlocuit, nu se aplică cu valoarea reală în repo). Funcții: `calendar`, `webhooks`, `notion`, `mcp`, toate `--no-verify-jwt`. Secrete: `INTEGRATIONS_SECRET`, `INTEGRATIONS_CRON_SECRET`, `NOTION_CLIENT_ID`, `NOTION_CLIENT_SECRET`. Tot în `docs/INTEGRATIONS.md`; teste DB în `supabase/tests/integrations.sql`.
+- Regulă: o integrare nu schimbă niciodată starea elevului; agenții MCP doar propun (`agent_actions` pending), confirmarea e în aplicație.
+- Funcțiile pot scrie în engleză pentru un elev cu `trFor(lang)` din `_shared/app/i18n.js` (folosește `en.js` copiat de `sync:functions`).
+
 ### Emailuri (Resend)
 
 - Retenție (secvență pe 4 pași) și reactivare (un singur email), trimise de funcția `campaigns` (job zilnic) de la `molted.eu`; dezabonare și webhook în funcția `email`. Totul în spatele `CAMPAIGNS_ENABLED` (oprit implicit). Detalii, config, ce rămâne manual: `docs/EMAILS.md`. Șabloanele (React Email) se regenerează cu `npm run build:emails` și fișierul generat se commit-uiește.

@@ -816,6 +816,7 @@ function Game() {
           {...common}
           mode={store.mode}
           env={store.env}
+          loadMonth={store.loadMonth}
           onChange={(fn) => update(fn)}
           onDeleteAccount={() =>
             setConfirm({

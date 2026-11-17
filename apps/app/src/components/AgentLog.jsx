@@ -69,6 +69,7 @@ function Item({ a, state, children }) {
     <li className="rounded-xl bg-ink/5 p-3">
       <div className="flex flex-wrap items-center gap-2">
         <span className="min-w-0 flex-1 text-sm font-extrabold text-ink">{describe(a, state)}</span>
+        {a.payload?.source?.kind === "mcp" && <Chip tone="violet">{tr("de la {name}", { name: a.payload.source.name || tr("un agent extern") })}</Chip>}
         <Chip tone={tone}>{label}</Chip>
       </div>
       {a.reason && <p className="mt-1 text-xs font-semibold text-dim">{a.reason}</p>}
