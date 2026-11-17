@@ -47,7 +47,8 @@ test("the stored token is encrypted: it reads back only with the same secret and
   assert.notEqual(await encryptToken(SECRET, token), stored, "a fresh iv every time");
   assert.equal(await decryptToken("another secret", stored), null);
   const [v, iv, data] = stored.split(".");
-  const flipped = data.slice(0, -1) + (data.endsWith("A") ? "B" : "A");
+  // one character in the middle (the last one of a base64 text can carry bits that are ignored)
+  const flipped = data.slice(0, 5) + (data[5] === "A" ? "B" : "A") + data.slice(6);
   assert.equal(await decryptToken(SECRET, `${v}.${iv}.${flipped}`), null, "a changed ciphertext is refused, not misread");
   for (const bad of ["", "plain-token", "v2.a.b", "v1.a", null]) assert.equal(await decryptToken(SECRET, bad), null);
   // the key that signs states is not the key that encrypts tokens

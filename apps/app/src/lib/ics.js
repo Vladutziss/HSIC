@@ -41,6 +41,14 @@ function formatter(tz) {
 }
 export const isTimeZone = (tz) => typeof tz === "string" && !!tz && !!formatter(tz);
 
+/** The calendar day ("YYYY-MM-DD") it is in `tz` at the instant `now` (in Bucharest when the zone is not a known one). */
+export function dayInZone(now, tz) {
+  const zone = isTimeZone(tz) ? tz : "Europe/Bucharest";
+  const p = {};
+  for (const x of formatter(zone).formatToParts(now)) p[x.type] = x.value;
+  return `${p.year}-${p.month}-${p.day}`;
+}
+
 /** Minutes the zone is ahead of UTC at that instant. */
 function offsetMinutes(utcMs, tz) {
   const p = {};

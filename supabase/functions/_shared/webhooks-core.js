@@ -144,3 +144,34 @@ export async function deliver({ url, secret, id, body, fetchImpl = fetch, resolv
   if (res.status >= 200 && res.status < 300) return { ok: true, status: res.status, error: null };
   return { ok: false, status: res.status, error: res.status >= 300 && res.status < 400 ? "redirects are not followed" : `HTTP ${res.status}` };
 }
+
+// ------------------------------------------------------------ the outbox run
+
+/**
+ * Handles one claimed outbox row (claim_integration_events) and says how it went: { ok, status, error, retry }.
+ * deps (all for the row's own user):
+ *   state(userId) · lang(userId) · review(userId, day) · action(id) · reflection(id)
+ *   send({ url, secret, id, body })             -> { ok, status, error }           (deliver() with DNS checks)
+ *   notion(userId, event, ref)                  -> { ok, status, error, retry }    (writes the page)
+ *   tr(lang)                                    -> tr function
+ */
+export async function processEvent(ev, deps) {
+  if (ev.target === "notion") return deps.notion(ev.user_id, ev.event, ev.ref);
+  if (!ev.endpoint_id || !ev.url) return { ok: false, status: null, error: "the address was deleted", retry: false };
+  if (!ev.endpoint_active) return { ok: false, status: null, error: "the address is switched off", retry: false };
+
+  let data = null;
+  if (ev.event === "habit.checked") data = habitCheckedData(await deps.state(ev.user_id), ev.ref);
+  else if (ev.event === "plan.applied") data = planAppliedData(await deps.action(ev.ref?.action_id));
+  else if (ev.event === "report.created") {
+    const lang = await deps.lang(ev.user_id);
+    data = reportData(await deps.review(ev.user_id, ev.ref?.day), await deps.state(ev.user_id), { tr: deps.tr(lang), lang });
+  } else if (ev.event === "reflection.created") data = reflectionData(await deps.reflection(ev.ref?.id));
+  // the thing is gone (a tick taken back, a row deleted): nothing to say, nothing to retry
+  if (!data) return { ok: true, status: null, error: null, retry: false, skipped: true };
+
+  const body = JSON.stringify(envelope(ev.id, ev.event, ev.created_at, data));
+  const r = await deps.send({ url: ev.url, secret: ev.secret, id: ev.id, body });
+  // an address we refuse to call will not become callable by waiting
+  return { ...r, retry: !(r.error || "").startsWith("address not allowed") };
+}

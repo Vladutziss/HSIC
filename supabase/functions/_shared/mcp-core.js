@@ -16,6 +16,7 @@ import { goalsSnapshot, schoolSnapshot, validateProposals } from "./agent-core.j
 import { coachData } from "./app/coach.js";
 import { addDays, diffDays } from "./app/dates.js";
 import { computeTimeline, habitExists, isScheduled, streakInfo } from "./app/engine.js";
+import { dayInZone } from "./app/ics.js";
 import { dayFacts } from "./app/mdExport.js";
 import { pct } from "./app/objectives.js";
 import { todosByDay } from "./app/todos.js";
@@ -471,13 +472,7 @@ export async function sha256Hex(text) {
 }
 
 /** The player's local day in their time zone (Bucharest when the zone is not one the runtime knows). */
-export function localDay(now, tz) {
-  try {
-    return new Intl.DateTimeFormat("en-CA", { timeZone: tz }).format(now);
-  } catch {
-    return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Bucharest" }).format(now);
-  }
-}
+export const localDay = dayInZone;
 
 /**
  * The whole endpoint. deps:
