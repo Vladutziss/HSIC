@@ -68,3 +68,7 @@ Reguli: un cod se poate folosi o singură dată pe cont, până la `max_uses` ș
 - Teste: `supabase/tests/roles.sql` (rulat local pe PGlite împreună cu `plans.sql`, apoi se poate rula în SQL editor, într-o tranzacție cu rollback).
 
 Flux pentru o școală: admin site → „Școală nouă” → „Pune un cont în școală” (primul admin) → adminul școlii creează codurile din Setări și le dă dirigintelui și elevilor → elevii le introduc în Setări → Plan.
+
+## Ghicirea codurilor (migrarea 0043)
+
+Orice �ncercare gre?ita de cod de plan sau de invita?ie de familie se numara pe cont; dupa 10 �ncercari gre?ite �ntr-o ora, urmatoarea (corecta sau nu) prime?te 	oo_many_attempts p�na trece ora. Codurile facute de adminul site au cel pu?in 8 caractere, iar un c�mp gol genereaza un cod aleatoriu (MLT-). Codurile de ?coala (SCH-) ?i invita?iile de familie sunt deja aleatorii. Test: supabase/tests/code_attempts.sql.
