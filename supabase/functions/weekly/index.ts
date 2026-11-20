@@ -196,5 +196,27 @@ Deno.serve(async (req) => {
       console.error("weekly player", id, e);
     }
   }
+
+  // Measuring is passive (it only compares check-in rates before and after), so it also covers players who accepted
+  // proposals but did not opt in to the weekly plan. Without this their changes were never measured.
+  const optedIn = new Set((users ?? []).map((u: { id: string }) => u.id));
+  const { data: open } = await admin.from("agent_actions").select("user_id").eq("status", "applied").is("outcome", null).limit(1000);
+  const others = [...new Set((open ?? []).map((r: { user_id: string }) => r.user_id))].filter((id) => !optedIn.has(id));
+  for (const id of others) {
+    try {
+      const state = await loadState(admin, id);
+      if (!state) continue;
+      const { data: actions } = await admin.from("agent_actions").select("*").eq("user_id", id).eq("status", "applied").is("outcome", null);
+      for (const a of actions ?? []) {
+        if (!isOutcomeDue(a, today)) continue;
+        const outcome = measureOutcome(a, state, today);
+        const { error: upErr } = await admin.from("agent_actions").update({ outcome }).eq("id", a.id);
+        if (!upErr) summary.measured++;
+      }
+    } catch (e) {
+      summary.failed++;
+      console.error("weekly measure", id, e);
+    }
+  }
   return reply(200, summary);
 });
