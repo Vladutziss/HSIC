@@ -226,9 +226,9 @@ ${header(route, locale, t)}
       <p class="mt-3 max-w-2xl text-sm font-semibold text-dim">${esc(p.draft)}</p>
 
       <ul class="mt-8 grid gap-5 md:grid-cols-3">
-${card("free", esc(p.free.price), "", f("free", ["f1", "f2", "f3", "f4"]), APP_URL, p.free.cta)}
+${card("free", esc(p.free.price), "", f("free", ["f1", "f2", "f3", "f4", "f5"]), APP_URL, p.free.cta)}
 ${card("pro", esc(fill(p.perMonth, { price: PLANS.pro.eurMonth })), esc(fill(p.perYear, { price: PLANS.pro.eurYear })), f("pro", ["f1", "f2", "f3"], PLANS.pro.aiFactor), mail("pro"), p.pro.cta, true)}
-${card("school", esc(fill(p.perStudent, { price: PLANS.school.eurPerStudentMonth })), esc(fill(p.minStudents, { n: PLANS.school.minStudents })), f("school", ["f1", "f2", "f3", "f4"], PLANS.school.aiFactor), mail("school"), p.school.cta)}
+${card("school", esc(fill(p.perStudent, { price: PLANS.school.eurPerStudentMonth })), esc(fill(p.minStudents, { n: PLANS.school.minStudents })), f("school", ["f1", "f2", "f3", "f4", "f5"], PLANS.school.aiFactor), mail("school"), p.school.cta)}
       </ul>
 
       <section class="mt-14" aria-labelledby="t-plata">

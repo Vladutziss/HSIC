@@ -51,3 +51,20 @@ Reguli: un cod se poate folosi o singură dată pe cont, până la `max_uses` ș
 - Nu are pagină de admin pentru coduri; se creează din SQL.
 - Nu verifică vârsta pentru Pro (țintă 16+); vezi planul de verificare din prezentare.
 - Textele legale (termeni) nu menționează încă planurile plătite: de actualizat înainte de prima vânzare reală.
+
+## Roluri (migrarea 0042)
+
+| Rol | Cum îl primești | Ce poate |
+|---|---|---|
+| Admin site | rândul din `site_admins` | pagina `/admin/plans/`: creează școli, coduri, pune conturi în școli, acordă sau retrage planuri |
+| Admin de școală | pus de adminul site (`admin_set_member`) | creează coduri de diriginte și de elev pentru școala lui, în limita locurilor; vede panoul clasei |
+| Diriginte | cod de diriginte | vede panoul clasei |
+| Elev | cod de elev | nimic în plus; școala nu îi vede datele |
+| Părinte | codul de invitație al unui elev (3 zile, o folosire) | vede numele elevului și două numere din ultimele 7 zile; elevul sau părintele șterg legătura oricând |
+
+- Panoul clasei (`school_panel()`) arată doar numere (elevi, activi, bifări în 7 zile) și **nimic sub 5 elevi**. Pragul e în `plans-core.js` și în migrare, iar `plan.test.mjs` le ține egale.
+- Un cont aparține unei singure școli. Planul din școală nu depășește `schools.until` (sfârșitul contractului), iar un cod de elev cere un loc liber.
+- În aplicație: Setări → Plan, Școala ta, Familie (`SchoolPanel.jsx`, `FamilyPanel.jsx`). Pentru site admin: `/admin/plans/` (`apps/web/src/admin-plans.js`).
+- Teste: `supabase/tests/roles.sql` (rulat local pe PGlite împreună cu `plans.sql`, apoi se poate rula în SQL editor, într-o tranzacție cu rollback).
+
+Flux pentru o școală: admin site → „Școală nouă” → „Pune un cont în școală” (primul admin) → adminul școlii creează codurile din Setări și le dă dirigintelui și elevilor → elevii le introduc în Setări → Plan.

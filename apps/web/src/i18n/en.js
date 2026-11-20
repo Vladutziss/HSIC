@@ -149,6 +149,7 @@ export default {
       f2: "Homework planner and the AI day plan",
       f3: "The agent that proposes and measures the effect at 14 days",
       f4: "The standard daily limit of AI calls",
+      f5: "Optional family link, by your invitation: a parent sees only two numbers a week",
       cta: "Start for free",
     },
     pro: {
@@ -166,6 +167,7 @@ export default {
       f2: "{n} times more AI calls per day for every student",
       f3: "One school code, valid for the length of the contract",
       f4: "No promises about grades: we track consistency and habits",
+      f5: "Roles: school admin and class teacher; the class panel shows only counts, from 5 students",
       cta: "Let us talk about your school",
     },
     howH2: "How payment works",

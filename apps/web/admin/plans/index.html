@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="ro">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Admin planuri · Molted</title>
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="theme-color" content="#0c0a1d" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png" />
+    <link rel="preload" href="/fonts/nunito-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="/fonts/nunito.css" />
+    <link rel="stylesheet" href="/src/styles.css" />
+    <script type="module" src="/src/admin-plans.js"></script>
+  </head>
+  <body class="app-bg min-h-screen font-sans text-body">
+    <header class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-5 py-5">
+      <a href="/admin/" class="font-pixel text-xl font-bold tracking-wide text-gold" aria-label="Admin Molted">MOLTED · ADMIN</a>
+      <div class="flex items-center gap-4 text-sm font-bold">
+        <a href="/admin/" class="text-dim hover:text-ink">Echipa</a>
+        <a href="/admin/giveaways/" class="text-dim hover:text-ink">Giveaway-uri</a>
+        <button id="iesire" type="button" class="btn btn-ghost btn-xs" hidden>Ieși din cont</button>
+      </div>
+    </header>
+
+    <main class="mx-auto max-w-6xl px-5 pb-24">
+      <h1 class="font-pixel mt-4 text-3xl font-bold text-ink">Planuri, școli și coduri</h1>
+      <p id="stare" class="mt-2 text-dim" role="status" aria-live="polite">Se încarcă…</p>
+      <p id="flash" class="mt-3 hidden rounded-xl px-4 py-3 text-sm font-bold" role="alert"></p>
+
+      <div id="login" class="mt-8 flex justify-center" hidden></div>
+      <div id="refuzat" class="panel mt-8" hidden>
+        <p class="font-bold text-ink">Contul tău nu e admin.</p>
+        <p class="mt-2 text-sm">Ești logat ca <b id="refuzat-email" class="text-ink"></b>. Cere unui admin să te adauge.</p>
+      </div>
+
+      <div id="admin" hidden>
+        <section class="mt-8" aria-labelledby="t-sumar">
+          <h2 id="t-sumar" class="font-pixel text-2xl font-bold text-ink">Sumar</h2>
+          <p id="sumar" class="mt-2 text-dim"></p>
+        </section>
+
+        <section class="mt-10" aria-labelledby="t-scoala">
+          <h2 id="t-scoala" class="font-pixel text-2xl font-bold text-ink">Școală nouă</h2>
+          <form id="f-scoala" class="panel mt-4 grid gap-3 sm:grid-cols-4">
+            <label class="block text-sm font-bold">Nume<input name="name" class="field mt-1" required minlength="2" maxlength="80" /></label>
+            <label class="block text-sm font-bold">Locuri (elevi)<input name="seats" class="field mt-1" inputmode="numeric" required /></label>
+            <label class="block text-sm font-bold">Contract până pe (AAAA-LL-ZZ)<input name="until" class="field mt-1" required pattern="\d{4}-\d{2}-\d{2}" placeholder="2027-06-30" /></label>
+            <div class="flex items-end"><button class="btn btn-sm" type="submit">Creează școala</button></div>
+          </form>
+          <ul id="scoli" class="mt-4 grid gap-2 text-sm"></ul>
+        </section>
+
+        <section class="mt-10" aria-labelledby="t-membru">
+          <h2 id="t-membru" class="font-pixel text-2xl font-bold text-ink">Pune un cont în școală (admin, diriginte sau elev)</h2>
+          <p class="mt-2 text-sm text-dim">Primul admin al unei școli se pune de aici. Contul primește planul Școală până la sfârșitul contractului. Poți scrie emailul contului sau id-ul Clerk.</p>
+          <form id="f-membru" class="panel mt-4 grid gap-3 sm:grid-cols-4">
+            <label class="block text-sm font-bold">Școala (id)<input name="school" class="field mt-1" required placeholder="lipește id-ul din listă" /></label>
+            <label class="block text-sm font-bold">Email sau id cont<input name="user" class="field mt-1" required /></label>
+            <div class="block text-sm font-bold">Rol
+              <fieldset class="mt-1 flex flex-wrap gap-3"><label class="flex items-center gap-1 font-semibold"><input type="radio" name="role" value="admin" checked />Admin de școală</label><label class="flex items-center gap-1 font-semibold"><input type="radio" name="role" value="teacher" />Diriginte</label><label class="flex items-center gap-1 font-semibold"><input type="radio" name="role" value="student" />Elev</label></fieldset>
+            </div>
+            <div class="flex items-end"><button class="btn btn-sm" type="submit">Salvează</button></div>
+          </form>
+        </section>
+
+        <section class="mt-10" aria-labelledby="t-cod">
+          <h2 id="t-cod" class="font-pixel text-2xl font-bold text-ink">Cod nou</h2>
+          <form id="f-cod" class="panel mt-4 grid gap-3 sm:grid-cols-4">
+            <label class="block text-sm font-bold">Cod (A-Z, 0-9, -)<input name="code" class="field mt-1" required pattern="[A-Za-z0-9-]{4,40}" /></label>
+            <div class="block text-sm font-bold">Plan
+              <fieldset class="mt-1 flex flex-wrap gap-3"><label class="flex items-center gap-1 font-semibold"><input type="radio" name="plan" value="pro" checked />Pro</label><label class="flex items-center gap-1 font-semibold"><input type="radio" name="plan" value="school" />Școală</label></fieldset>
+            </div>
+            <label class="block text-sm font-bold">Zile<input name="days" class="field mt-1" inputmode="numeric" value="30" required /></label>
+            <label class="block text-sm font-bold">Folosiri<input name="max" class="field mt-1" inputmode="numeric" value="1" required /></label>
+            <label class="block text-sm font-bold">Etichetă<input name="label" class="field mt-1" maxlength="80" /></label>
+            <label class="block text-sm font-bold">Școala (id, doar pentru planul Școală)<input name="school" class="field mt-1" /></label>
+            <div class="block text-sm font-bold">Rol în școală
+              <fieldset class="mt-1 flex flex-wrap gap-3"><label class="flex items-center gap-1 font-semibold"><input type="radio" name="role" value="student" checked />Elev</label><label class="flex items-center gap-1 font-semibold"><input type="radio" name="role" value="teacher" />Diriginte</label><label class="flex items-center gap-1 font-semibold"><input type="radio" name="role" value="admin" />Admin de școală</label></fieldset>
+            </div>
+            <div class="flex items-end"><button class="btn btn-sm" type="submit">Creează codul</button></div>
+          </form>
+          <ul id="coduri" class="mt-4 grid gap-1 text-sm"></ul>
+        </section>
+
+        <section class="mt-10" aria-labelledby="t-acorda">
+          <h2 id="t-acorda" class="font-pixel text-2xl font-bold text-ink">Acordă sau retrage un plan</h2>
+          <form id="f-acorda" class="panel mt-4 grid gap-3 sm:grid-cols-4">
+            <label class="block text-sm font-bold">Email sau id cont<input name="user" class="field mt-1" required /></label>
+            <div class="block text-sm font-bold">Plan
+              <fieldset class="mt-1 flex flex-wrap gap-3"><label class="flex items-center gap-1 font-semibold"><input type="radio" name="plan" value="pro" checked />Pro</label><label class="flex items-center gap-1 font-semibold"><input type="radio" name="plan" value="school" />Școală</label></fieldset>
+            </div>
+            <label class="block text-sm font-bold">Zile<input name="days" class="field mt-1" inputmode="numeric" value="30" required /></label>
+            <div class="flex items-end gap-2">
+              <button class="btn btn-sm" type="submit">Acordă</button>
+              <button id="retrage" class="btn btn-ghost btn-sm" type="button">Retrage planul</button>
+            </div>
+          </form>
+        </section>
+      </div>
+    </main>
+  </body>
+</html>

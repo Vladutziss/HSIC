@@ -27,3 +27,8 @@ export function cleanCode(input) {
   const c = String(input ?? "").trim().toUpperCase();
   return /^[A-Z0-9-]{4,40}$/.test(c) ? c : null;
 }
+
+// Roles (0042_roles.sql). A school's class panel shows nothing below this many students; the migration has the same
+// number and apps/app/tests/plan.test.mjs keeps them equal.
+export const SCHOOL_ROLES = ["admin", "teacher", "student"];
+export const PANEL_MIN_STUDENTS = 5;
