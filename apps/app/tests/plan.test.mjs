@@ -35,3 +35,10 @@ test("the migration lists exactly the plans of plans-core", () => {
   assert.ok(sql.includes("check (plan in ('pro', 'school'))"));
   assert.deepEqual(Object.keys(PLANS), ["free", "pro", "school"]);
 });
+
+test("roles in plans-core match the migration 0042 (roles, 5-student class panel)", async () => {
+  const { SCHOOL_ROLES, PANEL_MIN_STUDENTS } = await import("@molted/ui/plans-core.js");
+  const sql = readFileSync(new URL("../../../supabase/migrations/0042_roles.sql", import.meta.url), "utf8");
+  assert.ok(sql.includes(`check (role in (${SCHOOL_ROLES.map((r) => `'${r}'`).join(", ")}))`), "roles differ from the migration");
+  assert.ok(sql.includes(`if n < ${PANEL_MIN_STUDENTS} then`), "the minimum class size differs from the migration");
+});

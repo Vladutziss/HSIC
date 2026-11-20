@@ -149,6 +149,7 @@ export default {
       f2: "Planificator de teme și planul zilei cu AI",
       f3: "Agentul care propune și măsoară efectul la 14 zile",
       f4: "Limita zilnică standard de apeluri AI",
+      f5: "Legătură opțională cu un părinte, la invitația ta: vede doar două numere pe săptămână",
       cta: "Începe gratuit",
     },
     pro: {
@@ -166,6 +167,7 @@ export default {
       f2: "De {n} ori mai multe apeluri AI pe zi pentru fiecare elev",
       f3: "Un cod de școală, valabil pe durata contractului",
       f4: "Fără promisiuni de note: urmărim constanța și obiceiurile",
+      f5: "Roluri: admin de școală și diriginte; panoul clasei arată doar numere, de la 5 elevi",
       cta: "Vorbim despre școala ta",
     },
     howH2: "Cum funcționează plata",
