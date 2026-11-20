@@ -66,7 +66,7 @@
         <section class="mt-10" aria-labelledby="t-cod">
           <h2 id="t-cod" class="font-pixel text-2xl font-bold text-ink">Cod nou</h2>
           <form id="f-cod" class="panel mt-4 grid gap-3 sm:grid-cols-4">
-            <label class="block text-sm font-bold">Cod (A-Z, 0-9, -)<input name="code" class="field mt-1" required pattern="[A-Za-z0-9-]{4,40}" /></label>
+            <label class="block text-sm font-bold">Cod (gol = aleatoriu; minim 8 caractere)<input name="code" class="field mt-1" pattern="([A-Za-z0-9-]{8,40})?" placeholder="lasă gol pentru un cod aleatoriu" /></label>
             <div class="block text-sm font-bold">Plan
               <fieldset class="mt-1 flex flex-wrap gap-3"><label class="flex items-center gap-1 font-semibold"><input type="radio" name="plan" value="pro" checked />Pro</label><label class="flex items-center gap-1 font-semibold"><input type="radio" name="plan" value="school" />Școală</label></fieldset>
             </div>

@@ -15,6 +15,7 @@ const ERRORS = {
   forbidden: "Nu ai dreptul să faci asta.",
   "unknown account": "Nu găsesc contul. Contul trebuie să se fi autentificat cel puțin o dată; încearcă și cu id-ul Clerk.",
   "unknown school": "Nu găsesc școala cu acest id.",
+  "code too short": "Codul trebuie să aibă cel puțin 8 caractere. Lasă câmpul gol pentru un cod aleatoriu.",
 };
 function flash(text, ok = false) {
   const el = $("flash");

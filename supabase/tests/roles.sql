@@ -126,11 +126,11 @@ begin
   -- ---- one school per account, and the plan never outlives the contract
   perform public._t_as('u_sadmin', adm);
   sid2 := public.admin_create_school('Liceul Y', 5, now() + interval '10 days');
-  perform public.admin_create_code('LICEU-Y', 'school', 90, 5, 'y', sid2, 'student');
+  perform public.admin_create_code('LICEU-Y-ELEVI', 'school', 90, 5, 'y', sid2, 'student');
   perform public._t_as('u_s1');
-  if exists (select 1 from public.redeem_plan_code('LICEU-Y')) then raise exception 'an account joined a second school'; end if;
+  if exists (select 1 from public.redeem_plan_code('LICEU-Y-ELEVI')) then raise exception 'an account joined a second school'; end if;
   perform public._t_as('u_out');
-  select * into r from public.redeem_plan_code('LICEU-Y');
+  select * into r from public.redeem_plan_code('LICEU-Y-ELEVI');
   if r.until is null or r.until > now() + interval '11 days' then raise exception 'plan outlives the contract: %', r.until; end if;
   reset role;
 

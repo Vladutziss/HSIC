@@ -15,14 +15,14 @@ export async function getPlan() {
   return normalizePlan(Array.isArray(data) ? data[0] : data);
 }
 
-/** Returns the new plan, or throws Error("invalid") when the code is malformed, unknown, used up, expired or already used. */
+/** Returns the new plan, or throws Error("invalid") (malformed, unknown, used up, expired, already used) or Error("too_many") (10 failed tries in an hour). */
 export async function redeemCode(input) {
   const code = cleanCode(input);
   if (!code) throw new Error("invalid");
   const client = await getClient();
   if (!client) throw new Error("offline");
   const { data, error } = await client.rpc("redeem_plan_code", { p_code: code });
-  if (error) throw new Error("failed");
+  if (error) throw new Error(/too_many_attempts/.test(error.message || "") ? "too_many" : "failed");
   const row = Array.isArray(data) ? data[0] : data;
   if (!row) throw new Error("invalid");
   return normalizePlan(row);

@@ -49,7 +49,7 @@ export async function joinFamily(code) {
   const c = String(code ?? "").trim().toUpperCase();
   if (!/^[A-Z0-9]{8}$/.test(c)) throw new Error("invalid");
   const r = await call("family_join", { p_code: c });
-  if (r.error) throw new Error("failed");
+  if (r.error) throw new Error(/too_many_attempts/.test(r.error) ? "too_many" : "failed");
   if (!r.data) throw new Error("invalid");
   return r.data;
 }

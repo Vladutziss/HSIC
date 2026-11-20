@@ -1573,6 +1573,7 @@ export default {
   "Scoate doar din ziua asta": "Remove from this day only",
   "Scoate {name} doar din ziua asta": "Remove {name} from this day only",
   "Cod invalid, folosit sau expirat.": "Invalid, used or expired code.",
+  "Prea multe încercări greșite. Încearcă din nou peste o oră.": "Too many wrong tries. Try again in an hour.",
   "Gratuit": "Free",
   "Pro": "Pro",
   "Școală": "School",

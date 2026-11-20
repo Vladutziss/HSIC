@@ -32,7 +32,7 @@ export default function PlanPanel() {
       setPlan(await redeemCode(code));
       setCode("");
     } catch (err) {
-      setError(err.message === "invalid" ? tr("Cod invalid, folosit sau expirat.") : tr("Nu s-a putut. Încearcă din nou."));
+      setError(err.message === "invalid" ? tr("Cod invalid, folosit sau expirat.") : err.message === "too_many" ? tr("Prea multe încercări greșite. Încearcă din nou peste o oră.") : tr("Nu s-a putut. Încearcă din nou."));
     } finally {
       setBusy(false);
     }
