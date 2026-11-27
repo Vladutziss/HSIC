@@ -48,9 +48,9 @@ Reguli: un cod se poate folosi o singură dată pe cont, până la `max_uses` ș
 ## Ce nu face (încă)
 
 - Nu limitează altceva decât apelurile AI (obiective, istoric etc. rămân la fel).
-- Nu are pagină de admin pentru coduri; se creează din SQL.
+- Codurile se creează din `/admin/plans/` (sau din SQL, ca înainte).
 - Nu verifică vârsta pentru Pro (țintă 16+); vezi planul de verificare din prezentare.
-- Textele legale (termeni) nu menționează încă planurile plătite: de actualizat înainte de prima vânzare reală.
+- Termenii și politica de confidențialitate menționează planurile, plata prin transfer și dreptul de retragere (actualizate pe 20.11); de revăzut cu un jurist înainte de prima vânzare reală.
 
 ## Roluri (migrarea 0042)
 
@@ -71,4 +71,4 @@ Flux pentru o școală: admin site → „Școală nouă” → „Pune un cont 
 
 ## Ghicirea codurilor (migrarea 0043)
 
-Orice �ncercare gre?ita de cod de plan sau de invita?ie de familie se numara pe cont; dupa 10 �ncercari gre?ite �ntr-o ora, urmatoarea (corecta sau nu) prime?te 	oo_many_attempts p�na trece ora. Codurile facute de adminul site au cel pu?in 8 caractere, iar un c�mp gol genereaza un cod aleatoriu (MLT-). Codurile de ?coala (SCH-) ?i invita?iile de familie sunt deja aleatorii. Test: supabase/tests/code_attempts.sql.
+Orice încercare greșită de cod de plan sau de invitație de familie se numără pe cont; după 10 încercări greșite într-o oră, următoarea (corectă sau nu) primește `too_many_attempts` până trece ora. Codurile făcute de adminul site au cel puțin 8 caractere, iar un câmp gol generează un cod aleatoriu (`MLT-…`). Codurile de școală (`SCH-…`) și invitațiile de familie sunt deja aleatorii. Test: `supabase/tests/code_attempts.sql`.
