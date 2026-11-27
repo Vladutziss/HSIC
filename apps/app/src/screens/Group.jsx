@@ -4,6 +4,7 @@ import { Button, Chip, Confirm, DeleteButton, Empty, Field, LevelBadge, Panel, S
 import { dayKey, diffDays, fmt12, fmtDay, todayKey } from "../lib/dates.js";
 import { Sprite } from "../components/Sprite.jsx";
 import { MAX_GROUPS, MAX_PARTNERS, NUDGE_TEMPLATES } from "../lib/groups.js";
+import { withFreshWeek } from "../lib/groupBoard.js";
 import { PATHS } from "../lib/catalog.js";
 import { normalizeLook } from "../lib/cosmetics.js";
 import { tr } from "../lib/i18n.js";
@@ -113,7 +114,7 @@ function CreateJoin({ groups }) {
 
 function Leaderboard({ g, loading }) {
   const [by, setBy] = useState("weekGain");
-  const ranked = useMemo(() => [...g.members].sort((a, b) => (b[by] || 0) - (a[by] || 0)), [g.members, by]);
+  const ranked = useMemo(() => withFreshWeek(g.members, todayKey()).sort((a, b) => (b[by] || 0) - (a[by] || 0)), [g.members, by]);
   const unit = { weekGain: "momentum", momentum: tr("puncte"), streak: tr("zile") }[by];
   return (
     <Panel tone="gold" className="p-4 sm:p-5">
