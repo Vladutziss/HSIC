@@ -93,7 +93,7 @@ export function PlanPanel({ state, today, ai, onAddHabit, onEdit, onExperiment, 
     <Shell state={s} run={run} label={tr("Cere un plan")} idle={tr("Aici apar schimbările propuse pentru săptămâna viitoare.")} history={history} summary={(d) => d?.summary || (d?.proposals || []).map((p) => p.name || p.title).filter(Boolean).join(" · ")}>
       {r && (
         <div className="space-y-3">
-          {r.summary && <p className="text-[15px] font-semibold text-ink">{r.summary}</p>}
+          {r.summary && <p className="text-sm font-semibold text-ink">{r.summary}</p>}
           {r.notEnoughData && (
             <p className="text-sm font-semibold text-dim">{tr("Încă prea puține zile ca să spun ceva despre progresul tău: cel mai lung obicei are {longest} din {needed} zile programate necesare.", { longest: r.notEnoughData.longest, needed: r.notEnoughData.needed })}</p>
           )}
@@ -113,7 +113,7 @@ export function PlanPanel({ state, today, ai, onAddHabit, onEdit, onExperiment, 
                       {sg.action === "goal" ? (
                         <>
                           <p className="text-sm font-extrabold text-ink">{tr("Obiectiv nou: {title}", { title: sg.title })}</p>
-                          <p className="text-xs font-bold text-dim">{tr("{n} pași{v} · îl găsești în „Ce a făcut Molt”, de unde îl aplici", { n: sg.steps.length, v: sg.deadline ? tr(" · până la {fmtDay}", { fmtDay: fmtDay(sg.deadline) }) : "" })}</p>
+                          <p className="text-xs font-bold text-dim">{tr("{n} {steps}{v} · îl găsești în „Ce a făcut Molt”, de unde îl aplici", { n: sg.steps.length, steps: sg.steps.length === 1 ? tr("pas") : tr("pași"), v: sg.deadline ? tr(" · până la {fmtDay}", { fmtDay: fmtDay(sg.deadline) }) : "" })}</p>
                           <ul className="mt-1 list-disc pl-5 text-xs font-semibold text-body">
                             {sg.steps.map((t) => (
                               <li key={t}>{t}</li>
@@ -279,7 +279,7 @@ export function ExperimentsPanel({ state, today, ai, refreshKey = 0 }) {
   return (
     <section className="mt-6 space-y-3 border-t border-edge/60 pt-5" aria-label={tr("Experimente")}>
       <div>
-        <h3 className="flex items-center gap-2 font-pixel text-lg text-ink">
+        <h3 className="flex items-center gap-2 font-display text-lg text-ink">
           <FlaskConical size={16} className="text-violet-hi" aria-hidden="true" />{tr("Experimentele tale")}</h3>
         <p className="text-xs font-semibold text-dim">{tr("Teste pe tine însuți: zilele sunt trase la sorți, iar rezultatul e raportat cu incertitudine.")}</p>
       </div>

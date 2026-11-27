@@ -91,7 +91,7 @@ function Consent({ children }) {
             <ShieldCheck size={20} aria-hidden="true" />
           </span>
           <div>
-            <h1 className="font-pixel text-xl leading-tight text-ink">{tr("Un ultim pas")}</h1>
+            <h1 className="font-display text-xl leading-tight text-ink">{tr("Un ultim pas")}</h1>
             <p className="text-xs font-semibold text-dim">{tr("Înainte să intri în Molted")}</p>
           </div>
         </div>
@@ -126,9 +126,9 @@ function Gate({ children }) {
           <LanguageSwitch />
           <div className="flex items-center gap-3">
             <Leaf className="text-gold" size={28} aria-hidden="true" />
-            <div className="font-pixel text-2xl leading-none text-ink">Molted</div>
+            <div className="font-display text-2xl leading-none text-ink">Molted</div>
           </div>
-          <p className="text-center text-sm text-dim">{tr("Molted este o aplicație de self-improvement gamificată: îți urmărești obiceiurile zilnice, personajul tău evoluează odată cu progresul, poți intra în grupuri cu prietenii și primești rapoarte AI.")}</p>
+          <p className="text-center text-sm text-dim">{tr("Molted este un coach pentru elevi: îți planifici temele și examenele, îți urmărești obiceiurile, personajul tău evoluează odată cu progresul, poți intra în grupuri cu colegii și primești rapoarte AI.")}</p>
           {mode === "in" ? (
             <SignIn key="in" routing="hash" />
           ) : (

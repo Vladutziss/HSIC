@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { nextAssignments, nextExams, normalizeAssignments, normalizeExams, normalizeSession, studiedMinutes } from "../src/lib/schoolPlanner.js";
+import { addSchoolItem, addStudySession, examPlan, focusMinutes, examPlanTodos, nextAssignments, nextExams, normalizeAssignments, normalizeExams, normalizeSession, overdueAssignments, removeSchoolItem, setSchoolDone, studiedMinutes, studyWeek } from "../src/lib/schoolPlanner.js";
 
 const today = "2026-10-12";
 
@@ -65,4 +65,104 @@ test("study sessions: bounded minutes, local day default, totals per day and sub
   ] } };
   assert.equal(studiedMinutes(state, today), 70);
   assert.equal(studiedMinutes(state, today, "Mate"), 40);
+});
+
+test("addSchoolItem adds an assignment or an exam by hand and ignores an empty title", () => {
+  const empty = { assignments: [], exams: [], sessions: [] };
+  const a = addSchoolItem(empty, "assignment", { title: " Referat ", subject: "Istorie", due: "2026-10-20", estimatedMinutes: 60 }, today, "a-1");
+  assert.deepEqual(a.assignments, [{ title: "Referat", subject: "Istorie", due: "2026-10-20", estimatedMinutes: 60, id: "a-1", done: false }]);
+  const e = addSchoolItem(a, "exam", { title: "Test mate", subject: "Mate", date: "2026-10-22" }, today, "e-1");
+  assert.deepEqual(e.exams, [{ title: "Test mate", subject: "Mate", date: "2026-10-22", id: "e-1", done: false }]);
+  assert.equal(e.assignments.length, 1);
+  assert.equal(addSchoolItem(empty, "exam", { title: "  " }, today), empty);
+});
+
+test("setSchoolDone ticks one item and leaves the rest", () => {
+  const p = { assignments: [{ id: "a", title: "A", done: false }, { id: "b", title: "B", done: false }], exams: [{ id: "e", title: "E", date: today, done: false }] };
+  const next = setSchoolDone(p, "assignment", "a", true);
+  assert.deepEqual(next.assignments.map((x) => x.done), [true, false]);
+  assert.equal(setSchoolDone(next, "exam", "e", true).exams[0].done, true);
+  assert.equal(setSchoolDone(next, "assignment", "a", false).assignments[0].done, false);
+});
+
+test("addStudySession keeps valid blocks only, and studyWeek sums seven days by day and by subject", () => {
+  let p = { sessions: [] };
+  p = addStudySession(p, { subject: "Mate", minutes: 25 }, today, "s1");
+  p = addStudySession(p, { subject: "mate ", minutes: 0 }, today, "s2");
+  assert.equal(p.sessions.length, 1);
+  p = addStudySession(p, { subject: "Chimie", minutes: 45, day: "2026-10-10" }, today, "s3");
+  p = addStudySession(p, { subject: "Mate", minutes: 30, day: "2026-10-01" }, today, "s4");
+  const w = studyWeek({ schoolPlanner: p }, today);
+  assert.equal(w.days.length, 7);
+  assert.equal(w.days[6].day, today);
+  assert.equal(w.total, 70);
+  assert.deepEqual(w.bySubject, [{ subject: "Chimie", minutes: 45 }, { subject: "Mate", minutes: 25 }]);
+  assert.deepEqual(studyWeek({}, today).bySubject, []);
+});
+
+test("examPlan spreads sessions over the days before the exam and ends with the self-test", () => {
+  const plan = examPlan({ date: "2026-10-22" }, today); // 10 free days
+  assert.equal(plan.length, 5);
+  assert.deepEqual(plan.map((s) => s.date), ["2026-10-12", "2026-10-14", "2026-10-17", "2026-10-19", "2026-10-21"]);
+  assert.deepEqual(plan.map((s) => s.last), [false, false, false, false, true]);
+  assert.deepEqual(examPlan({ date: "2026-10-15" }, today).map((s) => s.date), ["2026-10-12", "2026-10-13", "2026-10-14"]);
+  assert.deepEqual(examPlan({ date: "2026-10-14" }, today).map((s) => s.date), ["2026-10-12", "2026-10-13"]);
+});
+
+test("examPlan gives nothing when there is no room, and examPlanTodos skips what is already there", () => {
+  assert.deepEqual(examPlan({ date: "2026-10-13" }, today), []);
+  assert.deepEqual(examPlan({ date: today }, today), []);
+  assert.deepEqual(examPlan({ date: "2026-10-01" }, today), []);
+  assert.deepEqual(examPlan({}, today), []);
+  const title = (s) => `${s.last ? "Test" : "Invata"} ${s.i}/${s.n}`;
+  const first = examPlanTodos({ date: "2026-10-15" }, today, [], title);
+  assert.deepEqual(first, [
+    { title: "Invata 1/3", date: "2026-10-12", dur: 45 },
+    { title: "Invata 2/3", date: "2026-10-13", dur: 45 },
+    { title: "Test 3/3", date: "2026-10-14", dur: 45 },
+  ]);
+  assert.equal(examPlanTodos({ date: "2026-10-15" }, today, first, title).length, 0);
+});
+
+test("overdueAssignments lists unfinished work past its deadline, oldest first, with the days late", () => {
+  const state = { schoolPlanner: { assignments: [
+    { id: "a", title: "Ieri", due: "2026-10-11", done: false },
+    { id: "b", title: "Acum o saptamana", due: "2026-10-05", done: false },
+    { id: "c", title: "Azi", due: today, done: false },
+    { id: "d", title: "Gata", due: "2026-10-01", done: true },
+    { id: "e", title: "Viitor", due: "2026-10-20", done: false },
+  ] } };
+  assert.deepEqual(overdueAssignments(state, today).map((a) => [a.id, a.daysLate]), [["b", 7], ["a", 1]]);
+  assert.deepEqual(overdueAssignments({}, today), []);
+});
+
+test("removeSchoolItem deletes one assignment or exam and keeps the rest and the study blocks", () => {
+  const p = { assignments: [{ id: "a", title: "A" }, { id: "b", title: "B" }], exams: [{ id: "a", title: "E" }], sessions: [{ id: "s", minutes: 25, assignmentId: "a" }] };
+  const noA = removeSchoolItem(p, "assignment", "a");
+  assert.deepEqual(noA.assignments.map((x) => x.id), ["b"]);
+  assert.equal(noA.exams.length, 1);
+  assert.equal(noA.sessions.length, 1);
+  assert.deepEqual(removeSchoolItem(p, "exam", "a").exams, []);
+  assert.equal(removeSchoolItem(p, "exam", "nope").exams.length, 1);
+});
+
+test("Focus counts as study time: in the day total and the week, never against one subject", () => {
+  const at = (day, h) => new Date(`${day}T${String(h).padStart(2, "0")}:00:00`).getTime();
+  const state = {
+    schoolPlanner: { sessions: [{ id: "s1", subject: "Mate", day: today, minutes: 25 }] },
+    focusSessions: [
+      { id: "f1", start: at(today, 9), end: at(today, 10), work: 1800 },
+      { id: "f2", start: at(today, 15), end: at(today, 16), work: 1500 },
+      { id: "f3", start: at("2026-10-11", 20), end: at("2026-10-11", 21), work: 3600 },
+    ],
+  };
+  assert.equal(focusMinutes(state, today), 55);
+  assert.equal(studiedMinutes(state, today), 80);
+  assert.equal(studiedMinutes(state, today, "Mate"), 25);
+  const w = studyWeek(state, today);
+  assert.equal(w.focus, 115);
+  assert.equal(w.total, 140);
+  assert.equal(w.days[5].minutes, 60);
+  assert.deepEqual(w.bySubject, [{ subject: "", minutes: 115 }, { subject: "Mate", minutes: 25 }]);
+  assert.equal(focusMinutes({}, today), 0);
 });

@@ -108,7 +108,7 @@ export async function dailyReview(p, signal) {
   const lines = p.habits
     .map((h) => `- ${h.name} (${h.diffLabel}${h.scheduled ? "" : ", optional today"}): ${h.done ? "done" : "not done"}`)
     .join("\n");
-  const prompt = `You are the evening coach in "Molted", a self-improvement RPG. Review the player's day and score it.
+  const prompt = `You are the evening coach in "Molted", a gamified study and habit coach for students. Review the player's day and score it.
 
 Player: ${p.name || "the player"}. Goal: "${clip(p.goal, 200) || "-"}" (path: ${PATHS[p.pathId]?.label || "-"}).
 Day: ${fmtLong(p.day)}.
@@ -156,7 +156,7 @@ Reply with only JSON: {"score": <integer 0-100>, "summary": "...", "highlight": 
 
 export async function momentLineAI(situation, quote, signal) {
   const server = await serverClient();
-  const prompt = `In one sentence in ${langName()} (at most 170 characters), connect this quote to the player's situation in a self-improvement game. Address the player${addressTu()}, be warm and concrete, and do not repeat the quote.
+  const prompt = `In one sentence in ${langName()} (at most 170 characters), connect this quote to the player's situation in a game that coaches students. Address the player${addressTu()}, be warm and concrete, and do not repeat the quote.
 Situation: ${situation}.
 Quote: "${quote.text}" (${quote.author}).
 Reply with only JSON: {"line":"..."}`;
@@ -166,7 +166,7 @@ Reply with only JSON: {"line":"..."}`;
 
 export async function evolutionChapter({ name, pathId, from, to, recent = [] }, signal) {
   const server = await serverClient();
-  const prompt = `In "Molted", a self-improvement RPG, the player's companion ${name || "the Molt"} (a ${PATHS[pathId]?.cls || "hero"}) just evolved from "${from}" to "${to}" thanks to the player's daily check-ins.
+  const prompt = `In "Molted", a gamified study and habit coach for students, the player's companion ${name || "the Molt"} (a ${PATHS[pathId]?.cls || "hero"}) just evolved from "${from}" to "${to}" thanks to the player's daily check-ins.
 Recent story (newest last):
 ${recent.slice(-3).map((s) => `- ${s}`).join("\n") || "- (none yet)"}
 Write a short celebratory chapter: 3 sentences, at most 380 characters, in ${langName()}, third person, present tense, describing the transformation and what the companion can do now. Give it a title of 2-4 words.

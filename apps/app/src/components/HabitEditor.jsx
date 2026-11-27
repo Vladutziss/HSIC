@@ -75,7 +75,7 @@ export function DifficultyPicker({ value, onChange }) {
         >
           <Gems n={n} size={13} />
           <span className="text-sm font-extrabold text-ink">{DIFF[n].label}</span>
-          <span className="text-[11px] font-bold text-gold-hi">{tr("+{xp} momentum", { xp: DIFF[n].xp })}</span>
+          <span className="text-xs font-bold text-gold-hi">{tr("+{xp} momentum", { xp: DIFF[n].xp })}</span>
         </button>
       ))}
     </div>
@@ -104,7 +104,7 @@ function CatalogTab({ state, today, onAdd }) {
         ))}
       </div>
       {full && <p className="rounded-xl bg-ember/10 p-3 text-sm font-semibold text-ember ring-1 ring-ember/30">{tr("Ai deja {MAX_HABITS} obiceiuri active. Arhivează sau șterge unul ca să adaugi altul.", { MAX_HABITS })}</p>}
-      <div className="grid gap-2 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         {list.map((c) => {
           const Icon = iconFor(c.icon);
           const has = taken.has(c.id);
@@ -115,7 +115,7 @@ function CatalogTab({ state, today, onAdd }) {
               </span>
               <div className="min-w-0 flex-1">
                 <div className="truncate text-sm font-extrabold text-ink">{c.name}</div>
-                <div className="flex items-center gap-2 text-[11px] font-bold text-dim">
+                <div className="flex items-center gap-2 text-xs font-bold text-dim">
                   <Gems n={c.diff} size={10} />
                   <span className="truncate">{scheduleLabel(c.days)}</span>
                 </div>

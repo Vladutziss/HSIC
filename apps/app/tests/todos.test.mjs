@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { fmt12 } from "../src/lib/dates.js";
+import { fmt12, fmtHour12 } from "../src/lib/dates.js";
+import { useLocale } from "../src/lib/i18n.js";
 import { computeTimeline } from "../src/lib/engine.js";
 import { fromRows, toRows } from "../src/lib/remote.js";
 import { firstOccurrence, makeRepeat, occursOn, repeatLabel, todosByDay, todosForToday, toggleDone } from "../src/lib/todos.js";
@@ -82,13 +83,23 @@ test("a series survives the database round trip", () => {
   assert.equal(back.todos.find((x) => x.id === "s").repeat, undefined);
 });
 
-test("labels and 12-hour times", () => {
+test("labels, and times written the way each language writes them (24-hour in Romanian, 12-hour in English)", () => {
   assert.equal(repeatLabel(series("daily").repeat), "Zilnic");
   assert.equal(repeatLabel(series("weekly").repeat), "În fiecare luni");
   assert.equal(repeatLabel(series("days", [5, 1]).repeat), "L V");
-  assert.equal(fmt12("00:05"), "12:05 AM");
-  assert.equal(fmt12("12:00"), "12:00 PM");
-  assert.equal(fmt12("16:25"), "4:25 PM");
-  assert.equal(fmt12("23:30"), "11:30 PM");
+  assert.equal(fmt12("00:05"), "00:05");
+  assert.equal(fmt12("16:25"), "16:25");
   assert.equal(fmt12(null), "");
+  assert.equal(fmtHour12(16 * 60), "16:00");
+  useLocale("en");
+  try {
+    assert.equal(fmt12("00:05"), "12:05 AM");
+    assert.equal(fmt12("12:00"), "12:00 PM");
+    assert.equal(fmt12("16:25"), "4:25 PM");
+    assert.equal(fmt12("23:30"), "11:30 PM");
+    assert.equal(fmt12(null), "");
+    assert.equal(fmtHour12(16 * 60), "4 PM");
+  } finally {
+    useLocale("ro");
+  }
 });

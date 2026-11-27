@@ -1,6 +1,7 @@
 // Colour themes. The palettes themselves live in src/styles.css ([data-theme="..."] blocks);
 // this file only lists them for the picker and switches the active one.
 //
+// The picker shows them in this order within each mode (Lavandă before the white Lumină).
 // To add a theme: add a block in styles.css and an entry below.
 
 import { useSyncExternalStore } from "react";
@@ -10,18 +11,18 @@ export const THEMES = [
   { id: "noapte", name: tr("Noapte"), mode: "dark", blurb: tr("Violet închis, cu accente aurii. Tema originală.") },
   { id: "padure", name: tr("Pădure"), mode: "dark", blurb: tr("Verde-închis, cu accente de salvie. Calm și contrastat.") },
   { id: "grafit", name: tr("Grafit"), mode: "dark", blurb: tr("Gri închis neutru, fără stele. Simplu și sobru.") },
-  { id: "cod", name: tr("Cod"), mode: "dark", blurb: tr("Pentru programatori: gri cărbune, albastru și turcoaz.") },
-  { id: "nord", name: "Nord", mode: "dark", blurb: tr("Gri-albastru arctic, culori pastelate.") },
-  { id: "ceata", name: tr("Ceață"), mode: "light", blurb: tr("Gri deschis și alb, accente discrete.") },
   { id: "lavanda", name: tr("Lavandă"), mode: "light", blurb: tr("Pastel luminos, lavandă și liliac, text violet-închis.") },
+  { id: "ceata", name: tr("Lumină"), mode: "light", blurb: tr("Gri deschis și alb, accente discrete.") },
   { id: "piersica", name: tr("Piersică"), mode: "light", blurb: tr("Unt, piersică și roz pal, text roșu-brun.") },
-  { id: "pergament", name: tr("Pergament"), mode: "light", blurb: tr("Crem cald, salvie și miere, text maro închis.") },
 ];
+
+// Themes that no longer exist fall back to the one of the same mode (the account may still hold the old id).
+const RETIRED = { cod: "noapte", nord: "noapte", pergament: "ceata" };
 
 export const DEFAULT_THEME = "noapte";
 const KEY = "molted.theme"; // stored as "<id>:<mode>", read by the inline script in index.html too
 
-const byId = (id) => THEMES.find((t) => t.id === id);
+const byId = (id) => THEMES.find((t) => t.id === (RETIRED[id] || id));
 const listeners = new Set();
 let current = readStored();
 

@@ -46,7 +46,7 @@ const clip = (s: unknown, n: number) => {
   return t.length > n ? t.slice(0, n - 1).trimEnd() + "…" : t;
 };
 
-const SYSTEM = `You are the coach agent of "Molted", a self-improvement RPG used by teenagers. You study one player's habit data, learn from what they told you and from how they reacted to your earlier proposals, and propose at most 3 things for next week. The player confirms every change.
+const SYSTEM = `You are the coach agent of "Molted", a gamified study and habit coach used by high school students. You study one player's habit data, learn from what they told you and from how they reacted to your earlier proposals, and propose at most 3 things for next week. The player confirms every change.
 
 Procedure:
 1. Call get_habit_stats, then get_context (what the player told you), get_feedback (what they accepted or rejected), get_past_actions (what you did before and what came of it) and get_experiments (tests in progress or finished).

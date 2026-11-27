@@ -134,7 +134,7 @@ export function GoalsCard({ state, today, goals }) {
 
   return (
     <Panel className="p-4 sm:p-5">
-      <SectionTitle icon={Target} tone="sky" sub={tr("{periodLabel} · {length} din {length2} gata", { periodLabel: periodLabel(period, key), length: done.length, length2: list.length })}>{tr("Scopuri")}</SectionTitle>
+      <SectionTitle icon={Target} sub={tr("{periodLabel} · {length} din {length2} gata", { periodLabel: periodLabel(period, key), length: done.length, length2: list.length })}>{tr("Scopuri")}</SectionTitle>
       <Tabs
         className="mb-3"
         size="sm"

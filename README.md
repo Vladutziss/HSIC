@@ -4,7 +4,7 @@ Coach AI pentru elevi. Molted transformă un obiectiv într-un plan de pași mic
 
 Aplicația: [app.molted.eu](https://app.molted.eu) · Site: [molted.eu](https://molted.eu)
 
-Proiect înscris la High School Innovation Challenge 2026 (tema: educația).
+Proiect înscris la High School Innovation Challenge 2026 (tema: educația; direcții din /teme: E3 „Smart Homework Planner" și F2 „AI Challenge & Gamification Platform"). Criteriile de jurizare, livrabilele semifinalei și planul de lucru: [`docs/HSIC_SEMIFINALE.md`](docs/HSIC_SEMIFINALE.md).
 
 ## Problema
 

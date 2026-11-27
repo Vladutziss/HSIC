@@ -29,12 +29,12 @@ export default {
         on: { gold: c("on-gold"), violet: c("on-violet"), mint: c("on-mint"), rose: c("on-rose") },
       },
       boxShadow: {
-        // the "3D" bottom edge on chunky toggles and tabs
-        "key-gold": "0 3px 0 rgb(var(--c-gold-deep))",
-        "key-gold-sm": "0 2px 0 rgb(var(--c-gold-deep))",
-        "key-gold-lg": "0 4px 0 rgb(var(--c-gold-deep))",
-        "key-mint": "0 3px 0 rgb(var(--c-mint-key))",
-        "key-ghost": "0 3px 0 rgb(var(--c-key))",
+        // the old "3D" bottom edge on toggles and tabs is gone (flat UI); the names stay so the components keep compiling
+        "key-gold": "none",
+        "key-gold-sm": "none",
+        "key-gold-lg": "none",
+        "key-mint": "none",
+        "key-ghost": "none",
       },
       fontFamily: {
         sans: ["Nunito", "ui-rounded", "system-ui", "Segoe UI", "sans-serif"],
