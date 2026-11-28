@@ -1,0 +1,3 @@
+Molted – coach AI pentru elevi care măsoară ce funcționează
+
+Molted transformă un obiectiv într-un plan de pași mici și îl adaptează după ce face elevul în realitate. Agentul AI observă obiceiurile, citează doar surse științifice, propune un pas și măsoară efectul după 14 zile. Elevul confirmă fiecare schimbare. Planul ajunge în Google Calendar, Notion și Obsidian, iar Claude sau ChatGPT se pot conecta prin MCP. Live pe app.molted.eu.
